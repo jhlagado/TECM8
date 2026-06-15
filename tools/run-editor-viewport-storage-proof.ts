@@ -931,36 +931,36 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'ScrollRowCount', expected: 0 },
     { symbol: 'ScrollMarkerCount', expected: 0 },
     { symbol: 'ScrollFullFlushCount', expected: 0 },
-    { symbol: 'ScrollRowFlushCount', expected: 10 },
-    { symbol: 'ScrollCellFlushCount', expected: 2 },
-    { symbol: 'ScrollCellFlushByteCount', expected: 0 },
+    { symbol: 'ScrollRowFlushCount', expected: 0 },
+    { symbol: 'ScrollCellFlushCount', expected: 24 },
+    { symbol: 'ScrollCellFlushByteCount', expected: 600 },
     { symbol: 'ScrollStepCount', expected: 60 },
     { symbol: 'ScrollCoalesceScreenCount', expected: 2 },
     { symbol: 'ScrollCoalescePageCount', expected: 2 },
     { symbol: 'ScrollCoalesceRowCount', expected: 0 },
     { symbol: 'ScrollCoalesceMarkerCount', expected: 0 },
     { symbol: 'ScrollCoalesceFullFlushCount', expected: 0 },
-    { symbol: 'ScrollCoalesceRowFlushCount', expected: 20 },
-    { symbol: 'ScrollCoalesceCellFlushCount', expected: 0 },
-    { symbol: 'ScrollCoalesceCellFlushByteCount', expected: 0 },
+    { symbol: 'ScrollCoalesceRowFlushCount', expected: 0 },
+    { symbol: 'ScrollCoalesceCellFlushCount', expected: 42 },
+    { symbol: 'ScrollCoalesceCellFlushByteCount', expected: 600 },
     { symbol: 'ScrollCoalesceStepCount', expected: 60 },
     { symbol: 'ResidentBoundaryScreenCount', expected: 4 },
     { symbol: 'ResidentBoundaryPageCount', expected: 4 },
     { symbol: 'ResidentBoundaryRowCount', expected: 0 },
     { symbol: 'ResidentBoundaryMarkerCount', expected: 0 },
     { symbol: 'ResidentBoundaryFullFlushCount', expected: 0 },
-    { symbol: 'ResidentBoundaryRowFlushCount', expected: 40 },
-    { symbol: 'ResidentBoundaryCellFlushCount', expected: 0 },
-    { symbol: 'ResidentBoundaryCellFlushByteCount', expected: 0 },
+    { symbol: 'ResidentBoundaryRowFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryCellFlushCount', expected: 82 },
+    { symbol: 'ResidentBoundaryCellFlushByteCount', expected: 600 },
     { symbol: 'ResidentBoundaryStepCount', expected: 60 },
     { symbol: 'ResidentBoundaryUpScreenCount', expected: 2 },
     { symbol: 'ResidentBoundaryUpPageCount', expected: 2 },
     { symbol: 'ResidentBoundaryUpRowCount', expected: 0 },
     { symbol: 'ResidentBoundaryUpMarkerCount', expected: 0 },
     { symbol: 'ResidentBoundaryUpFullFlushCount', expected: 0 },
-    { symbol: 'ResidentBoundaryUpRowFlushCount', expected: 20 },
-    { symbol: 'ResidentBoundaryUpCellFlushCount', expected: 0 },
-    { symbol: 'ResidentBoundaryUpCellFlushByteCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpRowFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpCellFlushCount', expected: 41 },
+    { symbol: 'ResidentBoundaryUpCellFlushByteCount', expected: 600 },
     { symbol: 'ResidentBoundaryUpStepCount', expected: 60 },
     { symbol: 'InsertScreenCount', expected: 0 },
     { symbol: 'InsertPageCount', expected: 0 },
@@ -1008,7 +1008,10 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
   ];
   const mismatches: string[] = [];
   for (const count of expectedCounts) {
-    const value = runtime.hardware.memory[symbolAddress(symbols, count.symbol)];
+    const address = symbolAddress(symbols, count.symbol);
+    const value = count.symbol.endsWith('CellFlushByteCount')
+      ? readWord(runtime.hardware.memory, address)
+      : runtime.hardware.memory[address];
     if (value !== count.expected) {
       mismatches.push(`${count.symbol} ${value}, expected ${count.expected}`);
     }

@@ -135,6 +135,7 @@ PROOF_FAIL       .equ     0xE0
         XOR     A
         LD      (GlcdTileFlushRowByteCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileStepCount),A
         LD      A,'E'
@@ -189,6 +190,7 @@ CellStepFinalReturn:
         XOR     A
         LD      (GlcdTileFlushRowByteCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileStepCount),A
         LD      A,'F'
@@ -240,6 +242,7 @@ CellTwoByteStepFinalReturn:
         XOR     A
         LD      (GlcdTileFlushRowByteCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileStepCount),A
         LD      A,8
@@ -285,6 +288,7 @@ GutterStepFinalReturn:
         XOR     A
         LD      (GlcdTileFlushRowByteCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileStepCount),A
 
@@ -334,6 +338,7 @@ DirtyStepFinalReturn:
         XOR     A
         LD      (GlcdTileFlushRowByteCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileFlushRowCount),A
         LD      (GlcdTileStepCount),A

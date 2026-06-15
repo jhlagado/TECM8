@@ -419,12 +419,13 @@ paths then walk six rows of six pixels with local set and clear mask tables.
 `BiosDisplayUpdate`, which keeps the visible GLCD in sync with the TECM8-owned
 bitmap state after initial or storage-synchronous viewport renders.
 Key-driven viewport scrolls use `EditorRenderPageBufferDirtyRows` instead:
-the editor rebuilds the ten visible tile rows in `TGBUF`, marks those rows
-dirty, and returns to the live input loop so `GlcdTileStep` can transfer the
-latest row set in bounded slices. `GlcdTileFlushRow` bypasses MON3 `plotToLCD`
-and transfers only one six-pixel text row, so cursor movement, status overlays,
-row-local edits, and resident one-line page-boundary movement avoid the old
-full-screen blank/repaint path.
+the editor rebuilds the ten visible tile rows in `TGBUF`, marks only each row's
+gutter-plus-text span dirty, and returns to the live input loop so
+`GlcdTileStep` can transfer the latest byte ranges in bounded slices.
+`GlcdTileFlushRow` bypasses MON3 `plotToLCD` and transfers only one six-pixel
+text row when a caller deliberately requests a whole row, so cursor movement,
+status overlays, row-local edits, and resident one-line page-boundary movement
+avoid the old full-screen blank/repaint path.
 
 The row-transfer path now also has a cooperative surface. `GlcdTileQueueRow`
 sets up one text row immediately, while `GlcdTileMarkRowDirty` records row
@@ -438,9 +439,9 @@ schedule GLCD work and return to matrix keyboard polling while the display
 drains in bounded slices.
 
 When repeated vertical movement arrives before pending row work drains, the
-dirty-row mask coalesces the requests. Intermediate viewport states may rebuild
-`TGBUF`, but the physical GLCD transfer drains only the latest marked rows, so
-quick Down/Up bursts do not create a backlog of obsolete paints.
+dirty mask coalesces the requests. Intermediate viewport states may rebuild
+`TGBUF`, but the physical GLCD transfer drains only the latest marked row spans,
+so quick Down/Up bursts do not create a backlog of obsolete paints.
 
 The same stepper also understands dirty cell byte ranges. `GlcdTileMarkCellDirty`
 validates a row/column, computes the GLCD byte column touched by the 6-pixel
@@ -477,6 +478,13 @@ calls `DisplayRenderScreen`.
 `EditorViewportRenderRecordRow` performs the same record-to-row conversion for
 one visible row and calls `DisplayRenderLine`, which is the dirty-rendering path
 used by ordinary in-line editor mutations.
+
+The viewport also tracks row text extents for display scheduling. When it copies
+each visible source record, it records the new visible text length and the
+larger of the previous and new lengths. Key-driven viewport scrolls use that
+larger extent to mark only the gutter through the last affected text cell dirty.
+This keeps stale pixels erased when a short row replaces a long row, while
+avoiding full 16-byte-wide GLCD row transfers for ragged-right source text.
 
 This module now owns the viewport-facing selection projection. It maps visible
 rows back to absolute page-line numbers, tests whether those lines fall inside

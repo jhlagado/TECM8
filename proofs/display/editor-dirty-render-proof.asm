@@ -45,8 +45,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (InsertRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (InsertCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (InsertCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (InsertCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (InsertStepCount),A
 
@@ -72,8 +72,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (DeleteRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (DeleteCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (DeleteCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (DeleteCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (DeleteStepCount),A
 
@@ -99,8 +99,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (BackspaceRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (BackspaceCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (BackspaceCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (BackspaceCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (BackspaceStepCount),A
 
@@ -126,8 +126,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (MoveRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (MoveCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (MoveCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (MoveCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (MoveStepCount),A
 
@@ -153,8 +153,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ScrollRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (ScrollCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (ScrollCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (ScrollCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ScrollStepCount),A
 
@@ -180,8 +180,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ScrollCoalesceRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (ScrollCoalesceCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (ScrollCoalesceCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (ScrollCoalesceCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ScrollCoalesceStepCount),A
 
@@ -207,8 +207,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ResidentBoundaryRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (ResidentBoundaryCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (ResidentBoundaryCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (ResidentBoundaryCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ResidentBoundaryStepCount),A
 
@@ -234,8 +234,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ResidentBoundaryUpRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (ResidentBoundaryUpCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (ResidentBoundaryUpCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (ResidentBoundaryUpCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ResidentBoundaryUpStepCount),A
 
@@ -258,8 +258,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (BlinkHideRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (BlinkHideCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (BlinkHideCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (BlinkHideCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (BlinkHideStepCount),A
         LD      A,(EditorCursorRendered)
@@ -286,8 +286,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (BlinkShowRowFlushCount),A
         LD      A,(GlcdTileFlushCellCount)
         LD      (BlinkShowCellFlushCount),A
-        LD      A,(GlcdTileFlushCellByteCount)
-        LD      (BlinkShowCellFlushByteCount),A
+        LD      HL,(GlcdTileFlushCellByteCount)
+        LD      (BlinkShowCellFlushByteCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (BlinkShowStepCount),A
         LD      A,(EditorCursorRendered)
@@ -322,6 +322,7 @@ ProofFailedDone:
         LD      (GlcdTileFlushRowCount),A
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileFlushCellByteCount),A
+        LD      (GlcdTileFlushCellByteCountHi),A
         LD      (GlcdTileStepCount),A
         RET
 
@@ -433,7 +434,7 @@ MoveRowFlushCount:
 MoveCellFlushCount:
         .db     0
 MoveCellFlushByteCount:
-        .db     0
+        .dw     0
 MoveStepCount:
         .db     0
 ScrollScreenCount:
@@ -451,7 +452,7 @@ ScrollRowFlushCount:
 ScrollCellFlushCount:
         .db     0
 ScrollCellFlushByteCount:
-        .db     0
+        .dw     0
 ScrollStepCount:
         .db     0
 ScrollCoalesceScreenCount:
@@ -469,7 +470,7 @@ ScrollCoalesceRowFlushCount:
 ScrollCoalesceCellFlushCount:
         .db     0
 ScrollCoalesceCellFlushByteCount:
-        .db     0
+        .dw     0
 ScrollCoalesceStepCount:
         .db     0
 ResidentBoundaryScreenCount:
@@ -487,7 +488,7 @@ ResidentBoundaryRowFlushCount:
 ResidentBoundaryCellFlushCount:
         .db     0
 ResidentBoundaryCellFlushByteCount:
-        .db     0
+        .dw     0
 ResidentBoundaryStepCount:
         .db     0
 ResidentBoundaryUpScreenCount:
@@ -505,7 +506,7 @@ ResidentBoundaryUpRowFlushCount:
 ResidentBoundaryUpCellFlushCount:
         .db     0
 ResidentBoundaryUpCellFlushByteCount:
-        .db     0
+        .dw     0
 ResidentBoundaryUpStepCount:
         .db     0
 InsertScreenCount:
@@ -523,7 +524,7 @@ InsertRowFlushCount:
 InsertCellFlushCount:
         .db     0
 InsertCellFlushByteCount:
-        .db     0
+        .dw     0
 InsertStepCount:
         .db     0
 DeleteScreenCount:
@@ -541,7 +542,7 @@ DeleteRowFlushCount:
 DeleteCellFlushCount:
         .db     0
 DeleteCellFlushByteCount:
-        .db     0
+        .dw     0
 DeleteStepCount:
         .db     0
 BackspaceScreenCount:
@@ -559,7 +560,7 @@ BackspaceRowFlushCount:
 BackspaceCellFlushCount:
         .db     0
 BackspaceCellFlushByteCount:
-        .db     0
+        .dw     0
 BackspaceStepCount:
         .db     0
 BlinkHideScreenCount:
@@ -571,7 +572,7 @@ BlinkHideRowFlushCount:
 BlinkHideCellFlushCount:
         .db     0
 BlinkHideCellFlushByteCount:
-        .db     0
+        .dw     0
 BlinkHideStepCount:
         .db     0
 BlinkHideRendered:
@@ -587,7 +588,7 @@ BlinkShowRowFlushCount:
 BlinkShowCellFlushCount:
         .db     0
 BlinkShowCellFlushByteCount:
-        .db     0
+        .dw     0
 BlinkShowStepCount:
         .db     0
 BlinkShowRendered:

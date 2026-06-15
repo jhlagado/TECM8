@@ -577,6 +577,8 @@ EditorViewportRowError:
 ;! out A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorViewportCopyRecord:
+        XOR     A
+        LD      (EditorViewportCopyLength),A
         LD      HL,(EditorRecordPtr)
         LD      A,(HL)
         AND     TECM8_EDITOR_RECORD_LENGTH_MASK
@@ -607,8 +609,12 @@ EditorViewportRowError:
 EditorViewportCopyCap:
         LD      A,B
         CP      TECM8_EDITOR_VISIBLE_COLS + 1
-        JR      C,EditorViewportCopyLoop
+        JR      C,EditorViewportCopyLengthReady
         LD      B,TECM8_EDITOR_VISIBLE_COLS
+
+EditorViewportCopyLengthReady:
+        LD      A,B
+        LD      (EditorViewportCopyLength),A
 
 EditorViewportCopyLoop:
         LD      A,(HL)
@@ -620,6 +626,8 @@ EditorViewportCopyLoop:
 EditorViewportTerminateRow:
         XOR     A
         LD      (DE),A
+        LD      A,(EditorViewportCopyLength)
+        CALL    EditorViewportRecordTextExtent
         LD      HL,(EditorRecordPtr)
         LD      DE,TECM8_EDITOR_RECORD_BYTES - 1
         ADD     HL,DE
@@ -629,6 +637,64 @@ EditorViewportTerminateRow:
         ADD     HL,DE
         LD      (EditorTextPtr),HL
         XOR     A
+        RET
+
+; EditorViewportRecordTextExtent -
+; Track the text-cell span that can contain changed pixels for a visible row.
+; Input: A = new visible text length in cells.
+;! in A
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,B,DE,HL
+@EditorViewportRecordTextExtent:
+        LD      (EditorViewportNewTextExtent),A
+        LD      A,(EditorRowIndex)
+        LD      (EditorViewportExtentRow),A
+        LD      E,A
+        LD      D,0
+        LD      HL,EditorViewportRenderedTextExtent
+        ADD     HL,DE
+        LD      A,(HL)
+        LD      B,A
+        LD      A,(EditorViewportNewTextExtent)
+        LD      (HL),A
+        CP      B
+        JR      NC,EditorViewportRecordTextExtentUseNew
+        LD      A,B
+
+EditorViewportRecordTextExtentUseNew:
+        LD      B,A
+        LD      A,(EditorViewportExtentRow)
+        LD      E,A
+        LD      D,0
+        LD      HL,EditorViewportDirtyTextExtent
+        ADD     HL,DE
+        LD      (HL),B
+        XOR     A
+        RET
+
+; EditorViewportMarkDirtySpan -
+; Queue the gutter and visible text byte span for one already-rendered row.
+; Input: A = visible row (0-9)
+;! in A
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,BC,DE,HL
+@EditorViewportMarkDirtySpan:
+        LD      (EditorViewportDirtySpanRow),A
+        CALL    GlcdTileMarkGutterDirty
+        RET     C
+        LD      A,(EditorViewportDirtySpanRow)
+        LD      E,A
+        LD      D,0
+        LD      HL,EditorViewportDirtyTextExtent
+        ADD     HL,DE
+        LD      A,(HL)
+        OR      A
+        RET     Z
+        DEC     A
+        LD      C,A
+        LD      A,(EditorViewportDirtySpanRow)
+        LD      B,A
+        CALL    GlcdTileMarkCellDirty
         RET
 
 EditorScreenDescriptor:
@@ -704,6 +770,24 @@ EditorViewportCurrentBasePtr:
         .dw     0
 EditorViewportMixedSourceRow:
         .db     0
+
+EditorViewportCopyLength:
+        .db     0
+
+EditorViewportNewTextExtent:
+        .db     0
+
+EditorViewportExtentRow:
+        .db     0
+
+EditorViewportDirtySpanRow:
+        .db     0
+
+EditorViewportRenderedTextExtent:
+        .db     0,0,0,0,0,0,0,0,0,0
+
+EditorViewportDirtyTextExtent:
+        .db     0,0,0,0,0,0,0,0,0,0
 
 EditorBlockSelectionStartLo:
         .db     0

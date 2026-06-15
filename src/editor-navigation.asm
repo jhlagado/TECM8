@@ -169,7 +169,7 @@ EditorRenderPageBufferDirtyRowsQueue:
 
 EditorMarkViewportRowsDirtyLoop:
         LD      A,(EditorViewportDirtyRow)
-        CALL    GlcdTileMarkRowDirty
+        CALL    EditorViewportMarkDirtySpan
         RET     C
         LD      A,(EditorViewportDirtyRow)
         INC     A

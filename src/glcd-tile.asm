@@ -869,6 +869,10 @@ GlcdTileFlushByteLoop:
         LD      A,(GlcdTileFlushCellByteCount)
         INC     A
         LD      (GlcdTileFlushCellByteCount),A
+        JR      NZ,GlcdTileFlushByteNext
+        LD      A,(GlcdTileFlushCellByteCountHi)
+        INC     A
+        LD      (GlcdTileFlushCellByteCountHi),A
 
 GlcdTileFlushByteNext:
         DJNZ    GlcdTileFlushByteLoop
@@ -970,6 +974,8 @@ GlcdTileFlushRowByteCount:
 GlcdTileFlushCellCount:
         .db     0
 GlcdTileFlushCellByteCount:
+        .db     0
+GlcdTileFlushCellByteCountHi:
         .db     0
 GlcdTileStepCount:
         .db     0

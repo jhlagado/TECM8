@@ -558,6 +558,13 @@ Work:
   live loop instead of calling `GlcdTileFlushFull`. Repeated scroll keys before
   the display drains coalesce into one latest-row transfer set, and resident
   page-boundary Down/Up movement uses the same path.
+- Done: narrowed key-driven viewport scrolling from full dirty rows to row text
+  spans. The viewport records each visible row's previous and current text
+  length, queues the gutter plus the widest affected text-cell span, and relies
+  on the existing dirty cell-range scheduler to transfer only the GLCD byte
+  columns that can contain changed pixels. Short lines replacing longer lines
+  still erase correctly because the backing tile row is cleared before drawing
+  and the dirty span covers the previous row extent.
 - Done: interleave matrix keyboard polling between display-update slices. The
   live loop polls input first, handles a key if one is pending, and only uses
   idle time to run one `GlcdTileStep`, so user input does not wait behind a full
@@ -608,6 +615,8 @@ Incremental implementation order:
 12. Done: poll the matrix keyboard between longer GLCD update slices and prove
     key-driven viewport scrolls queue cooperative row work instead of full
     repaint drains.
+13. Done: replace key-driven viewport full-row transfers with row extent
+    dirty spans so ragged-right source lines transfer fewer GLCD bytes.
 
 Proofs:
 
@@ -618,6 +627,7 @@ Proofs:
 - Insert/delete without full render.
 - Viewport scroll without full render.
 - Repeated scroll coalescing without obsolete row-drain backlog.
+- Viewport scroll without full row flushes, using dirty cell-span counters.
 - Resident page-boundary scroll without full render.
 - Cooperative display-step proof: a pending display update can be advanced in
   bounded slices without losing a queued/polled key event.
