@@ -87,7 +87,7 @@ lines:
 GlcdTileClearCell(row, col)
 GlcdTileDrawCell(row, col, glyph, flags)
 GlcdTileDrawTextRun(row, col, text, max_cells, flags)
-GlcdTileClearTextRow(row)
+GlcdTileClearTextRow(row) as an optional diagnostic/convenience wrapper
 GlcdTileDrawGutter(row, marker_flags)
 GlcdTileFlushFull()
 GlcdTileFlushDirtyRow(row) or equivalent later dirty flush
@@ -99,9 +99,13 @@ should no longer decide editor terminal policy, cell clearing, cursor drawing, o
 dirty update scope.
 
 Structured screen text rendering follows that boundary: `DisplayRenderLine`
-clears the row's text cells and redraws the string through TECM8 tile
-primitives. Full-screen repaint remains available, but normal structured text
-rows no longer call MON3's terminal glyph drawing path.
+redraws row text through TECM8 tile primitives. `GlcdTileDrawCell` clears the
+cell footprint before drawing the glyph, so a line redraw does not need to
+clear every text cell first. The display model instead tracks the last rendered
+text extent for each row and clears only the stale tail when a shorter row
+replaces a longer one. Full-screen repaint remains available, but normal
+structured text rows no longer call MON3's terminal glyph drawing path or do
+unnecessary full-row backing-buffer clears.
 
 Cursor rendering now uses a saved-byte XOR insertion bar rather than a full
 inverse block. The bar is drawn one pixel before the active 6x6 cell, so column

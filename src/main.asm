@@ -7,12 +7,14 @@
 
 TECM8_MAIN_PASS        .equ     0x42
 TECM8_MAIN_FAIL        .equ     0xE0
+TECM8_MAIN_STACK       .equ     0x3FF0
 
         .include "tecm8-equates.asm"
 
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,BC,DE,HL
 @Start:
+        LD      SP,TECM8_MAIN_STACK
         JP      LiveStart
 
 MainDone:

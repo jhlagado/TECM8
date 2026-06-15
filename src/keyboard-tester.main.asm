@@ -411,4 +411,5 @@ KbdTestHexBuffer:
         .db     0,0
 
         .include "glcd-tile.asm"
+        .include "glcd-tile-row.asm"
         .include "tecm8-bios.asm"

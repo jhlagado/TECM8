@@ -565,6 +565,11 @@ Work:
   columns that can contain changed pixels. Short lines replacing longer lines
   still erase correctly because the backing tile row is cleared before drawing
   and the dirty span covers the previous row extent.
+- Done: reduced CPU-side viewport repaint work. `DisplayRenderLine` no longer
+  clears all 20 text cells before every row draw; each glyph draw still clears
+  its own 6x6 tile, and the display model clears only the stale tail when a
+  shorter line replaces a longer one. The dirty-render proof now records clear
+  cell counts for scrolling paths as well as physical GLCD byte-transfer counts.
 - Done: interleave matrix keyboard polling between display-update slices. The
   live loop polls input first, handles a key if one is pending, and only uses
   idle time to run one `GlcdTileStep`, so user input does not wait behind a full
@@ -617,6 +622,8 @@ Incremental implementation order:
     repaint drains.
 13. Done: replace key-driven viewport full-row transfers with row extent
     dirty spans so ragged-right source lines transfer fewer GLCD bytes.
+14. Done: remove full-row CPU-side clears from `DisplayRenderLine`, replacing
+    them with per-row rendered text extents and stale-tail clearing.
 
 Proofs:
 
@@ -628,6 +635,7 @@ Proofs:
 - Viewport scroll without full render.
 - Repeated scroll coalescing without obsolete row-drain backlog.
 - Viewport scroll without full row flushes, using dirty cell-span counters.
+- Viewport scroll without full-row CPU-side clears, using clear-cell counters.
 - Resident page-boundary scroll without full render.
 - Cooperative display-step proof: a pending display update can be advanced in
   bounded slices without losing a queued/polled key event.

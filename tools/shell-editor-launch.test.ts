@@ -37,7 +37,8 @@ test('Debug80 main entry separates live launch from scripted verification', () =
   const runner = readRepoFile('tools/run-debug80-editor-session.ts');
   const packageJson = readRepoFile('package.json');
 
-  assert.match(mainSource, /^@Start:\n\s+JP\s+LiveStart/m);
+  assert.match(mainSource, /^TECM8_MAIN_STACK\s+\.equ\s+0x3FF0$/m);
+  assert.match(mainSource, /^@Start:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+JP\s+LiveStart/m);
   assert.doesNotMatch(mainSource, /^@ScriptStart:/m);
   assert.doesNotMatch(mainSource, /MainEditSaveQuitKeys:/);
   assert.match(mainSource, /^@LiveStart:/m);
@@ -45,6 +46,8 @@ test('Debug80 main entry separates live launch from scripted verification', () =
   assert.match(mainSource, /LD\s+HL,MainShellReadyText\n\s+CALL\s+EditorKeyShowStatus/);
   assert.match(mainSource, /MainShellReadyText:\n\s+\.db\s+"Shell",0/);
   assert.match(scriptSource, /^@ScriptStart:/m);
+  assert.match(scriptSource, /^TECM8_MAIN_STACK\s+\.equ\s+0x3FF0$/m);
+  assert.match(scriptSource, /^@ScriptStart:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+CALL\s+DisplayInit/m);
   assert.match(scriptSource, /CALL\s+ShellRunEditorSession/);
   assert.match(scriptSource, /\.include\s+"shell-editor-session\.asm"/);
   assert.match(runner, /symbolAddress\(symbols, 'ScriptStart'\)/);

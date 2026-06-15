@@ -11,13 +11,13 @@ function readRepoFile(path: string): string {
 
 test('GLCD tile layer exposes direct cell primitives', () => {
   const source = readRepoFile('src/glcd-tile.asm');
+  const rowSource = readRepoFile('src/glcd-tile-row.asm');
   const equates = readRepoFile('src/tecm8-equates.asm');
 
   for (const label of [
     'GlcdTileClearCell',
     'GlcdTileDrawCell',
     'GlcdTileDrawTextRun',
-    'GlcdTileClearTextRow',
     'GlcdTileFlushFull',
     'GlcdTileFlushRow',
     'GlcdTileQueueRow',
@@ -31,6 +31,8 @@ test('GLCD tile layer exposes direct cell primitives', () => {
   ]) {
     assert.match(source, new RegExp(`^@${label}:`, 'm'));
   }
+  assert.match(rowSource, /^@GlcdTileClearTextRow:/m);
+  assert.match(rowSource, /CALL\s+GlcdTileClearCell/);
 
   assert.match(source, /^TECM8_GLCD_TILE_COLUMNS\s+\.equ\s+TECM8_GLCD_COLUMNS$/m);
   assert.match(source, /^TECM8_GLCD_TILE_ROWS\s+\.equ\s+TECM8_GLCD_ROWS$/m);
@@ -101,6 +103,7 @@ test('GLCD tile proof is wired into package checks', () => {
   assert.match(proof, /CoalescedRowStepLoop:/);
   assert.match(proof, /CALL\s+GlcdTileStep/);
   assert.match(proof, /\.include\s+"..\/..\/src\/glcd-tile\.asm"/);
+  assert.match(proof, /\.include\s+"..\/..\/src\/glcd-tile-row\.asm"/);
   assert.match(runner, /verifyGlcdTile/);
   assert.match(packageJson, /"proof:display:glcd-tile"/);
   assert.match(packageJson, /proof:display:glcd-tile/);

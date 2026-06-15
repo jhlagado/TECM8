@@ -470,6 +470,7 @@ ProofFailedDone:
         JP      ProofDone
 
         .include "../../src/glcd-tile.asm"
+        .include "../../src/glcd-tile-row.asm"
         .include "../../src/tecm8-bios.asm"
 
 TileText:

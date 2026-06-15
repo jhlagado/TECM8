@@ -7,6 +7,7 @@
 
 TECM8_MAIN_PASS        .equ     0x42
 TECM8_MAIN_FAIL        .equ     0xE0
+TECM8_MAIN_STACK       .equ     0x3FF0
 
         .include "tecm8-equates.asm"
 
@@ -18,6 +19,7 @@ TECM8_MAIN_FAIL        .equ     0xE0
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,BC,DE,HL
 @ScriptStart:
+        LD      SP,TECM8_MAIN_STACK
         CALL    DisplayInit
         JP      C,MainFailed
 

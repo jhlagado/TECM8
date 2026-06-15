@@ -155,6 +155,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ScrollCellFlushCount),A
         LD      HL,(GlcdTileFlushCellByteCount)
         LD      (ScrollCellFlushByteCount),HL
+        LD      HL,(GlcdTileClearCellCount)
+        LD      (ScrollClearCellCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ScrollStepCount),A
 
@@ -182,6 +184,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ScrollCoalesceCellFlushCount),A
         LD      HL,(GlcdTileFlushCellByteCount)
         LD      (ScrollCoalesceCellFlushByteCount),HL
+        LD      HL,(GlcdTileClearCellCount)
+        LD      (ScrollCoalesceClearCellCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ScrollCoalesceStepCount),A
 
@@ -209,6 +213,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ResidentBoundaryCellFlushCount),A
         LD      HL,(GlcdTileFlushCellByteCount)
         LD      (ResidentBoundaryCellFlushByteCount),HL
+        LD      HL,(GlcdTileClearCellCount)
+        LD      (ResidentBoundaryClearCellCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ResidentBoundaryStepCount),A
 
@@ -236,6 +242,8 @@ PROOF_FAIL       .equ     0xE0
         LD      (ResidentBoundaryUpCellFlushCount),A
         LD      HL,(GlcdTileFlushCellByteCount)
         LD      (ResidentBoundaryUpCellFlushByteCount),HL
+        LD      HL,(GlcdTileClearCellCount)
+        LD      (ResidentBoundaryUpClearCellCount),HL
         LD      A,(GlcdTileStepCount)
         LD      (ResidentBoundaryUpStepCount),A
 
@@ -323,6 +331,8 @@ ProofFailedDone:
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileFlushCellByteCount),A
         LD      (GlcdTileFlushCellByteCountHi),A
+        LD      (GlcdTileClearCellCount),A
+        LD      (GlcdTileClearCellCountHi),A
         LD      (GlcdTileStepCount),A
         RET
 
@@ -453,6 +463,8 @@ ScrollCellFlushCount:
         .db     0
 ScrollCellFlushByteCount:
         .dw     0
+ScrollClearCellCount:
+        .dw     0
 ScrollStepCount:
         .db     0
 ScrollCoalesceScreenCount:
@@ -470,6 +482,8 @@ ScrollCoalesceRowFlushCount:
 ScrollCoalesceCellFlushCount:
         .db     0
 ScrollCoalesceCellFlushByteCount:
+        .dw     0
+ScrollCoalesceClearCellCount:
         .dw     0
 ScrollCoalesceStepCount:
         .db     0
@@ -489,6 +503,8 @@ ResidentBoundaryCellFlushCount:
         .db     0
 ResidentBoundaryCellFlushByteCount:
         .dw     0
+ResidentBoundaryClearCellCount:
+        .dw     0
 ResidentBoundaryStepCount:
         .db     0
 ResidentBoundaryUpScreenCount:
@@ -506,6 +522,8 @@ ResidentBoundaryUpRowFlushCount:
 ResidentBoundaryUpCellFlushCount:
         .db     0
 ResidentBoundaryUpCellFlushByteCount:
+        .dw     0
+ResidentBoundaryUpClearCellCount:
         .dw     0
 ResidentBoundaryUpStepCount:
         .db     0

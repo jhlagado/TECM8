@@ -934,6 +934,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'ScrollRowFlushCount', expected: 0 },
     { symbol: 'ScrollCellFlushCount', expected: 24 },
     { symbol: 'ScrollCellFlushByteCount', expected: 600 },
+    { symbol: 'ScrollClearCellCount', expected: 100 },
     { symbol: 'ScrollStepCount', expected: 60 },
     { symbol: 'ScrollCoalesceScreenCount', expected: 2 },
     { symbol: 'ScrollCoalescePageCount', expected: 2 },
@@ -943,6 +944,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'ScrollCoalesceRowFlushCount', expected: 0 },
     { symbol: 'ScrollCoalesceCellFlushCount', expected: 42 },
     { symbol: 'ScrollCoalesceCellFlushByteCount', expected: 600 },
+    { symbol: 'ScrollCoalesceClearCellCount', expected: 200 },
     { symbol: 'ScrollCoalesceStepCount', expected: 60 },
     { symbol: 'ResidentBoundaryScreenCount', expected: 4 },
     { symbol: 'ResidentBoundaryPageCount', expected: 4 },
@@ -952,6 +954,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'ResidentBoundaryRowFlushCount', expected: 0 },
     { symbol: 'ResidentBoundaryCellFlushCount', expected: 82 },
     { symbol: 'ResidentBoundaryCellFlushByteCount', expected: 600 },
+    { symbol: 'ResidentBoundaryClearCellCount', expected: 400 },
     { symbol: 'ResidentBoundaryStepCount', expected: 60 },
     { symbol: 'ResidentBoundaryUpScreenCount', expected: 2 },
     { symbol: 'ResidentBoundaryUpPageCount', expected: 2 },
@@ -961,6 +964,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'ResidentBoundaryUpRowFlushCount', expected: 0 },
     { symbol: 'ResidentBoundaryUpCellFlushCount', expected: 41 },
     { symbol: 'ResidentBoundaryUpCellFlushByteCount', expected: 600 },
+    { symbol: 'ResidentBoundaryUpClearCellCount', expected: 200 },
     { symbol: 'ResidentBoundaryUpStepCount', expected: 60 },
     { symbol: 'InsertScreenCount', expected: 0 },
     { symbol: 'InsertPageCount', expected: 0 },
@@ -1009,7 +1013,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
   const mismatches: string[] = [];
   for (const count of expectedCounts) {
     const address = symbolAddress(symbols, count.symbol);
-    const value = count.symbol.endsWith('CellFlushByteCount')
+    const value = count.symbol.endsWith('CellFlushByteCount') || count.symbol.endsWith('ClearCellCount')
       ? readWord(runtime.hardware.memory, address)
       : runtime.hardware.memory[address];
     if (value !== count.expected) {

@@ -83,7 +83,11 @@ test('structured display model has assembly entry points', () => {
   assert.match(source, /DisplayCursorSecondMaskTable:\n\s+\.db\s+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00/);
   assert.match(source, /DisplayRenderScreenCount:/);
   assert.match(source, /LD\s+\(DisplayCursorOriginalByte\),A/);
-  assert.match(source, /CALL\s+GlcdTileClearTextRow/);
+  assert.match(source, /CALL\s+DisplayMeasureTextExtent/);
+  assert.match(source, /CALL\s+DisplayPrepareTextTail/);
+  assert.match(source, /CALL\s+DisplayClearTextTail/);
+  assert.match(source, /DisplayRowTextExtent:/);
+  assert.match(source, /DisplayTailCount:/);
   assert.match(source, /CALL\s+GlcdTileDrawTextRun/);
   assert.doesNotMatch(source, /CALL\s+BiosDisplayDrawCharAt/);
   assert.match(source, /LD\s+HL,MON3_TGBUF\n\s+LD\s+DE,TECM8_DISPLAY_Y_ORIGIN_BYTES\n\s+ADD\s+HL,DE\n\s+LD\s+DE,TECM8_DISPLAY_ROW_STRIDE/);

@@ -32,6 +32,15 @@ TECM8_GLCD_TILE_ERR_RANGE           .equ    0x01
 @GlcdTileClearCell:
         CALL    GlcdTilePrepareCell
         RET     C
+        LD      A,(GlcdTileClearCellCount)
+        INC     A
+        LD      (GlcdTileClearCellCount),A
+        JR      NZ,GlcdTileClearCellCountDone
+        LD      A,(GlcdTileClearCellCountHi)
+        INC     A
+        LD      (GlcdTileClearCellCountHi),A
+
+GlcdTileClearCellCountDone:
         LD      C,0
         LD      B,TECM8_GLCD_TILE_HEIGHT
 
@@ -192,38 +201,6 @@ GlcdTileTextRunLoop:
         JR      GlcdTileTextRunLoop
 
 GlcdTileTextRunDone:
-        XOR     A
-        RET
-
-; GlcdTileClearTextRow -
-; Clear all 20 text cells on one display row.
-; Input: B = row (0-9)
-;! in B
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileClearTextRow:
-        LD      A,B
-        CP      TECM8_GLCD_TILE_ROWS
-        JP      NC,GlcdTileRangeError
-        LD      (GlcdTileTextRow),A
-        XOR     A
-        LD      (GlcdTileTextColumn),A
-
-GlcdTileClearTextRowLoop:
-        LD      A,(GlcdTileTextColumn)
-        CP      TECM8_GLCD_TILE_COLUMNS
-        JR      NC,GlcdTileClearTextRowDone
-        LD      C,A
-        LD      A,(GlcdTileTextRow)
-        LD      B,A
-        CALL    GlcdTileClearCell
-        RET     C
-        LD      A,(GlcdTileTextColumn)
-        INC     A
-        LD      (GlcdTileTextColumn),A
-        JR      GlcdTileClearTextRowLoop
-
-GlcdTileClearTextRowDone:
         XOR     A
         RET
 
@@ -976,6 +953,10 @@ GlcdTileFlushCellCount:
 GlcdTileFlushCellByteCount:
         .db     0
 GlcdTileFlushCellByteCountHi:
+        .db     0
+GlcdTileClearCellCount:
+        .db     0
+GlcdTileClearCellCountHi:
         .db     0
 GlcdTileStepCount:
         .db     0

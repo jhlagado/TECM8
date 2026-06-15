@@ -33,6 +33,8 @@ MON3_TGBUF                          .equ    TECM8_MON3_GLCD_TGBUF
         CALL    BiosDisplayInit
         RET     C
         CALL    BiosDisplayClear
+        RET     C
+        CALL    DisplayResetRowExtents
         RET
 
 ; DisplayRenderScreen -
@@ -87,15 +89,111 @@ DisplayScreenLoop:
         LD      (DisplayRow),A
         CALL    DisplayRenderGutter
         RET     C
-        LD      A,(DisplayRow)
-        LD      B,A
-        CALL    GlcdTileClearTextRow
+        LD      HL,(DisplayText)
+        CALL    DisplayMeasureTextExtent
+        CALL    DisplayPrepareTextTail
+        CALL    DisplayClearTextTail
         RET     C
         LD      HL,(DisplayText)
         LD      A,(DisplayRow)
         LD      B,A
         LD      C,0
         CALL    GlcdTileDrawTextRun
+        RET
+
+; DisplayResetRowExtents -
+; Forget the last-rendered text length for every display row.
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,B,HL
+@DisplayResetRowExtents:
+        LD      HL,DisplayRowTextExtent
+        LD      B,TECM8_DISPLAY_EDIT_ROWS
+        XOR     A
+
+DisplayResetRowExtentsLoop:
+        LD      (HL),A
+        INC     HL
+        DJNZ    DisplayResetRowExtentsLoop
+        RET
+
+; DisplayMeasureTextExtent -
+; Measure a NUL-terminated text run, capped to the visible cell count.
+; Input: HL = text
+; Output: A = visible text cells
+;! in HL
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,B,HL
+@DisplayMeasureTextExtent:
+        LD      B,0
+
+DisplayMeasureTextExtentLoop:
+        LD      A,B
+        CP      TECM8_DISPLAY_MAX_TEXT_CHARS
+        JR      NC,DisplayMeasureTextExtentDone
+        LD      A,(HL)
+        OR      A
+        JR      Z,DisplayMeasureTextExtentDone
+        INC     HL
+        INC     B
+        JR      DisplayMeasureTextExtentLoop
+
+DisplayMeasureTextExtentDone:
+        LD      A,B
+        LD      (DisplayMeasuredTextExtent),A
+        OR      A
+        RET
+
+; DisplayPrepareTextTail -
+; Compare this row's new text width with its previous width and prepare any
+; stale tail cells for clearing.
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,B,DE,HL
+@DisplayPrepareTextTail:
+        LD      A,(DisplayRow)
+        LD      E,A
+        LD      D,0
+        LD      HL,DisplayRowTextExtent
+        ADD     HL,DE
+        LD      A,(DisplayMeasuredTextExtent)
+        LD      B,A
+        LD      A,(HL)
+        LD      (HL),B
+        SUB     B
+        JR      C,DisplayPrepareTextTailNone
+        JR      Z,DisplayPrepareTextTailNone
+        LD      (DisplayTailCount),A
+        LD      A,B
+        LD      (DisplayTailColumn),A
+        RET
+
+DisplayPrepareTextTailNone:
+        XOR     A
+        LD      (DisplayTailCount),A
+        RET
+
+; DisplayClearTextTail -
+; Clear only the cells that were occupied by the previous, longer row text.
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,BC,DE,HL
+@DisplayClearTextTail:
+        LD      A,(DisplayTailCount)
+        OR      A
+        RET     Z
+
+DisplayClearTextTailLoop:
+        LD      A,(DisplayRow)
+        LD      B,A
+        LD      A,(DisplayTailColumn)
+        LD      C,A
+        CALL    GlcdTileClearCell
+        RET     C
+        LD      A,(DisplayTailColumn)
+        INC     A
+        LD      (DisplayTailColumn),A
+        LD      A,(DisplayTailCount)
+        DEC     A
+        LD      (DisplayTailCount),A
+        JR      NZ,DisplayClearTextTailLoop
         RET
 
 ; DisplayRenderGutter -
@@ -515,6 +613,12 @@ DisplayTextY:
         .db     0
 DisplayTextRemaining:
         .db     0
+DisplayMeasuredTextExtent:
+        .db     0
+DisplayTailColumn:
+        .db     0
+DisplayTailCount:
+        .db     0
 DisplayCursorCellRow:
         .db     0
 DisplayCursorCellCol:
@@ -542,5 +646,7 @@ DisplayCursorSecondMaskTable:
         .db     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 DisplaySawtoothPatternTable:
         .db     0x80,0xC0,0xE0,0xF0,0xE0,0xC0
+DisplayRowTextExtent:
+        .db     0,0,0,0,0,0,0,0,0,0
 DisplayRenderScreenCount:
         .db     0

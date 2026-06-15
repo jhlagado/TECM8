@@ -14,6 +14,7 @@ test('keyboard tester is a standalone 4000h diagnostic target', () => {
   assert.match(source, /@Start:/);
   assert.match(source, /CALL\s+BiosInputPollKey/);
   assert.match(source, /\.include\s+"glcd-tile\.asm"/);
+  assert.match(source, /\.include\s+"glcd-tile-row\.asm"/);
   assert.match(source, /\.include\s+"tecm8-bios\.asm"/);
 });
 

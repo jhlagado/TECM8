@@ -62,8 +62,9 @@ For the fastest orientation, read these files first:
     the complete shell.
 15. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
    editor.
-16. `src/glcd-tile.asm` and `src/display-model.asm`: the current direct GLCD
-   cell layer and the structured screen renderer built on top of it.
+16. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, and
+    `src/display-model.asm`: the current direct GLCD cell layer, optional row
+    convenience wrappers, and the structured screen renderer built on top.
 17. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
     `src/editor-block-state.asm`, `src/editor-viewport.asm`,
     `src/editor-record.asm`, `src/editor-line-edit.asm`, `src/editor-block.asm`,
@@ -182,8 +183,11 @@ the two live readers.
 
 This is now the Debug80-testable TECM8 editor session entry. It runs at `4000h`
 under the TEC-1G/MON3 profile. `Start` jumps to
-`LiveStart`, which initializes the GLCD, resolves `edit`, resets the cursor,
-and enters `EditorRunLive` for manual matrix-key testing against the real
+`LiveStart` after setting `SP` to `0x3FF0`, a RAM stack above the editor page
+buffers and below the `4000h` image. Owning this stack keeps the near-16K
+editor image from colliding with a MON3/debugger stack at the top of the code
+bank. `LiveStart` initializes the GLCD, resolves `edit`, resets the cursor, and
+enters `EditorRunLive` for manual matrix-key testing against the real
 storage-backed editor path. The automated save/reopen proof has moved to
 `src/editor-session-script.main.asm` so the live image does not carry the
 script entry and key-stream fixture data. Both targets include the real project
@@ -192,11 +196,11 @@ config loader and storage-backed editor path rather than a stub.
 ### `src/editor-session-script.main.asm`
 
 This is the Debug80 automated editor-session target. It also starts at `4000h`
-but enters `ScriptStart`, opens the project main source through `edit`, inserts
-a small visible edit, saves, quits, reopens the same file, and leaves the final
-editor screen visible. `tools/run-debug80-editor-session.ts` compiles this
-target for the default automated session and compiles `src/main.asm` for live
-and block smoke testing.
+but enters `ScriptStart`, moves `SP` to `0x3FF0`, opens the project main source
+through `edit`, inserts a small visible edit, saves, quits, reopens the same
+file, and leaves the final editor screen visible.
+`tools/run-debug80-editor-session.ts` compiles this target for the default
+automated session and compiles `src/main.asm` for live and block smoke testing.
 
 ### `src/keyboard-tester.main.asm`
 
@@ -377,6 +381,13 @@ text row. This module depends on the MON3 terminal graphics buffer at `0x13C0`,
 shares the tile layer's 6x6 cell geometry, and pushes full-screen updates
 through `BiosDisplayUpdate`.
 
+`DisplayRenderLine` keeps a one-byte rendered text extent for each physical row.
+It does not clear all 20 text cells before every redraw. `GlcdTileDrawCell`
+already clears the 6x6 tile it is about to overwrite, so the display model only
+clears the stale tail when a shorter row replaces a longer one. This reduces
+CPU-side bitmap work during viewport scrolls while preserving the important
+stale-pixel guarantee for ragged-right source lines.
+
 The gutter markers are now live editor state rather than proof-only
 placeholders. An ordinary whole-line selection draws a thin bar, the current
 row adds the current-line bar, a pending copy source draws a thick bar, and a
@@ -394,9 +405,11 @@ drawing path, so TECM8 owns cell overwrite, clear, and text-run behavior
 directly. Row flushes are now TECM8-owned ST7920 transfers: one editor text row
 writes the six physical GLCD rows, 16 bytes per physical row, through ports
 `0x07` and `0x87`. Current entry points include `GlcdTileClearCell`,
-`GlcdTileDrawCell`, `GlcdTileDrawTextRun`, `GlcdTileClearTextRow`,
-`GlcdTileFlushFull`, `GlcdTileFlushRow`, and the cooperative dirty row/cell
-scheduler.
+`GlcdTileDrawCell`, `GlcdTileDrawTextRun`, `GlcdTileFlushFull`,
+`GlcdTileFlushRow`, and the cooperative dirty row/cell scheduler.
+`GlcdTileClearTextRow` lives in `src/glcd-tile-row.asm` so diagnostic targets
+can still clear a whole text row without forcing the main editor image to carry
+that convenience wrapper.
 
 Public entries:
 
@@ -451,6 +464,13 @@ overlay render/erase uses this path, so ordinary horizontal cursor movement and
 post-edit cursor restore/redraw no longer require full text-row transfers.
 `GlcdTileMarkGutterDirty` uses the same scheduler for the left gutter byte pair
 when selection or pending copy/move markers change.
+
+The tile layer also exposes proof counters for both physical transfer work and
+CPU-side tile clearing. `GlcdTileFlushCellByteCount` measures the bytes sent
+through dirty cell-range transfers, while `GlcdTileClearCellCount` measures how
+many 6x6 tiles were cleared in `TGBUF` before transfer. The display performance
+proofs use both numbers so a change cannot silently reduce GLCD traffic while
+still doing excessive backing-buffer work.
 
 This module is the current boundary between TECM8 display policy and MON3 GLCD
 transport. Higher-level display code can stay in row and column coordinates
