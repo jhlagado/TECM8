@@ -37,9 +37,77 @@ Guardrails:
 - Table data should be named and commented well enough that the table is easier
   to verify than the branch tree it replaces.
 
+## Strategic Priority: Centralize Command Policy
+
+The editor has reached an unusually rich command surface for a 16K Z80 image:
+cursor movement, page movement, line splitting/joining, block selection, copy,
+move, paste, delete, save, restore, quit, prompts, dirty rendering, and several
+Debug80/manual-test paths all coexist. That feature richness was valuable while
+the editor was still proving its shape, but it has also encouraged scattered
+exception logic. The same command may involve logic in the keymap, interaction
+loop, cursor code, block state, navigation, render scheduling, prompt handling,
+and storage state.
+
+For the next compactness passes, treat centralized command policy as an
+architectural goal, not as a style preference. A table-driven or data-driven
+approach may cost a few cycles for table scans or offset calculation, but it can
+pay back in three ways that matter more on this machine:
+
+- less repeated branch and tail code,
+- one place to audit command precedence and exceptional cases,
+- fewer hidden interactions between key handling, prompt state, render policy,
+  dirty state, and block selection.
+
+The long-term target is ambitious: aim for an eventual **about 30% reduction** in
+resident editor/shell code where practical. That number is not a promise for any
+single pass. It is a pressure target for deciding whether broad command
+refactoring is worth the disruption. If a measured pilot shows that a table or
+shared-policy layer grows the binary or makes the code harder to prove, back it
+out.
+
+The first audit should collect the current command-policy surface before
+rewriting anything:
+
+- all key-to-action mappings in `src/editor-keymap.asm`,
+- all dispatch and fallback paths in `src/editor-interaction.asm`,
+- selection/pending-source state transitions in `src/editor-block.asm`,
+- prompt modal handling in `src/editor-prompt.asm`,
+- dirty/render scheduling calls in `src/editor-render.asm` and
+  `src/editor-navigation.asm`,
+- status/error text mapping and navigation boundary handling.
+
+The output of that audit should be a small table that names each command,
+required preconditions, state changes, render policy, prompt behavior, and
+proof/smoke coverage. Only then should a table-driven dispatcher be attempted.
+
 ## Recommended Pilot Order
 
-### 1. Table-Drive Editor Load Error Text
+### 1. Command Policy Inventory
+
+Candidate: the editor command path across `src/editor-keymap.asm`,
+`src/editor-interaction.asm`, `src/editor-block.asm`, `src/editor-prompt.asm`,
+and `src/editor-render.asm`.
+
+Before changing code, document the command matrix. This is the groundwork for a
+smaller central dispatcher and prevents the same scattered exceptions from being
+recreated under different labels.
+
+Recommended shape:
+
+- Build a command table in documentation first: key/modifier, normalized command,
+  allowed editor state, mutation routine, render routine, prompt behavior, and
+  proof coverage.
+- Mark commands that are pure movement, text mutation, block-state mutation,
+  storage operations, modal prompts, or ignored modified printable keys.
+- Identify duplicated policy such as "clear selection then mutate",
+  "hide cursor then render", "show modal prompt", and "ignore unknown
+  Ctrl-printable input".
+
+Expected value: no byte reduction by itself, but it is the gate for meaningful
+centralization. It also gives tests and reviewers a single policy surface to
+compare against.
+
+### 2. Table-Drive Editor Load Error Text
 
 Candidate: `EditorNavErrorTextForCode` in `src/editor-navigation.asm`.
 
@@ -59,7 +127,7 @@ Recommended shape:
 Expected value: likely worthwhile byte reduction and better readability, with
 low behavioral risk.
 
-### 2. Share Obvious Editor Render Tails
+### 3. Share Obvious Editor Render Tails
 
 Candidate: repeated editor key-loop tails in `src/editor-interaction.asm`.
 
@@ -87,7 +155,7 @@ Recommended shape:
 Expected value: modest but low-risk byte savings, and less repeated exit
 plumbing in the largest editor module.
 
-### 3. Share Navigation Commit/Render Tails
+### 4. Share Navigation Commit/Render Tails
 
 Candidate: repeated commit-and-render endings in `src/editor-navigation.asm`.
 
@@ -105,7 +173,7 @@ Recommended shape:
 
 Expected value: moderate readability improvement and small byte reduction.
 
-### 4. Replace Repeated Shell Error Tails With Existing Labels
+### 5. Replace Repeated Shell Error Tails With Existing Labels
 
 Candidate: inline `SHELL_ERR_SYNTAX` and `SHELL_ERR_LONG` returns in
 `src/shell-resolver.asm`.
@@ -120,7 +188,7 @@ Recommended shape:
 
 Expected value: small byte savings, but very low risk and easy to verify.
 
-### 5. Table-Drive TM8 Superblock Validation
+### 6. Table-Drive TM8 Superblock Validation
 
 Candidates:
 
@@ -142,7 +210,7 @@ Recommended shape:
 Expected value: good compactness and maintainability win, with medium risk
 because storage bootstrapping code must remain very predictable.
 
-### 6. Normalize Editor Modified Commands Before Dispatch
+### 7. Normalize Editor Modified Commands Before Dispatch
 
 Candidate: `EditorModifiedCommandFromKey` in `src/editor-keymap.asm`.
 
@@ -161,7 +229,7 @@ Recommended shape:
 Expected value: moderate readability improvement. Byte savings are plausible
 but must be measured because small Z80 dispatch tables can be deceptive.
 
-### 7. Review GLCD Dirty-Row Masking
+### 8. Review GLCD Dirty-Row Masking
 
 Candidate: repeated dirty-row byte/mask logic in `src/glcd-tile.asm`.
 
@@ -178,6 +246,35 @@ Recommended shape:
 
 Expected value: possible compactness win, but lower priority than error mapping,
 tail sharing, and superblock validation.
+
+## Central Dispatch Before Jump Tables
+
+The goal is not "use jump tables everywhere." The goal is to centralize policy
+so the editor can be made smaller and more predictable. A useful intermediate
+step may be a compact command descriptor table that feeds one dispatcher:
+
+```text
+normalized key -> command id -> precondition/mutation/render policy
+```
+
+This can still call ordinary labels; the table does not need to jump directly to
+every handler. In fact, direct indirect jumps may be the wrong first step if the
+larger savings are in shared preconditions and shared render tails.
+
+Good data fields to evaluate:
+
+- command id,
+- required state flags: normal, prompt, selection active, pending copy/move,
+  dirty/clean,
+- mutation class: none, cursor, text, block, storage, prompt,
+- selection policy: preserve, clear ordinary selection, consume move source,
+  keep copy source,
+- render policy: cursor only, current line, viewport, full page, status row,
+- error/status behavior.
+
+This is less flexible than adding another hand-coded branch, but that is the
+point. The command surface is now rich enough that unconstrained growth is a
+size and correctness risk.
 
 ## Jump Tables: Use Sparingly
 

@@ -50,15 +50,19 @@ current binary rather than trusting stale offsets.
    for closed state families, and string directives for explicit storage.
 4. Prefer compact shared routines when they reduce both bytes and bugs. Do not
    chase clever opcode-level savings before the module boundaries are clean.
-5. Do not reintroduce old keyboard conventions. Alphabetic keys are commands or
+5. Prefer centralized command/UI policy over scattered special cases. The editor
+   now has a large enough command surface that key dispatch, prompt behavior,
+   block state, dirty state, and render policy should be audited as one system
+   before adding more hand-coded branches.
+6. Do not reintroduce old keyboard conventions. Alphabetic keys are commands or
    text; navigation is by matrix arrow keys and modifiers only.
-6. Preserve the source-record contract. Each line is a 32-byte record; the
+7. Preserve the source-record contract. Each line is a 32-byte record; the
    length byte uses only bits 0-4 for length, so reads must mask with `0x1F`
    and writes must preserve bits 5-7 unless deliberately changing metadata.
-7. Keep resident code honest. Proof-only scaffolding and shell features not used
+8. Keep resident code honest. Proof-only scaffolding and shell features not used
    by the live editor should not be accidentally treated as required resident
    product code.
-8. Use TypeScript for host tooling in this repo. Do not introduce Python helper
+9. Use TypeScript for host tooling in this repo. Do not introduce Python helper
    scripts for code-quality or size measurement.
 
 ## Audit Findings Triage
@@ -79,6 +83,10 @@ Accepted findings:
   parallel names. Canonical equates are needed.
 - Native AZM module and layout features are underused. See
   `docs/azm-adoption-opportunities.md` for the adoption sequence.
+- Editor command/UI policy is too distributed for the current feature count.
+  Future compactness work should inventory and centralize command preconditions,
+  state transitions, render choices, and modal prompt behavior before adding more
+  special-case branches.
 - Space-saving opportunities exist in table-shaped error lookup, validation
   logic, and common render/error tails. See
   `docs/z80-space-saving-opportunities.md` for recommended pilots.
@@ -99,9 +107,9 @@ Findings to adjust before execution:
 - Do not create a broad general-purpose filesystem layer yet. Extract a narrow
   TM8 layer that serves current project config, file listing, editor loading,
   editor saving, backup creation, and growth.
-- Do not table-drive every dispatch path before the keymap has a stable module
-  boundary. Keymap extraction should happen first; table dispatch can follow
-  where it measurably reduces code and complexity.
+- Do not table-drive every dispatch path blindly. First document the command
+  matrix and central policy surface; table dispatch should follow where it
+  measurably reduces code and complexity.
 - Do not delete BIOS wrappers purely because they have no current product
   callers. First classify them as current product, near-future diagnostic/API,
   or obsolete MON3-terminal compatibility.

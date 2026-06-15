@@ -814,6 +814,9 @@ Work:
   superseded editor behavior.
 - Centralize shared equates for records, TM8 layout, keyboard modifiers,
   display geometry, and memory names.
+- Treat command/UI policy centralization as a serious compactness track: audit
+  key dispatch, prompt handling, block state, dirty state, and render policy as
+  one system before adding more feature branches.
 - Pilot one space-saving technique at a time: table-shaped error lookup,
   common render/error tails, table-driven validation, or measured dispatch
   tables where they are genuinely smaller.
@@ -848,6 +851,13 @@ Done when:
   assembler integration; the immediate editor-facing roadmap returns to Block
   Editing V1 manual validation unless a measured space-saving pilot is chosen
   first.
+
+Future compactness milestone:
+
+- Build an editor command-policy inventory and use it to identify table-driven
+  or shared-policy refactors. The aspirational long-term target is about a 30%
+  reduction in resident editor/shell code where measurement proves the approach;
+  do not promise that reduction from a single pass.
 
 ## Future Phase: Block Operations
 
