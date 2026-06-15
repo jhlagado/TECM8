@@ -842,8 +842,8 @@ Done when:
 - Done: the editor remains Debug80-runnable and proof-green after each
   increment.
 - Done: the post-refactor editor binary size is measured against the original
-  quality-phase baseline of 15,235 bytes. The fresh source build is 15,922
-  bytes, leaving 462 bytes in the current 16K bank.
+  quality-phase baseline of 15,235 bytes. The fresh source build is 16,053
+  bytes, leaving 331 bytes in the current 16K bank.
 - Done: the next tool-project direction is resident shell completion and later
   assembler integration; the immediate editor-facing roadmap returns to Block
   Editing V1 manual validation unless a measured space-saving pilot is chosen
@@ -913,9 +913,12 @@ Sequenced goals:
 5. **Done: Block Phase B5: Paste Insert**
    - `Ctrl-V` inserts the pending source before the cursor when no
      destination selection is active.
-   - Copy leaves source intact; move removes source only after insertion
+   - Copy leaves the pending source armed after paste so repeated `Ctrl-V`
+     duplicates the same source; move removes the source only after insertion
      succeeds.
-   - The pasted block becomes the ordinary selected range.
+   - Copy-paste clears any ordinary destination selection while leaving the
+     pending copy source armed; move-paste can select the moved rows as
+     confirmation after consuming the source.
    - The first implementation is resident-page only, rejects overlap/self as a
      no-op, and requires blank tail records so it cannot silently discard
      existing lines.
@@ -925,7 +928,7 @@ Sequenced goals:
 6. **Done: Block Phase B6: Paste Replace And Overlap Handling**
    - `Ctrl-V` replaces an ordinary destination selection when the
      pending source and destination are equal-sized resident-page ranges.
-   - Copy-replace leaves source intact.
+   - Copy-replace leaves the pending source armed for repeated paste.
    - Move-replace deletes the original source after replacement succeeds and
      selects the moved rows at their adjusted location.
    - Unsafe partial overlaps and exact self-overlaps are rejected as no-ops by

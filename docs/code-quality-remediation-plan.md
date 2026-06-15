@@ -19,8 +19,8 @@ improved without destabilizing that progress.
   - `src/editor-block.asm`: 760 lines.
   - `src/editor-interaction.asm`: 741 lines.
   - `src/editor-line-edit.asm`: 595 lines.
-- Current fresh source build: `npm run z80:size` reports 15,922 bytes emitted
-  at `4000h..7E32h`, leaving 462 bytes before the `8000h` bank boundary. The
+- Current fresh source build: `npm run z80:size` reports 16,053 bytes emitted
+  at `4000h..7EB5h`, leaving 331 bytes before the `8000h` bank boundary. The
   checked-in `build/main.bin` artifact may be stale; use the size command for
   baselines.
 - Current product shape: Debug80-runnable editor at `0x4000`, launched under
@@ -408,7 +408,7 @@ Actions:
   target, while live smoke paths compile `src/main.asm`. At that checkpoint this
   reduced the live editor image to 14,477 bytes, leaving 1,907 bytes free in the
   current 16K bank; later editor work has raised the current source build to
-  15,922 bytes, leaving 462 bytes free.
+  16,053 bytes, leaving 331 bytes free.
 - Extract shared superblock validation, byte matching, prefix scan, catalog
   scan, allocation-chain follow, and file-relative sector read/write helpers.
 - Route `project-config-loader`, `editor-storage-loader`, and
@@ -572,7 +572,7 @@ and list the exact manual keys to test.
 The Bank-Ready Editor V1 quality pass has reached its planned stopping point:
 proof-only script support is out of the live image, the shell/editor boundary is
 documented as a resident-to-banked-tool boundary, and the current source build
-has been remeasured at 15,922 bytes, leaving 462 bytes free in the 16K bank.
+has been remeasured at 16,053 bytes, leaving 331 bytes free in the 16K bank.
 
 The next practical goal should be chosen explicitly from the roadmap rather than
 continued automatically. The two strongest candidates are:

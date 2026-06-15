@@ -177,6 +177,7 @@ selection after the operation.
 source remains in place
 source is shown with thick gutter markers
 Ctrl-V duplicates the source at the destination
+copy source remains armed after paste so Ctrl-V can duplicate it repeatedly
 ```
 
 `Ctrl-X` on a selection creates a pending move block.
@@ -210,12 +211,12 @@ When there is an ordinary destination selection:
 Ctrl-V replaces the selected destination range.
 ```
 
-For copy mode, the source block remains. For move mode, the source block is
-removed after the destination insertion/replacement succeeds.
-
-The pasted block should become the ordinary selected range after paste. This
-gives visible confirmation and allows a user to immediately move, delete, or
-replace the newly pasted lines.
+For copy mode, the source block remains armed after paste and the ordinary
+destination selection is cleared. This lets repeated Ctrl-V duplicate the same
+source block without reselecting it. For move mode, the source block is removed
+after the destination insertion/replacement succeeds, the pending source is
+cleared, and the moved rows can become the ordinary selected range as visible
+confirmation.
 
 ## Overlap Rules
 
@@ -488,19 +489,21 @@ Manual script:
 3. Press Escape. The pending-copy gutter should clear. Select row 0 again with
    Shift+Down and press Ctrl-C to re-arm copy.
 4. Press Down three times to move to row 4.
-5. Press Ctrl-V. Row 0 should be copied before row 4 and the pasted row should
-   become the thin selected destination block.
-6. Press Ctrl-X. The pasted rows should change to the sawtooth pending-move
-   gutter.
-7. Press Down a few rows, then Ctrl-V. The moved rows should reappear at the new
+5. Press Ctrl-V. Row 0 should be copied before row 4 and row 0 should remain
+   marked as the thick pending-copy source.
+6. Press Ctrl-V again. The same row should be copied again without reselecting
+   the source.
+7. Press Escape, select a row with Shift+Down, then press Ctrl-X. The selected
+   row should change to the sawtooth pending-move gutter.
+8. Press Down a few rows, then Ctrl-V. The moved rows should reappear at the new
    position and the old source rows should close up.
-8. Select a destination range with Shift+Down, arm another source with Ctrl-C or
+9. Select a destination range with Shift+Down, arm another source with Ctrl-C or
    Ctrl-X, and press Ctrl-V. Equal-sized resident-page ranges should replace;
    unsafe overlaps should leave the text unchanged.
-9. Select a block and press Delete. Answer N first; the block should remain.
-10. Press Delete again and answer Y; the selected whole-line block should be
+10. Select a block and press Delete. Answer N first; the block should remain.
+11. Press Delete again and answer Y; the selected whole-line block should be
    removed and following lines should shift up.
-11. Press Ctrl-S. The editor should show saving feedback and return with the
+12. Press Ctrl-S. The editor should show saving feedback and return with the
     edited rows still visible.
 ```
 

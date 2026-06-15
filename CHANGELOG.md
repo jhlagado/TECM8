@@ -16,6 +16,23 @@ progression and to make the project history easier to navigate.
 - Each milestone tag should point at a committed, pushed, reviewed, and locally
   verified state.
 
+## [0.1.4] - 2026-06-15
+
+Block Editing V1 manual-verification fixes.
+
+### User-Facing Editor Behavior
+
+- `Ctrl-C` copy sources now remain armed after `Ctrl-V`, so repeated paste can
+  duplicate the same selected source without reselecting it.
+- `Ctrl-X` move sources are still consumed after successful paste.
+- The normal Debug80 manual editor image now seeds four source pages (`R0`
+  through `R3`) for larger multi-page testing. The short `B0` fixture remains
+  limited to the block-editing smoke target.
+
+### Verification
+
+- Covered by `editor-selection-proof` and the live Debug80 block smoke.
+
 ## [0.1.3] - 2026-06-15
 
 Code Quality Phase A2: shared source-record row-shift helpers.

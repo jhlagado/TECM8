@@ -153,7 +153,7 @@ PROOF_MOD_CTRL   .equ     0x02
         JP      C,ProofFailed
         CALL    SelectRowsZeroToTwo
         JP      C,ProofFailed
-        LD      A,"c"
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
         LD      B,PROOF_MOD_CTRL
         CALL    EditorRunModifiedKey
         JP      C,ProofFailed
@@ -203,7 +203,7 @@ PROOF_MOD_CTRL   .equ     0x02
         JP      C,ProofFailed
         CALL    SelectRowsZeroToTwo
         JP      C,ProofFailed
-        LD      A,"c"
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
         LD      B,PROOF_MOD_CTRL
         CALL    EditorRunModifiedKey
         JP      C,ProofFailed
@@ -247,7 +247,7 @@ PROOF_MOD_CTRL   .equ     0x02
         JP      C,ProofFailed
         CALL    SelectRowsZeroToOne
         JP      C,ProofFailed
-        LD      A,"c"
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
         LD      B,PROOF_MOD_CTRL
         CALL    EditorRunModifiedKey
         JP      C,ProofFailed
@@ -255,13 +255,143 @@ PROOF_MOD_CTRL   .equ     0x02
         LD      (PlainDownCount),A
         CALL    RunPlainDownCount
         JP      C,ProofFailed
-        LD      A,"v"
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
         LD      B,PROOF_MOD_CTRL
         CALL    EditorRunModifiedKey
         JP      C,ProofFailed
         CALL    GlcdTileDrainPending
         JP      C,ProofFailed
         CALL    AssertCopyPasteInsertRows
+        JP      C,ProofFailed
+
+        LD      A,22
+        LD      (CaseMarker),A
+        CALL    EditorOpenMain
+        JP      C,ProofFailed
+        CALL    EditorCursorReset
+        JP      C,ProofFailed
+        CALL    ClearPasteTailRows
+        JP      C,ProofFailed
+        LD      A,4
+        LD      (PlainDownCount),A
+        CALL    RunPlainDownCount
+        JP      C,ProofFailed
+        CALL    SelectRowsZeroToOne
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        XOR     A
+        LD      (EditorCursorRow),A
+        LD      (EditorNavCurrentRow),A
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        CALL    AssertCopyPasteBeforeSourceAdjustsPending
+        JP      C,ProofFailed
+
+        LD      A,23
+        LD      (CaseMarker),A
+        CALL    EditorOpenMain
+        JP      C,ProofFailed
+        CALL    EditorCursorReset
+        JP      C,ProofFailed
+        CALL    ClearPasteTailRows
+        JP      C,ProofFailed
+        LD      A,13
+        LD      (PlainDownCount),A
+        CALL    RunPlainDownCount
+        JP      C,ProofFailed
+        CALL    SelectRowsZeroToOne
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        XOR     A
+        LD      (EditorCursorRow),A
+        LD      (EditorNavCurrentRow),A
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        CALL    AssertCopyPasteBeforeTailSourceNoop
+        JP      C,ProofFailed
+
+        LD      A,24
+        LD      (CaseMarker),A
+        CALL    EditorOpenMain
+        JP      C,ProofFailed
+        CALL    EditorCursorReset
+        JP      C,ProofFailed
+        CALL    ClearPasteTailRows
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
+        LD      B,PROOF_MOD_SHIFT
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,3
+        LD      (PlainDownCount),A
+        CALL    RunPlainDownCount
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        CALL    AssertRepeatedCopyPasteSingleRow
+        JP      C,ProofFailed
+
+        LD      A,25
+        LD      (CaseMarker),A
+        CALL    EditorOpenMain
+        JP      C,ProofFailed
+        CALL    EditorCursorReset
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        CALL    ClearPasteTailRows
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
+        LD      B,PROOF_MOD_SHIFT
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_C
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,3
+        LD      (PlainDownCount),A
+        CALL    RunPlainDownCount
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        LD      A,TECM8_EDITOR_KEY_CTRL_V
+        LD      B,PROOF_MOD_CTRL
+        CALL    EditorRunModifiedKey
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        CALL    AssertRepeatedCopyPasteSingleRowPageOne
         JP      C,ProofFailed
 
         LD      A,14
@@ -813,20 +943,128 @@ ProofFailedDone:
 ;! clobbers A,BC,DE,HL
 @AssertCopyPasteInsertRows:
         LD      A,(EditorPendingBlockMode)
-        OR      A
-        JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionAnchorLo)
-        CP      5
+        LD      A,(EditorPendingBlockStartLo)
+        OR      A
         JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionActiveLo)
-        CP      7
+        LD      A,(EditorPendingBlockEndLo)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
         JP      NZ,AssertFail
         LD      A,(EditorCursorRow)
         CP      7
         JP      NZ,AssertFail
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers A,BC,DE,HL
+@AssertCopyPasteBeforeSourceAdjustsPending:
+        LD      A,(EditorPendingBlockMode)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockStartLo)
+        CP      6
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockEndLo)
+        CP      7
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorCursorRow)
+        CP      2
+        JP      NZ,AssertFail
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers A,BC,DE,HL
+@AssertCopyPasteBeforeTailSourceNoop:
+        LD      A,(EditorPendingBlockMode)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockStartLo)
+        CP      13
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockEndLo)
+        CP      14
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorCursorRow)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirty)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirtySectors)
+        OR      A
+        JP      NZ,AssertFail
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers A,BC,DE,HL
+@AssertRepeatedCopyPasteSingleRow:
+        LD      A,(EditorPendingBlockMode)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockStartLo)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockEndLo)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorCursorRow)
+        CP      6
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirty)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirtySectors)
+        AND     1
+        JP      Z,AssertFail
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers A,BC,DE,HL
+@AssertRepeatedCopyPasteSingleRowPageOne:
+        LD      A,(EditorNavCurrentPage)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockMode)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockStartLo)
+        CP      16
+        JP      NZ,AssertFail
+        LD      A,(EditorPendingBlockEndLo)
+        CP      16
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
+        JP      NZ,AssertFail
+        LD      A,(EditorCursorRow)
+        CP      6
+        JP      NZ,AssertFail
+        LD      A,(EditorNavCurrentRow)
+        CP      6
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirty)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorNavDirtySectors)
+        AND     1
+        JP      Z,AssertFail
         XOR     A
         RET
 
@@ -873,16 +1111,16 @@ ProofFailedDone:
 ;! clobbers A,BC,DE,HL
 @AssertCopyPasteReplaceRows:
         LD      A,(EditorPendingBlockMode)
-        OR      A
-        JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionAnchorLo)
-        CP      4
+        LD      A,(EditorPendingBlockStartLo)
+        OR      A
         JP      NZ,AssertFail
-        LD      A,(EditorBlockSelectionActiveLo)
-        CP      6
+        LD      A,(EditorPendingBlockEndLo)
+        CP      1
+        JP      NZ,AssertFail
+        LD      A,(EditorBlockSelectionActive)
+        OR      A
         JP      NZ,AssertFail
         LD      A,(EditorCursorRow)
         CP      6

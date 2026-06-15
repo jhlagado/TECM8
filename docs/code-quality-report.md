@@ -2,7 +2,7 @@
 
 **Purpose:** Actionable plan for a coding agent to improve compactness, structure, and coherence without breaking the proof-driven editor milestone.
 
-**Scope:** 30 assembly modules under `src/` (~11,500 lines), 30+ display proofs, TypeScript harness. Full editor binary (`src/main.asm`) currently assembles to **15,922 bytes** at `4000h..7E32h`, leaving **462 bytes** in the 16 KiB bank.
+**Scope:** 30 assembly modules under `src/` (~11,500 lines), 30+ display proofs, TypeScript harness. Full editor binary (`src/main.asm`) currently assembles to **16,053 bytes** at `4000h..7EB5h`, leaving **331 bytes** in the 16 KiB bank.
 
 **Date:** June 2026 (post editor milestone / block-editing V1 automation)
 
@@ -167,7 +167,7 @@ The scripted Debug80 editor session has also moved to
 `editor-session-script.main.asm`, with `shell-editor-session.asm` holding the
 proof-only key-stream helper.
 
-Current result: `npm run z80:size` reports 15,922 bytes, leaving 462 bytes free
+Current result: `npm run z80:size` reports 16,053 bytes, leaving 331 bytes free
 in the current 16K bank.
 
 ### 9. Stale documentation describing superseded behavior

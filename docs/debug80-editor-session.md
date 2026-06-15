@@ -114,10 +114,17 @@ The generated TM8 volume contains:
 /src/main.asm
 ```
 
-The generated `/src/main.asm` fixture has two source pages. Page 0 contains
+The generated `/src/main.asm` fixture has four source pages. Page 0 contains
 `R0 LINE 00` through `R0 LINE 14` plus an empty final record so Enter/split-line
 can be tested without crossing a sector boundary. Page 1 contains `R1 LINE 00`
-through `R1 LINE 15` for continuous resident-window movement tests.
+through `R1 LINE 15`, page 2 contains `R2 LINE 00` through `R2 LINE 15`, and
+page 3 contains `R3 LINE 00` through `R3 LINE 15` for larger multi-page manual
+movement tests.
+
+The separate `npm run debug80:editor-block-image` target deliberately prepares a
+short `B0 LINE ...` fixture for block-editing smoke tests. Run
+`npm run debug80:editor-image` again before manual multi-page editor testing if
+the visible file contains only `B0` lines.
 
 `/tecm8.prj` contains:
 
@@ -231,7 +238,8 @@ npm run debug80:editor-live-smoke
 
 It launches the manual `4000h` path under Debug80 with the MON3 `SYS_MODE`
 RAM mirror initialized to match shadow-ROM-off state, injects `ArrowDown`,
-`ArrowUp`, `ArrowDown`, `ArrowRight`, `Ctrl+ArrowDown`, `Ctrl+ArrowUp`,
+`ArrowUp`, `ArrowDown`, `ArrowRight`, `Ctrl+ArrowDown`, `Ctrl+ArrowDown`,
+`Ctrl+ArrowUp`,
 sixteen plain `ArrowDown` keypresses to cross from `R0` into `R1`, one plain
 `ArrowUp` keypress to cross back to `R0`, fifteen plain `ArrowUp` keypresses to
 return to the top, `Ctrl+ArrowRight`, `CapsLock`, `ArrowDown`, CapsLock back
@@ -239,7 +247,7 @@ off, `z`, dirty-window `Ctrl+ArrowDown`, `Enter`, `Backspace`, `Ctrl-S`, a clean
 dirty `Ctrl-Q`, `n`, `Ctrl-S`, `Ctrl-Z`, `n`, `Ctrl-Z`, `n`, and `Ctrl-Q`, then
 verifies that
 `Ctrl+ArrowDown` is treated as page movement rather than cursor movement. The
-generated image has two source pages, so the smoke verifies that
+live smoke uses a compact two-page fixture, so it verifies that
 `Ctrl+ArrowDown` changes to page 1 and `Ctrl+ArrowUp` returns to page 0 while
 the cursor resets to the top row of the new page. It also verifies that plain
 `ArrowDown` crosses from page 0 row 15 to page 1 row 0, and plain `ArrowUp`

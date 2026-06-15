@@ -238,6 +238,13 @@ GlcdTileClearTextRowDone:
         LD      HL,TECM8_GLCD_TILE_TGBUF
         LD      (TECM8_GLCD_TILE_VPORT),HL
         CALL    BiosDisplayUpdate
+        RET     C
+        XOR     A
+        LD      (GlcdTileFlushPending),A
+        LD      (GlcdTileDirtyRowsLo),A
+        LD      (GlcdTileDirtyRowsHi),A
+        LD      (GlcdTileDirtyCellRowsLo),A
+        LD      (GlcdTileDirtyCellRowsHi),A
         RET
 
 ; GlcdTileFlushRow -

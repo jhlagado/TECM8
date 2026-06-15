@@ -163,10 +163,13 @@ EditorPendingBlockArmNoSelection:
         JP      C,EditorPendingBlockPasteNoop
         CALL    EditorPendingBlockTailAvailable
         JP      Z,EditorPendingBlockPasteNoop
+        CALL    EditorPendingBlockRejectCopySourceShiftOutOfPage
+        JP      C,EditorPendingBlockPasteNoop
         CALL    EditorPendingBlockCopySourceToScratch
         RET     C
         CALL    EditorPendingBlockShiftRowsDown
         RET     C
+        CALL    EditorPendingBlockAdjustCopySourceAfterInsert
         CALL    EditorPendingBlockCopyScratchToDest
         RET     C
         LD      A,(EditorPendingBlockPasteMode)
@@ -177,7 +180,16 @@ EditorPendingBlockArmNoSelection:
 
 EditorPendingBlockPasteSelectInserted:
         CALL    EditorPendingBlockSelectInsertedRows
+        LD      A,(EditorPendingBlockPasteMode)
+        CP      TECM8_EDITOR_PENDING_BLOCK_MOVE
+        JR      Z,EditorPendingBlockPasteClearPending
+        CALL    EditorBlockSelectionClearState
+        JR      EditorPendingBlockPasteMarkDirty
+
+EditorPendingBlockPasteClearPending:
         CALL    EditorPendingBlockClearState
+
+EditorPendingBlockPasteMarkDirty:
         CALL    EditorMarkDirty
         LD      A,1
         RET
@@ -215,7 +227,16 @@ EditorPendingBlockPasteNoop:
 
 EditorPendingBlockPasteReplaceSelect:
         CALL    EditorPendingBlockSelectInsertedRows
+        LD      A,(EditorPendingBlockPasteMode)
+        CP      TECM8_EDITOR_PENDING_BLOCK_MOVE
+        JR      Z,EditorPendingBlockPasteReplaceClearPending
+        CALL    EditorBlockSelectionClearState
+        JR      EditorPendingBlockPasteReplaceMarkDirty
+
+EditorPendingBlockPasteReplaceClearPending:
         CALL    EditorPendingBlockClearState
+
+EditorPendingBlockPasteReplaceMarkDirty:
         CALL    EditorMarkDirty
         LD      A,1
         RET
@@ -412,6 +433,32 @@ EditorPendingBlockTailNo:
         RET
 
 ;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,A,B
+@EditorPendingBlockRejectCopySourceShiftOutOfPage:
+        LD      A,(EditorPendingBlockPasteMode)
+        CP      TECM8_EDITOR_PENDING_BLOCK_COPY
+        JR      NZ,EditorPendingBlockCopySourceShiftInPage
+        LD      A,(EditorPendingBlockSourceStartRow)
+        LD      B,A
+        LD      A,(EditorPendingBlockDestRow)
+        CP      B
+        JR      NC,EditorPendingBlockCopySourceShiftInPage
+        LD      A,(EditorPendingBlockSourceEndRow)
+        LD      B,A
+        LD      A,(EditorPendingBlockRowCount)
+        ADD     A,B
+        CP      16
+        JR      NC,EditorPendingBlockCopySourceShiftOutOfPage
+
+EditorPendingBlockCopySourceShiftInPage:
+        XOR     A
+        RET
+
+EditorPendingBlockCopySourceShiftOutOfPage:
+        SCF
+        RET
+
+;! out A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorPendingBlockCopySourceToScratch:
         CALL    EditorNavInvalidateWindowSlot3
@@ -460,6 +507,38 @@ EditorPendingBlockTailNo:
         CALL    Tecm8RecordShiftRecordsDown
 
 EditorPendingBlockShiftDone:
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,A,B,HL
+@EditorPendingBlockAdjustCopySourceAfterInsert:
+        LD      A,(EditorPendingBlockPasteMode)
+        CP      TECM8_EDITOR_PENDING_BLOCK_COPY
+        RET     NZ
+        LD      A,(EditorPendingBlockSourceStartRow)
+        LD      B,A
+        LD      A,(EditorPendingBlockDestRow)
+        CP      B
+        RET     NC
+        LD      A,(EditorPendingBlockRowCount)
+        LD      B,A
+        LD      HL,EditorPendingBlockStartLo
+        LD      A,(HL)
+        ADD     A,B
+        LD      (HL),A
+        INC     HL
+        LD      A,(HL)
+        ADC     A,0
+        LD      (HL),A
+        LD      HL,EditorPendingBlockEndLo
+        LD      A,(HL)
+        ADD     A,B
+        LD      (HL),A
+        INC     HL
+        LD      A,(HL)
+        ADC     A,0
+        LD      (HL),A
         XOR     A
         RET
 
@@ -596,16 +675,17 @@ EditorPendingBlockSelectStartReady:
         LD      (EditorBlockSelectionActiveHi),A
         LD      A,1
         LD      (EditorBlockSelectionActive),A
-        LD      A,C
+        LD      A,B
         CP      16
         JR      C,EditorPendingBlockCursorRowReady
         LD      A,15
 
 EditorPendingBlockCursorRowReady:
         LD      (EditorCursorRow),A
+        LD      (EditorNavCurrentRow),A
         XOR     A
         LD      (EditorCursorCol),A
-        RET
+        JP      EditorNavSyncViewport
 
 ; EditorBlockSelectionClearIfActive -
 ; Clear ordinary selection state and repaint visible gutter markers when needed.
