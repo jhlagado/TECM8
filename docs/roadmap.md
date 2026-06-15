@@ -1,30 +1,37 @@
 # TECM8 Roadmap
 
-This is the live roadmap for TECM8. It records the current editor direction,
-completed foundation, substantial future phases, milestone definitions, and
-manual testing expectations. Update this file after meaningful phase changes so
-the roadmap does not live only in conversation history.
+This is the live agent-executable roadmap for TECM8. Numbered phases and named
+quality phases should only contain work an agent can complete in this repo:
+implementation, proof automation, documentation, verification, commit, and push.
+Human hardware checks and manual UI observations belong in validation notes, not
+as blocking roadmap phases.
 
 Completed milestone history lives in the root `CHANGELOG.md`. When a roadmap
 milestone is complete, commit and push the reviewed work, update the changelog,
 and tag the milestone. Use patch versions for coherent internal progress and
 minor versions for larger user-visible TECM8 editor/shell/tool increments.
 
-## Current Roadmap Focus: Code Quality And Compactness
+## Current Agent Roadmap Focus: Code Quality And Compactness
 
-The Debug80-testable editor milestone and Block Editing V1 automation have been
-reached in the local proof harness. Remaining Block Editing V1 UI validation is
-human-facing: run the manual Debug80 script in the UI, then defer Phase 14
-real-hardware checks until a TEC-1G is available.
+The Debug80-testable editor milestone, Display Performance Phase 7, the
+display BIOS/profile boundary, the first bank-readiness/code-quality pass, and
+Block Editing V1 automation have been reached. Earlier numbered editor phases
+are closed unless they explicitly list a deferred follow-up in the future
+backlog.
 
-Recommended next user-facing task: manually validate the Block Editing V1
-keyboard workflow in Debug80: select lines, mark copy/move sources, paste or
-replace, delete selected lines when Debug80 exposes a live `Delete` key path,
-save, reset, reopen, and verify persistence.
+Next agent-owned phase:
 
-Recommended next agent-owned task after Phase A2: continue the code-quality
-compactness plan with Phase A3/A4, extracting shared TM8 byte/path helpers so
-storage and project-config scans stop carrying repeated prefix/catalog logic.
+1. Continue the code-quality compactness plan with **Q5: Editor Interaction
+   Decomposition**, because Q3/Q4 helper extraction has already been executed
+   through the narrow TM8/storage helpers now documented in the quality plan.
+2. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
+   compatibility wrappers, then run Q6/Q7 acceptance only if the code still
+   differs from the documented bank-ready boundary.
+3. After the quality pass is complete, return to user-visible editor features:
+   named block read/write, shell completion, then assembler integration.
+
+Human validation remains useful feedback, but it is not a numbered roadmap item
+and should not block agent progress unless it reports a concrete bug.
 
 ## System Vision: TECM8 As A ROM-Based OS
 
@@ -150,7 +157,7 @@ as Q2A in `docs/code-quality-remediation-plan.md`.
   Ctrl-modified printable keys are silently ignored, dirty page movement
   works inside the RAM window, and the live Debug80 smoke covers restore-prompt
   cancel.
-- Phase 15 Debug80 automation is complete at commit `5bcfe80`: the editor can
+- Debug80 editor automation is complete at commit `5bcfe80`: the editor can
   create a missing source file, edit and save source pages, move through the
   prepared multi-page fixture, restore backup state, quit cleanly, and show the
   shell-ready marker after exit. `debug80:editor-session`,
@@ -797,138 +804,117 @@ Done when:
 Goal: turn the current GLCD editor renderer into a clean backend profile rather
 than an editor-private dependency on MON3's GLCD terminal assumptions.
 
+Status: complete as a design/documentation boundary. Implementation extraction
+belongs to a later measured GLCD/backend refactor after the compactness pass,
+not to this completed roadmap phase.
+
 Work:
 
-- Keep the core TEC-1 fallback profile separate from the rich TECM8 profile:
+- Done: keep the core TEC-1 fallback profile separate from the rich TECM8 profile:
   character LCD, seven-segment display, and hexadecimal keypad are guaranteed;
   GLCD, TMS VDU, and matrix keyboard are profile capabilities.
-- Classify current GLCD routines into reusable backend services, editor policy,
+- Done: classify current GLCD routines into reusable backend services, editor policy,
   and MON3 compatibility glue.
-- Promote general services such as GLCD init, bitmap clear/plot, cell draw,
+- Done: promote general services such as GLCD init, bitmap clear/plot, cell draw,
   gutter draw, dirty row/cell scheduling, cooperative flush stepping, and cursor
   overlay save/restore into a documented backend surface.
-- Keep source-record, selection, copy/move, prompt, and project policy in the
+- Done: keep source-record, selection, copy/move, prompt, and project policy in the
   editor/shell layers.
-- Decide which backend services belong in a future MON3-light fixed ROM, which
+- Done: decide which backend services belong in a future MON3-light fixed ROM, which
   can live in a banked TECM8 tool ROM, and which should stay editor-local until
   another program needs them.
-- Sketch how a TMS9918-style backend would consume the same display model using
+- Done: sketch how a TMS9918-style backend would consume the same display model using
   tiles, attributes, or sprites instead of GLCD bitmap bytes.
 
 Done when:
 
-- `docs/tecm8-bios-api.md` has stable core/profile language and a first backend
+- Done: `docs/tecm8-bios-api.md` has stable core/profile language and a first backend
   service list.
-- `docs/codebase.md` identifies the current modules that belong to each side of
+- Done: `docs/codebase.md` identifies the current modules that belong to each side of
   the boundary.
-- The next GLCD refactor has a clear target: move reusable backend services
+- Done: the next GLCD refactor has a clear target: move reusable backend services
   without pulling editor state into the BIOS layer.
 
-## Phase 14: Hardware Transition
-
-Goal: prepare to move from Debug80 proof to real TEC-1G.
-
-Status: skipped in the current automation loop. Real hardware testing needs the
-user and cannot be completed by Codex alone.
-
-Work:
-
-- Confirm MON3 service assumptions.
-- Test SD latency and GLCD latency on real hardware.
-- Identify Debug80-specific differences.
-- Produce simple repro scripts for emulator bugs.
-- Keep TECM8 code independent of Debug80-only conveniences.
-
-Done when:
-
-- Same image/program can be launched at `4000h` on Debug80 and hardware.
-- Known differences are documented.
-
-## Phase 15: Editor Completion Milestone
+## Phase 14: Debug80 Editor Completion Milestone
 
 This is the point where the editor is substantially complete.
 
 Done criteria:
 
-- Edit an existing `.asm` file.
-- Create a new source file.
-- Insert and delete characters.
-- Split and join lines across pages.
-- Move through a multi-page file.
-- Save the full file.
-- Restore backup.
-- Quit cleanly.
-- Return to shell.
-- Export the edited file on the host and verify content.
-- Manual Debug80 test script passes.
-- Automated Debug80 smoke covers core behavior.
+- Done: edit an existing `.asm` file.
+- Done: create a new source file.
+- Done: insert and delete characters.
+- Done: split and join lines across pages.
+- Done: move through a multi-page file.
+- Done: save the full file.
+- Done: restore backup.
+- Done: quit cleanly.
+- Done: return to shell.
+- Done: export the edited file on the host and verify content.
+- Done: automated Debug80 smoke covers core behavior.
+- Done: manual Debug80 test script exists for human validation outside the
+  agent-executable roadmap.
 
-Status: automated Debug80 milestone complete at commit `5bcfe80`. The manual
-Debug80 script remains the human acceptance check, and Phase 14 is intentionally
-skipped until a human can test real hardware.
+Status: automated Debug80 milestone complete at commit `5bcfe80`.
 
-## Quality Phase: Bank-Ready Editor And Resident Shell Boundary
+## Next Agent Phase: Q5 Editor Interaction Decomposition
 
 Detailed execution plan: [Code Quality Execution Plan](code-quality-remediation-plan.md).
 Compactness recommendations live in
 [Z80 Space-Saving Opportunities](z80-space-saving-opportunities.md).
 
-Goal: turn the current proof-grown editor into a compact bank-ready tool while
-preserving the shell as the resident TECM8 operating-system personality.
+Goal: finish the editor-organization pass that is already underway, without
+adding new editor features.
+
+Completed prerequisites:
+
+- Q0/Q1 baseline and stale-policy cleanup are complete enough to proceed.
+- Q2 canonical equates are in place.
+- Q3 shared record/string/path helpers have been introduced.
+- Q4 narrow TM8 storage helpers have been introduced and documented in the
+  quality execution plan.
+- The resident shell/editor boundary is established: `main.asm` links only the
+  shell resolver plus editor launcher, while proof/script targets carry their
+  own scaffolding.
 
 Work:
 
-- Baseline current Z80 size and verification commands.
-- Update stale docs/comments that make the shell look accidental or describe
-  superseded editor behavior.
-- Centralize shared equates for records, TM8 layout, keyboard modifiers,
-  display geometry, and memory names.
-- Treat command/UI policy centralization as a serious compactness track: audit
-  key dispatch, prompt handling, block state, dirty state, and render policy as
-  one system before adding more feature branches.
-- Pilot one space-saving technique at a time: table-shaped error lookup,
-  common render/error tails, table-driven validation, or measured dispatch
-  tables where they are genuinely smaller.
-- Add a label-length hygiene pass: keep PascalCase, but audit and shorten
-  sentence-length private labels as part of nearby refactors. Do not churn
-  public `@` routine names without a wrapper/deprecation path.
-- Extract record, string, path, and narrow TM8 helpers before splitting large
-  modules.
-- Decompose `editor-interaction.asm` into keymap, cursor, line-edit, block,
-  prompt, render, and orchestration modules.
-- Separate proof-only/editor-bank code from resident shell/kernel code.
-- Keep the shell as a standalone resident project: command loop, project state,
-  tool launch/return, and bank-call boundary.
-- Keep the editor as a standalone banked tool project with a 16K-bank pressure
-  target. Named block read/write remains optional future work.
+- Continue the Q5 module split until `src/editor-interaction.asm` contains only
+  orchestration glue and compatibility wrappers.
+- Keep the existing modules as the target ownership boundaries:
+  `editor-keymap.asm`, `editor-cursor.asm`, `editor-record.asm`,
+  `editor-line-edit.asm`, `editor-block-state.asm`, `editor-block.asm`,
+  `editor-prompt.asm`, and `editor-render.asm`.
+- Build an editor command-policy inventory covering key dispatch, prompt
+  preconditions, block state transitions, dirty-state handling, and render
+  scheduling.
+- Use that inventory to identify the first table-driven or shared-policy
+  refactor that is actually smaller or clearer; do not table-drive code by
+  habit.
+- Keep alphabetic keys out of navigation logic. Alphabetic keys are text or
+  commands; navigation is by matrix arrow keys and modifiers only.
+- Measure `npm run z80:size` before and after each code slice.
 
 Done when:
 
-- Done: the live editor path no longer carries the shell prompt loop or
-  proof-only scripted key-session scaffolding.
-- Done: the shell/editor boundary is documented as a resident-to-banked-tool
-  call boundary.
-- Done: Phase A2 shared source-record shift helpers
-  `Tecm8RecordShiftRecordsDown` and `Tecm8RecordShiftRecordsUp` replace the
-  duplicated 32-byte row-shift loops in split, join, and block mutation paths.
-- Done: the editor remains Debug80-runnable and proof-green after each
-  increment.
-- Done: the post-refactor editor binary size is measured against the original
-  quality-phase baseline of 15,235 bytes. The fresh source build is 16,053
-  bytes, leaving 331 bytes in the current 16K bank.
-- Done: the next tool-project direction is resident shell completion and later
-  assembler integration; the immediate editor-facing roadmap returns to Block
-  Editing V1 manual validation unless a measured space-saving pilot is chosen
-  first.
+- `editor-interaction.asm` is visibly orchestration-focused.
+- Command/UI policy has a single documented inventory instead of being inferred
+  from scattered branches.
+- At least one measured compactness pilot is accepted or explicitly rejected
+  with byte counts.
+- `npm run check` passes.
+- The current binary size and any behavior-visible effects are recorded.
 
-Future compactness milestone:
+Following phases, in order:
 
-- Build an editor command-policy inventory and use it to identify table-driven
-  or shared-policy refactors. The aspirational long-term target is about a 30%
-  reduction in resident editor/shell code where measurement proves the approach;
-  do not promise that reduction from a single pass.
+1. Q6 resident product compactness if the live image still carries avoidable
+   proof/editor-bank code.
+2. Q7 contracts, documentation, and acceptance for the completed quality pass.
+3. Named block read/write as the next user-visible editor feature.
+4. Resident shell completion.
+5. Assembler integration.
 
-## Future Phase: Block Operations
+## Completed Milestone: Block Editing V1
 
 Detailed design: [Editor Block Operations](block-operations.md).
 
@@ -1049,36 +1035,20 @@ Block Editing V1 done criteria:
 - Host export still validates the edited source records and metadata bits.
 
 Status: reached in automation. Stop here for manual Debug80 validation before
-starting named block read/write or character-precise selections.
+starting named block read/write or character-precise selections. That validation
+is human feedback, not an agent roadmap phase.
 
-Next validation goal:
+## Human Validation Notes
+
+These are useful manual checks but are not numbered agent phases:
 
 - Run the manual Debug80 block-editing script from
-  [Editor Block Operations](block-operations.md).
-- Confirm selection with `Shift+Up/Down` and page selection with
-  `Shift+Ctrl+Up/Down` are usable from the matrix keyboard.
-- Confirm `Ctrl-C`, `Ctrl-X`, and `Ctrl-V` behave predictably on the GLCD.
-- Confirm selected-block `Delete` manually once Debug80 exposes a live
-  `Delete` key path; the editor behavior itself is covered by the Z80
-  block-delete proof.
-- Save, reset, reopen, and verify that copied, moved, replaced, or deleted
-  lines persisted in `/src/main.asm`.
-- Fix any manual-test issues before starting named `Ctrl-W` write-block,
-  `Ctrl-R` read-block, or character-precise selections.
-
-## Likely Next Practical Milestone After Phase 1
-
-The next sizeable milestone after the reliability phase should be **Multi-Page
-Source Editing V1**.
-
-Definition:
-
-The editor can edit a file longer than one 512-byte page, insert lines that push
-content across page boundaries, save the grown/reshaped file, page away and
-back, and reopen to confirm persistence.
-
-That is the next meaningful leap because it changes the editor from a page
-editor to a file editor.
+  [Editor Block Operations](block-operations.md), then report any concrete bugs
+  found in selection, copy/move, paste/replace, delete, save, or reopen.
+- Test the same `0x4000` image on real TEC-1G hardware when available, then
+  report any MON3, SD, GLCD, matrix-keyboard, or timing differences.
+- If hardware or Debug80 exposes a reproducible problem, convert it into an
+  agent-executable bugfix phase with a local repro, proof, or script.
 
 ## Deferred Design Work
 
@@ -1086,6 +1056,7 @@ editor to a file editor.
 - Decide whether to use source-record length bits 5-7 for line metadata.
 - Decide whether the current low-cost blinking insertion caret remains the
   preferred cursor shape, or whether to return to a block cursor.
-- Revisit block operations after Phase 7 display efficiency is settled.
-- Revisit MON3-to-BIOS reductions once editor storage/display requirements are
-  better measured.
+- Revisit MON3-to-BIOS reductions after the editor and resident shell boundaries
+  are tighter.
+- Revisit GLCD backend extraction after Q5/Q6 compactness work has made the
+  current renderer boundary cheaper to reason about.
