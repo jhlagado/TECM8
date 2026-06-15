@@ -218,6 +218,12 @@ The Ctrl-modified command decoder has uppercase/lowercase duplication and a few
 special ambiguous inputs. This may be smaller as normalization plus a compact
 lookup table.
 
+Status: first normalization pilot accepted. The decoder now normalizes uppercase
+printable command letters once, compares only lowercase command letters, and
+keeps the Ctrl-C versus ArrowUp raw-key guard. This reduced `npm run z80:size`
+from 16,327 to 16,317 bytes and increased free 16K bank space from 57 to 67
+bytes. A table-driven version remains only a future measured experiment.
+
 Recommended shape:
 
 - Preserve the current Ctrl-C and ArrowUp ambiguity behavior exactly.

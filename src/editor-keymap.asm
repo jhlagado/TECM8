@@ -71,30 +71,26 @@ EditorActionCursorRight:
         AND     TECM8_EDITOR_KEY_MOD_CTRL
         JR      Z,EditorModifiedCommandNone
         LD      A,(EditorPendingChar)
+        CP      "A"
+        JR      C,EditorModifiedCommandNormalized
+        CP      "Z" + 1
+        JR      NC,EditorModifiedCommandNormalized
+        OR      0x20
+EditorModifiedCommandNormalized:
         CP      "s"
-        JR      Z,EditorModifiedCommandSave
-        CP      "S"
         JR      Z,EditorModifiedCommandSave
         CP      "q"
         JR      Z,EditorModifiedCommandQuit
-        CP      "Q"
-        JR      Z,EditorModifiedCommandQuit
         CP      "z"
-        JR      Z,EditorModifiedCommandRestore
-        CP      "Z"
         JR      Z,EditorModifiedCommandRestore
         CP      "c"
         JR      Z,EditorModifiedCommandCopy
-        CP      "C"
-        JR      Z,EditorModifiedCommandCopy
         CP      "x"
-        JR      Z,EditorModifiedCommandMove
-        CP      "X"
         JR      Z,EditorModifiedCommandMove
         CP      "v"
         JR      Z,EditorModifiedCommandPaste
-        CP      "V"
-        JR      Z,EditorModifiedCommandPaste
+        CP      "y"
+        JR      Z,EditorModifiedCommandDeleteLine
         LD      A,(EditorPendingChar)
         CP      TECM8_EDITOR_KEY_CTRL_C
         JR      Z,EditorModifiedCommandControlByteCopy

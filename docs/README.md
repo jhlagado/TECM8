@@ -55,6 +55,7 @@ Start here:
 - [AZM Practical Feedback](azm-practical-feedback.md)
 - [Z80 Space-Saving Opportunities](z80-space-saving-opportunities.md)
 - [Editor Design](editor-design.md)
+- [Editor Command Policy And Compaction Inventory](editor-command-policy.md)
 - [Editor Rolling Source Window](editor-rolling-window.md)
 - [Editor Block Operations](block-operations.md)
 - [Debug80 Editor Session](debug80-editor-session.md)

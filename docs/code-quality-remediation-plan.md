@@ -484,12 +484,24 @@ Actions:
 - Done: move persistent selection and pending-source state out of viewport into
   `src/editor-block-state.asm`. The viewport now answers "what marker appears on
   this visible row?" while retaining only projection scratch.
+- Done: create `docs/editor-command-policy.md`, the first centralized
+  command-policy and compaction inventory. It records the current command
+  surface, planned top/end and named block read/write bindings, dispatch
+  candidates, and shared-tail candidates.
+- Done: accept the first modified-command compaction pilot. Normalizing
+  Ctrl-modified printable letters before comparison reduced the live source
+  build from 16,327 to 16,317 bytes and made printable Ctrl-Y match the
+  documented delete-current-line command path while preserving the Ctrl-C versus
+  ArrowUp raw-key guard.
 - Keep public entry names stable where proofs or docs use them; add wrappers
   during transition rather than broad rename churn.
 
 Done when:
 
 - The monolith is reduced to orchestration and compatibility wrappers.
+- Done: the first command-policy inventory exists.
+- Done: the first measured command compaction pilot has been accepted with byte
+  counts.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 

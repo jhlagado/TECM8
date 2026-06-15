@@ -862,6 +862,8 @@ Status: automated Debug80 milestone complete at commit `5bcfe80`.
 Detailed execution plan: [Code Quality Execution Plan](code-quality-remediation-plan.md).
 Compactness recommendations live in
 [Z80 Space-Saving Opportunities](z80-space-saving-opportunities.md).
+The active command-policy inventory lives in
+[Editor Command Policy And Compaction Inventory](editor-command-policy.md).
 
 Goal: finish the editor-organization pass that is already underway, without
 adding new editor features.
@@ -885,12 +887,12 @@ Work:
   `editor-keymap.asm`, `editor-cursor.asm`, `editor-record.asm`,
   `editor-line-edit.asm`, `editor-block-state.asm`, `editor-block.asm`,
   `editor-prompt.asm`, and `editor-render.asm`.
-- Build an editor command-policy inventory covering key dispatch, prompt
+- Done: build an editor command-policy inventory covering key dispatch, prompt
   preconditions, block state transitions, dirty-state handling, and render
   scheduling.
-- Use that inventory to identify the first table-driven or shared-policy
-  refactor that is actually smaller or clearer; do not table-drive code by
-  habit.
+- Use the command-policy inventory to identify the next table-driven or
+  shared-policy refactor that is actually smaller or clearer; do not table-drive
+  code by habit.
 - Keep alphabetic keys out of navigation logic. Alphabetic keys are text or
   commands; navigation is by matrix arrow keys and modifiers only.
 - Measure `npm run z80:size` before and after each code slice.
@@ -898,9 +900,9 @@ Work:
 Done when:
 
 - `editor-interaction.asm` is visibly orchestration-focused.
-- Command/UI policy has a single documented inventory instead of being inferred
+- Done: command/UI policy has a single documented inventory instead of being inferred
   from scattered branches.
-- At least one measured compactness pilot is accepted or explicitly rejected
+- Done: at least one measured compactness pilot is accepted or explicitly rejected
   with byte counts.
 - `npm run check` passes.
 - The current binary size and any behavior-visible effects are recorded.
