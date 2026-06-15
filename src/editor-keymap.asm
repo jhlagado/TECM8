@@ -65,7 +65,7 @@ EditorActionCursorRight:
 ; Input: EditorPendingChar, EditorPendingModifier
 ; Output: A = TECM8_EDITOR_KEY_* command or 0
 ;! out A,carry
-;! clobbers zero,sign,parity,halfCarry
+;! clobbers E,HL,zero,sign,parity,halfCarry
 @EditorModifiedCommandFromKey:
         LD      A,(EditorPendingModifier)
         AND     TECM8_EDITOR_KEY_MOD_CTRL
@@ -77,32 +77,33 @@ EditorActionCursorRight:
         JR      NC,EditorModifiedCommandNormalized
         OR      0x20
 EditorModifiedCommandNormalized:
-        CP      "s"
-        JR      Z,EditorModifiedCommandSave
-        CP      "q"
-        JR      Z,EditorModifiedCommandQuit
-        CP      "z"
-        JR      Z,EditorModifiedCommandRestore
-        CP      "c"
-        JR      Z,EditorModifiedCommandCopy
-        CP      "x"
-        JR      Z,EditorModifiedCommandMove
-        CP      "v"
-        JR      Z,EditorModifiedCommandPaste
-        CP      "y"
-        JR      Z,EditorModifiedCommandDeleteLine
+        LD      HL,EditorModifiedCommandTable
+        CALL    EditorModifiedCommandLookup
+        OR      A
+        RET     NZ
         LD      A,(EditorPendingChar)
         CP      TECM8_EDITOR_KEY_CTRL_C
         JR      Z,EditorModifiedCommandControlByteCopy
-        CP      TECM8_EDITOR_KEY_CTRL_X
-        JR      Z,EditorModifiedCommandMove
-        CP      TECM8_EDITOR_KEY_CTRL_V
-        JR      Z,EditorModifiedCommandPaste
-        CP      TECM8_EDITOR_KEY_CTRL_Y
-        JR      Z,EditorModifiedCommandDeleteLine
 
 EditorModifiedCommandNone:
         XOR     A
+        RET
+
+EditorModifiedCommandLookup:
+        LD      E,A
+EditorModifiedCommandLookupLoop:
+        LD      A,(HL)
+        OR      A
+        JR      Z,EditorModifiedCommandNone
+        CP      E
+        INC     HL
+        JR      Z,EditorModifiedCommandLookupFound
+        INC     HL
+        JR      EditorModifiedCommandLookupLoop
+
+EditorModifiedCommandLookupFound:
+        LD      A,(HL)
+        OR      A
         RET
 
 ; Byte 0x03 is a copy command only when it came from the C key with Control.
@@ -111,35 +112,22 @@ EditorModifiedCommandControlByteCopy:
         LD      A,(BiosInputRawPrimary)
         CP      TECM8_EDITOR_KEY_ARROW_UP
         JR      Z,EditorModifiedCommandNone
-        JP      EditorModifiedCommandCopy
-
-EditorModifiedCommandSave:
-        LD      A,TECM8_EDITOR_KEY_SAVE
-        RET
-
-EditorModifiedCommandQuit:
-        LD      A,TECM8_EDITOR_KEY_QUIT
-        RET
-
-EditorModifiedCommandRestore:
-        LD      A,TECM8_EDITOR_KEY_RESTORE
-        RET
-
-EditorModifiedCommandCopy:
         LD      A,"C"
+        OR      A
         RET
 
-EditorModifiedCommandMove:
-        LD      A,"X"
-        RET
-
-EditorModifiedCommandPaste:
-        LD      A,"V"
-        RET
-
-EditorModifiedCommandDeleteLine:
-        LD      A,"Y"
-        RET
+EditorModifiedCommandTable:
+        .db     "s",TECM8_EDITOR_KEY_SAVE
+        .db     "q",TECM8_EDITOR_KEY_QUIT
+        .db     "z",TECM8_EDITOR_KEY_RESTORE
+        .db     "c","C"
+        .db     "x","X"
+        .db     "v","V"
+        .db     "y","Y"
+        .db     TECM8_EDITOR_KEY_CTRL_X,"X"
+        .db     TECM8_EDITOR_KEY_CTRL_V,"V"
+        .db     TECM8_EDITOR_KEY_CTRL_Y,"Y"
+        .db     0
 
 ; EditorShouldIgnoreModifiedPrintable -
 ; Return A=1 when a Ctrl-modified printable key did not match a known command.

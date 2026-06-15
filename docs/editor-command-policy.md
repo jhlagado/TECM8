@@ -99,8 +99,32 @@ guarded by the raw primary matrix key check.
 
 ### Modified Command Dispatch
 
-The modified-command family is now a better candidate for a compact lookup
-because the keymap has one normalized letter per command:
+Status: accepted table-driven pilot. The modified-command family now uses a
+sentinel-terminated byte-pair table after normalizing printable Ctrl-letter
+input. The Ctrl-C versus ArrowUp ambiguity remains outside the table because it
+must inspect the raw primary matrix key before treating byte `0x03` as copy.
+
+Before:
+
+```text
+npm run z80:size
+bytes: 16317
+remainingIn16KBank: 67
+editor-keymap mappedBytes: 178
+```
+
+After:
+
+```text
+npm run z80:size
+bytes: 16301
+remainingIn16KBank: 83
+editor-keymap mappedBytes: 141
+```
+
+Result: accepted. The table saved 16 more bytes, reduced keymap mapped coverage
+by 37 bytes, and centralized the current implemented modified-command policy as
+data:
 
 ```text
 s -> save
@@ -110,13 +134,19 @@ c -> copy
 x -> move
 v -> paste
 y -> delete current line
+```
+
+The planned named block file commands remain outside the table until they are
+implemented:
+
+```text
 w -> write block later
 r -> read block later
 ```
 
-A table may or may not save bytes because Z80 table scans need setup code. The
-next attempt should measure a small table against the current ordered compare
-chain before keeping it.
+Future command additions should extend this table only when they are genuine
+Ctrl-modified editor commands. Navigation must continue to enter through
+`EditorActionFromKey`, not through alphabetic command aliases.
 
 ### Action Dispatch
 
@@ -165,10 +195,10 @@ Caution:
 
 The next compaction slice should choose one of:
 
-1. a modified-command lookup table, measured against the current normalized
-   compare chain; or
-2. one shared-tail pilot for two or more command handlers with identical
+1. one shared-tail pilot for two or more command handlers with identical
    render/loop endings.
+2. a small action-dispatch experiment only if it can keep movement semantics
+   obvious and reduce bytes.
 
 Each slice should record before/after `npm run z80:size`, run targeted editor
 proofs, and reject the idea if the byte count or readability does not improve.

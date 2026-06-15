@@ -890,8 +890,12 @@ Work:
 - Done: build an editor command-policy inventory covering key dispatch, prompt
   preconditions, block state transitions, dirty-state handling, and render
   scheduling.
-- Use the command-policy inventory to identify the next table-driven or
-  shared-policy refactor that is actually smaller or clearer; do not table-drive
+- Done: use the command-policy inventory to accept a table-driven
+  modified-command dispatch pilot. The measured result reduced the source build
+  from 16,317 to 16,301 bytes while preserving the Ctrl-C versus ArrowUp raw-key
+  guard.
+- Use the command-policy inventory to identify the next shared-policy or
+  shared-tail refactor that is actually smaller or clearer; do not table-drive
   code by habit.
 - Keep alphabetic keys out of navigation logic. Alphabetic keys are text or
   commands; navigation is by matrix arrow keys and modifiers only.
@@ -902,8 +906,10 @@ Done when:
 - `editor-interaction.asm` is visibly orchestration-focused.
 - Done: command/UI policy has a single documented inventory instead of being inferred
   from scattered branches.
-- Done: at least one measured compactness pilot is accepted or explicitly rejected
-  with byte counts.
+- Done: at least one measured compactness pilot is accepted or explicitly
+  rejected with byte counts.
+- Done: the modified-command table-dispatch pilot is accepted with measured byte
+  counts.
 - `npm run check` passes.
 - The current binary size and any behavior-visible effects are recorded.
 

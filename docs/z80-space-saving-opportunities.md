@@ -218,17 +218,20 @@ The Ctrl-modified command decoder has uppercase/lowercase duplication and a few
 special ambiguous inputs. This may be smaller as normalization plus a compact
 lookup table.
 
-Status: first normalization pilot accepted. The decoder now normalizes uppercase
-printable command letters once, compares only lowercase command letters, and
-keeps the Ctrl-C versus ArrowUp raw-key guard. This reduced `npm run z80:size`
-from 16,327 to 16,317 bytes and increased free 16K bank space from 57 to 67
-bytes. A table-driven version remains only a future measured experiment.
+Status: first normalization pilot accepted, then table pilot accepted. The
+decoder now normalizes uppercase printable command letters once, scans a compact
+byte-pair command table, and keeps the Ctrl-C versus ArrowUp raw-key guard
+outside the table. The normalization step reduced `npm run z80:size` from
+16,327 to 16,317 bytes and increased free 16K bank space from 57 to 67 bytes.
+The table-driven step reduced the build again from 16,317 to 16,301 bytes,
+increased free 16K bank space from 67 to 83 bytes, and reduced
+`src/editor-keymap.asm` mapped coverage from 178 to 141 bytes.
 
 Recommended shape:
 
 - Preserve the current Ctrl-C and ArrowUp ambiguity behavior exactly.
-- Normalize alphabetic input once, then dispatch from a small table or ordered
-  compare set.
+- Normalize alphabetic input once, then dispatch from the small modified-command
+  byte-pair table.
 - Treat this as a keymap-boundary improvement as much as a byte-saving
   experiment.
 

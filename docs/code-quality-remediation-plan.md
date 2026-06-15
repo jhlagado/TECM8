@@ -493,6 +493,12 @@ Actions:
   build from 16,327 to 16,317 bytes and made printable Ctrl-Y match the
   documented delete-current-line command path while preserving the Ctrl-C versus
   ArrowUp raw-key guard.
+- Done: accept the table-driven modified-command dispatch pilot. The normalized
+  decoder now scans a compact byte-pair table for save/quit/restore/copy/move/
+  paste/delete-current-line commands while leaving the Ctrl-C versus ArrowUp raw
+  matrix-key guard explicit. This reduced the live source build from 16,317 to
+  16,301 bytes, increased free 16K bank space from 67 to 83 bytes, and reduced
+  `src/editor-keymap.asm` mapped coverage from 178 to 141 bytes.
 - Keep public entry names stable where proofs or docs use them; add wrappers
   during transition rather than broad rename churn.
 
@@ -502,6 +508,8 @@ Done when:
 - Done: the first command-policy inventory exists.
 - Done: the first measured command compaction pilot has been accepted with byte
   counts.
+- Done: the table-driven modified-command dispatch pilot has been accepted with
+  byte counts.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 
