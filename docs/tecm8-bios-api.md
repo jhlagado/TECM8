@@ -57,6 +57,46 @@ services can use grouped extension ranges if a later BIOS profile has room.
 80h-8Fh  resident TECM8 system services, if promoted into ROM
 ```
 
+## Hardware Profiles And Display Boundary
+
+TECM8 should separate the guaranteed TEC-1 hardware surface from the richer
+development-system profile. This matters because the GLCD, matrix keyboard, and
+future TMS9918-style VDU are extensions, while the original TEC-1-style LCD,
+seven-segment display, and keypad are the only display/input devices that can be
+assumed for every machine.
+
+The BIOS API should therefore be described in layers:
+
+| Layer | Hardware | Role |
+| --- | --- | --- |
+| Core TEC-1 fallback | character LCD, seven-segment display, hexadecimal keypad | Boot, diagnostics, compatibility, and minimal recovery paths. |
+| Rich TECM8 profile | GLCD plus matrix keyboard | Main shell/editor user interface for the current product direction. |
+| Alternate rich profile | TMS9918-style VDU plus suitable keyboard input | Future backend for larger tiled displays and sprite-capable programs. |
+
+The fixed MON3-compatible BIOS layer should not require the GLCD to exist just
+to boot, report an error, or run a minimal diagnostic path. TECM8's editor can
+require the rich profile, but that requirement belongs to the editor/shell tool
+profile rather than to the whole BIOS. A later TECM8 ROM can still bundle a
+cut-down GLCD backend as a standard component; the distinction is that GLCD is a
+profile capability, not the definition of a TEC-1.
+
+The practical split is:
+
+- BIOS core: hardware initialization, error/status output on guaranteed devices,
+  storage, raw input scans, timing, banking, and compatibility services.
+- Optional display backends: GLCD and TMS initialization, cell/tile writes,
+  dirty-region flushing, cursor overlays, and backend-specific graphics.
+- Shared display policy: text-cell descriptors, gutter marker meanings,
+  transient status/prompt rows, cursor visibility, and dirty scheduling.
+- Editor/shell UI: viewport state, selection state, command prompts, and
+  application-specific redraw decisions.
+
+The current GLCD editor code is already moving in this direction. TECM8 owns the
+text-cell renderer and dirty scheduler, while MON3 is mostly used for GLCD
+initialization, the ROM font, and compatibility-level full-screen plotting. If
+these services are promoted into a TECM8 ROM profile, the reusable pieces should
+be exposed as backend services rather than as editor-private routines.
+
 ## Core Calls
 
 | Call | Name | Purpose |
@@ -172,11 +212,13 @@ storage should treat this range as BIOS-owned or volatile.
 
 ## Display Calls
 
-The GLCD is the primary first display, but TECM8 code should target a small
-display contract rather than hard-code MON3's GLCD routine names. The first
-implementation is MON3-backed and GLCD-oriented; later implementations may
-route the same names to a smaller TECM8 GLCD renderer or to a TMS9918-style VDU
-layer.
+The GLCD is the primary first rich display, but TECM8 code should target a
+small display contract rather than hard-code MON3's GLCD routine names. The
+first implementation is MON3-backed and GLCD-oriented; later implementations
+may route the same names to a smaller TECM8 GLCD renderer or to a TMS9918-style
+VDU layer. Code that only needs fallback diagnostics should use the
+compatibility LCD/seven-segment calls instead of requiring this rich display
+group.
 
 | Call | TECM8 wrapper | MON3 continuity |
 | ---: | --- | --- |
@@ -253,6 +295,21 @@ workspace, a 3584-byte 3.5 KiB range containing a full graphics buffer,
 terminal scroll buffer, terminal graphics buffer, and cursor/drawing state. A
 future TECM8-focused display BIOS may keep these MON3 calls for compatibility
 while adding a smaller text-first path that does not require the full workspace.
+
+Reusable GLCD services that look broadly useful beyond the editor include:
+
+- low-level GLCD init and mode selection
+- full-buffer clear and plot/update
+- 6x6 ROM-font cell drawing into a bitmap
+- cell clear, text-run draw, and gutter-marker draw
+- dirty row/cell scheduling and cooperative flush stepping
+- cursor overlay save/restore
+
+Editor-specific policy should stay above that layer: logical rows, source
+records, block selection ranges, copy/move state, transient prompt text, and
+project-file decisions. This keeps the door open for a future TMS backend that
+uses the same editor state but maps it to hardware tiles or sprites instead of
+GLCD bitmap bytes.
 
 ## Input Calls
 

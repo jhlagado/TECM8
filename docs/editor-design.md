@@ -25,6 +25,14 @@ TMS9918 VDU: 32 columns x 24 rows
 The editor core should not depend on either display. It should expose a
 viewport model that renderers can draw differently.
 
+The display dependency should follow the BIOS profile boundary in
+[TECM8 BIOS API Draft](tecm8-bios-api.md). The editor may require the rich
+TECM8 profile for its first usable version, meaning GLCD plus matrix keyboard,
+but the editor should still talk to a display backend rather than to MON3's
+terminal policy directly. Character LCD, seven-segment display, and hexadecimal
+keypad support remain core fallback/diagnostic surfaces, not the primary editor
+surface.
+
 The MON3 GLCD terminal is not an 8x8 tile display. Its current character path
 uses 6x6 pixel cells on a 128x64 bitmap display. The practical terminal
 capacity is therefore 20 columns by 10 rows. Older notes that refer to an

@@ -55,6 +55,15 @@ familiar service naming where it helps compatibility. Optional monitor UI,
 PATA-oriented storage paths, and GLCD terminal assumptions can be reduced or
 replaced as TECM8 takes over the shell and tool workflow.
 
+Display and input should be described as profiles, not as one universal machine
+shape. The guaranteed TEC-1 surface is the character LCD, seven-segment display,
+and hexadecimal keypad; these remain the fallback and diagnostic interface. The
+current TECM8 editor profile is richer: GLCD plus matrix keyboard. A later
+TMS9918-style VDU profile should be able to reuse the same editor/shell display
+state without pretending to be a GLCD. The BIOS API draft records this boundary
+so GLCD services can be made reusable without making the GLCD mandatory for
+every TEC-1-compatible path.
+
 Roadmap consequence: editor quality work is not just cleanup. It is the first
 exercise in making a banked TECM8 tool: compact, contract-driven, and cleanly
 separated from resident shell/kernel services.
@@ -782,6 +791,38 @@ Done when:
 - Done: editor memory map is explicit.
 - Done: page buffers, cache, status state, and scratch areas have stable
   locations.
+
+## Phase 13A: Display BIOS Boundary And Backend Profiles
+
+Goal: turn the current GLCD editor renderer into a clean backend profile rather
+than an editor-private dependency on MON3's GLCD terminal assumptions.
+
+Work:
+
+- Keep the core TEC-1 fallback profile separate from the rich TECM8 profile:
+  character LCD, seven-segment display, and hexadecimal keypad are guaranteed;
+  GLCD, TMS VDU, and matrix keyboard are profile capabilities.
+- Classify current GLCD routines into reusable backend services, editor policy,
+  and MON3 compatibility glue.
+- Promote general services such as GLCD init, bitmap clear/plot, cell draw,
+  gutter draw, dirty row/cell scheduling, cooperative flush stepping, and cursor
+  overlay save/restore into a documented backend surface.
+- Keep source-record, selection, copy/move, prompt, and project policy in the
+  editor/shell layers.
+- Decide which backend services belong in a future MON3-light fixed ROM, which
+  can live in a banked TECM8 tool ROM, and which should stay editor-local until
+  another program needs them.
+- Sketch how a TMS9918-style backend would consume the same display model using
+  tiles, attributes, or sprites instead of GLCD bitmap bytes.
+
+Done when:
+
+- `docs/tecm8-bios-api.md` has stable core/profile language and a first backend
+  service list.
+- `docs/codebase.md` identifies the current modules that belong to each side of
+  the boundary.
+- The next GLCD refactor has a clear target: move reusable backend services
+  without pulling editor state into the BIOS layer.
 
 ## Phase 14: Hardware Transition
 

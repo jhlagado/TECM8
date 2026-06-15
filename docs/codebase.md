@@ -251,6 +251,13 @@ this repository. The TECM8 wrapper routines themselves live in
 The previous local-module interface files have been removed; `mon3.asmi` is the
 only interface file currently expected under `src/`.
 
+The BIOS boundary is profile-based. The guaranteed TEC-1 fallback profile is
+the character LCD, seven-segment display, and hexadecimal keypad; the current
+TECM8 editor profile adds GLCD plus matrix keyboard. The GLCD tile renderer is
+therefore a rich-display backend candidate, not the definition of the whole
+BIOS. New code should keep source/editor policy out of the BIOS wrappers and
+push only reusable hardware-facing services downward.
+
 ### `src/project-config.asm`
 
 This parses the loaded `/tecm8.prj` project file. It does not perform I/O. The
@@ -464,6 +471,14 @@ overlay render/erase uses this path, so ordinary horizontal cursor movement and
 post-edit cursor restore/redraw no longer require full text-row transfers.
 `GlcdTileMarkGutterDirty` uses the same scheduler for the left gutter byte pair
 when selection or pending copy/move markers change.
+
+This module is the main candidate for promotion into a reusable GLCD backend.
+The generally useful surface is cell drawing, gutter drawing, dirty row/cell
+scheduling, cooperative stepping, and full/row flush compatibility. It should
+not grow knowledge of source records, block-copy state, prompts, or project
+policy. A future TMS9918 backend should be able to consume the same display
+model state from `display-model.asm` while replacing this module's bitmap-byte
+transport with hardware tile, attribute, or sprite operations.
 
 The tile layer also exposes proof counters for both physical transfer work and
 CPU-side tile clearing. `GlcdTileFlushCellByteCount` measures the bytes sent
