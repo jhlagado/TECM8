@@ -132,6 +132,114 @@ PROOF_FAIL       .equ     0xE0
         LD      (MoveStepCount),A
 
         CALL    ResetRenderCounters
+        LD      A,8
+        LD      (CaseMarker),A
+        LD      HL,ScrollKeys
+        CALL    EditorRunKeys
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        LD      A,(DisplayRenderScreenCount)
+        LD      (ScrollScreenCount),A
+        LD      A,(EditorRenderPageBufferCount)
+        LD      (ScrollPageCount),A
+        LD      A,(EditorViewportRenderRecordRowCount)
+        LD      (ScrollRowCount),A
+        LD      A,(EditorViewportRenderRowMarkerCount)
+        LD      (ScrollMarkerCount),A
+        LD      A,(GlcdTileFlushFullCount)
+        LD      (ScrollFullFlushCount),A
+        LD      A,(GlcdTileFlushRowCount)
+        LD      (ScrollRowFlushCount),A
+        LD      A,(GlcdTileFlushCellCount)
+        LD      (ScrollCellFlushCount),A
+        LD      A,(GlcdTileFlushCellByteCount)
+        LD      (ScrollCellFlushByteCount),A
+        LD      A,(GlcdTileStepCount)
+        LD      (ScrollStepCount),A
+
+        CALL    ResetRenderCounters
+        LD      A,9
+        LD      (CaseMarker),A
+        LD      HL,ScrollCoalesceKeys
+        CALL    EditorRunKeys
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        LD      A,(DisplayRenderScreenCount)
+        LD      (ScrollCoalesceScreenCount),A
+        LD      A,(EditorRenderPageBufferCount)
+        LD      (ScrollCoalescePageCount),A
+        LD      A,(EditorViewportRenderRecordRowCount)
+        LD      (ScrollCoalesceRowCount),A
+        LD      A,(EditorViewportRenderRowMarkerCount)
+        LD      (ScrollCoalesceMarkerCount),A
+        LD      A,(GlcdTileFlushFullCount)
+        LD      (ScrollCoalesceFullFlushCount),A
+        LD      A,(GlcdTileFlushRowCount)
+        LD      (ScrollCoalesceRowFlushCount),A
+        LD      A,(GlcdTileFlushCellCount)
+        LD      (ScrollCoalesceCellFlushCount),A
+        LD      A,(GlcdTileFlushCellByteCount)
+        LD      (ScrollCoalesceCellFlushByteCount),A
+        LD      A,(GlcdTileStepCount)
+        LD      (ScrollCoalesceStepCount),A
+
+        CALL    ResetRenderCounters
+        LD      A,10
+        LD      (CaseMarker),A
+        LD      HL,ResidentBoundaryKeys
+        CALL    EditorRunKeys
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        LD      A,(DisplayRenderScreenCount)
+        LD      (ResidentBoundaryScreenCount),A
+        LD      A,(EditorRenderPageBufferCount)
+        LD      (ResidentBoundaryPageCount),A
+        LD      A,(EditorViewportRenderRecordRowCount)
+        LD      (ResidentBoundaryRowCount),A
+        LD      A,(EditorViewportRenderRowMarkerCount)
+        LD      (ResidentBoundaryMarkerCount),A
+        LD      A,(GlcdTileFlushFullCount)
+        LD      (ResidentBoundaryFullFlushCount),A
+        LD      A,(GlcdTileFlushRowCount)
+        LD      (ResidentBoundaryRowFlushCount),A
+        LD      A,(GlcdTileFlushCellCount)
+        LD      (ResidentBoundaryCellFlushCount),A
+        LD      A,(GlcdTileFlushCellByteCount)
+        LD      (ResidentBoundaryCellFlushByteCount),A
+        LD      A,(GlcdTileStepCount)
+        LD      (ResidentBoundaryStepCount),A
+
+        CALL    ResetRenderCounters
+        LD      A,11
+        LD      (CaseMarker),A
+        LD      HL,ResidentBoundaryUpKeys
+        CALL    EditorRunKeys
+        JP      C,ProofFailed
+        CALL    GlcdTileDrainPending
+        JP      C,ProofFailed
+        LD      A,(DisplayRenderScreenCount)
+        LD      (ResidentBoundaryUpScreenCount),A
+        LD      A,(EditorRenderPageBufferCount)
+        LD      (ResidentBoundaryUpPageCount),A
+        LD      A,(EditorViewportRenderRecordRowCount)
+        LD      (ResidentBoundaryUpRowCount),A
+        LD      A,(EditorViewportRenderRowMarkerCount)
+        LD      (ResidentBoundaryUpMarkerCount),A
+        LD      A,(GlcdTileFlushFullCount)
+        LD      (ResidentBoundaryUpFullFlushCount),A
+        LD      A,(GlcdTileFlushRowCount)
+        LD      (ResidentBoundaryUpRowFlushCount),A
+        LD      A,(GlcdTileFlushCellCount)
+        LD      (ResidentBoundaryUpCellFlushCount),A
+        LD      A,(GlcdTileFlushCellByteCount)
+        LD      (ResidentBoundaryUpCellFlushByteCount),A
+        LD      A,(GlcdTileStepCount)
+        LD      (ResidentBoundaryUpStepCount),A
+
+        CALL    ResetRenderCounters
         LD      A,4
         LD      (CaseMarker),A
         LD      A,1
@@ -275,6 +383,23 @@ MovementKeys:
         .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_LEFT
         .db     TECM8_EDITOR_KEY_ARROW_UP,0
 
+ScrollKeys:
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN,0
+
+ScrollCoalesceKeys:
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN,0
+
+ResidentBoundaryKeys:
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN
+        .db     TECM8_EDITOR_KEY_ARROW_DOWN,TECM8_EDITOR_KEY_ARROW_DOWN,0
+
+ResidentBoundaryUpKeys:
+        .db     TECM8_EDITOR_KEY_ARROW_UP,0
+
 InsertKeys:
         .db     "Z",0
 
@@ -310,6 +435,78 @@ MoveCellFlushCount:
 MoveCellFlushByteCount:
         .db     0
 MoveStepCount:
+        .db     0
+ScrollScreenCount:
+        .db     0
+ScrollPageCount:
+        .db     0
+ScrollRowCount:
+        .db     0
+ScrollMarkerCount:
+        .db     0
+ScrollFullFlushCount:
+        .db     0
+ScrollRowFlushCount:
+        .db     0
+ScrollCellFlushCount:
+        .db     0
+ScrollCellFlushByteCount:
+        .db     0
+ScrollStepCount:
+        .db     0
+ScrollCoalesceScreenCount:
+        .db     0
+ScrollCoalescePageCount:
+        .db     0
+ScrollCoalesceRowCount:
+        .db     0
+ScrollCoalesceMarkerCount:
+        .db     0
+ScrollCoalesceFullFlushCount:
+        .db     0
+ScrollCoalesceRowFlushCount:
+        .db     0
+ScrollCoalesceCellFlushCount:
+        .db     0
+ScrollCoalesceCellFlushByteCount:
+        .db     0
+ScrollCoalesceStepCount:
+        .db     0
+ResidentBoundaryScreenCount:
+        .db     0
+ResidentBoundaryPageCount:
+        .db     0
+ResidentBoundaryRowCount:
+        .db     0
+ResidentBoundaryMarkerCount:
+        .db     0
+ResidentBoundaryFullFlushCount:
+        .db     0
+ResidentBoundaryRowFlushCount:
+        .db     0
+ResidentBoundaryCellFlushCount:
+        .db     0
+ResidentBoundaryCellFlushByteCount:
+        .db     0
+ResidentBoundaryStepCount:
+        .db     0
+ResidentBoundaryUpScreenCount:
+        .db     0
+ResidentBoundaryUpPageCount:
+        .db     0
+ResidentBoundaryUpRowCount:
+        .db     0
+ResidentBoundaryUpMarkerCount:
+        .db     0
+ResidentBoundaryUpFullFlushCount:
+        .db     0
+ResidentBoundaryUpRowFlushCount:
+        .db     0
+ResidentBoundaryUpCellFlushCount:
+        .db     0
+ResidentBoundaryUpCellFlushByteCount:
+        .db     0
+ResidentBoundaryUpStepCount:
         .db     0
 InsertScreenCount:
         .db     0

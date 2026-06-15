@@ -137,6 +137,48 @@ EditorRenderPageBufferFlush:
         CALL    GlcdTileFlushFull
         RET
 
+; EditorRenderPageBufferDirtyRows -
+; Render the already-loaded page buffer and queue all visible rows for
+; cooperative transfer by GlcdTileStep.
+;! out carry,A
+;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
+@EditorRenderPageBufferDirtyRows:
+        LD      A,(EditorRenderPageBufferCount)
+        INC     A
+        LD      (EditorRenderPageBufferCount),A
+        CALL    EditorNavSyncViewport
+        RET     C
+        CALL    EditorNavRenderMixedPreviousCurrent
+        RET     C
+        OR      A
+        JR      NZ,EditorRenderPageBufferDirtyRowsQueue
+        LD      HL,EditorNavPageBuffer
+        CALL    EditorViewportRender
+        RET     C
+
+EditorRenderPageBufferDirtyRowsQueue:
+        JP      EditorMarkViewportRowsDirty
+
+; EditorMarkViewportRowsDirty -
+; Queue all visible editor text rows for cooperative GLCD transfer.
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,BC,DE,HL
+@EditorMarkViewportRowsDirty:
+        XOR     A
+        LD      (EditorViewportDirtyRow),A
+
+EditorMarkViewportRowsDirtyLoop:
+        LD      A,(EditorViewportDirtyRow)
+        CALL    GlcdTileMarkRowDirty
+        RET     C
+        LD      A,(EditorViewportDirtyRow)
+        INC     A
+        LD      (EditorViewportDirtyRow),A
+        CP      TECM8_EDITOR_VISIBLE_ROWS
+        JR      NZ,EditorMarkViewportRowsDirtyLoop
+        XOR     A
+        RET
+
 ; EditorNavResetViewport -
 ; Reset the in-page viewport to logical row 0 and sync cursor row bookkeeping.
 ;! out A,carry
@@ -712,7 +754,7 @@ EditorPageDownResidentReady:
         LD      (EditorNavCurrentRow),A
         CALL    EditorNavSyncViewport
         RET     C
-        CALL    EditorRenderPageBuffer
+        CALL    EditorRenderPageBufferDirtyRows
         RET     C
         XOR     A
         RET
@@ -773,7 +815,7 @@ EditorPageUpResidentCurrentDirtyReady:
         RET     C
         CALL    EditorNavResetViewport
         RET     C
-        CALL    EditorRenderPageBuffer
+        CALL    EditorRenderPageBufferDirtyRows
         RET     C
         XOR     A
         RET
@@ -1797,6 +1839,9 @@ EditorNavBackupPathBuffer:
         .ds     TECM8_EDITOR_NAV_PATH_LEN
 
 EditorRenderPageBufferCount:
+        .db     0
+
+EditorViewportDirtyRow:
         .db     0
 
 EditorNavBackupNamePtr:

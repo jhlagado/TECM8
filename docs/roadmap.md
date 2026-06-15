@@ -552,10 +552,16 @@ Work:
 - Done: added bounded-step measurements for common dirty-render operations:
   movement, insert, delete, non-joining backspace, and cursor blink now record
   and assert `GlcdTileStepCount` as well as byte counts.
-- Next optimization: interleave matrix keyboard polling between display-update
-  slices. The matrix keyboard is quick to scan, but it has no interrupt; the
-  live loop should opportunistically poll between bounded GLCD transfers so
-  user input does not wait behind a full row or viewport update.
+- Done: moved key-driven viewport scrolling onto cooperative full-row
+  scheduling. A one-line viewport scroll now rebuilds the ten visible tile rows
+  in `TGBUF`, queues the rows with `GlcdTileMarkRowDirty`, and returns to the
+  live loop instead of calling `GlcdTileFlushFull`. Repeated scroll keys before
+  the display drains coalesce into one latest-row transfer set, and resident
+  page-boundary Down/Up movement uses the same path.
+- Done: interleave matrix keyboard polling between display-update slices. The
+  live loop polls input first, handles a key if one is pending, and only uses
+  idle time to run one `GlcdTileStep`, so user input does not wait behind a full
+  row or viewport update.
 - Keep the display/input scheduler shaped around:
 
   ```text
@@ -599,8 +605,9 @@ Incremental implementation order:
    cell-range transfers.
 10. Done: coalesce dirty row work against stale dirty cell ranges.
 11. Done: measure bounded GLCD steps for common dirty render paths.
-12. Poll the matrix keyboard between longer GLCD update slices and prove that a
-    queued or newly pressed key can be noticed before a full repaint drains.
+12. Done: poll the matrix keyboard between longer GLCD update slices and prove
+    key-driven viewport scrolls queue cooperative row work instead of full
+    repaint drains.
 
 Proofs:
 
@@ -609,6 +616,9 @@ Proofs:
 - Cursor move without full render.
 - Cursor blink without row/full render.
 - Insert/delete without full render.
+- Viewport scroll without full render.
+- Repeated scroll coalescing without obsolete row-drain backlog.
+- Resident page-boundary scroll without full render.
 - Cooperative display-step proof: a pending display update can be advanced in
   bounded slices without losing a queued/polled key event.
 

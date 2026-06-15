@@ -417,10 +417,14 @@ column to the first backing-bitmap byte plus bit offset. The draw and clear
 paths then walk six rows of six pixels with local set and clear mask tables.
 `GlcdTileFlushFull` writes `TGBUF` to the active viewport pointer and calls
 `BiosDisplayUpdate`, which keeps the visible GLCD in sync with the TECM8-owned
-bitmap state after full viewport renders. `GlcdTileFlushRow` bypasses MON3
-`plotToLCD` and transfers only one six-pixel text row, so cursor movement,
-status overlays, and row-local edits avoid the old full-screen blank/repaint
-path.
+bitmap state after initial or storage-synchronous viewport renders.
+Key-driven viewport scrolls use `EditorRenderPageBufferDirtyRows` instead:
+the editor rebuilds the ten visible tile rows in `TGBUF`, marks those rows
+dirty, and returns to the live input loop so `GlcdTileStep` can transfer the
+latest row set in bounded slices. `GlcdTileFlushRow` bypasses MON3 `plotToLCD`
+and transfers only one six-pixel text row, so cursor movement, status overlays,
+row-local edits, and resident one-line page-boundary movement avoid the old
+full-screen blank/repaint path.
 
 The row-transfer path now also has a cooperative surface. `GlcdTileQueueRow`
 sets up one text row immediately, while `GlcdTileMarkRowDirty` records row
@@ -432,6 +436,11 @@ requested row and drains all six steps before returning. The live editor idle
 loop calls `GlcdTileStep`, so current-line edits and block-marker changes can
 schedule GLCD work and return to matrix keyboard polling while the display
 drains in bounded slices.
+
+When repeated vertical movement arrives before pending row work drains, the
+dirty-row mask coalesces the requests. Intermediate viewport states may rebuild
+`TGBUF`, but the physical GLCD transfer drains only the latest marked rows, so
+quick Down/Up bursts do not create a backlog of obsolete paints.
 
 The same stepper also understands dirty cell byte ranges. `GlcdTileMarkCellDirty`
 validates a row/column, computes the GLCD byte column touched by the 6-pixel

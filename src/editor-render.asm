@@ -199,7 +199,7 @@ EditorKeyRenderCursorFlushCurrent:
 ;! out A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorKeyRenderViewport:
-        CALL    EditorRenderPageBuffer
+        CALL    EditorRenderPageBufferDirtyRows
         RET     C
         JP      EditorInvalidateCursorOverlay
 

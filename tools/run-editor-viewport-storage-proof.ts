@@ -926,6 +926,42 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'MoveCellFlushCount', expected: 3 },
     { symbol: 'MoveCellFlushByteCount', expected: 24 },
     { symbol: 'MoveStepCount', expected: 6 },
+    { symbol: 'ScrollScreenCount', expected: 1 },
+    { symbol: 'ScrollPageCount', expected: 1 },
+    { symbol: 'ScrollRowCount', expected: 0 },
+    { symbol: 'ScrollMarkerCount', expected: 0 },
+    { symbol: 'ScrollFullFlushCount', expected: 0 },
+    { symbol: 'ScrollRowFlushCount', expected: 10 },
+    { symbol: 'ScrollCellFlushCount', expected: 2 },
+    { symbol: 'ScrollCellFlushByteCount', expected: 0 },
+    { symbol: 'ScrollStepCount', expected: 60 },
+    { symbol: 'ScrollCoalesceScreenCount', expected: 2 },
+    { symbol: 'ScrollCoalescePageCount', expected: 2 },
+    { symbol: 'ScrollCoalesceRowCount', expected: 0 },
+    { symbol: 'ScrollCoalesceMarkerCount', expected: 0 },
+    { symbol: 'ScrollCoalesceFullFlushCount', expected: 0 },
+    { symbol: 'ScrollCoalesceRowFlushCount', expected: 20 },
+    { symbol: 'ScrollCoalesceCellFlushCount', expected: 0 },
+    { symbol: 'ScrollCoalesceCellFlushByteCount', expected: 0 },
+    { symbol: 'ScrollCoalesceStepCount', expected: 60 },
+    { symbol: 'ResidentBoundaryScreenCount', expected: 4 },
+    { symbol: 'ResidentBoundaryPageCount', expected: 4 },
+    { symbol: 'ResidentBoundaryRowCount', expected: 0 },
+    { symbol: 'ResidentBoundaryMarkerCount', expected: 0 },
+    { symbol: 'ResidentBoundaryFullFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryRowFlushCount', expected: 40 },
+    { symbol: 'ResidentBoundaryCellFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryCellFlushByteCount', expected: 0 },
+    { symbol: 'ResidentBoundaryStepCount', expected: 60 },
+    { symbol: 'ResidentBoundaryUpScreenCount', expected: 2 },
+    { symbol: 'ResidentBoundaryUpPageCount', expected: 2 },
+    { symbol: 'ResidentBoundaryUpRowCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpMarkerCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpFullFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpRowFlushCount', expected: 20 },
+    { symbol: 'ResidentBoundaryUpCellFlushCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpCellFlushByteCount', expected: 0 },
+    { symbol: 'ResidentBoundaryUpStepCount', expected: 60 },
     { symbol: 'InsertScreenCount', expected: 0 },
     { symbol: 'InsertPageCount', expected: 0 },
     { symbol: 'InsertRowCount', expected: 1 },
@@ -956,25 +992,29 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
     { symbol: 'BlinkHideScreenCount', expected: 0 },
     { symbol: 'BlinkHidePageCount', expected: 0 },
     { symbol: 'BlinkHideRowFlushCount', expected: 0 },
-    { symbol: 'BlinkHideCellFlushCount', expected: 2 },
-    { symbol: 'BlinkHideCellFlushByteCount', expected: 24 },
+    { symbol: 'BlinkHideCellFlushCount', expected: 1 },
+    { symbol: 'BlinkHideCellFlushByteCount', expected: 12 },
     { symbol: 'BlinkHideStepCount', expected: 6 },
     { symbol: 'BlinkHideRendered', expected: 0 },
     { symbol: 'BlinkHideToggleCount', expected: 1 },
     { symbol: 'BlinkShowScreenCount', expected: 0 },
     { symbol: 'BlinkShowPageCount', expected: 0 },
     { symbol: 'BlinkShowRowFlushCount', expected: 0 },
-    { symbol: 'BlinkShowCellFlushCount', expected: 2 },
-    { symbol: 'BlinkShowCellFlushByteCount', expected: 24 },
+    { symbol: 'BlinkShowCellFlushCount', expected: 1 },
+    { symbol: 'BlinkShowCellFlushByteCount', expected: 12 },
     { symbol: 'BlinkShowStepCount', expected: 6 },
     { symbol: 'BlinkShowRendered', expected: 1 },
     { symbol: 'BlinkShowToggleCount', expected: 2 },
   ];
+  const mismatches: string[] = [];
   for (const count of expectedCounts) {
     const value = runtime.hardware.memory[symbolAddress(symbols, count.symbol)];
     if (value !== count.expected) {
-      throw new Error(`editor dirty render ${count.symbol} ${value}, expected ${count.expected}`);
+      mismatches.push(`${count.symbol} ${value}, expected ${count.expected}`);
     }
+  }
+  if (mismatches.length > 0) {
+    throw new Error(`editor dirty render counters mismatched: ${mismatches.join('; ')}`);
   }
 
   const screenDescriptor = symbolAddress(symbols, 'EditorScreenDescriptor');
@@ -995,7 +1035,7 @@ function verifyEditorDirtyRenderProof(runtime: Runtime, platformRuntime: Platfor
   const pageBuffer = symbolAddress(symbols, 'EditorNavPageBuffer');
   const record = readSourceRecord(runtime.hardware.memory, pageBuffer, 0);
   if (record !== '0 LINE 00') {
-    throw new Error(`editor dirty render inserted record "${record}", expected "0 LINE 00"`);
+    throw new Error(`editor dirty render current record "${record}", expected "0 LINE 00"`);
   }
 }
 
