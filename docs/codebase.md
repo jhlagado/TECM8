@@ -45,33 +45,35 @@ For the fastest orientation, read these files first:
    model, hidden-file policy, and host preservation tools.
 4. `docs/shell-command-contract.md`: how `edit`, `asm`, and `run` resolve.
 5. `docs/editor-design.md`: 32-byte source records and GLCD viewport model.
-6. `docs/tecm8-bios-api.md`: the BIOS wrapper vocabulary used by Z80 code.
-7. `src/tecm8-equates.asm`: shared source-record, sector, display, GLCD, and
+6. `docs/editor-command-policy.md`: the current editor command surface, command
+   routing rules, and measured keymap compaction notes.
+7. `docs/tecm8-bios-api.md`: the BIOS wrapper vocabulary used by Z80 code.
+8. `src/tecm8-equates.asm`: shared source-record, sector, display, GLCD, and
    keyboard modifier constants used by the Z80 modules.
-8. `src/tecm8-record.asm`: shared fixed source-record helpers for masked
+9. `src/tecm8-record.asm`: shared fixed source-record helpers for masked
    length reads, metadata-preserving length writes, padding zeroing,
    full-record clear, in-record text shifts, and up/down record-window shifts.
-9. `src/tecm8-string.asm`: shared byte/string/path helpers used by storage,
+10. `src/tecm8-string.asm`: shared byte/string/path helpers used by storage,
    project config, and shell path-resolution code.
-10. `src/tecm8-storage.asm`: shared TM8 format helpers used by storage-backed
+11. `src/tecm8-storage.asm`: shared TM8 format helpers used by storage-backed
     loaders.
-11. `src/tecm8-bios.asm`: the current MON3-backed wrapper implementation.
-12. `src/shell-resolver.asm`: shell command resolution and executor stubs.
-13. `src/shell-program.asm`: the proof/live prompt loop and input buffer layer.
-14. `src/shell-commands.asm`: compatibility include for code that still wants
+12. `src/tecm8-bios.asm`: the current MON3-backed wrapper implementation.
+13. `src/shell-resolver.asm`: shell command resolution and executor stubs.
+14. `src/shell-program.asm`: the proof/live prompt loop and input buffer layer.
+15. `src/shell-commands.asm`: compatibility include for code that still wants
     the complete shell.
-15. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
+16. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
    editor.
-16. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, and
+17. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, and
     `src/display-model.asm`: the current direct GLCD cell layer, optional row
     convenience wrappers, and the structured screen renderer built on top.
-17. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
+18. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
     `src/editor-block-state.asm`, `src/editor-viewport.asm`,
     `src/editor-record.asm`, `src/editor-line-edit.asm`, `src/editor-block.asm`,
     `src/editor-keymap.asm`, `src/editor-cursor.asm`, `src/editor-prompt.asm`,
     `src/editor-render.asm`, and `src/editor-interaction.asm`: the current editor
     path.
-18. `proofs/display/glcd-tile-proof.asm`,
+19. `proofs/display/glcd-tile-proof.asm`,
     `proofs/display/editor-selection-proof.asm`,
     `proofs/display/editor-line-editing-proof.asm`,
     `proofs/display/editor-rolling-window-proof.asm`, and
@@ -723,6 +725,15 @@ The public entries are:
 - `EditorShouldIgnoreModifiedPrintable`: suppresses unknown Ctrl-modified
   printable letters so a failed command chord does not insert text.
 
+The modified-command path now folds printable `A`-`Z` input to lowercase before
+lookup, then walks a sentinel-terminated byte-pair table rather than a compare
+chain. That makes the implemented command surface explicit in data and keeps
+printable Ctrl-Y on the documented delete-line path even when the host input
+reports `Y` plus a Ctrl modifier instead of byte `0x19`. The `Ctrl-C` copy
+special case still sits outside the table because byte `0x03` also represents
+ArrowUp, so the keymap must inspect `BiosInputRawPrimary` before treating that
+control byte as a block-copy command.
+
 The keymap module still reads `EditorPendingChar` and `EditorPendingModifier`
 from the interaction state block. That keeps this checkpoint behavior-only and
 avoids moving shared state before the block, prompt, and line-edit modules have
@@ -1246,6 +1257,8 @@ toward.
   virtual directory model, and host preservation commands.
 - `docs/shell-command-contract.md`: TEC-side `edit`/`asm`/`run` behavior.
 - `docs/editor-design.md`: GLCD editor model and source records.
+- `docs/editor-command-policy.md`: current editor command surface,
+  normalization rules, and measured dispatch compaction inventory.
 - `docs/memory-and-code-quality.md`: memory map, RAM pressure, resident versus
   overlay code, and compactness principles.
 - `docs/azm-style-guide.md`: assembly style and routine contract conventions.
