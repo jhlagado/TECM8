@@ -104,6 +104,10 @@ not drift across modules:
 - source record geometry: 32-byte records, 31 text characters, `0x1F` length
   mask, `0xE0` metadata mask, and 16 records per 512-byte page
 - shared sector size
+- editor RAM layout constants: 64-byte path buffers, four 512-byte resident
+  source-window slots at `3000h-37FFh`, the blank-sector scratch page at
+  `3800h-39FFh`, and the current/backup path buffer addresses at
+  `3A00h-3A7Fh`
 - GLCD tile/display geometry: 20 columns, 10 rows, 6x6 cells, 2-pixel vertical
   origin, and 16-byte bitmap rows
 - MON3 GLCD `VPORT` and `TGBUF` addresses
@@ -112,7 +116,11 @@ not drift across modules:
 Module-local names such as `TECM8_EDITOR_RECORD_BYTES`,
 `TECM8_GLCD_TILE_ROWS`, and `TECM8_BIOS_KEY_MOD_CTRL` remain where they clarify
 the domain, but they derive from this shared file rather than repeating the
-literal values.
+literal values. The fixed aliases `EditorNavCachePageBuffer`,
+`EditorNavPageBuffer`, `EditorNavNextPageBuffer`, `EditorNavBackupPageBuffer`,
+`EditorCreateBlankPageBuffer`, `EditorNavPathBuffer`, and
+`EditorNavBackupPathBuffer` now also live here so editor-navigation and
+editor-storage-loader share one RAM map contract.
 
 ### `src/tecm8-record.asm`
 
