@@ -3,17 +3,8 @@
 ;! out A,carry,zero,HL
 ;! clobbers sign,parity,halfCarry,B,DE
 @EditorKeyCurrentRecord:
-        LD      HL,EditorNavPageBuffer
         LD      A,(EditorCursorRow)
-        OR      A
-        RET     Z
-        LD      B,A
-        LD      DE,TECM8_EDITOR_EDIT_RECORD_BYTES
-
-EditorRecordOffsetLoop:
-        ADD     HL,DE
-        DJNZ    EditorRecordOffsetLoop
-        XOR     A
+        CALL    EditorKeyRecordAtRow
         RET
 
 ;! in A

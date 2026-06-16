@@ -789,8 +789,11 @@ Work:
 - Done: documented editor RAM usage in `docs/memory-and-code-quality.md`.
 - Done: kept source page buffers above MON3/GLCD volatile areas.
 - Done: assigned `3000h-3FFFh` as the current editor workspace.
-- Done: fixed a 2K resident source-sector workspace at `3000h-37FFh`; `3800h`
-  to `3FFFh` is reserved for future growth.
+- Done: fixed a 2K resident source-sector workspace at `3000h-37FFh`.
+- Done: moved editor storage scratch out of the ROM image: `3800h-39FFh`
+  holds the blank-sector scratch page, and `3A00h-3A7Fh` holds the current and
+  backup path buffers.
+- `3A80h-3FFFh` remains reserved for future editor RAM growth and stack margin.
 - Done: avoided relying on MON3 RAM that GLCD/storage overwrites.
 
 Done when:

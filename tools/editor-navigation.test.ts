@@ -39,20 +39,23 @@ test('editor navigation module exposes open, render, and page movement entries',
   assert.match(source, /EditorNavCurrentPage:\n\s+\.db\s+0/);
   assert.match(source, /EditorNavDirty:\n\s+\.db\s+0/);
   assert.match(source, /TECM8_EDITOR_NAV_ERR_BACKUP\s+\.equ\s+0x52/);
-  assert.match(source, /EditorNavBackupPathBuffer:\n\s+\.ds\s+TECM8_EDITOR_NAV_PATH_LEN/);
+  assert.match(equates, /EditorNavBackupPathBuffer\s+\.equ\s+TECM8_EDITOR_NAV_BACKUP_PATH_BASE/);
   assert.match(source, /EditorNavBackupSourcePtr:\n\s+\.dw\s+0/);
-  assert.match(source, /TECM8_EDITOR_NAV_WORKSPACE_BASE\s+\.equ\s+0x3000/);
-  assert.match(source, /TECM8_EDITOR_NAV_CACHE_BASE\s+\.equ\s+0x3000/);
-  assert.match(source, /TECM8_EDITOR_NAV_PAGE_BASE\s+\.equ\s+0x3200/);
-  assert.match(source, /TECM8_EDITOR_NAV_NEXT_BASE\s+\.equ\s+0x3400/);
-  assert.match(source, /TECM8_EDITOR_NAV_BACKUP_BASE\s+\.equ\s+0x3600/);
-  assert.match(source, /TECM8_EDITOR_NAV_WORKSPACE_END\s+\.equ\s+0x3800/);
-  assert.match(source, /EditorNavCachePageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_CACHE_BASE/);
-  assert.match(source, /EditorNavPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_PAGE_BASE/);
-  assert.match(source, /TECM8_EDITOR_NAV_WINDOW_BYTES\s+\.equ\s+TECM8_SECTOR_BYTES \* 4/);
+  assert.match(equates, /TECM8_EDITOR_NAV_WORKSPACE_BASE\s+\.equ\s+0x3000/);
+  assert.match(equates, /TECM8_EDITOR_NAV_CACHE_BASE\s+\.equ\s+0x3000/);
+  assert.match(equates, /TECM8_EDITOR_NAV_PAGE_BASE\s+\.equ\s+0x3200/);
+  assert.match(equates, /TECM8_EDITOR_NAV_NEXT_BASE\s+\.equ\s+0x3400/);
+  assert.match(equates, /TECM8_EDITOR_NAV_BACKUP_BASE\s+\.equ\s+0x3600/);
+  assert.match(equates, /TECM8_EDITOR_NAV_BLANK_BASE\s+\.equ\s+0x3800/);
+  assert.match(equates, /TECM8_EDITOR_NAV_PATH_BASE\s+\.equ\s+0x3A00/);
+  assert.match(equates, /TECM8_EDITOR_NAV_BACKUP_PATH_BASE\s+\.equ\s+0x3A40/);
+  assert.match(equates, /TECM8_EDITOR_NAV_WORKSPACE_END\s+\.equ\s+0x3A80/);
+  assert.match(equates, /EditorNavCachePageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_CACHE_BASE/);
+  assert.match(equates, /EditorNavPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_PAGE_BASE/);
+  assert.match(equates, /TECM8_EDITOR_NAV_WINDOW_BYTES\s+\.equ\s+TECM8_SECTOR_BYTES \* 4/);
   assert.match(equates, /TECM8_SECTOR_BYTES\s+\.equ\s+512/);
-  assert.match(source, /EditorNavNextPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_NEXT_BASE/);
-  assert.match(source, /EditorNavBackupPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_BACKUP_BASE/);
+  assert.match(equates, /EditorNavNextPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_NEXT_BASE/);
+  assert.match(equates, /EditorNavBackupPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_BACKUP_BASE/);
   assert.match(source, /EditorNavDirtySectors:\n\s+\.db\s+0/);
   assert.match(source, /EditorNavViewportTopRow:\n\s+\.db\s+0/);
   assert.match(source, /EditorNavCurrentRow:\n\s+\.db\s+0/);
@@ -73,6 +76,7 @@ test('editor navigation module exposes open, render, and page movement entries',
 
 test('editor navigation commits page movement only after successful render', () => {
   const source = readRepoFile('src/editor-navigation.asm');
+  const equates = readRepoFile('src/tecm8-equates.asm');
 
   assert.match(source, /CALL\s+EditorNavRenderPage\n\s+RET\s+C\n\s+LD\s+A,\(EditorNavPendingPage\)\n\s+LD\s+\(EditorNavCurrentPage\),A/);
   assert.match(source, /CALL\s+EditorLoadSourcePage/);
@@ -116,7 +120,7 @@ test('editor navigation commits page movement only after successful render', () 
   assert.match(source, /@EditorNavRenderPage:\n\s+LD\s+\(EditorNavRenderPageInput\),A\n\s+LD\s+HL,EditorStatusLoadingText\n\s+CALL\s+EditorNavShowStatus/);
   assert.match(source, /EditorNavRenderPageRestoreError:\n\s+PUSH\s+AF\n\s+CALL\s+EditorViewportRestoreStatusRow\n\s+POP\s+AF\n\s+SCF\n\s+RET/);
   assert.match(source, /EditorNavPathPtr:\n\s+\.dw\s+0/);
-  assert.match(source, /EditorNavPathBuffer:\n\s+\.ds\s+TECM8_EDITOR_NAV_PATH_LEN/);
+  assert.match(equates, /EditorNavPathBuffer\s+\.equ\s+TECM8_EDITOR_NAV_PATH_BASE/);
   assert.match(source, /CALL\s+EditorNavCopyPath/);
   assert.match(source, /CALL\s+Tecm8StringCopyNulBounded/);
   assert.match(readRepoFile('src/tecm8-string.asm'), /^@Tecm8StringCopyNulBounded:/m);

@@ -986,6 +986,7 @@ EditorCreateFreeCountOk:
 ;! out A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorCreateBlankCreatedSource:
+        CALL    EditorCreateClearBlankPageBuffer
         XOR     A
         LD      (EditorCreateBlankPageIndex),A
 
@@ -1000,6 +1001,17 @@ EditorCreateBlankCreatedSourceLoop:
         LD      (EditorCreateBlankPageIndex),A
         CP      8
         JR      NZ,EditorCreateBlankCreatedSourceLoop
+        XOR     A
+        RET
+
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,BC,DE,HL
+@EditorCreateClearBlankPageBuffer:
+        LD      HL,EditorCreateBlankPageBuffer
+        LD      DE,EditorCreateBlankPageBuffer + 1
+        LD      BC,TM8_SECTOR_BYTES - 1
+        LD      (HL),0
+        LDIR
         XOR     A
         RET
 
@@ -1452,9 +1464,6 @@ EditorCreateAllocSectorHigh:
 
 EditorCreateBlankPageIndex:
         .db     0
-
-EditorCreateBlankPageBuffer:
-        .ds     TM8_SECTOR_BYTES
 
 EditorSavePreviousBlock:
         .dw     0

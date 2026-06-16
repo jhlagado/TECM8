@@ -36,7 +36,7 @@ These are strengths to preserve through refactoring:
 2. **Proof gate** — `npm run check` runs 40+ proof/smoke steps; any refactor must keep this green after each increment.
 3. **Cooperative GLCD** — `GlcdTileStep`, dirty row mask, dirty cell byte ranges; live loop polls keyboard between display slices.
 4. **Mutation API** — primitives return `A=1` (changed) / `A=0` (noop); prevents spurious dirty marks.
-5. **RAM window policy** — fixed `3000h–37FFh` workspace documented in `editor-navigation.asm` and [Memory and Code Quality Manifest](memory-and-code-quality.md).
+5. **RAM window policy** — fixed `3000h–3A7Fh` workspace documented in `editor-navigation.asm` and [Memory and Code Quality Manifest](memory-and-code-quality.md), with the 2K source-sector window, blank-sector scratch, and path buffers kept out of the ROM image.
 6. **Static TypeScript tests** — entry-point and contract assertions in `tools/*.test.ts` catch accidental API drift.
 
 ---
@@ -210,8 +210,9 @@ window/cache policy and is covered by navigation/window proofs.
 
 **Good:**
 
-- Editor workspace `3000h–37FFh` (2 KiB) with explicit slot assignment in `editor-navigation.asm`
-- `3800h–3FFFh` reserved for growth
+- Editor source-sector workspace `3000h–37FFh` (2 KiB) with explicit slot assignment in `editor-navigation.asm`
+- Editor blank-sector and path workspace `3800h–3A7Fh`
+- `3A80h–3FFFh` reserved for growth and stack margin
 - TGBUF at `13C0h` shared with MON3 — intentional
 
 **Needs improvement:**

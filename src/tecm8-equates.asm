@@ -10,6 +10,28 @@ TECM8_SOURCE_RECORD_METADATA_MASK  .equ    0xE0
 TECM8_SOURCE_RECORDS_PER_PAGE      .equ    16
 TECM8_SECTOR_BYTES                 .equ    512
 
+TECM8_EDITOR_NAV_PATH_LEN          .equ    64
+TECM8_EDITOR_NAV_PAGE_BYTES        .equ    TECM8_SECTOR_BYTES
+TECM8_EDITOR_NAV_WINDOW_BYTES      .equ    TECM8_SECTOR_BYTES * 4
+TECM8_EDITOR_NAV_BACKED_PAGE_MAX   .equ    16
+TECM8_EDITOR_NAV_WORKSPACE_BASE    .equ    0x3000
+TECM8_EDITOR_NAV_CACHE_BASE        .equ    0x3000
+TECM8_EDITOR_NAV_PAGE_BASE         .equ    0x3200
+TECM8_EDITOR_NAV_NEXT_BASE         .equ    0x3400
+TECM8_EDITOR_NAV_BACKUP_BASE       .equ    0x3600
+TECM8_EDITOR_NAV_BLANK_BASE        .equ    0x3800
+TECM8_EDITOR_NAV_PATH_BASE         .equ    0x3A00
+TECM8_EDITOR_NAV_BACKUP_PATH_BASE  .equ    0x3A40
+TECM8_EDITOR_NAV_WORKSPACE_END     .equ    0x3A80
+
+EditorNavCachePageBuffer           .equ    TECM8_EDITOR_NAV_CACHE_BASE
+EditorNavPageBuffer                .equ    TECM8_EDITOR_NAV_PAGE_BASE
+EditorNavNextPageBuffer            .equ    TECM8_EDITOR_NAV_NEXT_BASE
+EditorNavBackupPageBuffer          .equ    TECM8_EDITOR_NAV_BACKUP_BASE
+EditorCreateBlankPageBuffer        .equ    TECM8_EDITOR_NAV_BLANK_BASE
+EditorNavPathBuffer                .equ    TECM8_EDITOR_NAV_PATH_BASE
+EditorNavBackupPathBuffer          .equ    TECM8_EDITOR_NAV_BACKUP_PATH_BASE
+
 TECM8_GLCD_COLUMNS                 .equ    20
 TECM8_GLCD_ROWS                    .equ    10
 TECM8_GLCD_CELL_WIDTH              .equ    6

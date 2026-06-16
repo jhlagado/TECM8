@@ -589,12 +589,14 @@ Public entries:
 - `EditorPageUp`
 - `EditorNavDeriveBackupPath`
 
-The module stores a 64-byte path buffer and legacy aggregate `EditorNavDirty`.
 The source-sector buffers now live in a fixed workspace at `3000h-37FFh`:
 slot 0/current page at `3200h`, slot 1/adjacent next page at `3400h`, slot
 2/cache page at `3000h`, and slot 3/fourth resident page or backup/save scratch
 at `3600h`. This keeps the 2K resident source workspace below the `4000h` MON3
 launch address and away from MON3's lower GLCD/storage volatile RAM.
+The editor also uses `3800h-39FFh` as a blank-sector scratch page and
+`3A00h-3A7Fh` for the current and backup path buffers, so those mutable storage
+areas do not inflate the ROM image.
 `EditorNavWindowBasePage`, `EditorNavWindowSlotPages`, and the 4-bit valid,
 dirty, and synthetic masks record that workspace as a contiguous four-page
 rolling window even though the compatibility API still exposes current/next/
