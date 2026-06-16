@@ -72,6 +72,10 @@ test('editor navigation module exposes open, render, and page movement entries',
   assert.match(source, /EditorNavWindowSlot1\s+\.equ\s+EditorNavNextPageBuffer/);
   assert.match(source, /EditorNavWindowSlot2\s+\.equ\s+EditorNavCachePageBuffer/);
   assert.match(source, /EditorNavWindowSlot3\s+\.equ\s+EditorNavBackupPageBuffer/);
+  assert.match(readRepoFile('src/tecm8-storage.asm'), /^@Tecm8StorageClearSectorBuffer:/m);
+  assert.match(source, /@EditorNavClearCachePageBuffer:\n\s+LD\s+HL,EditorNavCachePageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
+  assert.match(source, /@EditorNavClearBackupPageBuffer:\n\s+LD\s+HL,EditorNavBackupPageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
+  assert.match(source, /@EditorNavClearNextPageBuffer:\n\s+LD\s+HL,EditorNavNextPageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
 });
 
 test('editor navigation commits page movement only after successful render', () => {

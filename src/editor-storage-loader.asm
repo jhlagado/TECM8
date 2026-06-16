@@ -1008,12 +1008,7 @@ EditorCreateBlankCreatedSourceLoop:
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorCreateClearBlankPageBuffer:
         LD      HL,EditorCreateBlankPageBuffer
-        LD      DE,EditorCreateBlankPageBuffer + 1
-        LD      BC,TM8_SECTOR_BYTES - 1
-        LD      (HL),0
-        LDIR
-        XOR     A
-        RET
+        JP      Tecm8StorageClearSectorBuffer
 
 ;! out carry,zero,A
 ;! clobbers sign,parity,halfCarry,BC,DE,HL

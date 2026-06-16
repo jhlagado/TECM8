@@ -45,7 +45,7 @@ test('editor storage loader exposes a fixed main-source sector entry point', () 
   assert.match(source, /EditorLoadPageErr:\n\s+LD\s+A,EDITOR_LOAD_ERR_PAGE\n\s+SCF\n\s+RET/);
   assert.match(source, /@EditorCreateBlankCreatedSource:\n\s+CALL\s+EditorCreateClearBlankPageBuffer/);
   assert.match(source, /@EditorCreateBlankCreatedSource:[\s\S]*?LD\s+HL,EditorCreateBlankPageBuffer[\s\S]*?CALL\s+EditorSaveSourcePageNoGrow/);
-  assert.match(source, /@EditorCreateClearBlankPageBuffer:[\s\S]*?LD\s+HL,EditorCreateBlankPageBuffer[\s\S]*?LD\s+BC,TM8_SECTOR_BYTES - 1[\s\S]*?LD\s+\(HL\),0[\s\S]*?LDIR/);
+  assert.match(source, /@EditorCreateClearBlankPageBuffer:\n\s+LD\s+HL,EditorCreateBlankPageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
   assert.match(source, /CP\s+8\n\s+JR\s+NZ,EditorCreateBlankCreatedSourceLoop/);
   assert.doesNotMatch(source, /EditorCreateBlankPageBuffer:\n\s+\.ds\s+TM8_SECTOR_BYTES/);
   assert.match(readRepoFile('src/tecm8-equates.asm'), /EditorCreateBlankPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_BLANK_BASE/);

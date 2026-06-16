@@ -169,6 +169,8 @@ by project config, editor storage, and file listing. It also owns
 `Tecm8StorageAdvancePrefixEntryPtr` and
 `Tecm8StorageAdvanceCatalogEntryPtr`, which advance table entry pointers while
 preserving the current scan offset in `DE`. It also owns
+`Tecm8StorageClearSectorBuffer`, the shared 512-byte RAM buffer clear primitive
+used by editor source-window and blank-file creation paths. It also owns
 `Tecm8StorageBlockToOffset`, the 4K TM8 block-number to MON3 `HLDE` byte-offset
 conversion used by `src/project-config-loader.asm`, and
 `Tecm8StorageBlockSectorToOffset`, the block-plus-sector variant used by editor

@@ -388,24 +388,28 @@ Actions:
   wrapper for scan loops that need the current `DE` byte offset after
   `BiosFileReadSector`. Project config, editor prefix/catalog scans, allocation
   scans, catalog-slot scans, and file listing now use it. Direct sector reads
-  remain local where the caller does not need `DE` preserved or is writing a
-  sector. This reduced the live Debug80 image to 14,964 bytes, leaving 1,420
-  bytes in the current 16K bank.
+  remain local when callers do not need `DE` preservation.
+- Done: add `Tecm8StorageClearSectorBuffer`, a shared 512-byte RAM buffer clear
+  primitive. Editor navigation page-clear wrappers and blank source-file
+  creation now delegate to this helper, keeping source-window clearing at the
+  storage/window boundary rather than duplicating byte loops in editor policy
+  code. This reduced the live Debug80 image to 15,639 bytes, leaving 745 bytes
+  in the current 16K bank.
 - Done: add `Tecm8StorageAdvancePrefixEntryPtr` and
   `Tecm8StorageAdvanceCatalogEntryPtr` for table-entry walks that must preserve
   the current scan offset in `DE`. This replaces both duplicated preserved-add
   sequences and older scratch-`DE` entry advances in project config and editor
   storage. The new `editor-nonfirst-catalog-save-proof` seeds a preceding
   `/src/first.asm` catalog entry and proves `/src/main.asm` still saves back to
-  the correct catalog entry. This leaves the live Debug80 image at 14,966 bytes,
-  with 1,418 bytes free in the current 16K bank.
+  the correct catalog entry. At that checkpoint, the live Debug80 image was
+  14,966 bytes, with 1,418 bytes free in the current 16K bank.
 - Done: add `Tecm8StorageBlockSectorToOffset` for source-page read/write paths
   that convert a resolved TM8 block plus sector-in-block into a MON3 byte
-  offset. This is a code-organization helper rather than a size win: the live
-  Debug80 image is now 14,948 bytes, leaving 1,436 bytes free in the current
-  16K bank. AZM strict contracts caught the first draft because it tried to use
-  `A` after calling `Tecm8StorageBlockToOffset`, whose contract clobbers `A`;
-  the helper now preserves `AF` across that call.
+  offset. This is a code-organization helper rather than a size win: at that
+  checkpoint, the live Debug80 image was 14,948 bytes, leaving 1,436 bytes free
+  in the current 16K bank. AZM strict contracts caught the first draft because
+  it tried to use `A` after calling `Tecm8StorageBlockToOffset`, whose contract
+  clobbers `A`; the helper now preserves `AF` across that call.
 - Done: split the shell into `shell-resolver.asm` and `shell-program.asm`.
   `main.asm` now includes only the resolver plus `shell-editor-launch.asm`; the
   full shell-command proof includes both halves. This reduces the live editor

@@ -1415,58 +1415,22 @@ EditorNavInitialSlot2SyntheticReady:
         RET
 
 ;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
+;! clobbers sign,parity,halfCarry,BC,DE
 @EditorNavClearCachePageBuffer:
         LD      HL,EditorNavCachePageBuffer
-        LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
-        XOR     A
-
-EditorNavClearCachePageBufferLoop:
-        XOR     A
-        LD      (HL),A
-        INC     HL
-        DEC     BC
-        LD      A,B
-        OR      C
-        JR      NZ,EditorNavClearCachePageBufferLoop
-        XOR     A
-        RET
+        JP      Tecm8StorageClearSectorBuffer
 
 ;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
+;! clobbers sign,parity,halfCarry,BC,DE
 @EditorNavClearBackupPageBuffer:
         LD      HL,EditorNavBackupPageBuffer
-        LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
-        XOR     A
-
-EditorNavClearBackupPageBufferLoop:
-        XOR     A
-        LD      (HL),A
-        INC     HL
-        DEC     BC
-        LD      A,B
-        OR      C
-        JR      NZ,EditorNavClearBackupPageBufferLoop
-        XOR     A
-        RET
+        JP      Tecm8StorageClearSectorBuffer
 
 ;! out HL,A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE
 @EditorNavClearNextPageBuffer:
         LD      HL,EditorNavNextPageBuffer
-        LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
-        XOR     A
-
-EditorNavClearNextPageBufferLoop:
-        XOR     A
-        LD      (HL),A
-        INC     HL
-        DEC     BC
-        LD      A,B
-        OR      C
-        JR      NZ,EditorNavClearNextPageBufferLoop
-        XOR     A
-        RET
+        JP      Tecm8StorageClearSectorBuffer
 
 ;! out A,carry,zero
 ;! clobbers sign,parity,halfCarry,BC,DE,HL

@@ -66,6 +66,14 @@ test('storage helper includes stay after proof entry trampolines', () => {
   }
 });
 
+test('storage helper exposes shared sector-buffer primitives', () => {
+  const storageSource = readRepoFile('src/tecm8-storage.asm');
+
+  assert.match(storageSource, /^@Tecm8StorageClearSectorBuffer:/m);
+  assert.match(storageSource, /LD\s+BC,TM8_SECTOR_BYTES - 1/);
+  assert.match(storageSource, /LD\s+\(HL\),0\n\s+LDIR/);
+});
+
 test('TECM8 BIOS display API is documented for GLCD wrappers', () => {
   const docs = readRepoFile('docs/tecm8-bios-api.md');
 

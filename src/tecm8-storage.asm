@@ -117,6 +117,21 @@ Tecm8StorageCoreSuperErr:
         POP     DE
         RET
 
+; Tecm8StorageClearSectorBuffer -
+; Clear one TM8 sector-sized RAM buffer.
+;! in HL
+;! out A,carry,zero,HL
+;! clobbers sign,parity,halfCarry,BC,DE,HL
+@Tecm8StorageClearSectorBuffer:
+        LD      D,H
+        LD      E,L
+        INC     DE
+        LD      BC,TM8_SECTOR_BYTES - 1
+        LD      (HL),0
+        LDIR
+        XOR     A
+        RET
+
 ; Tecm8StorageAdvancePrefixEntryPtr -
 ; Advance a prefix-entry pointer in HL while preserving the scan offset in DE.
 ;! in DE,HL

@@ -200,7 +200,7 @@ window/cache policy and is covered by navigation/window proofs.
 | Cursor render/erase mirror blocks | display-model | 100–150 |
 | MatchBytes | storage-loader, project-config-loader | 20–30 |
 | Page×16 absolute line calc | interaction, viewport | 30–40 |
-| 512-byte buffer clear loops | navigation ×2 | 30–40 |
+| 512-byte buffer clear loops | done: shared storage helper | recovered |
 | Render prelude (hide cursor, ensure visible) | interaction ×3 | 60–90 |
 | **Total dedup opportunity** | | **~800–1,200** |
 
