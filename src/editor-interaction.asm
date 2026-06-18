@@ -253,11 +253,8 @@ EditorKeyCleanSave:
 
 EditorKeyRestorePrompt:
         LD      A,TECM8_EDITOR_PROMPT_ACTION_RESTORE
-        LD      (EditorPromptAction),A
         LD      HL,EditorRestorePromptText
-        CALL    EditorPromptAskYesNo
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailPromptAskYesNo
 
 EditorKeyQuit:
         LD      A,(EditorNavDirty)
@@ -269,11 +266,8 @@ EditorKeyQuit:
 
 EditorKeyQuitPrompt:
         LD      A,TECM8_EDITOR_PROMPT_ACTION_QUIT
-        LD      (EditorPromptAction),A
         LD      HL,EditorQuitPromptText
-        CALL    EditorPromptAskYesNo
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailPromptAskYesNo
 
 EditorKeyPageDown:
         LD      A,(EditorPendingModifier)
@@ -281,9 +275,7 @@ EditorKeyPageDown:
         JP      NZ,EditorKeySelectPageDown
         CALL    EditorPageDown
         JR      C,EditorKeyPageDownErr
-        CALL    EditorCursorResetState
-        CALL    EditorInvalidateCursorOverlay
-        JP      EditorKeyLoop
+        JP      EditorKeyTailPageMoveLoop
 
 EditorKeyPageUp:
         LD      A,(EditorPendingModifier)
@@ -291,9 +283,7 @@ EditorKeyPageUp:
         JP      NZ,EditorKeySelectPageUp
         CALL    EditorPageUp
         JR      C,EditorKeyPageUpErr
-        CALL    EditorCursorResetState
-        CALL    EditorInvalidateCursorOverlay
-        JP      EditorKeyLoop
+        JP      EditorKeyTailPageMoveLoop
 
 EditorKeyPageDownErr:
         CP      TECM8_EDITOR_NAV_ERR_PAGE
@@ -303,11 +293,7 @@ EditorKeyPageDownErr:
         JR      EditorKeyNavigationErr
 
 EditorKeyPageDownEnd:
-        CALL    EditorHideCursor
-        RET     C
-        CALL    EditorViewportRestoreStatusRow
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRestoreStatusRowLoop
 
 EditorKeyPageUpErr:
         CP      TECM8_EDITOR_NAV_ERR_PAGE
@@ -315,41 +301,21 @@ EditorKeyPageUpErr:
         JR      EditorKeyNavigationErr
 
 EditorKeyPageUpTop:
-        CALL    EditorHideCursor
-        RET     C
-        CALL    EditorViewportRestoreStatusRow
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRestoreStatusRowLoop
 
 EditorKeySelectPageDown:
         CALL    EditorBlockSelectionCapturePageAnchor
         RET     C
         CALL    EditorPageDown
         JR      C,EditorKeyPageDownErr
-        CALL    EditorCursorResetStateKeepSelection
-        CALL    EditorBlockSelectionRestorePageAnchor
-        RET     C
-        CALL    EditorBlockSelectionUpdateActive
-        RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        CALL    EditorInvalidateCursorOverlay
-        JP      EditorKeyLoop
+        JP      EditorKeyTailSelectPageLoop
 
 EditorKeySelectPageUp:
         CALL    EditorBlockSelectionCapturePageAnchor
         RET     C
         CALL    EditorPageUp
         JR      C,EditorKeyPageUpErr
-        CALL    EditorCursorResetStateKeepSelection
-        CALL    EditorBlockSelectionRestorePageAnchor
-        RET     C
-        CALL    EditorBlockSelectionUpdateActive
-        RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        CALL    EditorInvalidateCursorOverlay
-        JP      EditorKeyLoop
+        JP      EditorKeyTailSelectPageLoop
 
 EditorKeyNavigationErr:
         CP      TECM8_EDITOR_NAV_ERR_PAGE
@@ -371,9 +337,7 @@ EditorKeyCursorLeft:
         JP      Z,EditorKeyLoop
         DEC     A
         LD      (EditorCursorCol),A
-        CALL    EditorKeyRenderCursorColumnMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorColumnLoop
 
 EditorKeyCursorDown:
         LD      A,(EditorPendingModifier)
@@ -387,9 +351,7 @@ EditorKeyCursorDown:
         LD      (EditorCursorPreviousRow),A
         INC     A
         LD      (EditorCursorRow),A
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveLoop
 
 EditorKeyCursorDownAtPageBottom:
         LD      A,(EditorCursorCol)
@@ -399,9 +361,7 @@ EditorKeyCursorDownAtPageBottom:
         CALL    EditorCursorResetState
         LD      A,(EditorCursorSavedCol)
         LD      (EditorCursorCol),A
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveLoop
 
 EditorKeyCursorDownAtPageBottomErr:
         CP      TECM8_EDITOR_NAV_ERR_PAGE
@@ -422,9 +382,7 @@ EditorKeyCursorUp:
         LD      (EditorCursorPreviousRow),A
         DEC     A
         LD      (EditorCursorRow),A
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveLoop
 
 EditorKeyCursorUpAtPageTop:
         LD      A,(EditorCursorCol)
@@ -436,9 +394,7 @@ EditorKeyCursorUpAtPageTop:
         LD      (EditorCursorRow),A
         LD      A,(EditorCursorSavedCol)
         LD      (EditorCursorCol),A
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveLoop
 
 EditorKeyCursorUpAtPageTopErr:
         CP      TECM8_EDITOR_NAV_ERR_PAGE
@@ -457,11 +413,7 @@ EditorKeySelectDown:
         LD      (EditorCursorRow),A
         CALL    EditorBlockSelectionUpdateActive
         RET     C
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveMarkersLoop
 
 EditorKeySelectDownAtBottom:
         CALL    EditorBlockSelectionBeginIfNeeded
@@ -477,11 +429,7 @@ EditorKeySelectDownAtBottom:
         LD      (EditorBlockSelectionActiveHi),A
         LD      A,1
         LD      (EditorBlockSelectionActive),A
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveMarkersLoop
 
 EditorKeySelectUp:
         LD      A,(EditorCursorRow)
@@ -495,11 +443,7 @@ EditorKeySelectUp:
         LD      (EditorCursorRow),A
         CALL    EditorBlockSelectionUpdateActive
         RET     C
-        CALL    EditorKeyRenderCursorMove
-        RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorMoveMarkersLoop
 
 EditorKeyCursorRight:
         CALL    EditorBlockSelectionClearIfActive
@@ -509,9 +453,7 @@ EditorKeyCursorRight:
         JP      Z,EditorKeyLoop
         INC     A
         LD      (EditorCursorCol),A
-        CALL    EditorKeyRenderCursorColumnMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorColumnLoop
 
 EditorKeyInsertPrintable:
         CALL    EditorBlockStateClearForEdit
@@ -521,9 +463,7 @@ EditorKeyInsertPrintable:
         RET     C
         OR      A
         JP      Z,EditorKeyLoop
-        CALL    EditorKeyRenderCurrentLineCellsDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCurrentLineCellsLoop
 
 EditorKeySplitLine:
         CALL    EditorBlockStateClearForEdit
@@ -532,9 +472,7 @@ EditorKeySplitLine:
         RET     C
         OR      A
         JP      Z,EditorKeyLoop
-        CALL    EditorKeyRenderDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderDirtyLoop
 
 EditorKeyBackspace:
         CALL    EditorBlockStateClearForEdit
@@ -546,23 +484,17 @@ EditorKeyBackspace:
         RET     C
         OR      A
         JR      NZ,EditorKeyBackspaceDirty
-        CALL    EditorKeyRenderCursorColumnMove
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCursorColumnLoop
 
 EditorKeyBackspaceDirty:
-        CALL    EditorKeyRenderCurrentLineCellsDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCurrentLineCellsLoop
 
 EditorKeyBackspaceJoin:
         CALL    EditorBackspaceChar
         RET     C
         OR      A
         JP      Z,EditorKeyLoop
-        CALL    EditorKeyRenderDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderDirtyLoop
 
 EditorKeyDelete:
         LD      A,(EditorBlockSelectionActive)
@@ -574,9 +506,7 @@ EditorKeyDelete:
         RET     C
         OR      A
         JP      Z,EditorKeyLoop
-        CALL    EditorKeyRenderCurrentLineCellsDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderCurrentLineCellsLoop
 
 EditorKeyDeleteCurrentLine:
         CALL    EditorBlockStateClearForEdit
@@ -590,42 +520,31 @@ EditorKeyDeleteCurrentLine:
         XOR     A
         LD      (EditorCursorCol),A
         CALL    EditorMarkDirty
-        CALL    EditorKeyRenderDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderDirtyLoop
 
 EditorKeyDeleteBlockPrompt:
         LD      A,TECM8_EDITOR_PROMPT_ACTION_DELETE_BLOCK
-        LD      (EditorPromptAction),A
         LD      HL,EditorDeleteBlockPromptText
-        CALL    EditorPromptAskYesNo
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailPromptAskYesNo
 
 EditorKeyCopyBlock:
         LD      A,TECM8_EDITOR_PENDING_BLOCK_COPY
         CALL    EditorPendingBlockArm
         RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderMarkersLoop
 
 EditorKeyMoveBlock:
         LD      A,TECM8_EDITOR_PENDING_BLOCK_MOVE
         CALL    EditorPendingBlockArm
         RET     C
-        CALL    EditorBlockSelectionRenderMarkers
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderMarkersLoop
 
 EditorKeyPasteBlock:
         CALL    EditorPendingBlockPasteInsert
         RET     C
         OR      A
         JP      Z,EditorKeyLoop
-        CALL    EditorKeyRenderDirty
-        RET     C
-        JP      EditorKeyLoop
+        JP      EditorKeyTailRenderDirtyLoop
 
 EditorKeyUnknownModifiedPrintable:
         XOR     A
@@ -634,6 +553,67 @@ EditorKeyUnknownModifiedPrintable:
 EditorKeyEscape:
         CALL    EditorBlockStateClearForEdit
         RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailPromptAskYesNo:
+        LD      (EditorPromptAction),A
+        CALL    EditorPromptAskYesNo
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderDirtyLoop:
+        CALL    EditorKeyRenderDirty
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderCurrentLineCellsLoop:
+        CALL    EditorKeyRenderCurrentLineCellsDirty
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderCursorColumnLoop:
+        CALL    EditorKeyRenderCursorColumnMove
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderCursorMoveLoop:
+        CALL    EditorKeyRenderCursorMove
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderCursorMoveMarkersLoop:
+        CALL    EditorKeyRenderCursorMove
+        RET     C
+        CALL    EditorBlockSelectionRenderMarkers
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRenderMarkersLoop:
+        CALL    EditorBlockSelectionRenderMarkers
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailRestoreStatusRowLoop:
+        CALL    EditorHideCursor
+        RET     C
+        CALL    EditorViewportRestoreStatusRow
+        RET     C
+        JP      EditorKeyLoop
+
+EditorKeyTailPageMoveLoop:
+        CALL    EditorCursorResetState
+        CALL    EditorInvalidateCursorOverlay
+        JP      EditorKeyLoop
+
+EditorKeyTailSelectPageLoop:
+        CALL    EditorCursorResetStateKeepSelection
+        CALL    EditorBlockSelectionRestorePageAnchor
+        RET     C
+        CALL    EditorBlockSelectionUpdateActive
+        RET     C
+        CALL    EditorBlockSelectionRenderMarkers
+        RET     C
+        CALL    EditorInvalidateCursorOverlay
         JP      EditorKeyLoop
 
 ;! in HL

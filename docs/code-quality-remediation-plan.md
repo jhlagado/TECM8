@@ -509,6 +509,12 @@ Actions:
   tables are not worthwhile by themselves; the next compactness work should
   centralize command-family policy, render/loop tails, prompt setup, and
   normal/insert routing with a credible 400-800 byte near-term target.
+- Done: accept the first second-pass shared-tail slice in
+  `src/editor-interaction.asm`. Private `EditorKeyTail*` helpers now centralize
+  repeated prompt, render, page-move, and selection cleanup tails. This reduced
+  the live source build from 15,639 to 15,563 bytes, leaving 821 bytes free in
+  the current 16K bank, and reduced `editor-interaction.asm` mapped coverage
+  from 1,181 to 1,105 bytes.
 - Keep public entry names stable where proofs or docs use them; add wrappers
   during transition rather than broad rename churn.
 
@@ -522,6 +528,8 @@ Done when:
   byte counts.
 - Done: the second-pass command/input architecture plan exists with measurable
   implementation slices and reject/accept thresholds.
+- Done: the first second-pass shared-tail implementation slice has been accepted
+  with before/after byte counts.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 

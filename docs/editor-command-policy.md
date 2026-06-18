@@ -308,6 +308,13 @@ easier.
 
 1. one shared-tail pilot for two or more command handlers with identical
    render/loop endings. Minimum useful saving: 40 bytes.
+   - Done 2026-06-18: added private `EditorKeyTail*` shared tails for prompt
+     setup, dirty render, current-line cell render, cursor column render, cursor
+     movement render, selection marker render, status-row restore, page-move
+     cleanup, and selection-page cleanup. This reduced the live source build
+     from 15,639 to 15,563 bytes, saving 76 bytes and raising free 16K bank space
+     from 745 to 821 bytes. `editor-interaction.asm` mapped coverage fell from
+     1,181 to 1,105 bytes.
 2. extract prompt command setup into one helper taking prompt action and text
    pointer. Minimum useful saving: 30 bytes, or keep only if it makes prompt
    additions safer.
