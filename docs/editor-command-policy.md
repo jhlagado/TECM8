@@ -345,9 +345,23 @@ easier.
      a larger command executor/descriptor rewrite.
 5. revisit modified-command execution dispatch only after the handler tails
    above are shared. A jump table by itself is not enough.
+   - Rejected 2026-06-18: a direct command descriptor table was prototyped for
+     `EditorDispatchModifiedCommand`, with byte keys mapped to `.dw` handler
+     addresses and a shared `JP (HL)` executor. The focused interaction test
+     `node --test --test-name-pattern="editor interaction module exposes" --experimental-strip-types tools/*.test.ts tools/**/*.test.ts`
+     passed, but `npm run z80:size` grew from 15,463 to 15,472 bytes. The old
+     compare/jump ladder is smaller because there are only seven commands and a
+     descriptor table pays both interpreter code and two-byte handler addresses.
+     Do not retry address-only descriptor dispatch for this command family
+     unless it is folded into a broader executor that removes substantial
+     handler policy.
 6. only after the above, consider a compact descriptor table that encodes command
    family, state flags, and render policy. This is the first slice that could
    justify a larger rewrite.
+   - The first descriptor table must target repeated state policy, not just
+     handler-address dispatch. Candidate policy to encode: movement direction,
+     selection behavior, boundary handling, render policy, and error handling.
+     Minimum useful saving: 150 bytes for the first accepted prototype.
 
 Each slice should record before/after `npm run z80:size`, run targeted editor
 proofs, and reject the idea if the byte count or readability does not improve.
