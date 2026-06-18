@@ -334,6 +334,15 @@ easier.
 4. create a command-result convention for mutation helpers: A=0 for no change,
    A!=0 for dirty, carry for error. Move dirty/cell/full-render decision into a
    shared tail or tiny result table. Minimum useful saving: 100 bytes.
+   - Rejected 2026-06-18: a trial added dirty-result and current-line-cells
+     result tails for insert, split, join-backspace, delete-char, and paste,
+     and removed one duplicated dirty mark from current-line delete. The source
+     build fell only from 15,463 to 15,451 bytes, saving 12 bytes. The remaining
+     safe duplicate dirty marks in block paste/delete paths would add only low
+     tens of bytes, still far below the 100-byte threshold, while making dirty
+     ownership less local. The mutation helpers already follow the practical
+     return convention; do not add result-tail indirection unless it is part of
+     a larger command executor/descriptor rewrite.
 5. revisit modified-command execution dispatch only after the handler tails
    above are shared. A jump table by itself is not enough.
 6. only after the above, consider a compact descriptor table that encodes command
