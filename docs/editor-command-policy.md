@@ -49,7 +49,6 @@ The current design rule is simple:
 
 `src/editor-keymap.asm` owns key normalization:
 
-- `EditorActionFromKey` maps arrow keys and Ctrl-arrow page movement.
 - `EditorModifiedCommandFromKey` maps Ctrl-letter commands before printable
   insertion.
 - `EditorShouldIgnoreModifiedPrintable` suppresses unknown Ctrl-printable keys.
@@ -58,7 +57,7 @@ The current design rule is simple:
 
 - prompt routing
 - insert-mode routing
-- movement dispatch
+- physical-arrow movement dispatch
 - modified-command dispatch
 - command handler tails
 - loop return policy
@@ -146,15 +145,18 @@ r -> read block later
 
 Future command additions should extend this table only when they are genuine
 Ctrl-modified editor commands. Navigation must continue to enter through
-`EditorActionFromKey`, not through alphabetic command aliases.
+physical matrix arrow keys in `src/editor-interaction.asm`, not through
+alphabetic command aliases.
 
 ### Action Dispatch
 
-`EditorDispatchAction` is a dense action range from page movement through
-cursor movement. It is a possible jump-table candidate, but only if the handler
-pointer table plus indexing code is smaller than the current compare/jump chain.
-This is less urgent than modified commands because there are only six actions
-today.
+Status: rejected as a generic table, then replaced by a better simplification.
+The action-number layer was removed instead: physical arrows now dispatch
+directly to cursor/page handlers in `src/editor-interaction.asm`. A trial
+generic pointer table for action and modified-command dispatch cost almost as
+much as the compare/jump ladders it replaced, saving only one extra byte beyond
+the normal/insert routing merge. The accepted result is direct physical-arrow
+dispatch plus the existing modified-command table.
 
 ### Prompt Dispatch
 
@@ -214,9 +216,9 @@ editor-keymap mappedBytes: 141
 editor-prompt mappedBytes: 147
 ```
 
-The present command architecture has four separate layers:
+The baseline command architecture had four separate layers:
 
-1. `EditorActionFromKey` turns physical arrows plus modifiers into six movement
+1. `EditorActionFromKey` turned physical arrows plus modifiers into six movement
    actions.
 2. `EditorModifiedCommandFromKey` turns Ctrl-letter chords into editor command
    bytes.
@@ -293,8 +295,8 @@ target is:
 - 150-250 bytes from shared prompt setup, render tails, and mutation tails.
 - 100-200 bytes from merging normal/insert routing around one command decoder.
 - 100-250 bytes from cursor/page/selection movement executor families.
-- 50-150 bytes from replacing compare/jump action dispatch with a descriptor or
-  pointer dispatch if the indexing code stays small.
+- 50-150 bytes from removing or replacing any remaining command-action
+  indirection only when the indexing code stays smaller than the branches.
 
 That gives a conservative near-term target of 400-800 bytes. Multi-K savings
 probably require a broader redesign that includes editor-navigation,
@@ -321,12 +323,19 @@ easier.
 3. merge normal-mode and insert-mode printable/delete/backspace/newline routing
    so insert mode becomes a policy flag instead of a duplicate branch tree.
    Minimum useful saving: 80 bytes.
+   - Done 2026-06-18: merged the normal/insert edit-key routing into
+     `EditorKeyEditDispatch`, then removed the redundant movement action enum
+     layer so physical arrows dispatch directly in `src/editor-interaction.asm`.
+     A generic action/command pointer table was tested and rejected because it
+     did not materially reduce size. The accepted source build fell from 15,563
+     to 15,463 bytes, saving 100 bytes and raising free 16K bank space from 821
+     to 921 bytes. `src/editor-keymap.asm` mapped coverage fell from 141 to 87
+     bytes.
 4. create a command-result convention for mutation helpers: A=0 for no change,
    A!=0 for dirty, carry for error. Move dirty/cell/full-render decision into a
    shared tail or tiny result table. Minimum useful saving: 100 bytes.
-5. replace `EditorDispatchAction` and `EditorDispatchModifiedCommand` with a
-   unified command-id dispatch only after the handler tails above are shared.
-   A jump table by itself is not enough.
+5. revisit modified-command execution dispatch only after the handler tails
+   above are shared. A jump table by itself is not enough.
 6. only after the above, consider a compact descriptor table that encodes command
    family, state flags, and render policy. This is the first slice that could
    justify a larger rewrite.

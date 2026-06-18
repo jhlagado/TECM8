@@ -3,13 +3,6 @@
 ; Proof-oriented key stream for page movement, cursor movement, and in-page
 ; source-record editing.
 
-TECM8_EDITOR_ACTION_NONE                .equ    0
-TECM8_EDITOR_ACTION_PAGE_DOWN           .equ    1
-TECM8_EDITOR_ACTION_PAGE_UP             .equ    2
-TECM8_EDITOR_ACTION_CURSOR_LEFT         .equ    3
-TECM8_EDITOR_ACTION_CURSOR_DOWN         .equ    4
-TECM8_EDITOR_ACTION_CURSOR_UP           .equ    5
-TECM8_EDITOR_ACTION_CURSOR_RIGHT        .equ    6
 TECM8_EDITOR_KEY_ARROW_UP                .equ    0x03
 TECM8_EDITOR_KEY_ARROW_DOWN              .equ    0x04
 TECM8_EDITOR_KEY_ARROW_LEFT              .equ    0x05
@@ -148,33 +141,19 @@ EditorKeyLoop:
         JP      Z,EditorKeyEscape
         LD      A,(EditorInsertMode)
         OR      A
-        JR      NZ,EditorKeyMaybeInsertMode
+        JR      NZ,EditorKeyEditDispatch
         LD      A,(EditorPendingChar)
-        CALL    EditorActionFromKey
-        RET     C
-        OR      A
-        JP      NZ,EditorDispatchAction
-        LD      A,(EditorPendingChar)
-        CP      TECM8_EDITOR_KEY_BACKSPACE
-        JP      Z,EditorKeyBackspace
-        CP      TECM8_EDITOR_KEY_DELETE
-        JP      Z,EditorKeyDelete
-        CALL    EditorShouldIgnoreModifiedPrintable
-        RET     C
-        OR      A
-        JP      NZ,EditorKeyUnknownModifiedPrintable
-        LD      A,(EditorPendingChar)
-        CP      TECM8_EDITOR_KEY_PRINTABLE_MIN
-        JP      C,EditorKeyLoop
-        CP      TECM8_EDITOR_KEY_PRINTABLE_MAX + 1
-        JP      NC,EditorKeyLoop
-        JP      EditorKeyInsertPrintable
-        JP      EditorKeyLoop
+        CP      TECM8_EDITOR_KEY_ARROW_UP
+        JR      Z,EditorDispatchArrowUp
+        CP      TECM8_EDITOR_KEY_ARROW_DOWN
+        JR      Z,EditorDispatchArrowDown
+        CP      TECM8_EDITOR_KEY_ARROW_LEFT
+        JP      Z,EditorKeyCursorLeft
+        CP      TECM8_EDITOR_KEY_ARROW_RIGHT
+        JP      Z,EditorKeyCursorRight
 
-EditorKeyMaybeInsertMode:
+EditorKeyEditDispatch:
         LD      A,(EditorPendingChar)
-        CP      TECM8_EDITOR_KEY_NEWLINE
-        JP      Z,EditorKeySplitLine
         CP      TECM8_EDITOR_KEY_BACKSPACE
         JP      Z,EditorKeyBackspace
         CP      TECM8_EDITOR_KEY_DELETE
@@ -203,21 +182,6 @@ EditorKeyPrompt:
         RET     C
         JP      EditorKeyLoop
 
-EditorDispatchAction:
-        CP      TECM8_EDITOR_ACTION_PAGE_DOWN
-        JP      Z,EditorKeyPageDown
-        CP      TECM8_EDITOR_ACTION_PAGE_UP
-        JP      Z,EditorKeyPageUp
-        CP      TECM8_EDITOR_ACTION_CURSOR_LEFT
-        JP      Z,EditorKeyCursorLeft
-        CP      TECM8_EDITOR_ACTION_CURSOR_DOWN
-        JP      Z,EditorKeyCursorDown
-        CP      TECM8_EDITOR_ACTION_CURSOR_UP
-        JP      Z,EditorKeyCursorUp
-        CP      TECM8_EDITOR_ACTION_CURSOR_RIGHT
-        JP      Z,EditorKeyCursorRight
-        JP      EditorKeyLoop
-
 EditorDispatchModifiedCommand:
         CP      TECM8_EDITOR_KEY_SAVE
         JP      Z,EditorKeySave
@@ -234,6 +198,18 @@ EditorDispatchModifiedCommand:
         CP      "Y"
         JP      Z,EditorKeyDeleteCurrentLine
         JP      EditorKeyLoop
+
+EditorDispatchArrowUp:
+        LD      A,(EditorPendingModifier)
+        AND     TECM8_EDITOR_KEY_MOD_CTRL
+        JP      NZ,EditorKeyPageUp
+        JP      EditorKeyCursorUp
+
+EditorDispatchArrowDown:
+        LD      A,(EditorPendingModifier)
+        AND     TECM8_EDITOR_KEY_MOD_CTRL
+        JP      NZ,EditorKeyPageDown
+        JP      EditorKeyCursorDown
 
 EditorKeySave:
         LD      A,(EditorNavDirty)

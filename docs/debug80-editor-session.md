@@ -155,20 +155,12 @@ The runner verifies:
 
 The manual `4000h` entry now polls MON3 `matrixScan` through
 `BiosInputPollKey`. The editor consumes the translated key in `A` and modifier
-flags in `B`; raw `D/E` scan values remain available for diagnostics. Movement
-is represented inside the editor as named actions:
-
-```text
-page down
-page up
-cursor left
-cursor down
-cursor up
-cursor right
-```
+flags in `B`; raw `D/E` scan values remain available for diagnostics. The
+interaction loop dispatches physical matrix arrow bytes directly to cursor and
+page handlers.
 
 The current live path maps the TEC-1G matrix arrow codes directly onto cursor
-actions:
+movement:
 
 ```text
 03h / ArrowUp       cursor up

@@ -723,15 +723,14 @@ also separated.
 
 ### `src/editor-keymap.asm`
 
-`src/editor-keymap.asm` owns translated key normalization and modified-command
-lookup. It keeps alphabetic navigation out of the editor: movement comes from
-matrix arrow key bytes, while Ctrl-modified printable letters are mapped to
-editor commands before printable insertion.
+`src/editor-keymap.asm` owns modified-command lookup and modified-printable
+suppression. It keeps alphabetic navigation out of the editor: movement comes
+from matrix arrow key bytes dispatched directly by `src/editor-interaction.asm`,
+while Ctrl-modified printable letters are mapped to editor commands before
+printable insertion.
 
 The public entries are:
 
-- `EditorActionFromKey`: maps arrow keys, with Ctrl+ArrowUp and
-  Ctrl+ArrowDown converted to page actions.
 - `EditorModifiedCommandFromKey`: maps Ctrl-S, Ctrl-Q, Ctrl-Z, Ctrl-C,
   Ctrl-X, Ctrl-V, and Ctrl-Y into editor command bytes.
 - `EditorShouldIgnoreModifiedPrintable`: suppresses unknown Ctrl-modified
@@ -745,6 +744,12 @@ reports `Y` plus a Ctrl modifier instead of byte `0x19`. The `Ctrl-C` copy
 special case still sits outside the table because byte `0x03` also represents
 ArrowUp, so the keymap must inspect `BiosInputRawPrimary` before treating that
 control byte as a block-copy command.
+
+The former movement-action enum layer has been removed. The interaction loop
+now checks physical arrow bytes directly when not in insert mode: plain arrows
+dispatch to cursor movement, and Ctrl+Up/Ctrl+Down dispatch to page movement.
+This avoids decoding arrows into synthetic action IDs and then dispatching those
+IDs back to handlers.
 
 The keymap module still reads `EditorPendingChar` and `EditorPendingModifier`
 from the interaction state block. That keeps this checkpoint behavior-only and

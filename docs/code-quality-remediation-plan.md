@@ -467,9 +467,10 @@ Actions:
     routines now live in `src/editor-cursor.asm`; `src/editor-interaction.asm`
     still owns the shared editor constants and state bytes during the
     transition.
-  - Current checkpoint: key normalization, movement-action lookup, and
-    Ctrl-modified command lookup now live in `src/editor-keymap.asm`;
-    `src/editor-interaction.asm` still performs the command dispatch.
+  - Current checkpoint: Ctrl-modified command lookup and modified-printable
+    suppression live in `src/editor-keymap.asm`; physical-arrow movement now
+    dispatches directly in `src/editor-interaction.asm` without the former
+    movement-action enum layer.
   - Current checkpoint: status-line yes/no prompt handling now lives in
     `src/editor-prompt.asm`.
   - Current checkpoint: dirty render policy, cursor visibility checks, and
@@ -515,6 +516,14 @@ Actions:
   the live source build from 15,639 to 15,563 bytes, leaving 821 bytes free in
   the current 16K bank, and reduced `editor-interaction.asm` mapped coverage
   from 1,181 to 1,105 bytes.
+- Done: accept the second second-pass command/input slice. Normal and insert
+  edit-key routing now share `EditorKeyEditDispatch`, and the redundant
+  movement-action enum layer has been removed in favor of direct physical-arrow
+  dispatch in `src/editor-interaction.asm`. A generic pointer-table dispatch
+  was trialed and rejected because it added complexity for only one byte beyond
+  the routing merge. The accepted result reduced the live source build from
+  15,563 to 15,463 bytes, leaving 921 bytes free in the current 16K bank;
+  `src/editor-keymap.asm` mapped coverage fell from 141 to 87 bytes.
 - Keep public entry names stable where proofs or docs use them; add wrappers
   during transition rather than broad rename churn.
 
@@ -530,6 +539,8 @@ Done when:
   implementation slices and reject/accept thresholds.
 - Done: the first second-pass shared-tail implementation slice has been accepted
   with before/after byte counts.
+- Done: the second second-pass command/input implementation slice has been
+  accepted with before/after byte counts.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 

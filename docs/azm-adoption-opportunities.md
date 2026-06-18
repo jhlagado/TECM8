@@ -118,9 +118,8 @@ indexing should remain ordinary Z80 address arithmetic.
 Several constant families are really enumerations:
 
 - `SHELL_CMD_*`, `SHELL_ERR_*`, `SHELL_PROGRAM_*`, `SHELL_PROJECT_*`.
-- `TECM8_EDITOR_ACTION_*`.
 - editor prompt actions and prompt results.
-- pending block modes.
+- editor pending block modes.
 - `EDITOR_LOAD_ERR_*`.
 - `TECM8_DISPLAY_MARKER_*`.
 
