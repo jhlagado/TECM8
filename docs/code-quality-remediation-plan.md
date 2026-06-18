@@ -503,6 +503,12 @@ Actions:
   matrix-key guard explicit. This reduced the live source build from 16,317 to
   16,301 bytes, increased free 16K bank space from 67 to 83 bytes, and reduced
   `src/editor-keymap.asm` mapped coverage from 178 to 141 bytes.
+- Done: document the second-pass command/input architecture investigation in
+  `docs/editor-command-policy.md`. The current source build is 15,639 bytes,
+  leaving 745 bytes free. The investigation concludes that further tiny dispatch
+  tables are not worthwhile by themselves; the next compactness work should
+  centralize command-family policy, render/loop tails, prompt setup, and
+  normal/insert routing with a credible 400-800 byte near-term target.
 - Keep public entry names stable where proofs or docs use them; add wrappers
   during transition rather than broad rename churn.
 
@@ -514,6 +520,8 @@ Done when:
   counts.
 - Done: the table-driven modified-command dispatch pilot has been accepted with
   byte counts.
+- Done: the second-pass command/input architecture plan exists with measurable
+  implementation slices and reject/accept thresholds.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 

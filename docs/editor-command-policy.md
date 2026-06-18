@@ -193,12 +193,148 @@ Caution:
 
 ## Next Q5 Slice
 
-The next compaction slice should choose one of:
+The small table pilots are complete and should not be repeated as isolated
+byte-shaving work. They proved that the keymap can become more data-driven, but
+they also proved that single tiny dispatch tables are not enough: the accepted
+modified-command table saved only 16 bytes. The next Q5 work must be a larger
+architecture slice with a credible route to hundreds of bytes, and possibly
+more after render/navigation policy is simplified.
+
+### Second-Pass Architecture Investigation
+
+Baseline measured on 2026-06-18:
+
+```text
+npm run z80:size
+bytes: 15639
+remainingIn16KBank: 745
+editor-interaction mappedBytes: 1181
+editor-render mappedBytes: 589
+editor-keymap mappedBytes: 141
+editor-prompt mappedBytes: 147
+```
+
+The present command architecture has four separate layers:
+
+1. `EditorActionFromKey` turns physical arrows plus modifiers into six movement
+   actions.
+2. `EditorModifiedCommandFromKey` turns Ctrl-letter chords into editor command
+   bytes.
+3. `EditorKeyLoop` repeats normal-mode and insert-mode routing with many direct
+   comparisons.
+4. Handler bodies perform the edit/navigation work and then locally choose one
+   of several render/loop tails.
+
+This is easy to grow, but it is not compact. The cost is no longer mainly the
+letter-command lookup; it is the repeated control-flow shape in
+`src/editor-interaction.asm`:
+
+- prompt setup appears in restore, quit, and delete-block commands;
+- ordinary movement repeatedly clears selection, updates cursor state, renders,
+  and returns to the key loop;
+- selection movement repeats begin/update/render-marker tails;
+- mutation handlers repeatedly clear block state, call a mutation helper, test
+  whether anything changed, render dirty state, and return;
+- normal mode and insert mode duplicate printable/delete/backspace/newline
+  routing;
+- error handling has local branches for "ignore boundary" versus "show compact
+  error".
+
+The high-value redesign is therefore not "another jump table". It is a small
+command-state interpreter that separates command decoding from command effects:
+
+```text
+key event -> command id -> command descriptor -> shared executor family
+```
+
+The descriptor does not need to be a large C-style structure. It can be a compact
+byte stream or fixed byte table, for example:
+
+```text
+command id
+executor family
+operation id or helper address index
+render policy
+state policy flags
+prompt action/text id when needed
+```
+
+The first version should keep handler addresses for complex operations rather
+than forcing all commands into one generic interpreter. The space win comes from
+centralizing the repetitive policy around the handlers:
+
+- selection clearing before ordinary movement/editing,
+- block-state clearing before destructive edits,
+- "no change" handling after mutation helpers,
+- dirty/full-row/cell/cursor/render-marker tail selection,
+- prompt setup,
+- ignored boundary errors,
+- loop return.
+
+### Proposed Command Families
+
+| Family | Examples | Shared policy worth centralizing |
+| --- | --- | --- |
+| direct command | save, quit, restore, escape | clean command setup and loop return |
+| prompt command | restore, dirty quit, delete selected block | store prompt action, choose prompt text, render modal status |
+| cursor movement | left, right, up, down | optional selection clear, cursor previous state, cursor render policy |
+| page movement | Ctrl-Up, Ctrl-Down | dirty/window errors, cursor reset, viewport render/invalidate |
+| selection movement | Shift-Up/Down, Shift-Ctrl-Up/Down | anchor capture/restore, active range update, marker render |
+| mutation | insert, delete char, backspace, split, join, delete line, paste | clear block state, call mutation helper, no-change test, dirty render policy |
+| block command | copy, move, paste, delete selection | pending source mode, overlap/error policy, marker or dirty render |
+
+### Estimated Savings
+
+The realistic near-term target is not multiple kilobytes from key dispatch
+alone. `editor-interaction.asm` maps to about 1.2K, so even a strong rewrite of
+that module cannot save more than that module's live footprint. A credible Q5
+target is:
+
+- 150-250 bytes from shared prompt setup, render tails, and mutation tails.
+- 100-200 bytes from merging normal/insert routing around one command decoder.
+- 100-250 bytes from cursor/page/selection movement executor families.
+- 50-150 bytes from replacing compare/jump action dispatch with a descriptor or
+  pointer dispatch if the indexing code stays small.
+
+That gives a conservative near-term target of 400-800 bytes. Multi-K savings
+probably require a broader redesign that includes editor-navigation,
+editor-block, and display/render policy, not just command dispatch.
+
+### Implementation Slices
+
+Each slice must be measured independently. Reject a slice if it adds complexity
+without saving meaningful bytes or making the later interpreter slice clearly
+easier.
 
 1. one shared-tail pilot for two or more command handlers with identical
-   render/loop endings.
-2. a small action-dispatch experiment only if it can keep movement semantics
-   obvious and reduce bytes.
+   render/loop endings. Minimum useful saving: 40 bytes.
+2. extract prompt command setup into one helper taking prompt action and text
+   pointer. Minimum useful saving: 30 bytes, or keep only if it makes prompt
+   additions safer.
+3. merge normal-mode and insert-mode printable/delete/backspace/newline routing
+   so insert mode becomes a policy flag instead of a duplicate branch tree.
+   Minimum useful saving: 80 bytes.
+4. create a command-result convention for mutation helpers: A=0 for no change,
+   A!=0 for dirty, carry for error. Move dirty/cell/full-render decision into a
+   shared tail or tiny result table. Minimum useful saving: 100 bytes.
+5. replace `EditorDispatchAction` and `EditorDispatchModifiedCommand` with a
+   unified command-id dispatch only after the handler tails above are shared.
+   A jump table by itself is not enough.
+6. only after the above, consider a compact descriptor table that encodes command
+   family, state flags, and render policy. This is the first slice that could
+   justify a larger rewrite.
 
 Each slice should record before/after `npm run z80:size`, run targeted editor
 proofs, and reject the idea if the byte count or readability does not improve.
+
+### Guardrails
+
+- Do not reintroduce alphabetic navigation aliases. Movement remains arrow-key
+  based.
+- Keep Control as the command modifier. Alt parity has been retired.
+- Preserve the raw-key guard for Ctrl-C versus physical ArrowUp.
+- Keep public `@` labels stable unless a proof or caller is deliberately moved.
+- Keep AZM register contracts on public entries and use contract failures as a
+  design signal, not as noise to work around.
+- Treat the command descriptor format as ROM data. It must be readable in Z80
+  assembly and not require large general-purpose decoding machinery.
