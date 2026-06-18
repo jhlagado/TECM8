@@ -362,6 +362,16 @@ easier.
      handler-address dispatch. Candidate policy to encode: movement direction,
      selection behavior, boundary handling, render policy, and error handling.
      Minimum useful saving: 150 bytes for the first accepted prototype.
+   - Rejected 2026-06-18: a vertical movement state-policy prototype replaced
+     the direct Arrow Up/Arrow Down Ctrl checks with a shared
+     `EditorMovementPolicyDispatch` and one byte of direction state
+     (`0=up`, `1=down`). The focused interaction test passed, but
+     `npm run z80:size` grew from 15,463 to 15,481 bytes. This fails the
+     150-byte threshold and points to the real problem: the direct arrow
+     dispatch is already tiny, while the page/cursor/selection paths diverge in
+     boundary behavior, EOF/size error handling, anchor handling, and render
+     tails. Do not retry a movement-direction dispatcher unless it is part of a
+     larger rewrite that also removes those divergent policy bodies.
 
 Each slice should record before/after `npm run z80:size`, run targeted editor
 proofs, and reject the idea if the byte count or readability does not improve.
