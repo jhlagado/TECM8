@@ -9,18 +9,19 @@ improved without destabilizing that progress.
 
 ## Current Baseline
 
-- Z80 source size: 30 `.asm` modules, roughly 11,500 lines.
+- Z80 source size: 33 `.asm` modules, roughly 11,500 lines.
 - Largest files:
   - `src/editor-storage-loader.asm`: 1,463 lines.
   - `src/shell-resolver.asm`: command resolution and executor stubs.
   - `src/shell-program.asm`: prompt-loop and seeded input skeleton.
-  - `src/editor-navigation.asm`: 1,164 lines.
+  - `src/editor-navigation.asm`: 1,866 lines.
   - `src/glcd-tile.asm`: 1,008 lines.
-  - `src/editor-block.asm`: 760 lines.
-  - `src/editor-interaction.asm`: 741 lines.
-  - `src/editor-line-edit.asm`: 595 lines.
-- Current fresh source build: `npm run z80:size` reports 16,053 bytes emitted
-  at `4000h..7EB5h`, leaving 331 bytes before the `8000h` bank boundary. The
+  - `src/editor-block.asm`: 842 lines.
+  - `src/editor-interaction.asm`: 621 lines.
+  - `src/editor-line-edit.asm`: 602 lines.
+  - `src/editor-input.asm`: 130 lines.
+- Current fresh source build: `npm run z80:size` reports 15,493 bytes emitted
+  at `4000h..7C85h`, leaving 891 bytes before the `8000h` bank boundary. The
   checked-in `build/main.bin` artifact may be stale; use the size command for
   baselines.
 - Current product shape: Debug80-runnable editor at `0x4000`, launched under
@@ -420,7 +421,7 @@ Actions:
   target, while live smoke paths compile `src/main.asm`. At that checkpoint this
   reduced the live editor image to 14,477 bytes, leaving 1,907 bytes free in the
   current 16K bank; later editor work has raised the current source build to
-  16,053 bytes, leaving 331 bytes free.
+  15,493 bytes, leaving 891 bytes free.
 - Extract shared superblock validation, byte matching, prefix scan, catalog
   scan, allocation-chain follow, and file-relative sector read/write helpers.
 - Route `project-config-loader`, `editor-storage-loader`, and
@@ -457,7 +458,9 @@ Target ownership:
 - `src/editor-prompt.asm`: status-line prompts and modal yes/no handling.
 - `src/editor-render.asm`: dirty render policy that connects editor state to
   viewport/display scheduling.
-- `src/editor-interaction.asm`: orchestration glue and the live/script loops.
+- `src/editor-input.asm`: key-stream setup, one-shot modified-key ingestion,
+  live matrix-key polling, and input-local state bytes.
+- `src/editor-interaction.asm`: orchestration glue and command handlers.
 
 Actions:
 
@@ -484,6 +487,10 @@ Actions:
     source state now live in `src/editor-block-state.asm`; paste, replace, and
     delete live in `src/editor-block.asm`; selection marker projection scratch
     still lives in `src/editor-viewport.asm`.
+  - Current checkpoint: translated-key fixture setup, one-shot modified-key
+    ingestion, live matrix-key polling, and input-local state bytes now live in
+    `src/editor-input.asm`. `src/editor-interaction.asm` retains
+    `@EditorKeyLoop` and command handlers.
 - After movement is green, collapse duplicated cursor-reset and movement
   handler shapes into shared routines.
 - Done: move persistent selection and pending-source state out of viewport into
@@ -541,6 +548,13 @@ Done when:
   with before/after byte counts.
 - Done: the second second-pass command/input implementation slice has been
   accepted with before/after byte counts.
+- Done: the input-ownership slice has been accepted as an architectural split,
+  not a compaction win. It moves live/key-stream entry points and input-local
+  state to `src/editor-input.asm`; the live source build grew from 15,490 to
+  15,493 bytes because the former fall-through into `EditorKeyLoop` is now an
+  explicit cross-module jump. The tradeoff is accepted because it removes live
+  polling and fixture setup from the command monolith without changing editor
+  behavior.
 - `npm run check` passes after each sub-step.
 - Manual editor behavior is unchanged.
 
@@ -631,7 +645,7 @@ and list the exact manual keys to test.
 The Bank-Ready Editor V1 quality pass has reached its planned stopping point:
 proof-only script support is out of the live image, the shell/editor boundary is
 documented as a resident-to-banked-tool boundary, and the current source build
-has been remeasured at 16,053 bytes, leaving 331 bytes free in the 16K bank.
+has been remeasured at 15,493 bytes, leaving 891 bytes free in the 16K bank.
 
 The next practical goal should be chosen explicitly from the roadmap rather than
 continued automatically. The two strongest candidates are:

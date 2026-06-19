@@ -7,6 +7,12 @@ The current strategy is to keep classic MON3 identity first, then reclaim
 space from GLCD replacement, PATA removal while preserving SD access, RTC
 UI relocation, and optional text/extensions.
 
+Storage classifications marked `bios-keep` describe the current compatibility
+surface TECM8 calls today. They are not a final MON3-light fixed-ROM promise:
+the current direction is compact SD sector services resident, TEC-FS as the
+measured native file layer, and FAT32/file-sector compatibility in banked or
+host tooling unless later size work justifies keeping it resident.
+
 ## RST 18h API
 
 Selector register: `A`. Table symbol: `APITable2`.

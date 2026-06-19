@@ -916,6 +916,11 @@ Work:
 - Use the command-policy inventory to identify the next shared-policy or
   shared-tail refactor that is actually smaller or clearer; do not table-drive
   code by habit.
+- Done: split live/key-stream event ingestion into `src/editor-input.asm`.
+  `src/editor-interaction.asm` now keeps the command loop and handlers, while
+  input setup, live polling, and input-local state have their own module. The
+  measured cost is +3 bytes, accepted as architectural cleanup rather than a
+  compactness result.
 - Keep alphabetic keys out of navigation logic. Alphabetic keys are text or
   commands; navigation is by matrix arrow keys and modifiers only.
 - Measure `npm run z80:size` before and after each code slice.

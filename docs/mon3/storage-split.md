@@ -7,6 +7,12 @@ address ranges between known labels, so the numbers include code and data
 inside those ranges. The categories are planning aids for an SD-only TECM8
 profile, not linker-enforced boundaries.
 
+This report captures the current MON3 storage split. Its `keep` dispositions
+describe the compatibility surface TECM8 currently relies on, not the newer
+MON3-light storage target. The current MON3-light direction is compact SD sector
+I/O in fixed ROM, with TEC-FS as the native file layer if measured small enough;
+FAT32/file-sector code moves to compatibility or banked tooling.
+
 Measured storage module span: 2646 bytes (`0A56`).
 
 ## Category Split

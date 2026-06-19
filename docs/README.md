@@ -65,8 +65,12 @@ Start here:
 - [TypeScript Code Quality Report](typescript-code-quality.md)
 - [TECM8 BIOS API Draft](tecm8-bios-api.md)
 
-MON3 analysis is intentionally separated from the main TECM8 editor docs:
+MON3/MON3-light direction and analysis is intentionally separated from the main
+TECM8 editor docs:
 
+- [MON3-Light Platform Direction](mon3/mon3-light-platform-direction.md)
+- [TEC-FS Storage Direction](mon3/tec-fs-direction.md)
+- [MON3 Core And Auxiliary Services](mon3/core-and-auxiliary-services.md)
 - [MON3 Decomposition Plan](mon3/decomposition.md)
 - [MON3 Service Inventory](mon3/service-inventory.md)
 - [MON3 Storage Split Report](mon3/storage-split.md)

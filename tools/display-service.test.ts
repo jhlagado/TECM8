@@ -36,14 +36,16 @@ test('display service exposes editor-facing GLCD operations as contract wrappers
 
 test('editor modules call display through the TECM8 display service boundary', () => {
   const interaction = readRepoFile('src/editor-interaction.asm');
+  const input = readRepoFile('src/editor-input.asm');
   const cursor = readRepoFile('src/editor-cursor.asm');
   const render = readRepoFile('src/editor-render.asm');
   const viewport = readRepoFile('src/editor-viewport.asm');
   const navigation = readRepoFile('src/editor-navigation.asm');
   const block = readRepoFile('src/editor-block.asm');
 
-  assert.match(interaction, /EditorLiveIdle:\n\s+CALL\s+Tecm8DisplayStep/);
+  assert.match(input, /EditorLiveIdle:\n\s+CALL\s+Tecm8DisplayStep/);
   assert.doesNotMatch(interaction, /CALL\s+GlcdTileStep/);
+  assert.doesNotMatch(input, /CALL\s+GlcdTileStep/);
 
   assert.match(cursor, /CALL\s+Tecm8DisplayRenderCursorCell/);
   assert.match(cursor, /CALL\s+Tecm8DisplayEraseCursorCell/);

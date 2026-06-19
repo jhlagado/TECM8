@@ -376,6 +376,19 @@ easier.
 Each slice should record before/after `npm run z80:size`, run targeted editor
 proofs, and reject the idea if the byte count or readability does not improve.
 
+7. split live/key-stream input ownership out of `src/editor-interaction.asm`
+   after the command-tail work. This is not expected to save bytes by itself;
+   accept it only if it makes the next command executor rewrite safer by
+   separating event ingestion from command effects.
+   - Accepted 2026-06-19: `src/editor-input.asm` now owns `EditorRunKeys`,
+     `EditorRunModifiedKey`, `EditorRunLive`, the live polling loop, and
+     input-local state bytes. `src/editor-interaction.asm` keeps
+     `@EditorKeyLoop` and the command handlers. `npm run z80:size` grew from
+     15,490 to 15,493 bytes because the old fall-through into `EditorKeyLoop`
+     became an explicit `JP EditorKeyLoop` across the module boundary. The
+     3-byte cost is accepted as an ownership cleanup, not counted as a
+     compactness result.
+
 ### Guardrails
 
 - Do not reintroduce alphabetic navigation aliases. Movement remains arrow-key

@@ -81,7 +81,7 @@ BIOS.
 | Matrix keyboard scan and ASCII parsing | Device service | Keep | Primary TECM8 input path. |
 | GLCD low-level init, plot, text, drawing primitives | Extension/device service | Keep first, later replace selectively | GLCD is central to TECM8, but MON3's terminal architecture may be too RAM-heavy. |
 | Character LCD, seven-segment scan, hex keypad | Classic hardware surface | Keep as fallback/diagnostic | Lower priority than matrix keyboard and GLCD, but useful because the hardware is built in. |
-| SD/FAT32 file and sector access | Extension/device service | Keep and stabilize | TECM8 depends on SD-backed storage. |
+| SD storage access | Extension/device service | Keep SD sector I/O; move FAT32 to compatibility/banked tooling | TECM8 depends on SD-backed storage, but MON3-light should not make FAT32 the fixed-ROM default. |
 | PATA support | Legacy storage extension | Remove from TECM8 profile | PATA exists for older compatibility, not TECM8's main storage path. |
 | Serial bit-bang I/O | Device service | Keep | Host transfer/debug remains valuable. |
 | RTC | Extension/device service | Keep if compact or make optional | Useful, but not on the critical path for first TECM8. |
@@ -172,7 +172,9 @@ size wins and explicit replacement paths.
 
 The first stable BIOS vocabulary should focus on reusable hardware services:
 
-- Storage: SD init, FAT32 mount/open, sector read, sector write, close/error.
+- Storage: SD init, sector read/write, compact errors, and measured TEC-FS
+  helpers if they fit. FAT32 mount/open belongs in compatibility or banked
+  tooling unless later measurements prove it is the right fixed-ROM choice.
 - Input: matrix raw scan, modifier state, ASCII/key-code translation, wait key.
 - Display: GLCD init, clear, cursor, character/string output, plot/update, draw
   glyph/sprite, optional primitive drawing.
@@ -201,7 +203,8 @@ long-term shape:
   than treating the GLCD as a serial terminal with scrollback history.
 - Disassembler/debugger: keep the MON3 disassembler until TECM8 has a genuinely
   better source-aware debugger or disassembly view elsewhere.
-- Storage UI: keep SD/FAT32 primitives in BIOS, but move TM8 pack/unpack,
+- Storage UI: keep compact SD sector primitives in BIOS, add measured TEC-FS
+  helpers only if they fit, and move FAT32 compatibility, TM8 pack/unpack,
   project creation, import/export, and path policy above the BIOS.
 - Larger applications: assembler, debugger, BASIC, scripting, examples, and
   games should live in banked ROM, RAM overlays, or disk files rather than in

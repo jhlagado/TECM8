@@ -82,14 +82,17 @@ it roughly as:
 | --- | ---: | --- |
 | PATA-specific hardware path | 167 | Remove from the standard ROM. |
 | Shared block-device/error glue | 169 | Keep, but simplify around SD. |
-| FAT32/file-sector core | 867 | Keep if reliable and compact. |
+| FAT32/file-sector core | 867 | Move to compatibility/banked tooling; replace the fixed-ROM candidate with TEC-FS if measured smaller and reliable. |
 | Storage UI/load-save workflows | 853 | Move out of fixed ROM. |
 | SD/SPI hardware path | 367 | Keep and harden. |
 | Storage messages | 223 | Replace with compact error codes or move text out. |
 
 The important finding is that the PATA-only code is not the whole storage cost.
 PATA should still go from the standard ROM because it is the wrong default
-target, but the larger saving comes from removing storage UI, RAM
+target, and the FAT32-compatible path should not be treated as the fixed-ROM
+default. FAT32 can remain useful as compatibility tooling, but the resident
+storage candidate is compact SD sector I/O plus, if measured worthwhile, a
+small TEC-FS layer. The larger saving comes from removing storage UI, RAM
 backup/restore, Intel HEX storage workflows, and long human-facing messages.
 
 The fixed ROM should expose a clean SD service boundary:
@@ -99,17 +102,18 @@ The fixed ROM should expose a clean SD service boundary:
 - read a 512-byte sector
 - write a 512-byte sector
 - return compact error codes
-- optionally mount/open a file and read/write file-relative sectors
+- optionally mount/open TEC-FS files and read/write file-relative sectors
 
-The file-system choice can then be made above that boundary. FAT compatibility
-is still attractive because a card can be read on ordinary computers. However,
-FAT should not force the monitor to carry bulky workflows that are better
-implemented as external tools.
+The file-system choice can then be made above that boundary. TEC-FS is the
+planned replacement for the current FAT32-compatible MON3 storage code and the
+PATA path. It trades host FAT compatibility for a much simpler TEC-specific
+layout: fixed file slots, compact FCBs, memory-block save/load semantics, and
+small code paths suitable for the machine.
 
-If Craig's SD code has a better sector model or simpler write path, it is worth
-reviewing and potentially finishing. The target should be reliable random
-sector read/write first. File systems and user-facing file tools can sit above
-that.
+Craig's original SD code and the later `sd_api`/TEC-FS work are worth reviewing
+as the replacement storage base. The target should be reliable random sector
+read/write first, then TEC-FS file operations above that. User-facing file
+tools can sit above the fixed-ROM service boundary.
 
 ## PATA
 
@@ -182,7 +186,7 @@ Tiny BASIC would benefit from resident services such as:
 - cursor and clear-screen services
 - numeric formatting/parsing helpers
 - simple serial I/O
-- SD sector or file-sector access
+- SD sector or TEC-FS file access
 - compact error reporting
 - optional sound/timing calls
 
@@ -264,7 +268,7 @@ A focused MON3 ROM could look like this:
 3. Keyboard, LCD, seven-segment, serial, timing, sound, and formatting services.
 4. System latch and bank state services.
 5. SD sector read/write and compact storage errors.
-6. Optional compact FAT/file-sector service if it can be made reliable.
+6. Optional compact TEC-FS file-sector service if it can be made reliable.
 7. Generic display service calls for text/video output.
 8. Minimal fallback display driver.
 9. Disassembler retained unless measured pressure forces a second pass.
@@ -285,7 +289,7 @@ optional build modules:
 | Full GLCD drawing library | Useful, but not always needed resident. |
 | VDU driver | Hardware-specific display driver behind generic display calls. |
 | Rich font libraries | Useful to applications, expensive in fixed ROM. |
-| Storage file browser/load UI | User workflow above the storage service layer. |
+| Storage file browser/load UI | User workflow above the SD/TEC-FS service layer. |
 | Intel HEX load workflow | Legacy transfer path; useful as a tool, not necessarily resident. |
 | RTC setup and PRAM viewer | Interactive application, not core time service. |
 | Help text and demos | Better as documentation, disk files, or extension tools. |
@@ -300,7 +304,7 @@ Before changing the ROM, these should be measured from a buildable source tree:
 - exact ROM bytes saved by moving GLCD terminal scrollback out
 - exact ROM bytes needed for minimal text/video service vectors
 - exact ROM bytes needed for a compact SD sector read/write API
-- exact ROM bytes needed for FAT-compatible file-sector access
+- exact ROM bytes needed for TEC-FS file-sector access
 - exact ROM bytes saved by moving RTC UI out
 - exact ROM bytes saved by replacing storage text with compact error codes
 - exact ROM budget required by Tiny BASIC and its required service calls
@@ -309,4 +313,3 @@ The first practical build target should be an SD-only MON3 profile with PATA
 removed, storage UI separated from storage services, and the GLCD banner moved
 out. That gives a measured base before deciding whether GLCD terminal code,
 RTC UI, or the disassembler must also move.
-

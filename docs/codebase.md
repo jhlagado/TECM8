@@ -74,8 +74,8 @@ For the fastest orientation, read these files first:
     `src/editor-block-state.asm`, `src/editor-viewport.asm`,
     `src/editor-record.asm`, `src/editor-line-edit.asm`, `src/editor-block.asm`,
     `src/editor-keymap.asm`, `src/editor-cursor.asm`, `src/editor-prompt.asm`,
-    `src/editor-render.asm`, and `src/editor-interaction.asm`: the current editor
-    path.
+    `src/editor-render.asm`, `src/editor-input.asm`, and
+    `src/editor-interaction.asm`: the current editor path.
 20. `proofs/display/glcd-tile-proof.asm`,
     `proofs/display/editor-selection-proof.asm`,
     `proofs/display/editor-line-editing-proof.asm`,
@@ -778,16 +778,18 @@ contract. `src/editor-keymap.asm` no longer owns movement decoding or synthetic
 action IDs, so the file stays focused on command normalization while
 `src/editor-interaction.asm` handles direct arrow dispatch.
 
-The keymap module still reads `EditorPendingChar` and `EditorPendingModifier`
-from the interaction state block. That keeps this checkpoint behavior-only and
-avoids moving shared state before the block, prompt, and line-edit modules have
-their own ownership boundaries. The source-level contract is pinned by
-`tools/editor-interaction.test.ts`, and the live editor acceptance proofs now
-include `src/editor-interaction.asm`, then `src/editor-record.asm`, then
-`src/editor-line-edit.asm`, then `src/editor-block.asm`, then
-`src/editor-keymap.asm`, then `src/editor-cursor.asm`, then
-`src/editor-prompt.asm`, then `src/editor-render.asm`, so the storage-backed
-editor runners exercise the same normalized command path as the real session
+The keymap module still reads `EditorPendingChar` and `EditorPendingModifier`,
+but those input-event bytes now live with the key-stream and live-polling entry
+points in `src/editor-input.asm`. `src/editor-interaction.asm` owns the command
+loop and handlers that consume that state. The source-level contract is pinned
+by `tools/editor-interaction.test.ts` and `tools/editor-input.test.ts`, and the
+live editor acceptance proofs now include `src/editor-interaction.asm`, then
+`src/editor-input.asm` through the nested include at the end of the interaction
+module, then `src/editor-record.asm`, then `src/editor-line-edit.asm`, then
+`src/editor-block.asm`, then `src/editor-keymap.asm`, then
+`src/editor-cursor.asm`, then `src/editor-prompt.asm`, then
+`src/editor-render.asm`, so the storage-backed editor runners exercise the same
+normalized command path as the real session
 target.
 
 ### `src/editor-prompt.asm`
@@ -887,9 +889,10 @@ that answers visible-row marker queries.
 
 ### `src/editor-interaction.asm`
 
-This is the early editor interaction loop. It supports both a NUL-terminated
-translated-key fixture runner and the live matrix-key path that polls MON3
-through `BiosInputPollKey`. In command mode:
+This is the editor command orchestration loop. It receives prepared key events
+from `src/editor-input.asm`, dispatches editor commands, calls the cursor,
+line-edit, block-edit, prompt, navigation, and render helpers, and returns to the
+input loop after each completed event. In command mode:
 
 - matrix arrows move the cursor
 - plain ArrowDown/ArrowUp cross the resident adjacent source-sector boundary,
@@ -918,16 +921,24 @@ through `BiosInputPollKey`. In command mode:
 - delete removes the character at the cursor, or prompts before deleting a
   selected whole-line block
 
-The editor interface now exposes the translated-key fixture runner and the live
-polling loop from `src/editor-interaction.asm`, plus primitive line-edit entries
-from `src/editor-line-edit.asm`:
+The public input interface now comes from `src/editor-input.asm`, while
+primitive line-edit entries come from `src/editor-line-edit.asm`:
 
 - `EditorRunLive`
+- `EditorRunKeys`
+- `EditorRunModifiedKey`
 - `EditorInsertChar`
 - `EditorBackspaceChar`
 - `EditorDeleteChar`
 - `EditorSplitLine`
 - `EditorJoinPreviousLine`
+
+`src/editor-input.asm` owns the NUL-terminated fixture-stream runner, one-shot
+modified-key ingestion used by tests, the live matrix-key polling loop, and the
+small input state bytes such as `EditorKeyStreamPtr`,
+`EditorKeyStreamModifier`, `EditorPendingModifier`, `EditorPendingChar`,
+`EditorInsertMode`, and `EditorQuitRequested`. `src/editor-interaction.asm`
+still owns `@EditorKeyLoop` and the command handlers.
 
 The editing operations mutate `EditorNavPageBuffer` in memory and then rerender
 the current page buffer. The implementation respects 32-byte source records and

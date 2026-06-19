@@ -2,7 +2,7 @@
 
 **Purpose:** Actionable plan for a coding agent to improve compactness, structure, and coherence without breaking the proof-driven editor milestone.
 
-**Scope:** 30 assembly modules under `src/` (~11,500 lines), 30+ display proofs, TypeScript harness. Full editor binary (`src/main.asm`) currently assembles to **16,053 bytes** at `4000h..7EB5h`, leaving **331 bytes** in the 16 KiB bank.
+**Scope:** 33 assembly modules under `src/` (~11,500 lines), 30+ display proofs, TypeScript harness. Full editor binary (`src/main.asm`) currently assembles to **15,493 bytes** at `4000h..7C85h`, leaving **891 bytes** in the 16 KiB bank.
 
 **Date:** June 2026 (post editor milestone / block-editing V1 automation)
 
@@ -16,7 +16,7 @@ The main problem is **incremental growth without consolidation**. Features lande
 
 | Symptom | Primary location |
 |--------|-------------------|
-| One file doing too much | `editor-interaction.asm` (741 lines after keymap/cursor/prompt/render/record/line-edit/block extraction) |
+| One file doing too much | `editor-interaction.asm` (621 lines after keymap/cursor/prompt/render/record/line-edit/block/input extraction) |
 | Copy-pasted TM8 I/O | `editor-storage-loader.asm` |
 | Parallel constant namespaces | `display-model.asm`, `glcd-tile.asm`, `editor-viewport.asm`, `editor-interaction.asm` |
 | Legacy state kept for compatibility | `EditorNavDirty` vs `EditorNavDirtySectors` |
@@ -71,7 +71,7 @@ These are strengths to preserve through refactoring:
                                               └───────────────┘
 ```
 
-**Include order in proofs and `main.asm`:** glcd-tile → display-model → editor-block-state → editor-viewport → editor-storage-loader → editor-navigation → editor-interaction → editor-record → editor-line-edit → editor-block → editor-keymap → editor-cursor → editor-prompt → editor-render → shell-* → tecm8-bios. This order is consistent across ~25 proofs but **always pulls the full stack**, even for proofs that only need viewport rendering.
+**Include order in proofs and `main.asm`:** glcd-tile → display-model → editor-block-state → editor-viewport → editor-storage-loader → editor-navigation → tecm8-record → editor-interaction (which includes editor-input at its end) → editor-record → editor-line-edit → editor-block → editor-keymap → editor-cursor → editor-prompt → editor-render → shell-* → tecm8-bios. This order is consistent across ~25 proofs but **always pulls the full stack**, even for proofs that only need viewport rendering.
 
 ---
 
@@ -79,7 +79,7 @@ These are strengths to preserve through refactoring:
 
 ### 1. `editor-interaction.asm` is a monolith (highest priority)
 
-**741 lines, now mostly orchestration but still carrying shared constants/state:**
+**621 lines, now mostly orchestration but still carrying shared constants and command handlers:**
 
 | Approx. lines | Concern |
 |---------------|---------|
@@ -90,8 +90,9 @@ These are strengths to preserve through refactoring:
 | Extracted | Editor-facing record helpers and line scratch now live in `editor-record.asm` |
 | Extracted | Character insert/delete, split, join, row-15 growth, and cross-page join now live in `editor-line-edit.asm` |
 | Extracted | Block selection, pending copy/move, paste, replace, and delete now live in `editor-block.asm` |
-| ~55–675 | Key dispatch (`EditorRunKeys`, `EditorRunLive`, handlers) |
-| ~677–747 | Remaining shared state and prompt/status strings |
+| Extracted | Key-stream setup, one-shot modified-key ingestion, live polling, and input-local state now live in `editor-input.asm` |
+| ~55–565 | Command loop, command dispatch, and handlers |
+| ~567–621 | Remaining cursor/prompt/status state and strings |
 
 This is the single largest barrier to review, banking, and compactness. A Z80 editor **should** have a key loop module, but not one that also owns TM8 record algebra, block editing, cursor rendering, and GLCD dirty scheduling.
 
@@ -167,7 +168,7 @@ The scripted Debug80 editor session has also moved to
 `editor-session-script.main.asm`, with `shell-editor-session.asm` holding the
 proof-only key-stream helper.
 
-Current result: `npm run z80:size` reports 16,053 bytes, leaving 331 bytes free
+Current result: `npm run z80:size` reports 15,493 bytes, leaving 891 bytes free
 in the current 16K bank.
 
 ### 9. Stale documentation describing superseded behavior
