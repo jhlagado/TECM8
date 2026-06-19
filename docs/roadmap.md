@@ -21,18 +21,23 @@ backlog.
 
 Next agent-owned phase:
 
-1. Continue the code-quality compactness plan with **Q5: Editor Interaction
+1. Execute **DS1: GLCD Display Service Facade**, using
+   `docs/display-service-extraction.md` as the service-boundary plan. The goal
+   is to make the editor call a display-service surface for cursor overlay and
+   dirty-step work without changing GLCD behavior, then measure whether aliases,
+   `JP` tails, or wrappers are the right zero/low-cost boundary.
+2. Continue the code-quality compactness plan with **Q5: Editor Interaction
    Decomposition**, because Q3/Q4 helper extraction has already been executed
    through the narrow TM8/storage helpers now documented in the quality plan.
-2. Execute the second-pass command/input architecture plan in
+3. Execute the second-pass command/input architecture plan in
    `docs/editor-command-policy.md`: centralize command-family policy,
    render/loop tails, prompt setup, and normal/insert routing only in measured
    slices with meaningful byte-saving thresholds. Do not continue with isolated
    tiny dispatch-table experiments unless they are part of that larger shape.
-3. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
+4. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
    compatibility wrappers, then run Q6/Q7 acceptance only if the code still
    differs from the documented bank-ready boundary.
-4. After the quality pass is complete, return to user-visible editor features:
+5. After the quality pass is complete, return to user-visible editor features:
    named block read/write, shell completion, then assembler integration.
 
 Human validation remains useful feedback, but it is not a numbered roadmap item
@@ -814,7 +819,8 @@ than an editor-private dependency on MON3's GLCD terminal assumptions.
 
 Status: complete as a design/documentation boundary. Implementation extraction
 belongs to a later measured GLCD/backend refactor after the compactness pass,
-not to this completed roadmap phase.
+not to this completed roadmap phase. The concrete extraction sequence now lives
+in `docs/display-service-extraction.md`.
 
 Work:
 
@@ -842,6 +848,9 @@ Done when:
   the boundary.
 - Done: the next GLCD refactor has a clear target: move reusable backend services
   without pulling editor state into the BIOS layer.
+- Done: `docs/display-service-extraction.md` estimates current display burden,
+  identifies MON3 font/data already resident in ROM, and defines DS1 as the
+  first agent-executable implementation slice.
 
 ## Phase 14: Debug80 Editor Completion Milestone
 
@@ -1074,5 +1083,6 @@ These are useful manual checks but are not numbered agent phases:
   preferred cursor shape, or whether to return to a block cursor.
 - Revisit MON3-to-BIOS reductions after the editor and resident shell boundaries
   are tighter.
-- Revisit GLCD backend extraction after Q5/Q6 compactness work has made the
-  current renderer boundary cheaper to reason about.
+- Implement DS1 from `docs/display-service-extraction.md`: introduce the
+  display-service facade without changing current GLCD behavior, then measure
+  the wrapper/alias cost before moving any backend-owned state.

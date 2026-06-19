@@ -58,6 +58,7 @@ Start here:
 - [Editor Command Policy And Compaction Inventory](editor-command-policy.md)
 - [Editor Rolling Source Window](editor-rolling-window.md)
 - [Editor Block Operations](block-operations.md)
+- [Display Service Extraction Plan](display-service-extraction.md)
 - [Debug80 Editor Session](debug80-editor-session.md)
 - [Memory and Code Quality Manifest](memory-and-code-quality.md)
 - [Code Quality Execution Plan](code-quality-remediation-plan.md)

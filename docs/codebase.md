@@ -1277,6 +1277,8 @@ toward.
 - `docs/editor-design.md`: GLCD editor model and source records.
 - `docs/editor-command-policy.md`: current editor command surface,
   normalization rules, and measured command compaction inventory.
+- `docs/display-service-extraction.md`: measured plan for moving reusable GLCD
+  display code below the editor into a TECM8 display-service boundary.
 - `docs/memory-and-code-quality.md`: memory map, RAM pressure, resident versus
   overlay code, and compactness principles.
 - `docs/azm-style-guide.md`: assembly style and routine contract conventions.
