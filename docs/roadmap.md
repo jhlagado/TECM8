@@ -14,30 +14,25 @@ minor versions for larger user-visible TECM8 editor/shell/tool increments.
 ## Current Agent Roadmap Focus: Code Quality And Compactness
 
 The Debug80-testable editor milestone, Display Performance Phase 7, the
-display BIOS/profile boundary, the first bank-readiness/code-quality pass, and
-Block Editing V1 automation have been reached. Earlier numbered editor phases
-are closed unless they explicitly list a deferred follow-up in the future
-backlog.
+display BIOS/profile boundary, the DS1 display-service facade, the first
+bank-readiness/code-quality pass, and Block Editing V1 automation have been
+reached. Earlier numbered editor phases are closed unless they explicitly list a
+deferred follow-up in the future backlog.
 
 Next agent-owned phase:
 
-1. Execute **DS1: GLCD Display Service Facade**, using
-   `docs/display-service-extraction.md` as the service-boundary plan. The goal
-   is to make the editor call a display-service surface for cursor overlay and
-   dirty-step work without changing GLCD behavior, then measure whether aliases,
-   `JP` tails, or wrappers are the right zero/low-cost boundary.
-2. Continue the code-quality compactness plan with **Q5: Editor Interaction
+1. Continue the code-quality compactness plan with **Q5: Editor Interaction
    Decomposition**, because Q3/Q4 helper extraction has already been executed
    through the narrow TM8/storage helpers now documented in the quality plan.
-3. Execute the second-pass command/input architecture plan in
+2. Execute the second-pass command/input architecture plan in
    `docs/editor-command-policy.md`: centralize command-family policy,
    render/loop tails, prompt setup, and normal/insert routing only in measured
    slices with meaningful byte-saving thresholds. Do not continue with isolated
    tiny dispatch-table experiments unless they are part of that larger shape.
-4. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
+3. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
    compatibility wrappers, then run Q6/Q7 acceptance only if the code still
    differs from the documented bank-ready boundary.
-5. After the quality pass is complete, return to user-visible editor features:
+4. After the quality pass is complete, return to user-visible editor features:
    named block read/write, shell completion, then assembler integration.
 
 Human validation remains useful feedback, but it is not a numbered roadmap item
@@ -155,6 +150,11 @@ as Q2A in `docs/code-quality-remediation-plan.md`.
 - `BiosInputPollKey` exposes translated key codes, modifier flags, and raw
   matrix scan diagnostics so the Debug80 editor can be driven from real matrix
   arrow keys and modifier chords.
+- Editor modules now call display through `src/tecm8-display-service.asm` for
+  cursor overlay, dirty marking, row/full flush, line rendering, and cooperative
+  display stepping. The facade is implemented as contract-preserving `JP`
+  wrappers after a zero-byte `.equ` alias experiment failed AZM register
+  contract checking; the measured image cost is 27 bytes.
 - A TECM8-owned GLCD tile-cell layer exists for 6x6 text cells. Structured
   screen text rendering now writes through tile primitives rather than MON3's
   terminal character drawing routine.
@@ -543,9 +543,10 @@ Work:
   prepares one dirty editor row, and `GlcdTileStep` transfers one physical
   16-byte GLCD row per call, returning whether more display work remains.
   `GlcdTileFlushRow` remains a synchronous compatibility wrapper that queues and
-  drains all six steps. The live editor idle path now calls `GlcdTileStep`, so
-  later non-blocking render paths have a place to advance pending display work
-  between keyboard polls.
+  drains all six steps. The live editor idle path now calls
+  `Tecm8DisplayStep`, currently wrapping `GlcdTileStep`, so later non-blocking
+  render paths have a place to advance pending display work between keyboard
+  polls.
 - Done: moved the first real editor paths onto cooperative dirty-row scheduling.
   `GlcdTileMarkRowDirty` records dirty text rows in a small row mask, and
   `GlcdTileStep` starts the next marked row when no row transfer is already
@@ -562,7 +563,7 @@ Work:
   word-aligned gutter byte pair for each affected row. The dirty-render proof
   now requires ordinary cursor movement to use zero full row flushes.
 - Done: added cooperative cursor blink. The live idle path runs one
-  `GlcdTileStep` first and advances `EditorCursorBlinkStep` only when no
+  `Tecm8DisplayStep` first and advances `EditorCursorBlinkStep` only when no
   queued display work remains; when the blink countdown is due it hides or
   restores the XOR insertion cursor through the existing dirty cell byte-range
   path, without viewport, row, or gutter redraws.
@@ -598,8 +599,8 @@ Work:
   cell counts for scrolling paths as well as physical GLCD byte-transfer counts.
 - Done: interleave matrix keyboard polling between display-update slices. The
   live loop polls input first, handles a key if one is pending, and only uses
-  idle time to run one `GlcdTileStep`, so user input does not wait behind a full
-  row or viewport update.
+  idle time to run one `Tecm8DisplayStep`, currently wrapping `GlcdTileStep`,
+  so user input does not wait behind a full row or viewport update.
 - Keep the display/input scheduler shaped around:
 
   ```text
@@ -632,7 +633,8 @@ Incremental implementation order:
 2. Done: introduce dirty row scheduling while still flushing through MON3.
 3. Done: replace MON3-backed row flushes with a TECM8-owned row-range GLCD
    flush backend.
-4. Done: introduce `GlcdTileStep` and call it from live editor idle.
+4. Done: introduce `GlcdTileStep` and route live editor idle through
+   `Tecm8DisplayStep`.
 5. Done: add a dirty-row mask and use it for current-line edits and block
    marker movement.
 6. Done: add dirty cell ranges for horizontal movement and edit cursor overlays.
@@ -1083,6 +1085,3 @@ These are useful manual checks but are not numbered agent phases:
   preferred cursor shape, or whether to return to a block cursor.
 - Revisit MON3-to-BIOS reductions after the editor and resident shell boundaries
   are tighter.
-- Implement DS1 from `docs/display-service-extraction.md`: introduce the
-  display-service facade without changing current GLCD behavior, then measure
-  the wrapper/alias cost before moving any backend-owned state.

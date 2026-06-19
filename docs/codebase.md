@@ -66,9 +66,10 @@ For the fastest orientation, read these files first:
     the complete shell.
 17. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
    editor.
-18. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, and
-    `src/display-model.asm`: the current direct GLCD cell layer, optional row
-    convenience wrappers, and the structured screen renderer built on top.
+18. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, `src/display-model.asm`, and
+    `src/tecm8-display-service.asm`: the current direct GLCD cell layer,
+    optional row convenience wrappers, the structured screen renderer built on
+    top, and the editor-facing display service facade.
 19. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
     `src/editor-block-state.asm`, `src/editor-viewport.asm`,
     `src/editor-record.asm`, `src/editor-line-edit.asm`, `src/editor-block.asm`,
@@ -416,6 +417,31 @@ pending move source draws the sawtooth edge. The viewport composes those marker
 bits for every visible row and the interaction layer updates them as cursor
 movement, selection movement, and pending source state change.
 
+### `src/tecm8-display-service.asm`
+
+This is the editor-facing display service facade. It deliberately sits between
+the editor modules and the current GLCD/display-model implementation, so future
+work can move display scheduling, cursor overlay, or backend selection without
+renaming every editor call site again.
+
+The current implementation is a set of tiny AZM-contract-preserving tail-call
+wrappers:
+
+- `Tecm8DisplayStep`
+- `Tecm8DisplayMarkRowDirty`
+- `Tecm8DisplayMarkCellDirty`
+- `Tecm8DisplayMarkGutterDirty`
+- `Tecm8DisplayFlushFull`
+- `Tecm8DisplayFlushRow`
+- `Tecm8DisplayRenderLine`
+- `Tecm8DisplayRenderCursorCell`
+- `Tecm8DisplayEraseCursorCell`
+
+These wrappers cost 27 bytes in the editor image: one `JP` for each service
+entry. A zero-byte `.equ` alias facade was rejected because AZM register
+contracts cannot currently prove calls through those aliases. The wrapper cost
+is small enough to keep while preserving contract-driven assembly.
+
 ### `src/glcd-tile.asm`
 
 This is the direct GLCD tile-cell layer under the structured renderer. It
@@ -468,9 +494,9 @@ next marked row when no transfer is pending, then transfers one physical GLCD
 row per call. `GlcdTileFlushRow` is kept as the synchronous compatibility
 wrapper: it first drains any already pending cooperative work, then queues the
 requested row and drains all six steps before returning. The live editor idle
-loop calls `GlcdTileStep`, so current-line edits and block-marker changes can
-schedule GLCD work and return to matrix keyboard polling while the display
-drains in bounded slices.
+loop calls `Tecm8DisplayStep`, currently wrapping `GlcdTileStep`, so
+current-line edits and block-marker changes can schedule GLCD work and return
+to matrix keyboard polling while the display drains in bounded slices.
 
 When repeated vertical movement arrives before pending row work drains, the
 dirty mask coalesces the requests. Intermediate viewport states may rebuild
@@ -525,8 +551,8 @@ starts at `EditorViewportTopRow`, copies ten visible records into
 NUL-terminated row buffers, masks each record length to the low five bits, then
 calls `DisplayRenderScreen`.
 `EditorViewportRenderRecordRow` performs the same record-to-row conversion for
-one visible row and calls `DisplayRenderLine`, which is the dirty-rendering path
-used by ordinary in-line editor mutations.
+one visible row and calls `Tecm8DisplayRenderLine`, which is the dirty-rendering
+path used by ordinary in-line editor mutations.
 
 The viewport also tracks row text extents for display scheduling. When it copies
 each visible source record, it records the new visible text length and the
@@ -709,8 +735,8 @@ the interaction monolith:
 The cursor is a one-pixel XOR insertion bar drawn one pixel before the active
 6x6 cell, with a cooperative blink state.
 `EditorCursorBlinkReset` arms a 16-bit idle countdown after key handling
-renders the cursor. The live idle path first runs one `GlcdTileStep`; only when
-that reports no remaining queued display work does it call
+renders the cursor. The live idle path first runs one `Tecm8DisplayStep`; only
+when that reports no remaining queued display work does it call
 `EditorCursorBlinkStep`. When the countdown expires, blink hides or restores
 the cursor through the same dirty cell byte-range path used by ordinary cursor
 movement. The countdown is intentionally long enough to avoid the cursor
@@ -786,7 +812,7 @@ deletion is dispatched to `src/editor-block.asm`.
 ### `src/editor-render.asm`
 
 `src/editor-render.asm` owns the dirty render policy between editor state and
-the direct GLCD tile layer. It contains:
+the display service facade. It contains:
 
 - `EditorKeyRenderDirty`, which marks the current sector dirty, hides the cursor,
   keeps row/column viewports in range, and rerenders the page buffer.

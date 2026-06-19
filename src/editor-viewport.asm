@@ -124,7 +124,7 @@ EditorViewportMixedDone:
         LD      HL,(EditorTextPtr)
         LD      DE,0 - TECM8_EDITOR_ROW_TEXT_BYTES
         ADD     HL,DE
-        CALL    DisplayRenderLine
+        CALL    Tecm8DisplayRenderLine
         RET
 
 ; EditorViewportRenderRowMarker -
@@ -550,10 +550,10 @@ EditorViewportRowError:
         LD      HL,(EditorPromptTextPtr)
         LD      A,TECM8_DISPLAY_STATUS_ROW
         LD      C,TECM8_DISPLAY_MARKER_NONE
-        CALL    DisplayRenderLine
+        CALL    Tecm8DisplayRenderLine
         RET     C
         LD      A,TECM8_DISPLAY_STATUS_ROW
-        CALL    GlcdTileFlushRow
+        CALL    Tecm8DisplayFlushRow
         RET
 
 ; EditorViewportRestoreStatusRow -
@@ -566,10 +566,10 @@ EditorViewportRowError:
         CALL    EditorViewportMarkerForRow
         LD      HL,EditorRowText9
         LD      A,TECM8_DISPLAY_STATUS_ROW
-        CALL    DisplayRenderLine
+        CALL    Tecm8DisplayRenderLine
         RET     C
         LD      A,TECM8_DISPLAY_STATUS_ROW
-        CALL    GlcdTileFlushRow
+        CALL    Tecm8DisplayFlushRow
         RET
 
 ; EditorViewportCopyRecord -
@@ -680,7 +680,7 @@ EditorViewportRecordTextExtentUseNew:
 ;! clobbers sign,parity,halfCarry,BC,DE,HL
 @EditorViewportMarkDirtySpan:
         LD      (EditorViewportDirtySpanRow),A
-        CALL    GlcdTileMarkGutterDirty
+        CALL    Tecm8DisplayMarkGutterDirty
         RET     C
         LD      A,(EditorViewportDirtySpanRow)
         LD      E,A
@@ -694,7 +694,7 @@ EditorViewportRecordTextExtentUseNew:
         LD      C,A
         LD      A,(EditorViewportDirtySpanRow)
         LD      B,A
-        CALL    GlcdTileMarkCellDirty
+        CALL    Tecm8DisplayMarkCellDirty
         RET
 
 EditorScreenDescriptor:

@@ -34,7 +34,7 @@
         CALL    EditorViewportRenderRecordRow
         RET     C
         LD      A,(EditorCursorVisibleRow)
-        CALL    GlcdTileMarkRowDirty
+        CALL    Tecm8DisplayMarkRowDirty
         RET     C
         XOR     A
         RET
@@ -107,7 +107,7 @@ EditorKeyRenderCurrentLineCellsEndReady:
         LD      B,A
         LD      A,(EditorLineDirtyVisibleStart)
         LD      C,A
-        CALL    GlcdTileMarkCellDirty
+        CALL    Tecm8DisplayMarkCellDirty
         RET     C
         LD      A,(EditorLineDirtyVisibleEnd)
         LD      C,A
@@ -118,7 +118,7 @@ EditorKeyRenderCurrentLineCellsEndReady:
         LD      B,A
         LD      A,(EditorLineDirtyVisibleEnd)
         LD      C,A
-        CALL    GlcdTileMarkCellDirty
+        CALL    Tecm8DisplayMarkCellDirty
         RET     C
 
 EditorKeyRenderCurrentLineCellsDone:
@@ -164,11 +164,11 @@ EditorKeyRenderCursorNewOnly:
         LD      A,(EditorCursorPreviousVisibleRow)
         CP      0xFF
         JR      Z,EditorKeyRenderCursorFlushCurrent
-        CALL    GlcdTileMarkGutterDirty
+        CALL    Tecm8DisplayMarkGutterDirty
         RET     C
 EditorKeyRenderCursorFlushCurrent:
         LD      A,(EditorCursorVisibleRow)
-        CALL    GlcdTileMarkGutterDirty
+        CALL    Tecm8DisplayMarkGutterDirty
         RET     C
         XOR     A
         RET

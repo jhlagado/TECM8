@@ -129,7 +129,7 @@ test('editor navigation commits page movement only after successful render', () 
   assert.match(source, /CALL\s+Tecm8StringCopyNulBounded/);
   assert.match(readRepoFile('src/tecm8-string.asm'), /^@Tecm8StringCopyNulBounded:/m);
   assert.match(source, /CALL\s+EditorViewportRender/);
-  assert.match(source, /CALL\s+GlcdTileFlushFull/);
+  assert.match(source, /CALL\s+Tecm8DisplayFlushFull/);
   assert.match(source, /@EditorRenderPageBufferDirtyRows:/);
   assert.match(source, /EditorRenderPageBufferDirtyRowsQueue:\n\s+JP\s+EditorMarkViewportRowsDirty/);
   assert.match(source, /@EditorMarkViewportRowsDirty:[\s\S]*?CALL\s+EditorViewportMarkDirtySpan/);

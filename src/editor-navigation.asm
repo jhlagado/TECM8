@@ -123,7 +123,7 @@ EditorRenderCurrentSlot3Error:
         RET     C
 
 EditorRenderPageBufferFlush:
-        CALL    GlcdTileFlushFull
+        CALL    Tecm8DisplayFlushFull
         RET
 
 ; EditorRenderPageBufferDirtyRows -

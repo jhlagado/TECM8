@@ -77,8 +77,8 @@ test('editor viewport module exposes a source-record render entry point', () => 
   assert.match(source, /EditorViewportRenderRowMarkerCount:\n\s+\.db\s+0/);
   assert.match(source, /LD\s+A,TECM8_DISPLAY_STATUS_ROW/);
   assert.match(source, /LD\s+HL,EditorRowText9/);
-  assert.match(source, /CALL\s+DisplayRenderLine/);
-  assert.match(source, /CALL\s+GlcdTileFlushRow/);
+  assert.match(source, /CALL\s+Tecm8DisplayRenderLine/);
+  assert.match(source, /CALL\s+Tecm8DisplayFlushRow/);
   assert.doesNotMatch(source, /EditorViewportSelectBottom/);
   assert.doesNotMatch(source, /EditorScreenBottomPtr/);
   assert.doesNotMatch(source, /EditorTopChrome/);

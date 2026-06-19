@@ -650,3 +650,5 @@ DisplayRowTextExtent:
         .db     0,0,0,0,0,0,0,0,0,0
 DisplayRenderScreenCount:
         .db     0
+
+        .include "tecm8-display-service.asm"

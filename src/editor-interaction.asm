@@ -645,7 +645,7 @@ EditorLiveLoop:
         JP      EditorLiveLoop
 
 EditorLiveIdle:
-        CALL    GlcdTileStep
+        CALL    Tecm8DisplayStep
         RET     C
         OR      A
         JR      NZ,EditorLiveIdleDelay

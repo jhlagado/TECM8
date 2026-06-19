@@ -66,7 +66,7 @@
         LD      A,(EditorCursorRenderedCol)
         LD      C,A
         LD      A,(EditorCursorRenderedRow)
-        CALL    DisplayEraseCursorCell
+        CALL    Tecm8DisplayEraseCursorCell
         RET     C
         XOR     A
         LD      (EditorCursorRendered),A
@@ -79,7 +79,7 @@ EditorCursorRenderCheckVisible:
         LD      A,(EditorCursorVisibleRow)
         CP      TECM8_EDITOR_CURSOR_VISIBLE_ROWS
         JR      NC,EditorCursorRenderDone
-        CALL    DisplayRenderCursorCell
+        CALL    Tecm8DisplayRenderCursorCell
         RET     C
         LD      A,(EditorCursorVisibleRow)
         LD      (EditorCursorRenderedRow),A
@@ -103,7 +103,7 @@ EditorCursorRenderDone:
         LD      A,(EditorCursorRenderedCol)
         LD      C,A
         LD      A,(EditorCursorRenderedRow)
-        CALL    DisplayEraseCursorCell
+        CALL    Tecm8DisplayEraseCursorCell
         RET     C
         XOR     A
         LD      (EditorCursorRendered),A

@@ -729,7 +729,7 @@ EditorBlockSelectionRenderMarkerLoop:
         CALL    EditorViewportRenderRowMarker
         RET     C
         LD      A,(EditorBlockSelectionMarkerRow)
-        CALL    GlcdTileMarkGutterDirty
+        CALL    Tecm8DisplayMarkGutterDirty
         RET     C
         LD      A,(EditorBlockSelectionMarkerRow)
         INC     A
