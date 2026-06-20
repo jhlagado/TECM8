@@ -65,8 +65,9 @@ Start here:
 - [TypeScript Code Quality Report](typescript-code-quality.md)
 - [TECM8 BIOS API Draft](tecm8-bios-api.md)
 
-MON3/MON3-light direction and analysis is intentionally separated from the main
-TECM8 editor docs:
+MON3/MON3-light direction and analysis is part of the TECM8 platform work. These
+documents define how the fixed ROM, banked ROM tools, display services, storage
+services, and editor workflow fit together:
 
 - [MON3-Light Platform Direction](mon3/mon3-light-platform-direction.md)
 - [TEC-FS Storage Direction](mon3/tec-fs-direction.md)

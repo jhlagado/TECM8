@@ -4,6 +4,12 @@ This is the consolidated direction note for the TECM8/MON3 work. TECM8 is the
 home for these planning documents. MON3 and Debug80 should stay close to their
 own jobs: MON3 as monitor source and Debug80 as emulator/debugger support.
 
+MON3 development should now be treated as part of the TECM8 platform direction,
+not as a separate monitor exercise. The MON3 repository remains the source home
+for the ROM, but the product decisions belong here because TECM8 defines how
+the fixed ROM, banked ROM tools, display services, storage services, and editor
+workflow fit together.
+
 The goal is to use the TEC-1G 64K address space as an application-friendly
 ROM-and-RAM platform:
 
@@ -19,6 +25,32 @@ C000h-FFFFh  fixed 16K MON3/MON3-light ROM
 The fixed ROM should be a small monitor plus BIOS-style services. Larger tools
 should live in the `8000h-BFFFh` banked window and call fixed services at
 `C000h-FFFFh`.
+
+## Development Model
+
+TECM8 should be the architecture owner for the whole application platform:
+
+- fixed MON3/MON3-light ROM services
+- banked ROM tool framework
+- editor, assembler, interpreter, debugger, and shell direction
+- display service contract and backend policy
+- SD and TEC-FS storage policy
+- RAM ownership and service-buffer contracts
+- host-side tools that prepare ROM banks, SD images, and TEC-FS images
+
+MON3 should remain buildable and testable on its own, but changes to MON3 should
+be evaluated against the TECM8 platform contract. That means every sizeable ROM
+decision should answer the same questions:
+
+- is this essential fixed-ROM monitor or BIOS behaviour?
+- is it a reusable service needed by banked tools?
+- is it a higher-level application or UI feature that belongs in banked ROM?
+- does it consume RAM that should be part of the public system map?
+- does it make the editor, assembler, BASIC, debugger, display stack, or
+  TEC-FS easier to build?
+
+This gives us a practical rule: MON3-light is not just a smaller MON3. It is the
+fixed-ROM layer of TECM8.
 
 ## Product Shape
 
@@ -165,15 +197,16 @@ smaller:
 
 TEC-FS is the planned replacement for the current FAT32-compatible MON3 storage
 library and the PATA path. It is a TEC-specific filesystem intended to keep SD
-card code small and practical: fixed file slots, simple FCBs, up to 128 files
-per virtual disk, up to 64K per file, and support for multiple virtual disks.
-It is deliberately not FAT or CP/M compatible.
+card code small and practical. The current direction is a FAT32-formatted SD
+card containing multiple contiguous 128 MiB `TECFSxx.IMG` image volumes. Each
+image is treated as a TEC-FS drive using 4 KiB allocation blocks. TEC-FS is
+deliberately not FAT or CP/M compatible internally.
 
 The detailed storage direction is captured in
 [TEC-FS Storage Direction](tec-fs-direction.md). In short, TEC-FS should grow
 around TEC concepts: long native names, file records with load/run/type/metadata
-fields, prefix-based virtual folders over a flat catalogue, and a PC utility for
-transfer and maintenance.
+fields, prefix-based virtual folders over a flat catalogue, TEC-side formatting,
+and optional PC tools for transfer and maintenance.
 
 The fixed ROM should still expose the lowest practical SD block services first.
 TEC-FS can then sit above those services as the standard MON3-light filesystem.
