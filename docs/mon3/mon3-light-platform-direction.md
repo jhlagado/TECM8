@@ -199,8 +199,10 @@ TEC-FS is the planned replacement for the current FAT32-compatible MON3 storage
 library and the PATA path. It is a TEC-specific filesystem intended to keep SD
 card code small and practical. The current direction is a FAT32-formatted SD
 card containing multiple contiguous 128 MiB `TECFSxx.IMG` image volumes. Each
-image is treated as a TEC-FS drive using 4 KiB allocation blocks. TEC-FS is
-deliberately not FAT or CP/M compatible internally.
+image is treated as a TEC-FS drive using 4 KiB allocation blocks. A 4 GiB-class
+layout should expose 30 user volumes and reserve one additional image as a
+work/safety volume for compaction, repair, upgrades, and copy-then-swap
+maintenance. TEC-FS is deliberately not FAT or CP/M compatible internally.
 
 The detailed storage direction is captured in
 [TEC-FS Storage Direction](tec-fs-direction.md). In short, TEC-FS should grow

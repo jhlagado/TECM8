@@ -123,9 +123,46 @@ directory overhead:
 ```
 
 In practice, the formatter should reserve space for the MBR, FAT32 metadata,
-root directory, locator table, and any small PC-visible helper files, so a
-nominal 4 GiB card should be expected to hold 31 full 128 MiB TEC-FS images
-unless the exact card capacity and overhead leave enough room for all 32.
+root directory, locator table, and any small PC-visible helper files. A nominal
+4 GiB card should therefore be treated as a 30-volume user layout, with one
+additional 128 MiB image reserved as a work/safety volume where capacity
+permits.
+
+## User And Work Volumes
+
+The standard 4 GiB-class layout should expose 30 normal TEC-FS volumes and keep
+one extra image as a reserved work volume:
+
+```text
+TECFS00.IMG .. TECFS29.IMG  user volumes
+TECFS30.IMG                 reserved work/safety volume
+```
+
+The reserved work volume is not a substitute for ordinary file-save safety. It
+should not be used for every write. Normal file saves should still be protected
+inside the active volume by a small transaction rule:
+
+```text
+write new data blocks first
+write and verify updated metadata
+commit with a small generation/checksum marker
+free old blocks only after the new state is committed
+```
+
+The reserved work volume is for larger operations where modifying the only live
+copy in place would be risky:
+
+- compacting or defragmenting a volume
+- rebuilding a damaged catalogue or allocation map
+- upgrading an older TEC-FS layout to a newer one
+- importing or staging a large set of files before making it live
+- taking a whole-volume checkpoint before a risky maintenance operation
+
+The safe pattern is copy-then-swap. For example, volume 5 can be rebuilt into
+the reserved work volume, verified, and then the locator table can be updated so
+the rebuilt image becomes the new volume 5. If power fails before the final
+locator update, the old volume remains the live copy. If power fails after the
+locator update, the new verified volume is live.
 
 ## Allocation Block Size
 
