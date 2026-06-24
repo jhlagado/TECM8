@@ -13,23 +13,28 @@ first product is a Turbo Pascal-like edit/assemble/run workflow on the machine:
 a project has a main source file, `edit` opens source, `asm` builds it, and
 `run` launches the derived output.
 
-The current codebase is split into four working layers:
+The current codebase is split into five working layers:
 
 - `src/`: Z80 assembly modules for the TEC-side shell, project config reader,
   MON3-backed BIOS wrappers, structured GLCD display, source-page loading,
   editor navigation, and early editor interaction.
+- `roms/`: project-owned TEC-1G ROM source and tracked ROM images for the
+  fixed monitor replacement path and the banked expansion window path.
 - `proofs/`: Z80 proof programs that include `src/` modules and exercise one
   behavior under Debug80/MON3.
 - `tools/`: TypeScript host tools for TM8 volume formatting, project setup,
-  source-record conversion, proof runners, and MON3 decomposition reports.
+  source-record conversion, ROM builders, proof runners, and MON3
+  decomposition reports.
 - `docs/`: design notes, contracts, and generated reports that explain the
   intended system and keep the implementation honest.
 
 The main dependency direction is:
 
 ```text
-host fs tools -> create TM8 volumes and FAT32 proof images
+host fs tools -> create TM8 volumes, ROM images, and FAT32 proof images
+debug80.json -> binds RAM targets and project ROM artifacts into one TECM8 profile
 proof runners -> assemble proof programs and run Debug80
+ROM build tools -> assemble project-owned expansion and monitor images
 Z80 proof files -> include src modules
 src modules -> call PascalCase BIOS wrappers
 BIOS wrappers -> call MON3 storage and GLCD services
@@ -50,33 +55,35 @@ For the fastest orientation, read these files first:
 7. `docs/tecm8-bios-api.md`: the BIOS wrapper vocabulary used by Z80 code.
 8. `docs/mon3/core-and-auxiliary-services.md`: the current MON3 split note for
    fixed-ROM services versus auxiliary tools and libraries.
-9. `src/tecm8-equates.asm`: shared source-record, sector, display, GLCD, and
+9. `debug80.json`: the Debug80 `tecm8` profile, RAM target layout, and ROM
+   artifact wiring for the current development workflow.
+10. `src/tecm8-equates.asm`: shared source-record, sector, display, GLCD, and
    keyboard modifier constants used by the Z80 modules.
-10. `src/tecm8-record.asm`: shared fixed source-record helpers for masked
+11. `src/tecm8-record.asm`: shared fixed source-record helpers for masked
    length reads, metadata-preserving length writes, padding zeroing,
    full-record clear, in-record text shifts, and up/down record-window shifts.
-11. `src/tecm8-string.asm`: shared byte/string/path helpers used by storage,
+12. `src/tecm8-string.asm`: shared byte/string/path helpers used by storage,
    project config, and shell path-resolution code.
-12. `src/tecm8-storage.asm`: shared TM8 format helpers used by storage-backed
+13. `src/tecm8-storage.asm`: shared TM8 format helpers used by storage-backed
     loaders.
-13. `src/tecm8-bios.asm`: the current MON3-backed wrapper implementation.
-14. `src/shell-resolver.asm`: shell command resolution and executor stubs.
-15. `src/shell-program.asm`: the proof/live prompt loop and input buffer layer.
-16. `src/shell-commands.asm`: compatibility include for code that still wants
+14. `src/tecm8-bios.asm`: the current MON3-backed wrapper implementation.
+15. `src/shell-resolver.asm`: shell command resolution and executor stubs.
+16. `src/shell-program.asm`: the proof/live prompt loop and input buffer layer.
+17. `src/shell-commands.asm`: compatibility include for code that still wants
     the complete shell.
-17. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
+18. `src/shell-editor-launch.asm`: the bridge from shell resolution into the
    editor.
-18. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, `src/display-model.asm`, and
+19. `src/glcd-tile.asm`, `src/glcd-tile-row.asm`, `src/display-model.asm`, and
     `src/tecm8-display-service.asm`: the current direct GLCD cell layer,
     optional row convenience wrappers, the structured screen renderer built on
     top, and the editor-facing display service facade.
-19. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
+20. `src/editor-storage-loader.asm`, `src/editor-navigation.asm`,
     `src/editor-block-state.asm`, `src/editor-viewport.asm`,
     `src/editor-record.asm`, `src/editor-line-edit.asm`, `src/editor-block.asm`,
     `src/editor-keymap.asm`, `src/editor-cursor.asm`, `src/editor-prompt.asm`,
     `src/editor-render.asm`, `src/editor-input.asm`, and
     `src/editor-interaction.asm`: the current editor path.
-20. `proofs/display/glcd-tile-proof.asm`,
+21. `proofs/display/glcd-tile-proof.asm`,
     `proofs/display/editor-selection-proof.asm`,
     `proofs/display/editor-line-editing-proof.asm`,
     `proofs/display/editor-rolling-window-proof.asm`, and
@@ -228,6 +235,30 @@ render as `\X`. Arrow keys render as `^`, `_`, `<`, and `>`, not alphabet
 aliases. Each history entry includes the raw matrix `D/E` bytes in hex
 before the interpreted token so translated-token issues can be separated from
 raw Debug80 matrix mapping issues.
+
+### `debug80.json` and `roms/tec1g/tecm8/*`
+
+`debug80.json` now defines the default `tecm8` Debug80 profile rather than a
+plain MON3 profile. The profile still uses bundled MON3 fixed-ROM assets, but
+the TECM8 targets add project-owned ROM source roots for
+`roms/tec1g/tecm8/monitor` and `roms/tec1g/tecm8/expansion` so AZM and Debug80
+can resolve symbols across the live RAM image and the ROM work.
+
+The two current ROM sources are scaffolds, but they establish the contracts the
+host tools and Debug80 session now expect:
+
+- `roms/tec1g/tecm8/monitor/monitor.asm`: a fixed-ROM replacement stub at
+  `0xC000` with `Tecm8MonitorEntry`, a small `TM8` info signature, and a hold
+  loop. The `tecm8-monitor` artifact is declared but inactive, so MON3 remains
+  the active fixed monitor ROM.
+- `roms/tec1g/tecm8/expansion/expansion.asm`: a bank-0 expansion stub at
+  `0x8000` with `Tecm8ExpansionEntry` and a matching `TM8` info signature. The
+  `tecm8-expansion` artifact is active and is loaded through
+  `tec1g.expansionRomHex` into the TEC-1G banked window at `0x8000-0xBFFF`.
+
+The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
+images. The host ROM builders regenerate them and also write matching build
+artifacts plus D8 debug maps under `build/roms/tec1g/tecm8/`.
 
 ### `src/tecm8-bios.asm` and `src/mon3.asmi`
 
@@ -1184,6 +1215,20 @@ omit leading-dot local filenames by default and keep editor backups such as
 `import`, `export`, and `copy` remain byte-exact host operations and can still
 address those hidden TM8 paths directly.
 
+### ROM Build Tools
+
+`tools/build-monitor-rom.ts` and `tools/build-expansion-rom.ts` are the host
+builders for the new project-owned ROM tree. Both scripts compile their ROM
+source through the npm `@jhlagado/azm` package or a local `AZM_ROOT` override,
+fail on any AZM diagnostic, and emit both a tracked project copy under
+`roms/tec1g/tecm8/` and the runtime copy plus D8 map under `build/roms/`.
+
+The monitor builder keeps the output within the 16K fixed-ROM range at
+`0xC000-0xFFFF`. The expansion builder keeps the mapped code within the 32K
+backing image used for the two 16K TEC-1G expansion banks, then pads the
+generated image to the full 32768-byte backing size Debug80 expects for
+`expansionRomHex`.
+
 ### Proof Runners
 
 The `run-*.ts` files assemble proof programs through the npm
@@ -1262,6 +1307,10 @@ block smoke and manual image preparation into one host acceptance entry.
 `build/keyboard-tester.bin` plus a D8M symbol file. It is a manual diagnostic
 target, not a storage-backed proof runner.
 
+The ROM workflow is separate from the proof runners. `package.json` adds
+`rom:monitor`, `rom:expansion`, and `rom:check` so the ROM sources can be
+validated together before launching the `tecm8` Debug80 profile.
+
 `proof:display:shell-edit-create-source` covers the missing-source launch case:
 `edit fresh` creates `/src/fresh.asm` as a blank one-block source file and opens
 it through the same storage-backed editor path.
@@ -1299,7 +1348,14 @@ coverage:
 - direct GLCD tile-layer contracts
 - static checks that assembly modules expose expected entry points
 - static checks that local entry points carry `;!` contract comments
+- static checks that `debug80.json` keeps the `tecm8` profile, ROM source
+  roots, and ROM artifact declarations aligned with the tracked files
 - proof wiring checks that package scripts invoke the right proof runners
+
+`tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
+verifies the `tecm8` profile selection, target source roots, active expansion
+artifact wiring, inactive monitor artifact wiring, ROM build npm scripts, and
+the tracked 32768-byte expansion image.
 
 ## Documentation Map
 
