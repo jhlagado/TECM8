@@ -37,6 +37,30 @@ Start with the documentation:
 
 MON3 analysis and ROM-reduction notes live under [docs/mon3](docs/mon3/).
 
+## Debug80 Development Modes
+
+TECM8 currently has two Debug80 workflows.
+
+The RAM-loaded workflow remains the fast proof and live-editor path. Debug80
+assembles `src/main.asm` into `build/main.bin`, loads it at `0x4000`, and runs
+it with MON-3 providing storage, keyboard, and display services.
+
+The ROM-development workflow keeps MON-3 as the active fixed monitor ROM for now
+and adds project-owned TECM8 ROM source under `roms/tec1g/tecm8/`. Build the
+project ROM artifacts manually with:
+
+```text
+npm run rom:check
+```
+
+Debug80 also declares the expansion ROM as an active source-backed
+`tec1g.romArtifacts` entry, so launch builds
+`build/roms/tec1g/tecm8/expansion/expansion.bin` and loads it through
+`tec1g.expansionRomHex`. The image is available through the TEC-1G banked
+expansion window at `0x8000-0xBFFF`. The monitor source is present as an
+inactive artifact for development, but `tec1g.romHex` continues to point at
+MON-3 until the TECM8 monitor can boot.
+
 Useful local checks:
 
 ```text

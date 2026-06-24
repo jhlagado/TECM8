@@ -1,12 +1,12 @@
 {
   "projectVersion": 2,
   "projectPlatform": "tec1g",
-  "defaultProfile": "mon3",
+  "defaultProfile": "tecm8",
   "defaultTarget": "main",
   "profiles": {
-    "mon3": {
+    "tecm8": {
       "platform": "tec1g",
-      "description": "TEC-1G monitor-first profile with user code at 0x4000.",
+      "description": "TECM8 on MON-3 with project-owned expansion ROM.",
       "bundledAssets": {
         "romHex": {
           "bundleId": "tec1g/mon3/v1",
@@ -27,10 +27,12 @@
       "outputDir": "build",
       "artifactBase": "main",
       "platform": "tec1g",
-      "profile": "mon3",
+      "profile": "tecm8",
       "sourceRoots": [
         "src",
-        "roms/tec1g/mon3"
+        "roms/tec1g/mon3",
+        "roms/tec1g/tecm8/monitor",
+        "roms/tec1g/tecm8/expansion"
       ],
       "tec1g": {
         "regions": [
@@ -53,6 +55,31 @@
         "appStart": 16384,
         "entry": 0,
         "romHex": "roms/tec1g/mon3/mon3.bin",
+        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+        "romArtifacts": [
+          {
+            "id": "tecm8-expansion",
+            "role": "expansion",
+            "sourceFile": "roms/tec1g/tecm8/expansion/expansion.asm",
+            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+            "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
+            "windowAddress": 32768,
+            "windowSize": 16384,
+            "imageSize": 32768,
+            "bankSize": 16384,
+            "bankCount": 2
+          },
+          {
+            "id": "tecm8-monitor",
+            "role": "monitor",
+            "active": false,
+            "sourceFile": "roms/tec1g/tecm8/monitor/monitor.asm",
+            "outputBin": "build/roms/tec1g/tecm8/monitor/monitor.bin",
+            "outputDebugMap": "build/roms/tec1g/tecm8/monitor/monitor.d8.json",
+            "address": 49152,
+            "size": 16384
+          }
+        ],
         "sdEnabled": true,
         "sdHighCapacity": true,
         "sdImagePath": "/Users/johnhardy/projects/TECM8/demos/debug80/editor-session-fat32.img"
@@ -61,10 +88,12 @@
     "keyboard-tester.main": {
       "outputDir": "build",
       "platform": "tec1g",
-      "profile": "mon3",
+      "profile": "tecm8",
       "sourceRoots": [
         "src",
-        "roms/tec1g/mon3"
+        "roms/tec1g/mon3",
+        "roms/tec1g/tecm8/monitor",
+        "roms/tec1g/tecm8/expansion"
       ],
       "tec1g": {
         "regions": [
@@ -87,6 +116,31 @@
         "appStart": 16384,
         "entry": 0,
         "romHex": "roms/tec1g/mon3/mon3.bin",
+        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+        "romArtifacts": [
+          {
+            "id": "tecm8-expansion",
+            "role": "expansion",
+            "sourceFile": "roms/tec1g/tecm8/expansion/expansion.asm",
+            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+            "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
+            "windowAddress": 32768,
+            "windowSize": 16384,
+            "imageSize": 32768,
+            "bankSize": 16384,
+            "bankCount": 2
+          },
+          {
+            "id": "tecm8-monitor",
+            "role": "monitor",
+            "active": false,
+            "sourceFile": "roms/tec1g/tecm8/monitor/monitor.asm",
+            "outputBin": "build/roms/tec1g/tecm8/monitor/monitor.bin",
+            "outputDebugMap": "build/roms/tec1g/tecm8/monitor/monitor.d8.json",
+            "address": 49152,
+            "size": 16384
+          }
+        ],
         "sdEnabled": true,
         "sdHighCapacity": true,
         "sdImagePath": "/Users/johnhardy/projects/TECM8/demos/debug80/editor-session-fat32.img"

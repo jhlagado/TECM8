@@ -6,8 +6,8 @@ node_modules/
 build/
 out/
 dist/
-# Materialized platform ROM bundles are local copies; debug80.json references extension bundles by profile
-roms/
+# Project TECM8 ROM sources and project-owned ROM images under roms/ are tracked.
+roms/tec1g/mon3/
 # Optional local launch; the extension also contributes "Debug80: Current Project"
 .vscode/launch.json
 # Generated Debug80 session artifacts
