@@ -249,6 +249,16 @@ session now expect:
 - `roms/tec1g/tecm8/monitor/monitor.asm`: the active fixed-monitor entry point.
   It includes the project-local MON-3 source tree, builds a 16 KiB ROM at
   `0xC000-0xFFFF`, and is loaded through `tec1g.romHex`.
+- `roms/tec1g/tecm8/monitor/README.md`: the local monitor-source note that
+  names the seeded MON-3 baseline and keeps the ROM workflow attached to
+  `npm run rom:monitor` and `npm run rom:check`.
+- `roms/tec1g/tecm8/monitor/packages.asm`,
+  `glcd_library.asm`, `pata_fat32.asm`, `disassembler.asm`,
+  `rtc.asm`, `sound.asm`, and `api_includes.asm`: the current project-local
+  MON-3 include set kept beside `monitor.asm`. `rtc.asm` now carries the
+  DS1302 date and time entry points and `sound.asm` carries the note and music
+  playback routines that the fixed monitor can assemble into the same ROM
+  image. `monitor.main.asm` is no longer part of this tree.
 - `roms/tec1g/tecm8/expansion/expansion.asm`: a bank-0 expansion stub at
   `0x8000` with `Tecm8ExpansionEntry` and a matching `TM8` info signature. The
   `tecm8-expansion` artifact is active and is loaded through
@@ -1352,8 +1362,9 @@ coverage:
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
 verifies the `tecm8` profile selection, target source roots, active monitor and
-expansion artifact wiring, local MON-3 monitor source tree, ROM build npm
-scripts, and tracked fixed-size ROM images.
+expansion artifact wiring, the current local MON-3 monitor source tree, the
+absence of the old `monitor.main.asm` include path, ROM build npm scripts, and
+tracked fixed-size ROM images.
 
 ## Documentation Map
 
@@ -1380,6 +1391,8 @@ toward.
 - `docs/mon3/service-inventory.md`: generated MON3 service classification.
 - `docs/mon3/storage-split.md`: generated MON3 storage code analysis.
 - `docs/mon3/glcd-split.md`: generated MON3 GLCD code and RAM analysis.
+- `docs/mon3/tecm8-rom-artifact-plan.md`: the TECM8-owned fixed-ROM and
+  expansion-ROM source, artifact, and handoff plan for the Debug80 profile.
 - `docs/codebase.md`: this tour.
 
 Recent editor-design additions also matter for implementation work:
