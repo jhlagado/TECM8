@@ -3699,7 +3699,7 @@ creditsCFG:
 
 ; Monitor Packages
         .org BASE_ADDR+1800H
-        .include "packages.z80"
+        .include "packages.asm"
 
         .org BASE_ADDR+3FECH    ; 16k
 

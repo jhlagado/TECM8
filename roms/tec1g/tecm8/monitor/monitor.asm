@@ -3,4 +3,4 @@
 ; The MON-3 source files in this folder are project-owned so TECM8 can evolve
 ; the fixed monitor ROM locally.
 
-        .include "mon3.z80"
+        .include "monitor.main.asm"
