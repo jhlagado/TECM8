@@ -70,6 +70,7 @@ documents define how the fixed ROM, banked ROM tools, display services, storage
 services, and editor workflow fit together:
 
 - [MON3-Light Platform Direction](mon3/mon3-light-platform-direction.md)
+- [TECM8 ROM Artifact Plan](mon3/tecm8-rom-artifact-plan.md)
 - [TEC-FS Storage Direction](mon3/tec-fs-direction.md)
 - [MON3 Core And Auxiliary Services](mon3/core-and-auxiliary-services.md)
 - [MON3 Decomposition Plan](mon3/decomposition.md)

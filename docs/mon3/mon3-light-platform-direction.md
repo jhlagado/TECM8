@@ -256,6 +256,8 @@ tools:
 
 ## Supporting Documents
 
+- [TECM8 ROM Artifact Plan](tecm8-rom-artifact-plan.md): fixed ROM, banked
+  expansion ROM, build artifact, and Debug80 support requirements.
 - [MON3 Decomposition Plan](decomposition.md): current 16K ROM shape and broad
   reduction strategy.
 - [MON3 Core And Auxiliary Services](core-and-auxiliary-services.md): fixed ROM
