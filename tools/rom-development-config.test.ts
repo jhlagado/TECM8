@@ -96,11 +96,11 @@ test('TECM8 project tracks ROM source folders and has ROM build scripts', () => 
 test('TECM8 monitor source is a project-local MON-3 source tree', () => {
   const monitorAsm = readText('roms/tec1g/tecm8/monitor/monitor.asm');
 
-  assert.match(monitorAsm, /\.include\s+"monitor\.main\.asm"/);
+  assert.doesNotMatch(monitorAsm, /\.include\s+"monitor\.main\.asm"/);
   assert.doesNotMatch(monitorAsm, /Tecm8MonitorHold/);
+  assert.equal(existsSync(resolve(root, 'roms/tec1g/tecm8/monitor/monitor.main.asm')), false);
 
   for (const path of [
-    'roms/tec1g/tecm8/monitor/monitor.main.asm',
     'roms/tec1g/tecm8/monitor/packages.asm',
     'roms/tec1g/tecm8/monitor/glcd_library.asm',
     'roms/tec1g/tecm8/monitor/pata_fat32.asm',
@@ -112,10 +112,9 @@ test('TECM8 monitor source is a project-local MON-3 source tree', () => {
     assert.equal(existsSync(resolve(root, path)), true, `${path} should exist`);
   }
 
-  const mon3Source = readText('roms/tec1g/tecm8/monitor/monitor.main.asm');
-  assert.match(mon3Source, /MONITOR 3 for the TEC-1G/);
-  assert.match(mon3Source, /\.org BASE_ADDR/);
-  assert.match(mon3Source, /\.include "packages\.asm"/);
+  assert.match(monitorAsm, /MONITOR 3 for the TEC-1G/);
+  assert.match(monitorAsm, /\.org BASE_ADDR/);
+  assert.match(monitorAsm, /\.include "packages\.asm"/);
 });
 
 test('TECM8 monitor ROM binary is a full fixed ROM image', () => {

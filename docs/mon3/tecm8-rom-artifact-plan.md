@@ -152,7 +152,7 @@ Proposed source layout:
 ```text
 roms/tec1g/mon3/
   mon3.rom.asm
-  monitor.main.asm
+  monitor.asm
   ...
 
 roms/tec1g/tecm8-expansion/
