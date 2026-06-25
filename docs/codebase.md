@@ -239,18 +239,16 @@ raw Debug80 matrix mapping issues.
 ### `debug80.json` and `roms/tec1g/tecm8/*`
 
 `debug80.json` now defines the default `tecm8` Debug80 profile rather than a
-plain MON3 profile. The profile still uses bundled MON3 fixed-ROM assets, but
-the TECM8 targets add project-owned ROM source roots for
+plain MON3 profile. The TECM8 targets add project-owned ROM source roots for
 `roms/tec1g/tecm8/monitor` and `roms/tec1g/tecm8/expansion` so AZM and Debug80
 can resolve symbols across the live RAM image and the ROM work.
 
-The two current ROM sources are scaffolds, but they establish the contracts the
-host tools and Debug80 session now expect:
+The two current ROM sources establish the contracts the host tools and Debug80
+session now expect:
 
-- `roms/tec1g/tecm8/monitor/monitor.asm`: a fixed-ROM replacement stub at
-  `0xC000` with `Tecm8MonitorEntry`, a small `TM8` info signature, and a hold
-  loop. The `tecm8-monitor` artifact is declared but inactive, so MON3 remains
-  the active fixed monitor ROM.
+- `roms/tec1g/tecm8/monitor/monitor.asm`: the active fixed-monitor entry point.
+  It includes the project-local MON-3 source tree, builds a 16 KiB ROM at
+  `0xC000-0xFFFF`, and is loaded through `tec1g.romHex`.
 - `roms/tec1g/tecm8/expansion/expansion.asm`: a bank-0 expansion stub at
   `0x8000` with `Tecm8ExpansionEntry` and a matching `TM8` info signature. The
   `tecm8-expansion` artifact is active and is loaded through
@@ -1353,9 +1351,9 @@ coverage:
 - proof wiring checks that package scripts invoke the right proof runners
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
-verifies the `tecm8` profile selection, target source roots, active expansion
-artifact wiring, inactive monitor artifact wiring, ROM build npm scripts, and
-the tracked 32768-byte expansion image.
+verifies the `tecm8` profile selection, target source roots, active monitor and
+expansion artifact wiring, local MON-3 monitor source tree, ROM build npm
+scripts, and tracked fixed-size ROM images.
 
 ## Documentation Map
 

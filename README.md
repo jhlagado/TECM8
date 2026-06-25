@@ -46,9 +46,10 @@ assembles `src/main.asm` into `build/main.bin`, loads it at `0x4000`, and runs
 it with MON-3 providing storage, keyboard, and display services.
 
 The ROM-development workflow boots from project-owned TECM8 ROM source under
-`roms/tec1g/tecm8/`. The current monitor artifact is a stub: it jumps into
-`Tecm8MonitorHold`, which proves Debug80 is loading the project-owned fixed ROM
-instead of MON-3. Build the project ROM artifacts manually with:
+`roms/tec1g/tecm8/`. The current monitor artifact is a local MON-3 source tree
+assembled through `roms/tec1g/tecm8/monitor/monitor.asm`, so monitor changes can
+be built and debugged from the project instead of the bundled Debug80 ROM. Build
+the project ROM artifacts manually with:
 
 ```text
 npm run rom:check

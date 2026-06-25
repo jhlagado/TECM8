@@ -93,6 +93,31 @@ test('TECM8 project tracks ROM source folders and has ROM build scripts', () => 
   assert.equal(packageJson.scripts?.['rom:check'], 'npm run rom:monitor && npm run rom:expansion');
 });
 
+test('TECM8 monitor source is a project-local MON-3 source tree', () => {
+  const monitorAsm = readText('roms/tec1g/tecm8/monitor/monitor.asm');
+
+  assert.match(monitorAsm, /\.include\s+"mon3\.z80"/);
+  assert.doesNotMatch(monitorAsm, /Tecm8MonitorHold/);
+
+  for (const path of [
+    'roms/tec1g/tecm8/monitor/mon3.z80',
+    'roms/tec1g/tecm8/monitor/packages.z80',
+    'roms/tec1g/tecm8/monitor/glcd_library.z80',
+    'roms/tec1g/tecm8/monitor/pata_fat32.z80',
+    'roms/tec1g/tecm8/monitor/disassembler.z80',
+    'roms/tec1g/tecm8/monitor/rtc.z80',
+    'roms/tec1g/tecm8/monitor/sound.z80',
+    'roms/tec1g/tecm8/monitor/api_includes.z80',
+  ]) {
+    assert.equal(existsSync(resolve(root, path)), true, `${path} should exist`);
+  }
+
+  const mon3Source = readText('roms/tec1g/tecm8/monitor/mon3.z80');
+  assert.match(mon3Source, /MONITOR 3 for the TEC-1G/);
+  assert.match(mon3Source, /\.org BASE_ADDR/);
+  assert.match(mon3Source, /\.include "packages\.z80"/);
+});
+
 test('TECM8 monitor ROM binary is a full fixed ROM image', () => {
   const monitorBin = resolve(root, 'roms/tec1g/tecm8/monitor/monitor.bin');
 
