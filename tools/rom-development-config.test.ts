@@ -43,7 +43,7 @@ test('TECM8 Debug80 config uses a custom profile with monitor and expansion ROM 
       'roms/tec1g/tecm8/monitor',
       'roms/tec1g/tecm8/expansion',
     ]);
-    assert.equal(resolvedTarget.tec1g?.romHex, 'roms/tec1g/mon3/mon3.bin');
+    assert.equal(resolvedTarget.tec1g?.romHex, 'build/roms/tec1g/tecm8/monitor/monitor.bin');
     assert.equal(
       resolvedTarget.tec1g?.expansionRomHex,
       'build/roms/tec1g/tecm8/expansion/expansion.bin'
@@ -64,7 +64,6 @@ test('TECM8 Debug80 config uses a custom profile with monitor and expansion ROM 
       {
         id: 'tecm8-monitor',
         role: 'monitor',
-        active: false,
         sourceFile: 'roms/tec1g/tecm8/monitor/monitor.asm',
         outputBin: 'build/roms/tec1g/tecm8/monitor/monitor.bin',
         outputDebugMap: 'build/roms/tec1g/tecm8/monitor/monitor.d8.json',
@@ -92,6 +91,13 @@ test('TECM8 project tracks ROM source folders and has ROM build scripts', () => 
   assert.equal(packageJson.scripts?.['rom:monitor'], 'node --experimental-strip-types tools/build-monitor-rom.ts');
   assert.equal(packageJson.scripts?.['rom:expansion'], 'node --experimental-strip-types tools/build-expansion-rom.ts');
   assert.equal(packageJson.scripts?.['rom:check'], 'npm run rom:monitor && npm run rom:expansion');
+});
+
+test('TECM8 monitor ROM binary is a full fixed ROM image', () => {
+  const monitorBin = resolve(root, 'roms/tec1g/tecm8/monitor/monitor.bin');
+
+  assert.equal(existsSync(monitorBin), true, 'monitor ROM binary should exist');
+  assert.equal(statSync(monitorBin).size, 16384);
 });
 
 test('TECM8 expansion ROM binary is a full two-bank backing image', () => {

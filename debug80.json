@@ -6,7 +6,7 @@
   "profiles": {
     "tecm8": {
       "platform": "tec1g",
-      "description": "TECM8 on MON-3 with project-owned expansion ROM.",
+      "description": "TECM8 with project-owned monitor and expansion ROMs.",
       "bundledAssets": {
         "romHex": {
           "bundleId": "tec1g/mon3/v1",
@@ -54,7 +54,7 @@
         ],
         "appStart": 16384,
         "entry": 0,
-        "romHex": "roms/tec1g/mon3/mon3.bin",
+        "romHex": "build/roms/tec1g/tecm8/monitor/monitor.bin",
         "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
         "romArtifacts": [
           {
@@ -72,7 +72,6 @@
           {
             "id": "tecm8-monitor",
             "role": "monitor",
-            "active": false,
             "sourceFile": "roms/tec1g/tecm8/monitor/monitor.asm",
             "outputBin": "build/roms/tec1g/tecm8/monitor/monitor.bin",
             "outputDebugMap": "build/roms/tec1g/tecm8/monitor/monitor.d8.json",
@@ -115,7 +114,7 @@
         ],
         "appStart": 16384,
         "entry": 0,
-        "romHex": "roms/tec1g/mon3/mon3.bin",
+        "romHex": "build/roms/tec1g/tecm8/monitor/monitor.bin",
         "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
         "romArtifacts": [
           {
@@ -133,7 +132,6 @@
           {
             "id": "tecm8-monitor",
             "role": "monitor",
-            "active": false,
             "sourceFile": "roms/tec1g/tecm8/monitor/monitor.asm",
             "outputBin": "build/roms/tec1g/tecm8/monitor/monitor.bin",
             "outputDebugMap": "build/roms/tec1g/tecm8/monitor/monitor.d8.json",

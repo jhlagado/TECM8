@@ -1,7 +1,7 @@
 ; TECM8 monitor ROM scaffold.
 ;
-; MON-3 remains the active fixed monitor ROM for now. This source is where the
-; future TECM8 monitor replacement will grow.
+; This stub is the active fixed monitor ROM while the TECM8 monitor replacement
+; grows. It deliberately parks execution in Tecm8MonitorHold.
 
         .org    0xC000
 

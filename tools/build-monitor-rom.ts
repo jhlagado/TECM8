@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Assemble the inactive TECM8 monitor ROM replacement image.
+ * Assemble the TECM8 monitor ROM replacement image.
  */
 
 const { mkdirSync, writeFileSync } = require('node:fs');
@@ -85,10 +85,13 @@ async function main(): Promise<void> {
     throw new Error(`Monitor ROM binary is ${bin.bytes.length} bytes; limit is ${ROM_BYTES}`);
   }
 
+  const romImage = Buffer.alloc(ROM_BYTES);
+  Buffer.from(bin.bytes).copy(romImage);
+
   mkdirSync(dirname(PROJECT_BIN_PATH), { recursive: true });
   mkdirSync(dirname(BUILD_BIN_PATH), { recursive: true });
-  writeFileSync(PROJECT_BIN_PATH, Buffer.from(bin.bytes));
-  writeFileSync(BUILD_BIN_PATH, Buffer.from(bin.bytes));
+  writeFileSync(PROJECT_BIN_PATH, romImage);
+  writeFileSync(BUILD_BIN_PATH, romImage);
   writeFileSync(BUILD_D8_PATH, `${JSON.stringify(d8, null, 2)}\n`);
 
   console.log(
@@ -99,7 +102,8 @@ async function main(): Promise<void> {
         projectBin: PROJECT_BIN_PATH,
         buildBin: BUILD_BIN_PATH,
         d8: BUILD_D8_PATH,
-        bytes: bin.bytes.length,
+        sourceBytes: bin.bytes.length,
+        imageBytes: romImage.length,
         romStart: toHex(ROM_START),
         romEndExclusive: toHex(ROM_END_EXCLUSIVE),
       },
