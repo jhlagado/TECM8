@@ -253,12 +253,19 @@ session now expect:
   names the seeded MON-3 baseline and keeps the ROM workflow attached to
   `npm run rom:monitor` and `npm run rom:check`.
 - `roms/tec1g/tecm8/monitor/packages.asm`,
-  `glcd_library.asm`, `pata_fat32.asm`, `disassembler.asm`,
-  `rtc.asm`, `sound.asm`, and `api_includes.asm`: the current project-local
-  MON-3 include set kept beside `monitor.asm`. `rtc.asm` now carries the
-  DS1302 date and time entry points and `sound.asm` carries the note and music
-  playback routines that the fixed monitor can assemble into the same ROM
-  image. `monitor.main.asm` is no longer part of this tree.
+  `monitor_lite_stubs.asm`, `disassembler.asm`, `rtc.asm`, `sound.asm`, and
+  `api_includes.asm`: the current active fixed-ROM include set kept beside
+  `monitor.asm`. `packages.asm` now pulls in `monitor_lite_stubs.asm` first so
+  the MON-3 API table still exposes the old GLCD and storage call numbers while
+  the trimmed TecMate fixed-ROM profile returns unsupported status for those
+  relocated services. `rtc.asm` now carries the DS1302 date and time entry
+  points while its setup UI stays out of the fixed monitor profile, and
+  `sound.asm` carries the note and music playback routines that the fixed
+  monitor can still assemble into the same ROM image.
+- `roms/tec1g/tecm8/monitor/glcd_library.asm` and `pata_fat32.asm`: retained
+  project-local MON-3 source modules kept beside the active monitor tree for
+  reference and future relocation work. The trimmed fixed monitor no longer
+  includes them directly. `monitor.main.asm` is no longer part of this tree.
 - `roms/tec1g/tecm8/expansion/expansion.asm`: a bank-0 expansion stub at
   `0x8000` with `Tecm8ExpansionEntry` and a matching `TM8` info signature. The
   `tecm8-expansion` artifact is active and is loaded through
