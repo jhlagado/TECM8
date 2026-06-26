@@ -406,13 +406,7 @@ LCDbanners:
         ;send a welcome message to the Serial Terminal if connected
         ld hl,serialStartup
         call stringToSerial
-        ;send a welcome banner to the GLCD (disabled for now)
-        call initLCD        ;Initialise the GLCD (default graphics mode)
-        ld hl,GLCD_BANNER   ;point to welcome banner
-        ld de,GBUF          ;internal graphics buffer
-        ld bc,16*64         ;full screen
-        ldir
-        call plotToLCD      ;Display it
+        ;GLCD startup banner is not part of the fixed monitor profile.
         ;play a tone...
         ld de,hardResetTune ;Set DE to tune data
         call playTune
@@ -2889,7 +2883,7 @@ getCaps:
 ; Input: none
 ; Output: A = GLCD Terminal state; 0 = off, FF = on
 getGLCDTerm:
-        ld a,(GLCD_TERM)    ; fetch current value
+        xor a               ; GLCD terminal is not resident in this profile
         ret
 
 ; Get SHADOW state
@@ -2937,11 +2931,7 @@ updateMode:
 ; Input: A = Desired GLCD Terminal state; 0 = off, FF = on
 ; Destroy: A
 setGLCDTerm:
-        or a                ; check for zero
-        jr z,$+4            ; yes, skip force FF
-        ld a,0FFH           ; set to FF
-        ld (GLCD_TERM),a    ; save glcd termnial flag
-        jp initGLCDTerminal ; set GLCD based on flag
+        ret                 ; GLCD terminal is not resident in this profile
 
 ; Set SHADOW state
 ; Input: A = Desired SHADOW state; 0 = off, SHADOW = on
@@ -3008,23 +2998,8 @@ toggleExpand:
 ; Input: none
 ; Destroy: A
 toggleGLCDTerminal:
-        ld a,(GLCD_TERM)    ; get glcd terminal status
-        cpl                 ; twos complement
-        ld (GLCD_TERM),a    ; save it back
+        ret                 ; GLCD terminal is not resident in this profile
 initGLCDTerminal:
-        push bc
-        push de
-        push hl
-        push af
-        or a
-        jr z, $+7
-        call initTerminal   ; set GLCD as terminal
-        jr $+5
-        call initLCD        ; set GLCD as normal
-        pop af
-        pop hl
-        pop de
-        pop bc
         ret
 
 ; Toggle Key Press Beep
@@ -3068,14 +3043,13 @@ displaySettings:
         ld hl,settingsCFG
         call menuDriver
 
+; Launch TecMate from the expansion ROM window.
+launchTecMate:
+        jp 08000H
+
 ; Display baud rate menu
 displayBaud:
         ld hl,baudCFG
-        call menuDriver
-
-; Display Drive menu
-displayDrive:
-        ld hl,driveCFG
         call menuDriver
 
 ; Random Number generator.
@@ -3294,25 +3268,6 @@ baudCFG:
         .dw baud4800
         .db "2400",0
         .dw baud2400
-
-;Drive Menu
-driveCFG:
-        .db 3   ;three entries
-        .db "DRIVE "       ;7segment Text
-           ;"                   " <- Max LCD entry width
-        .db "=   Drive Access   =",0
-        .db "Catalog",0
-        .dw loadFromDisk
-        .db "Save Session",0
-        .dw saveRAM
-        .db "Load Session",0
-        .dw loadRAMConfirm
-
-;Restoring Session confirmation
-loadRAMConfirm:
-        call LCDConfirm     ;this is serious mum!
-        ret nz              ;no, just exit
-        jp loadRAM
 
 egg:
         ld c,0
@@ -3545,9 +3500,9 @@ functionJumpTable:
         .dw getCELQuickJump ;2 = Get CEL Quick Jump 2
         .dw getCELQuickJump ;3 = Get CEL Quick Jump 3
         .dw intelHexLoad    ;4 = Intel Hex File Loader
-        .dw toggleGLCDTerminal ;5 = Toggle GLCD Terminal output
-        .dw saveRAM         ;6 = Save Session to Drive (if present)
-        .dw loadRAMConfirm  ;7 = Load Session to RAM (if present)
+        .dw displayNoFn     ;5 = GLCD Terminal moved out of fixed ROM
+        .dw displayNoFn     ;6 = Save Session moved to TEC-FS
+        .dw displayNoFn     ;7 = Load Session moved to TEC-FS
         .dw NOPFill         ;8 = NOP Fill
         .dw displayNoFn     ;9 = Unused
         .dw restoreBackup   ;A = Restore Backup
@@ -3555,7 +3510,7 @@ functionJumpTable:
         .dw smartCopy       ;C = Smart Copy
         .dw switchView      ;D = Switch between Hex and Disassembly view
         .dw toggleExpand    ;E = Toggle Expand
-        .dw loadFromDisk    ;F = Disk Menu
+        .dw displayNoFn     ;F = Disk Menu moved to TEC-FS
 
 ASCIISegTable:
         .db 00H,18H,0AH,0EEH,0A7H,5CH,2CH,02H       ;  ! " # $ % & '
@@ -3621,15 +3576,15 @@ hardResetMessage:
 
 ;Main Menu Configuration
 mainMenuCFG:
-        .db 12   ;twelve entries
+        .db 11   ;eleven entries
         .db "TEC-1G"    ;7segment Text
            ;"                   " <- Max LCD entry width
         .db "= TEC-1G Main Menu =",0
+        .db "TecMate",0
+        .dw launchTecMate
 intelLabel:
         .db "Intel HEX Load",0
         .dw intelHexLoad
-        .db "Drive Access",0
-        .dw displayDrive
         .db "Smart Block Copy",0
         .dw smartCopy
         .db "Block Backup",0
@@ -3642,8 +3597,6 @@ intelLabel:
         .dw hexDumpToSerial
         .db "Import Binary File",0
         .dw dataFromSerial
-        .db "Music Routine",0
-        .dw playTuneMenu
         .db "Settings",0
         .dw displaySettings
         .db "Credits",0
@@ -3653,7 +3606,7 @@ intelLabel:
 
 ;Settings Menu
 settingsCFG:
-        .db 7
+        .db 5
         .db "Config"    ;7segment Text
            ;"                   " <- Max LCD entry width
         .db "=  TEC-1G Settings =",0
@@ -3661,12 +3614,8 @@ settingsCFG:
         .dw toggleBeep
         .db "Set Baud Rate",0
         .dw displayBaud
-        .db "Toggle GLCD Term",0
-        .dw toggleGLCDTerminal
         .db "Toggle Address Inc",0
         .dw toggleAutoAddress
-        .db "Configure RTC",0
-        .dw RTCSetup
         .db "Reset RTC & PRAM",0
         .dw RTCReset
         .db "Toggle EXPAND",0

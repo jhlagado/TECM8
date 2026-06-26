@@ -2,9 +2,10 @@
 
 ; Include packages are to be placed in memory from 0D000H to 0FFECH
 
+        ; MON3-lite compatibility stubs for relocated packages
+        .include "monitor_lite_stubs.asm"
+
         ; Disassembler code
-        .include "glcd_library.asm"
         .include "disassembler.asm"
         .include "sound.asm"
-        .include "pata_fat32.asm"
         .include "rtc.asm"
