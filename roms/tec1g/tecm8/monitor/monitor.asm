@@ -3045,6 +3045,8 @@ displaySettings:
 
 ; Launch TecMate from the expansion ROM window.
 launchTecMate:
+        ld a,EXPAND
+        call setExpand
         jp 08000H
 
 ; Display baud rate menu
@@ -3576,7 +3578,7 @@ hardResetMessage:
 
 ;Main Menu Configuration
 mainMenuCFG:
-        .db 11   ;eleven entries
+        .db 12   ;twelve entries
         .db "TEC-1G"    ;7segment Text
            ;"                   " <- Max LCD entry width
         .db "= TEC-1G Main Menu =",0
@@ -3597,6 +3599,8 @@ intelLabel:
         .dw hexDumpToSerial
         .db "Import Binary File",0
         .dw dataFromSerial
+        .db "Music Routine",0
+        .dw playTuneMenu
         .db "Settings",0
         .dw displaySettings
         .db "Credits",0
