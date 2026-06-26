@@ -55,26 +55,27 @@ better fits for the expansion ROM unless measurement proves otherwise.
 The expansion ROM window is `8000h-BFFFh`. It is a 16K address window onto a
 larger physical ROM selected by hardware bank bits.
 
-The first target is a 32K physical expansion ROM:
+The current Debug80 target is a 144K physical expansion image:
 
 ```text
-physical ROM offset 0000h-3FFFh  bank 0, appears at 8000h-BFFFh
-physical ROM offset 4000h-7FFFh  bank 1, appears at 8000h-BFFFh
+physical ROM offset 00000h-03FFFh  legacy bank 0, appears at 8000h-BFFFh
+physical ROM offset 04000h-07FFFh  legacy bank 1, appears at 8000h-BFFFh
+physical ROM offset 08000h-23FFFh  seven additional 16K TECM8 slots
 ```
 
-Both banks are assembled with the same origin:
+Each ROM/RAM slot is assembled for the same visible origin:
 
 ```asm
 .org 8000h
 ```
 
-The bank select hardware chooses which 16K half is visible at `8000h-BFFFh`.
-The current discussion assumes a status bit controls the initial two-bank
-selection. Later hardware may expose more bank bits, with a likely target of up
-to seven banked ROMs in the same window.
+The bank select hardware chooses which 16K slot is visible at `8000h-BFFFh`.
+Debug80 preserves the first two legacy expand pages and exposes seven
+additional TECM8 slots for tools, libraries, cartridge-style programs, or RAM
+overlays.
 
 The software model should therefore treat the bank number as a general value,
-not as a boolean, even though the first implementation only needs banks 0 and 1.
+not as a boolean.
 
 ## Bank Ownership Rule
 
@@ -189,13 +190,13 @@ build/roms/tec1g/tecm8-expansion/bank1.hex
 build/roms/tec1g/tecm8-expansion/bank1.bin
 build/roms/tec1g/tecm8-expansion/bank1.d8.json
 
-build/roms/tec1g/tecm8-expansion/tecm8-expansion-32k.bin
-build/roms/tec1g/tecm8-expansion/tecm8-expansion-32k.hex
-build/roms/tec1g/tecm8-expansion/tecm8-expansion-32k.d8.json
+build/roms/tec1g/tecm8-expansion/tecm8-expansion-144k.bin
+build/roms/tec1g/tecm8-expansion/tecm8-expansion-144k.hex
+build/roms/tec1g/tecm8-expansion/tecm8-expansion-144k.d8.json
 ```
 
-The combined `32K` artifact is the physical ROM image. It contains two 16K
-banks, both assembled for the visible address range `8000h-BFFFh`.
+The combined `144K` artifact is the physical expansion image. It contains nine
+16K slots, each assembled for the visible address range `8000h-BFFFh`.
 
 The debug metadata needs to preserve bank identity. Two different source lines
 may both assemble to address `8000h`, but they are not the same code unless the
@@ -256,7 +257,7 @@ The incremental path should be deliberately conservative:
 4. Launch Debug80 using the local MON3 build.
 5. Add a tiny expansion ROM bank 0 with a manifest and return stub.
 6. Add bank 1 with a different manifest and return stub.
-7. Produce a combined 32K expansion ROM artifact.
+7. Produce a combined 144K expansion image artifact.
 8. Add a MON3Lite menu item or command that launches bank 0.
 9. Prove bank 0 can long-call bank 1 through fixed-ROM bank services.
 10. Only then begin moving real TECM8 shell/editor code into banked ROM.

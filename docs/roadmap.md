@@ -56,9 +56,9 @@ The editor, assembler, runner, and later debugger should be treated as separate
 tool projects launched by the shell. The preferred implementation is ROM-based:
 the fixed ROM contains MON3-compatible BIOS services and the resident shell,
 while the 16K expansion window holds banked tools. The currently modeled system
-has a fixed 16K ROM plus two 16K expansion banks, giving a 48K first ROM budget
-with 32K addressable at one time. Future hardware may add more banks, but the
-current roadmap should prove the 48K model first.
+has a fixed 16K ROM plus nine 16K expansion slots: two legacy expand pages and
+seven additional TECM8 slots. That gives a 160K ROM budget with 32K addressable
+at one time.
 
 The MON3 direction is evolutionary, not a clean break. TECM8 should keep as much
 of MON3's useful hardware service surface as practical: SD/FAT32, matrix

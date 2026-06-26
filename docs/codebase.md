@@ -1232,10 +1232,9 @@ fail on any AZM diagnostic, and emit both a tracked project copy under
 `roms/tec1g/tecm8/` and the runtime copy plus D8 map under `build/roms/`.
 
 The monitor builder keeps the output within the 16K fixed-ROM range at
-`0xC000-0xFFFF`. The expansion builder keeps the mapped code within the 32K
-backing image used for the two 16K TEC-1G expansion banks, then pads the
-generated image to the full 32768-byte backing size Debug80 expects for
-`expansionRomHex`.
+`0xC000-0xFFFF`. The expansion builder keeps the current source within the
+16K visible bank window at `0x8000-0xBFFF`, then pads the generated image to
+the full 147456-byte backing size Debug80 expects for `expansionRomHex`.
 
 ### Proof Runners
 

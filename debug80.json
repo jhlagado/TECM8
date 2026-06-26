@@ -65,9 +65,9 @@
             "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
             "windowAddress": 32768,
             "windowSize": 16384,
-            "imageSize": 32768,
+            "imageSize": 147456,
             "bankSize": 16384,
-            "bankCount": 2
+            "bankCount": 9
           },
           {
             "id": "tecm8-monitor",
@@ -125,9 +125,9 @@
             "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
             "windowAddress": 32768,
             "windowSize": 16384,
-            "imageSize": 32768,
+            "imageSize": 147456,
             "bankSize": 16384,
-            "bankCount": 2
+            "bankCount": 9
           },
           {
             "id": "tecm8-monitor",

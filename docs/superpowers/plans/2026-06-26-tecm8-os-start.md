@@ -4,7 +4,7 @@
 
 **Goal:** Start the ROM-based TECM8 operating-system track by pausing editor feature growth, building the first expansion-ROM libraries and smoke program, starting VDU and TEC-FS foundations, and clearing enough fixed-ROM space for reliable bank switching.
 
-**Architecture:** MON3-derived fixed ROM remains the compatibility and BIOS layer at `C000h-FFFFh`. TECM8 grows in the banked expansion ROM window at `8000h-BFFFh`, initially as a 32K two-bank artifact where each bank assembles at `0x8000`. The first implementation keeps the existing editor as reference code but shifts active development toward reusable ROM services and a tiny launchable program.
+**Architecture:** MON3-derived fixed ROM remains the compatibility and BIOS layer at `C000h-FFFFh`. TECM8 grows in the banked expansion ROM window at `8000h-BFFFh`, using a 144K backing image with two legacy expand pages plus seven additional 16K TECM8 slots. Each slot assembles for the visible address range at `0x8000`. The first implementation keeps the existing editor as reference code but shifts active development toward reusable ROM services and a tiny launchable program.
 
 **Tech Stack:** Z80 assembly, AZM, Debug80 `romArtifacts`, TEC-1G fixed monitor ROM, TEC-1G banked expansion ROM, TMS9918-style VDU target, TEC-FS storage design, Node-based build/proof tooling.
 
@@ -20,7 +20,7 @@
 - Modify `roms/tec1g/tecm8/monitor/api_includes.asm`: reserve stable service numbers for bank select, bank call, and TECM8 launch.
 - Modify `roms/tec1g/tecm8/monitor/monitor.asm`: add a small monitor-side TECM8 launch hook and fixed-ROM-owned bank-call routine.
 - Modify `roms/tec1g/tecm8/monitor/rtc.asm`: prepare to split RTC service routines from interactive RTC setup UI.
-- Modify `tools/build-expansion-rom.ts`: keep producing a two-bank-compatible expansion artifact and verify size constraints.
+- Modify `tools/build-expansion-rom.ts`: keep producing a nine-slot-compatible expansion artifact and verify size constraints.
 - Add focused tests under `tools/` for expansion manifest shape, monitor service reservations, and generated ROM sizes.
 
 ## Pause Rule

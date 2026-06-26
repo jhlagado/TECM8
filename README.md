@@ -61,7 +61,9 @@ Debug80 declares both the monitor and expansion ROMs as active source-backed
 `tec1g.romHex`. Launch also builds
 `build/roms/tec1g/tecm8/expansion/expansion.bin` and loads it through
 `tec1g.expansionRomHex`. The image is available through the TEC-1G banked
-expansion window at `0x8000-0xBFFF`.
+expansion window at `0x8000-0xBFFF`. The configured expansion backing image is
+nine 16K slots: two legacy expand pages plus seven additional TECM8 expansion
+slots.
 
 Useful local checks:
 

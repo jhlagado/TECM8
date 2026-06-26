@@ -17,8 +17,9 @@ const BUILD_D8_PATH = resolve(
 );
 const ROM_START = 0x8000;
 const ROM_BANK_BYTES = 16 * 1024;
-const ROM_BYTES = 32 * 1024;
-const ROM_END_EXCLUSIVE = ROM_START + ROM_BYTES;
+const ROM_BANK_COUNT = 9;
+const ROM_BYTES = ROM_BANK_BYTES * ROM_BANK_COUNT;
+const ROM_WINDOW_END_EXCLUSIVE = ROM_START + ROM_BANK_BYTES;
 
 type Diagnostic = {
   id?: string;
@@ -80,13 +81,13 @@ async function main(): Promise<void> {
 
   const d8 = d8m?.json ?? {};
   const mappedEnd = getMappedEnd(d8);
-  if (mappedEnd !== undefined && mappedEnd > ROM_END_EXCLUSIVE) {
+  if (mappedEnd !== undefined && mappedEnd > ROM_WINDOW_END_EXCLUSIVE) {
     throw new Error(
-      `Expansion ROM exceeds 32K backing image: mapped end ${toHex(mappedEnd)}, limit ${toHex(ROM_END_EXCLUSIVE)}`
+      `Expansion ROM bank 0 exceeds the 16K visible window: mapped end ${toHex(mappedEnd)}, limit ${toHex(ROM_WINDOW_END_EXCLUSIVE)}`
     );
   }
-  if (bin.bytes.length > ROM_BYTES) {
-    throw new Error(`Expansion ROM binary is ${bin.bytes.length} bytes; limit is ${ROM_BYTES}`);
+  if (bin.bytes.length > ROM_BANK_BYTES) {
+    throw new Error(`Expansion ROM bank 0 binary is ${bin.bytes.length} bytes; limit is ${ROM_BANK_BYTES}`);
   }
   const romImage = Buffer.alloc(ROM_BYTES);
   Buffer.from(bin.bytes).copy(romImage);
@@ -108,8 +109,9 @@ async function main(): Promise<void> {
         sourceBytes: bin.bytes.length,
         imageBytes: romImage.length,
         romStart: toHex(ROM_START),
-        romEndExclusive: toHex(ROM_END_EXCLUSIVE),
+        romWindowEndExclusive: toHex(ROM_WINDOW_END_EXCLUSIVE),
         bankBytes: ROM_BANK_BYTES,
+        bankCount: ROM_BANK_COUNT,
       },
       null,
       2

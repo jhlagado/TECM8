@@ -14,7 +14,7 @@ working assumption is:
 64K address space
 16K MON3/TECM8 fixed ROM mapped at C000h-FFFFh
 16K expansion window at 8000h-BFFFh
-32K expansion potential, exposed as two 16K banks
+144K expansion potential, exposed as nine 16K slots
 24K realistic working RAM target
 ```
 
@@ -117,16 +117,16 @@ features:
 bit 0  ~SHADOW, active low; 0 maps C000h-C7FFh into 0000h-07FFh
 bit 1  PROTECT; protects writes to 4000h-7FFFh
 bit 2  EXPAND; enables the banked 8000h-BFFFh expansion window
-bit 3  E_A14; selects one of two current 16K expansion banks
-bits 3-6 future memory expansion bank field in Debug80
+bit 3  E_A14; preserves the legacy low/high 16K expand-page select
+bits 3-6 memory expansion bank field in Debug80
 bit 7  CAPSLOCK
 ```
 
 The expansion window is the natural place to think about editor, assembler,
 runner, debugger, help text, and table overlays. It exposes 16K at a time, and
-the currently modeled bank select gives two 16K banks for 32K of expansion
-content. Together with the fixed 16K ROM, the practical first ROM budget is
-therefore 48K total, with only 32K addressable at one time.
+the currently modeled bank select gives two legacy 16K expand pages plus seven
+additional 16K expansion slots. Together with the fixed 16K ROM, the practical
+ROM budget is therefore 160K total, with only 32K addressable at one time.
 
 Some less central MON3 utilities may eventually be candidates for relocation or
 replacement if TECM8 controls a modified ROM image and needs that space. The

@@ -57,9 +57,9 @@ test('TECM8 Debug80 config uses a custom profile with monitor and expansion ROM 
         outputDebugMap: 'build/roms/tec1g/tecm8/expansion/expansion.d8.json',
         windowAddress: 32768,
         windowSize: 16384,
-        imageSize: 32768,
+        imageSize: 147456,
         bankSize: 16384,
-        bankCount: 2,
+        bankCount: 9,
       },
       {
         id: 'tecm8-monitor',
@@ -124,9 +124,9 @@ test('TECM8 monitor ROM binary is a full fixed ROM image', () => {
   assert.equal(statSync(monitorBin).size, 16384);
 });
 
-test('TECM8 expansion ROM binary is a full two-bank backing image', () => {
+test('TECM8 expansion ROM binary is a full nine-bank backing image', () => {
   const expansionBin = resolve(root, 'roms/tec1g/tecm8/expansion/expansion.bin');
 
   assert.equal(existsSync(expansionBin), true, 'expansion ROM binary should exist');
-  assert.equal(statSync(expansionBin).size, 32768);
+  assert.equal(statSync(expansionBin).size, 147456);
 });
