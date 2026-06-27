@@ -228,7 +228,7 @@ banked code does not own the hardware latch.
 Use this provisional calling convention for the first implementation:
 
 ```text
-Tecm8FarJump
+farJump
   Input:  B = target bank
           HL = target address in the 8000h-BFFFh window
   Action: discard the caller return address, select target bank, then JP (HL)
@@ -257,12 +257,12 @@ The intended `RST 10h` call shape is:
         rst     10h
 ```
 
-Because `Tecm8FarJump` is reached through the monitor API path but does not
+Because `farJump` is reached through the monitor API path but does not
 return, it must remove the unused return address from the stack before jumping.
 The least destructive form is:
 
 ```asm
-Tecm8FarJump:
+farJump:
         inc     sp
         inc     sp
         ld      a,b

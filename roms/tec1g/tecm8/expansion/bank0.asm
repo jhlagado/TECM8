@@ -13,9 +13,9 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
-        Tecm8BankCall 0x01,TECM8_DEMO_BANK1_ENTRY
+        farCall 0x01,TECM8_DEMO_BANK1_ENTRY
         ld (TECM8_DEMO_TRACE_4),a
-        Tecm8FarJump 0x02,TECM8_DEMO_BANK2_TARGET
+        farJump 0x02,TECM8_DEMO_BANK2_TARGET
         ld (TECM8_DEMO_TRACE_7),a
         RET
 
