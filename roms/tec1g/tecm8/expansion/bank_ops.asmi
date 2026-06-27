@@ -23,3 +23,17 @@ TECM8_DEMO_BANK1_ENTRY      .equ    0x8000
 TECM8_DEMO_BANK1_HELPER     .equ    0x8010
 TECM8_DEMO_BANK2_ENTRY      .equ    0x8000
 TECM8_DEMO_BANK2_TARGET     .equ    0x8020
+
+op Tecm8BankCall(bank imm8, target imm16)
+        ld a,bank
+        ld hl,target
+        ld c,TECM8_BIOS_BANK_CALL
+        rst 10H
+end
+
+op Tecm8FarJump(bank imm8, target imm16)
+        ld a,bank
+        ld hl,target
+        ld c,TECM8_BIOS_FAR_JUMP
+        rst 10H
+end

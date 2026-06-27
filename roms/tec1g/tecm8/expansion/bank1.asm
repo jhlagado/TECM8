@@ -10,10 +10,7 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @Tecm8ExpansionBank1Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_1),a
-        ld a,0x02
-        ld hl,TECM8_DEMO_BANK2_ENTRY
-        ld c,TECM8_BIOS_BANK_CALL
-        rst 10H
+        Tecm8BankCall 0x02,TECM8_DEMO_BANK2_ENTRY
         ld (TECM8_DEMO_TRACE_3),a
         ld a,TECM8_EXPANSION_BANK
         RET
