@@ -16,7 +16,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,TECM8_ABI_TRACE_BASE
-        ld b,22
+        ld b,23
 ClearTrace:
         ld (hl),0
         inc hl
@@ -52,6 +52,8 @@ ClearTrace:
         ld (TECM8_ABI_TRACE_BASE+19),a
         callService TECM8_SERVICE_RTC_TOOL
         ld (TECM8_ABI_TRACE_BASE+20),a
+        callService TECM8_SERVICE_GLCD_ENTRY
+        ld (TECM8_ABI_TRACE_BASE+22),a
         callService 0x7F
         ld (TECM8_ABI_TRACE_BASE+21),a
 

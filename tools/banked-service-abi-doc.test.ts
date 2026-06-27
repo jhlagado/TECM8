@@ -68,6 +68,8 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
     'TECM8_SERVICE_TECFS_MOUNT_ADDR',
     'TECM8_SERVICE_RTC_TOOL_BANK',
     'TECM8_SERVICE_RTC_TOOL_ADDR',
+    'TECM8_SERVICE_GLCD_ENTRY_BANK',
+    'TECM8_SERVICE_GLCD_ENTRY_ADDR',
   ]) {
     assertDocRow(name);
   }
@@ -155,6 +157,26 @@ test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
     'TECM8_RTC_STATUS_OK',
     'TECM8_RTC_FEATURE_SERVICE',
     'TECM8_RTC_ERR_UNSUPPORTED',
+  ]) {
+    assertDocRow(name);
+  }
+});
+
+test('banked service ABI doc covers bank 4 GLCD boundary slots and parameters', () => {
+  for (const name of [
+    'TECM8_GLCD_ENTRY',
+    'TECM8_GLCD_INIT',
+    'TECM8_GLCD_CLEAR',
+    'TECM8_GLCD_PLOT',
+    'TECM8_GLCD_PARAM_BASE',
+    'TECM8_GLCD_PARAM_STATUS',
+    'TECM8_GLCD_PARAM_LAST_ERROR',
+    'TECM8_GLCD_PARAM_BANK',
+    'TECM8_GLCD_PARAM_VERSION',
+    'TECM8_GLCD_PARAM_FEATURES',
+    'TECM8_GLCD_STATUS_OK',
+    'TECM8_GLCD_FEATURE_BOUNDARY',
+    'TECM8_GLCD_ERR_UNSUPPORTED',
   ]) {
     assertDocRow(name);
   }

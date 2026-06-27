@@ -35,6 +35,8 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         jr z,Tecm8ServiceCallTecfsMount
         cp TECM8_SERVICE_RTC_TOOL
         jr z,Tecm8ServiceCallRtcTool
+        cp TECM8_SERVICE_GLCD_ENTRY
+        jr z,Tecm8ServiceCallGlcdEntry
         pop af
         pop de
         pop hl
@@ -61,6 +63,13 @@ Tecm8ServiceCallRtcTool:
         pop de
         pop hl
         farCall TECM8_SERVICE_RTC_TOOL_BANK,TECM8_SERVICE_RTC_TOOL_ADDR
+        ret
+
+Tecm8ServiceCallGlcdEntry:
+        pop af
+        pop de
+        pop hl
+        farCall TECM8_SERVICE_GLCD_ENTRY_BANK,TECM8_SERVICE_GLCD_ENTRY_ADDR
         ret
 
         .org    0x8100

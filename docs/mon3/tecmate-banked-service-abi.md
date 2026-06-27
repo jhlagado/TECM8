@@ -59,6 +59,9 @@ final banked service still receives the caller's original `AF`, `DE`, and `HL`.
 | `TECM8_SERVICE_RTC_TOOL` | `03h` | RTC tool service ID. |
 | `TECM8_SERVICE_RTC_TOOL_BANK` | `03h` | RTC tool physical bank. |
 | `TECM8_SERVICE_RTC_TOOL_ADDR` | `8010h` | RTC tool address. |
+| `TECM8_SERVICE_GLCD_ENTRY` | `04h` | GLCD boundary service ID. |
+| `TECM8_SERVICE_GLCD_ENTRY_BANK` | `04h` | GLCD boundary physical bank. |
+| `TECM8_SERVICE_GLCD_ENTRY_ADDR` | `8000h` | GLCD boundary address. |
 | `TECM8_SERVICE_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 ## Bank 1: VDU/TMS9918
@@ -191,6 +194,38 @@ RTC status and feature values:
 | `TECM8_RTC_STATUS_OK` | `00h` | Success. |
 | `TECM8_RTC_FEATURE_SERVICE` | `01h` | Basic service boundary present. |
 | `TECM8_RTC_ERR_UNSUPPORTED` | `E0h` | UI/tool slot exists but is not implemented yet. |
+
+## Bank 4: GLCD Boundary
+
+Physical bank 4 is the first GLCD relocation boundary. It does not yet contain
+the real GLCD implementation; it exposes a descriptor and explicit unsupported
+stubs so monitor callers can move to a banked GLCD ABI.
+
+| Constant | Address | Status |
+| --- | ---: | --- |
+| `TECM8_GLCD_ENTRY` | `8000h` | Publishes service descriptor, returns `A=84h`, carry clear. |
+| `TECM8_GLCD_INIT` | `8010h` | Explicit unsupported error. |
+| `TECM8_GLCD_CLEAR` | `8020h` | Explicit unsupported error. |
+| `TECM8_GLCD_PLOT` | `8030h` | Explicit unsupported error. |
+
+GLCD parameter block:
+
+| Constant | Address | Meaning |
+| --- | ---: | --- |
+| `TECM8_GLCD_PARAM_BASE` | `3B80h` | Base of GLCD parameter block. |
+| `TECM8_GLCD_PARAM_STATUS` | `3B80h` | Last status code. |
+| `TECM8_GLCD_PARAM_LAST_ERROR` | `3B81h` | Last error code. |
+| `TECM8_GLCD_PARAM_BANK` | `3B82h` | Service bank marker. |
+| `TECM8_GLCD_PARAM_VERSION` | `3B83h` | Service ABI version. |
+| `TECM8_GLCD_PARAM_FEATURES` | `3B84h` | Feature flags. |
+
+GLCD status and feature values:
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `TECM8_GLCD_STATUS_OK` | `00h` | Success. |
+| `TECM8_GLCD_FEATURE_BOUNDARY` | `01h` | Basic service boundary present. |
+| `TECM8_GLCD_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
 ## Proof Hooks
 
