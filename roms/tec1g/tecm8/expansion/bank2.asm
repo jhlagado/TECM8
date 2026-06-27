@@ -9,6 +9,9 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 TECFS_VOLUME_MIB              .equ    128
 TECFS_BLOCK_BYTES             .equ    4096
 TECFS_VOLUME_BLOCKS           .equ    32768
+TECFS_USER_VOLUMES            .equ    30
+TECFS_SPARE_VOLUME            .equ    30
+TECFS_TOTAL_VOLUMES           .equ    31
 
 @Tecm8ExpansionBank2Entry:
         ld a,TECM8_EXPANSION_BANK
@@ -17,30 +20,76 @@ TECFS_VOLUME_BLOCKS           .equ    32768
 
         .org    0x8010
 @tecfsMount:
-        ld a,0x82
-        ret
+        jp tecfsMountImpl
 
         .org    0x8020
 @tecfsSelectVolume:
-        ret
+        jp tecfsSelectVolumeImpl
 
         .org    0x8030
 @tecfsRead:
-        ret
+        jp tecfsUnsupported
 
         .org    0x8040
 @tecfsWrite:
-        ret
+        jp tecfsUnsupported
 
         .org    0x8050
 @tecfsLoadRange:
-        ret
+        jp tecfsUnsupported
 
         .org    0x8060
 @tecfsSaveRange:
+        jp tecfsUnsupported
+
+        .org    0x8070
+@tecfsMountImpl:
+        xor a
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        ld a,TECFS_VOLUME_MIB
+        ld (TECFS_PARAM_VOLUME_MIB),a
+        ld hl,TECFS_BLOCK_BYTES
+        ld (TECFS_PARAM_BLOCK_BYTES_LO),hl
+        ld hl,TECFS_VOLUME_BLOCKS
+        ld (TECFS_PARAM_VOLUME_BLOCKS_LO),hl
+        ld a,TECFS_USER_VOLUMES
+        ld (TECFS_PARAM_USER_VOLUMES),a
+        ld a,TECFS_SPARE_VOLUME
+        ld (TECFS_PARAM_SPARE_VOLUME),a
+        ld a,TECFS_TOTAL_VOLUMES
+        ld (TECFS_PARAM_TOTAL_VOLUMES),a
+        ld a,0x82
+        or a
         ret
 
-        .org    0x80C0
+@tecfsSelectVolumeImpl:
+        ld a,(TECFS_PARAM_REQUEST_VOLUME)
+        cp TECFS_TOTAL_VOLUMES
+        jr nc,tecfsBadVolume
+        ld (TECFS_PARAM_ACTIVE_VOLUME),a
+        xor a
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsBadVolume:
+        ld a,TECFS_ERR_BAD_VOLUME
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsUnsupported:
+        ld a,TECFS_ERR_UNSUPPORTED
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+        .org    TECM8_ABI_BANK2_NESTED
 @BankAbiNestedTarget:
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
