@@ -19,6 +19,18 @@ TECM8_DEMO_TRACE_6          .equ    TECM8_DEMO_TRACE_BASE+6
 TECM8_DEMO_TRACE_7          .equ    TECM8_DEMO_TRACE_BASE+7
 TECM8_DEMO_TRACE_8          .equ    TECM8_DEMO_TRACE_BASE+8
 TECM8_DEMO_TRACE_9          .equ    TECM8_DEMO_TRACE_BASE+9
+TECM8_SERVICE_CALL          .equ    0x80A0
+TECM8_SERVICE_VDU_INIT      .equ    0x01
+TECM8_SERVICE_VDU_INIT_BANK .equ    0x01
+TECM8_SERVICE_VDU_INIT_ADDR .equ    TECM8_VDU_INIT
+TECM8_SERVICE_TECFS_MOUNT   .equ    0x02
+TECM8_SERVICE_TECFS_MOUNT_BANK .equ 0x02
+TECM8_SERVICE_TECFS_MOUNT_ADDR .equ TECM8_TECFS_MOUNT
+TECM8_SERVICE_RTC_TOOL      .equ    0x03
+TECM8_SERVICE_RTC_TOOL_BANK .equ    0x03
+TECM8_SERVICE_RTC_TOOL_ADDR .equ    TECM8_RTC_TOOL_ENTRY
+TECM8_SERVICE_ERR_UNKNOWN   .equ    0xEE
+
 TECM8_ABI_TRACE_BASE        .equ    0x3100
 TECM8_ABI_TRACE_0           .equ    TECM8_ABI_TRACE_BASE+0
 TECM8_ABI_TRACE_1           .equ    TECM8_ABI_TRACE_BASE+1
@@ -112,4 +124,19 @@ op farJump(bank imm8, target imm16)
         ld hl,target
         ld c,TECM8_BIOS_FAR_JUMP
         rst 10H
+end
+
+op callService(service imm8)
+        ld b,0x00
+        ld c,service
+        push bc
+        push hl
+        push de
+        push af
+        ld b,0x00
+        ld hl,TECM8_SERVICE_CALL
+        ld c,TECM8_BIOS_BANK_CALL
+        rst 10H
+        inc sp
+        inc sp
 end

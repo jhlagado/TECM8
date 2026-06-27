@@ -60,6 +60,23 @@ test('banked service ABI doc covers fixed monitor bank services', () => {
   }
 });
 
+test('banked service ABI doc covers bank 0 service registry entries', () => {
+  for (const name of [
+    'TECM8_SERVICE_VDU_INIT_BANK',
+    'TECM8_SERVICE_VDU_INIT_ADDR',
+    'TECM8_SERVICE_TECFS_MOUNT_BANK',
+    'TECM8_SERVICE_TECFS_MOUNT_ADDR',
+    'TECM8_SERVICE_RTC_TOOL_BANK',
+    'TECM8_SERVICE_RTC_TOOL_ADDR',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(ops, /op callService\(service imm8\)/);
+  assert.doesNotMatch(ops, /TECM8_SERVICE_REQUEST/);
+  assert.match(doc, /callService TECM8_SERVICE_VDU_INIT/);
+  assert.match(doc, /per-call stack word/);
+});
+
 test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => {
   for (const name of [
     'TECM8_VDU_ENTRY',

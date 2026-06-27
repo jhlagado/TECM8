@@ -33,6 +33,34 @@ The bank-call return path preserves the callee's `AF`, so carry and `A` status
 values survive the fixed-ROM bank restore. The previous `SYS_CTRL` value is
 stored in the stack frame, so nested far calls restore the correct bank state.
 
+## Bank 0: Service Registry
+
+Bank 0 owns the first assembly-time service registry. Callers can use:
+
+```asm
+        callService TECM8_SERVICE_VDU_INIT
+```
+
+`callService` stores the requested service ID, enters bank 0 through the fixed
+bank-call gateway, and bank 0 dispatches to the service's registered bank and
+address. The service ID is carried in a per-call stack word, not a shared RAM
+byte, so nested or interrupted calls do not overwrite each other's request. The
+final banked service still receives the caller's original `AF`, `DE`, and `HL`.
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `TECM8_SERVICE_CALL` | `80A0h` | Bank 0 registry dispatcher. |
+| `TECM8_SERVICE_VDU_INIT` | `01h` | VDU init service ID. |
+| `TECM8_SERVICE_VDU_INIT_BANK` | `01h` | VDU init physical bank. |
+| `TECM8_SERVICE_VDU_INIT_ADDR` | `8010h` | VDU init address. |
+| `TECM8_SERVICE_TECFS_MOUNT` | `02h` | TEC-FS mount service ID. |
+| `TECM8_SERVICE_TECFS_MOUNT_BANK` | `02h` | TEC-FS mount physical bank. |
+| `TECM8_SERVICE_TECFS_MOUNT_ADDR` | `8010h` | TEC-FS mount address. |
+| `TECM8_SERVICE_RTC_TOOL` | `03h` | RTC tool service ID. |
+| `TECM8_SERVICE_RTC_TOOL_BANK` | `03h` | RTC tool physical bank. |
+| `TECM8_SERVICE_RTC_TOOL_ADDR` | `8010h` | RTC tool address. |
+| `TECM8_SERVICE_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
+
 ## Bank 1: VDU/TMS9918
 
 Physical bank 1 currently owns the first TMS9918-facing services.

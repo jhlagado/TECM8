@@ -13,12 +13,54 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
-        farCall 0x01,TECM8_VDU_INIT
+        callService TECM8_SERVICE_VDU_INIT
         ld (TECM8_DEMO_TRACE_4),a
-        farCall 0x02,TECM8_TECFS_MOUNT
+        callService TECM8_SERVICE_TECFS_MOUNT
         ld (TECM8_DEMO_TRACE_5),a
-        farCall 0x03,TECM8_RTC_TOOL_ENTRY
+        callService TECM8_SERVICE_RTC_TOOL
         ld (TECM8_DEMO_TRACE_6),a
+        ret
+
+        .org    TECM8_SERVICE_CALL
+@Tecm8ServiceCall:
+        push hl
+        push de
+        push af
+        ld ix,0
+        add ix,sp
+        ld a,(ix+12)
+        cp TECM8_SERVICE_VDU_INIT
+        jr z,Tecm8ServiceCallVduInit
+        cp TECM8_SERVICE_TECFS_MOUNT
+        jr z,Tecm8ServiceCallTecfsMount
+        cp TECM8_SERVICE_RTC_TOOL
+        jr z,Tecm8ServiceCallRtcTool
+        pop af
+        pop de
+        pop hl
+        ld a,TECM8_SERVICE_ERR_UNKNOWN
+        scf
+        ret
+
+Tecm8ServiceCallVduInit:
+        pop af
+        pop de
+        pop hl
+        farCall TECM8_SERVICE_VDU_INIT_BANK,TECM8_SERVICE_VDU_INIT_ADDR
+        ret
+
+Tecm8ServiceCallTecfsMount:
+        pop af
+        pop de
+        pop hl
+        farCall TECM8_SERVICE_TECFS_MOUNT_BANK,TECM8_SERVICE_TECFS_MOUNT_ADDR
+        ret
+
+Tecm8ServiceCallRtcTool:
+        pop af
+        pop de
+        pop hl
+        farCall TECM8_SERVICE_RTC_TOOL_BANK,TECM8_SERVICE_RTC_TOOL_ADDR
         ret
 
         .org    0x8100
