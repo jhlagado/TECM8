@@ -1,4 +1,4 @@
-; TECM8 expansion ROM physical bank 1: VDU/TMS9918 service skeleton.
+; TECM8 expansion ROM physical bank 1: VDU/TMS9918 services.
 
         .include "bank_ops.asmi"
 
@@ -14,12 +14,17 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 
         .org    0x8010
 @vduInit:
+        call tmsInit
         ld a,0x81
         ret
 
         .org    0x8020
 @vduClear:
-        ret
+        xor a
+        ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld (TECM8_TMS_PARAM_ADDR_HI),a
+        ld (TECM8_TMS_PARAM_VALUE),a
+        jp tmsWriteVram
 
         .org    0x8030
 @vduSetCursor:
@@ -27,18 +32,45 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 
         .org    0x8040
 @vduPutChar:
-        ret
+        xor a
+        ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld (TECM8_TMS_PARAM_ADDR_HI),a
+        jp tmsWriteVram
 
         .org    0x8080
 @tmsInit:
+        ld a,0x07
+        ld (TECM8_TMS_PARAM_REGISTER),a
+        ld a,0xF1
+        ld (TECM8_TMS_PARAM_VALUE),a
+        call tmsSetRegister
+        ld a,0x81
         ret
 
         .org    0x8090
+; Input: TECM8_TMS_PARAM_REGISTER = TMS register 0-7,
+;        TECM8_TMS_PARAM_VALUE = value.
 @tmsSetRegister:
+        ld a,(TECM8_TMS_PARAM_VALUE)
+        out (TECM8_TMS_CONTROL_PORT),a
+        ld a,(TECM8_TMS_PARAM_REGISTER)
+        and 0x07
+        or 0x80
+        out (TECM8_TMS_CONTROL_PORT),a
         ret
 
         .org    0x80A0
+; Input: TECM8_TMS_PARAM_ADDR_LO/HI = VRAM address,
+;        TECM8_TMS_PARAM_VALUE = byte value.
 @tmsWriteVram:
+        ld a,(TECM8_TMS_PARAM_ADDR_LO)
+        out (TECM8_TMS_CONTROL_PORT),a
+        ld a,(TECM8_TMS_PARAM_ADDR_HI)
+        and 0x3F
+        or 0x40
+        out (TECM8_TMS_CONTROL_PORT),a
+        ld a,(TECM8_TMS_PARAM_VALUE)
+        out (TECM8_TMS_DATA_PORT),a
         ret
 
         .org    0x80C0
