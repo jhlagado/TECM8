@@ -40,6 +40,14 @@ TECFS_VOLUME_BLOCKS           .equ    32768
 @tecfsSaveRange:
         ret
 
+        .org    0x80C0
+@BankAbiNestedTarget:
+        ld c,TECM8_BIOS_SYS_GET
+        rst 10H
+        ld (TECM8_ABI_TRACE_8),a
+        ld a,0xB2
+        ret
+
         .org    0x8100
 @Tecm8ExpansionBank2Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

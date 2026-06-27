@@ -41,6 +41,15 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @tmsWriteVram:
         ret
 
+        .org    0x80C0
+@BankAbiNestedCall:
+        ld a,0xA1
+        ld (TECM8_ABI_TRACE_6),a
+        farCall 0x02,TECM8_ABI_BANK2_NESTED
+        ld (TECM8_ABI_TRACE_7),a
+        ld a,0x91
+        ret
+
         .org    0x8100
 @Tecm8ExpansionBank1Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
