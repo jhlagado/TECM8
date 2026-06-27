@@ -28,11 +28,11 @@ TECFS_TOTAL_VOLUMES           .equ    31
 
         .org    0x8030
 @tecfsRead:
-        jp tecfsUnsupported
+        jp tecfsSectorIoNoDriver
 
         .org    0x8040
 @tecfsWrite:
-        jp tecfsUnsupported
+        jp tecfsSectorIoNoDriver
 
         .org    0x8050
 @tecfsLoadRange:
@@ -129,6 +129,43 @@ TECFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsBadBlock:
         ld a,TECFS_ERR_BAD_BLOCK
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsSectorIoNoDriver:
+        call tecfsValidateSector
+        jr c,tecfsBadSector
+        ld hl,(TECFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jr z,tecfsBadBuffer
+        ld a,TECFS_ERR_NO_DRIVER
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsValidateSector:
+        ld a,(TECFS_PARAM_SECTOR_3)
+        or a
+        scf
+        ret nz
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x7C
+        ccf
+        ret
+
+@tecfsBadSector:
+        ld a,TECFS_ERR_BAD_SECTOR
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsBadBuffer:
+        ld a,TECFS_ERR_BAD_BUFFER
         ld (TECFS_PARAM_STATUS),a
         ld (TECFS_PARAM_LAST_ERROR),a
         scf

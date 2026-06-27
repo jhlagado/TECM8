@@ -136,8 +136,8 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TECM8_TECFS_ENTRY` | `8000h` | Bank entry marker. |
 | `TECM8_TECFS_MOUNT` | `8010h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TECM8_TECFS_SELECT_VOLUME` | `8020h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
-| `TECM8_TECFS_READ` | `8030h` | Explicit unsupported error. |
-| `TECM8_TECFS_WRITE` | `8040h` | Explicit unsupported error. |
+| `TECM8_TECFS_READ` | `8030h` | 512-byte sector I/O contract; validates request, then reports no low-level driver yet. |
+| `TECM8_TECFS_WRITE` | `8040h` | 512-byte sector I/O contract; validates request, then reports no low-level driver yet. |
 | `TECM8_TECFS_LOAD_RANGE` | `8050h` | Explicit unsupported error. |
 | `TECM8_TECFS_SAVE_RANGE` | `8060h` | Explicit unsupported error. |
 | `TECM8_TECFS_MAP_BLOCK` | `8070h` | Maps active volume/block index to a 32-bit sector number. |
@@ -185,6 +185,13 @@ TEC-FS parameter block:
 | `TECFS_PARAM_SECTOR_1` | `3B4Fh` | Mapped 512-byte sector number byte 1. |
 | `TECFS_PARAM_SECTOR_2` | `3B50h` | Mapped 512-byte sector number byte 2. |
 | `TECFS_PARAM_SECTOR_3` | `3B51h` | Mapped 512-byte sector number byte 3. |
+| `TECFS_PARAM_BUFFER_LO` | `3B52h` | 512-byte sector buffer address low byte. |
+| `TECFS_PARAM_BUFFER_HI` | `3B53h` | 512-byte sector buffer address high byte. |
+
+The sector I/O contract uses `TECFS_PARAM_SECTOR_0..3` for the absolute
+512-byte sector and `TECFS_PARAM_BUFFER_LO..HI` for the RAM buffer. The current
+implementation validates the request but reports that no low-level SD sector
+driver is linked behind the boundary yet.
 
 TEC-FS status codes:
 
@@ -193,6 +200,9 @@ TEC-FS status codes:
 | `TECFS_STATUS_OK` | `00h` | Success. |
 | `TECFS_ERR_BAD_VOLUME` | `0Bh` | Requested volume is out of range. |
 | `TECFS_ERR_BAD_BLOCK` | `0Ch` | Requested block index is out of range. |
+| `TECFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
+| `TECFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
+| `TECFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TECFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
 ## Bank 3: RTC Boundary

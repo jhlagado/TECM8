@@ -17,6 +17,10 @@ PROOF_FAIL_SELECT_INVALID   .equ    0xE4
 PROOF_FAIL_UNSUPPORTED      .equ    0xE5
 PROOF_FAIL_MAP_BLOCK        .equ    0xE6
 PROOF_FAIL_MAP_INVALID      .equ    0xE7
+PROOF_FAIL_READ_CONTRACT    .equ    0xE8
+PROOF_FAIL_WRITE_CONTRACT   .equ    0xE9
+PROOF_FAIL_BAD_BUFFER       .equ    0xEA
+PROOF_FAIL_BAD_SECTOR       .equ    0xEB
 TECFS_PROOF_TRACE_BASE      .equ    0x3B80
 TECFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -113,11 +117,62 @@ ClearParams:
         cp TECFS_ERR_BAD_BLOCK
         jp nz,FailMapInvalid
 
+        ld a,0x34
+        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,0x12
+        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
+        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        jp c,FailMapBlock
+        ld hl,0x6000
+        ld (TECFS_PARAM_BUFFER_LO),hl
+
         farCall 0x02,TECM8_TECFS_READ
-        jp nc,FailUnsupported
-        cp TECFS_ERR_UNSUPPORTED
-        jp nz,FailUnsupported
+        jp nc,FailReadContract
+        cp TECFS_ERR_NO_DRIVER
+        jp nz,FailReadContract
         ld a,(TECFS_PARAM_LAST_ERROR)
+        cp TECFS_ERR_NO_DRIVER
+        jp nz,FailReadContract
+
+        farCall 0x02,TECM8_TECFS_WRITE
+        jp nc,FailWriteContract
+        cp TECFS_ERR_NO_DRIVER
+        jp nz,FailWriteContract
+        ld a,(TECFS_PARAM_LAST_ERROR)
+        cp TECFS_ERR_NO_DRIVER
+        jp nz,FailWriteContract
+
+        ld hl,0x0000
+        ld (TECFS_PARAM_BUFFER_LO),hl
+        farCall 0x02,TECM8_TECFS_READ
+        jp nc,FailBadBuffer
+        cp TECFS_ERR_BAD_BUFFER
+        jp nz,FailBadBuffer
+
+        ld hl,0x6000
+        ld (TECFS_PARAM_BUFFER_LO),hl
+        ld a,0x7C
+        ld (TECFS_PARAM_SECTOR_2),a
+        xor a
+        ld (TECFS_PARAM_SECTOR_0),a
+        ld (TECFS_PARAM_SECTOR_1),a
+        ld (TECFS_PARAM_SECTOR_3),a
+        farCall 0x02,TECM8_TECFS_READ
+        jp nc,FailBadSector
+        cp TECFS_ERR_BAD_SECTOR
+        jp nz,FailBadSector
+
+        ld a,0xA0
+        ld (TECFS_PARAM_SECTOR_0),a
+        ld a,0x91
+        ld (TECFS_PARAM_SECTOR_1),a
+        ld a,0x14
+        ld (TECFS_PARAM_SECTOR_2),a
+        xor a
+        ld (TECFS_PARAM_SECTOR_3),a
+
+        farCall 0x02,TECM8_TECFS_LOAD_RANGE
+        jp nc,FailUnsupported
         cp TECFS_ERR_UNSUPPORTED
         jp nz,FailUnsupported
 
@@ -148,6 +203,18 @@ FailMapBlock:
         jr Fail
 FailMapInvalid:
         ld a,PROOF_FAIL_MAP_INVALID
+        jr Fail
+FailReadContract:
+        ld a,PROOF_FAIL_READ_CONTRACT
+        jr Fail
+FailWriteContract:
+        ld a,PROOF_FAIL_WRITE_CONTRACT
+        jr Fail
+FailBadBuffer:
+        ld a,PROOF_FAIL_BAD_BUFFER
+        jr Fail
+FailBadSector:
+        ld a,PROOF_FAIL_BAD_SECTOR
 Fail:
         ld (TECFS_PROOF_RESULT),a
         halt

@@ -40,7 +40,7 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `206` | `357` | `8165h` | `16027` |
 | 1 | VDU/TMS9918 boundary | `136` | `261` | `8105h` | `16123` |
-| 2 | TEC-FS boundary and block mapper | `188` | `517` | `8205h` | `15867` |
+| 2 | TEC-FS boundary and block mapper | `243` | `517` | `8205h` | `15867` |
 | 3 | RTC boundary | `65` | `261` | `8105h` | `16123` |
 | 4 | GLCD boundary | `53` | `261` | `8105h` | `16123` |
 | 5 | Reserved stub | `6` | `6` | `8006h` | `16378` |
@@ -48,7 +48,7 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `672`
+Expansion occupied bytes: `727`
 
 Expansion high-water span total: `1681`
 
