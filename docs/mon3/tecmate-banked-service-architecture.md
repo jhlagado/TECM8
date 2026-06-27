@@ -82,8 +82,9 @@ special banked return instruction because the callee returns to fixed ROM first;
 fixed ROM restores the previous `SYS_CTRL` bank bits, then returns to the
 original caller.
 
-`farJump` switches to the target bank and does not return. It is for launch,
-handoff, and permanent transfer of control.
+`farJump` switches to the target bank and tail-transfers control without
+resuming after the helper. It is for launch, handoff, and permanent transfer of
+control.
 
 The fixed ROM should preserve unrelated `SYS_CTRL` bits when switching banks.
 Only the expansion-selection bits should be changed.

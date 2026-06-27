@@ -12,10 +12,12 @@ through the fixed-ROM RST 10h bank services and the AZM helpers:
         farJump bank,target
 ```
 
-`farCall` uses `A` for the physical bank and `HL` for the target address before
-entering the monitor trampoline. Banked services that need arguments must not
-depend on those registers surviving the call setup. Current services use small
-RAM parameter blocks instead.
+`farCall` and `farJump` use `B` for the physical bank, `C` for the RST 10h
+service selector, and `HL` for the target address while entering the monitor
+trampoline. The helper saves caller `AF`, `DE`, and `HL` before loading those
+control values, and the fixed-ROM service restores them before entering the
+banked target. `B`, `C`, `IX`, and `IY` are gateway scratch. Larger service
+arguments still use small RAM parameter blocks.
 
 ## Fixed Bank Calls
 
@@ -25,10 +27,11 @@ RAM parameter blocks instead.
 | `TECM8_BIOS_SYS_SET` | `51h` | Update masked `SYS_CTRL` bits. |
 | `TECM8_BIOS_BANK_SELECT` | `52h` | Select a physical expansion bank. |
 | `TECM8_BIOS_BANK_CALL` | `53h` | Call into a bank and restore previous bank on `ret`. |
-| `TECM8_BIOS_FAR_JUMP` | `54h` | Jump into a bank and do not return. |
+| `TECM8_BIOS_FAR_JUMP` | `54h` | Tail-jump into a bank without resuming after the helper. |
 
 The bank-call return path preserves the callee's `AF`, so carry and `A` status
-values survive the fixed-ROM bank restore.
+values survive the fixed-ROM bank restore. The previous `SYS_CTRL` value is
+stored in the stack frame, so nested far calls restore the correct bank state.
 
 ## Bank 1: VDU/TMS9918
 

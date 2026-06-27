@@ -447,7 +447,7 @@ unrelated bits.
 | `51h` | `TECM8_BIOS_SYS_SET` | Set masked system control bits. |
 | `52h` | `BiosBankSelect` | Select expansion bank. |
 | `53h` | `BiosBankCall` | Call a routine through the banked window. |
-| `54h` | `BiosFarJump` | Jump to a routine through the banked window without returning. |
+| `54h` | `BiosFarJump` | Tail-jump to a routine through the banked window. |
 | `55h` | `TECM8_BIOS_PROTECT_SET` | Reserved for protect-mode control. |
 | `56h` | `TECM8_BIOS_SHADOW_SET` | Reserved for shadow-mode control. |
 
@@ -472,27 +472,31 @@ BiosBankSelect
   clobbers: A, B, C, D, flags
 
 BiosBankCall
-  in:  A = physical bank number, 0-8
+  in:  B = physical bank number, 0-8
        HL = routine address inside 8000h-BFFFh window
+       stack below RST return contains saved AF, DE, and HL from farCall
   out: returns from banked routine with original bank restored
        A and flags are the banked routine return values on success
        carry set, A = error if bank cannot be selected
-  clobbers: D and E after the banked routine returns, plus banked routine
-            contract
+  clobbers: B, C, IX, IY, plus banked routine contract
 
 BiosFarJump
-  in:  A = physical bank number, 0-8
+  in:  B = physical bank number, 0-8
        HL = routine address inside 8000h-BFFFh window
-  out: does not return on success
+       stack below RST return contains saved AF, DE, and HL from farJump
+  out: does not resume after the farJump helper on success
        returns with carry set, A = error if bank cannot be selected
-  clobbers: banked routine contract on success
+  clobbers: B, C, IX, IY, plus banked routine contract on success
 ```
 
 The first implementation stores the old cached `SYS_CTRL` byte on the stack
 with a fixed-ROM return stub. A normal banked `RET` returns into fixed ROM,
-which restores `SYS_CTRL` before returning to the original caller. `BiosFarJump`
-selects the target bank, removes the caller return address with `INC SP` /
-`INC SP`, and jumps through `HL`.
+which restores `SYS_CTRL` before returning to the original caller. The AZM
+`farCall` and `farJump` helpers save caller `AF`, `DE`, and `HL` before loading
+the gateway control values, so the banked target sees the original argument
+registers. `BiosFarJump` selects the target bank, restores those saved argument
+registers, discards the RST continuation, pushes the target address, and enters
+it with `RET`. It does not install a fixed-ROM return trampoline.
 
 ## Sound, Timing, RTC, Utilities
 

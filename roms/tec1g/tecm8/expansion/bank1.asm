@@ -82,6 +82,20 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         ld a,0x91
         ret
 
+        .org    TECM8_ABI_BANK1_PRESERVE
+@BankAbiPreserveProbe:
+        ld (TECM8_ABI_TRACE_BASE+10),a
+        ld a,d
+        ld (TECM8_ABI_TRACE_BASE+11),a
+        ld a,e
+        ld (TECM8_ABI_TRACE_BASE+12),a
+        ld a,h
+        ld (TECM8_ABI_TRACE_BASE+13),a
+        ld a,l
+        ld (TECM8_ABI_TRACE_BASE+14),a
+        ld a,0xC1
+        ret
+
         .org    0x8100
 @Tecm8ExpansionBank1Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

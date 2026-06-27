@@ -10,12 +10,13 @@
 
 PROOF_PASS                  .equ    0x42
 PROOF_FAIL_FARJUMP_RETURNED .equ    0xE1
+PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,TECM8_ABI_TRACE_BASE
-        ld b,16
+        ld b,18
 ClearTrace:
         ld (hl),0
         inc hl
@@ -25,32 +26,40 @@ ClearTrace:
         rst 10H
         ld (TECM8_ABI_TRACE_0),a
 
-        ld a,0x01
-        ld hl,TECM8_VDU_INIT
-        ld c,TECM8_BIOS_BANK_CALL
-        rst 10H
+        farCall 0x01,TECM8_VDU_INIT
         ld (TECM8_ABI_TRACE_1),a
 
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
         ld (TECM8_ABI_TRACE_2),a
 
-        ld a,0x01
-        ld hl,TECM8_ABI_BANK1_NESTED
-        ld c,TECM8_BIOS_BANK_CALL
-        rst 10H
+        farCall 0x01,TECM8_ABI_BANK1_NESTED
         ld (TECM8_ABI_TRACE_3),a
 
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
         ld (TECM8_ABI_TRACE_4),a
 
-        ld a,0x03
-        ld hl,TECM8_ABI_BANK3_FARJUMP
-        ld c,TECM8_BIOS_FAR_JUMP
-        rst 10H
+        ld a,0x5A
+        ld de,0xD3E4
+        ld hl,0x1234
+        farCall 0x01,TECM8_ABI_BANK1_PRESERVE
+        ld (TECM8_ABI_TRACE_BASE+15),a
+
+        call ReturningFarJumpProbe
+        ld a,0xD4
+        ld (TECM8_ABI_TRACE_BASE+17),a
+
+        farJump 0x03,TECM8_ABI_BANK3_FARJUMP
 
         ld a,PROOF_FAIL_FARJUMP_RETURNED
+        ld (TECM8_ABI_TRACE_9),a
+        ld (ResultMarker),a
+        halt
+
+ReturningFarJumpProbe:
+        farJump 0x03,TECM8_ABI_BANK3_RETURNING_FARJUMP
+        ld a,PROOF_FAIL_FARJUMP_LOCAL_RET
         ld (TECM8_ABI_TRACE_9),a
         ld (ResultMarker),a
         halt

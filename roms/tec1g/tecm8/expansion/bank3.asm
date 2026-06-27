@@ -49,6 +49,12 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @BankAbiFarJumpTarget:
         jp TECM8_ABI_FARJUMP_LANDED
 
+        .org    TECM8_ABI_BANK3_RETURNING_FARJUMP
+@BankAbiReturningFarJumpTarget:
+        ld a,0xD3
+        ld (TECM8_ABI_TRACE_BASE+16),a
+        ret
+
         .org    0x8100
 @Tecm8ExpansionBank3Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

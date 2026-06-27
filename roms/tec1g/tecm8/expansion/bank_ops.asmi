@@ -89,18 +89,26 @@ TECM8_RTC_FEATURE_SERVICE   .equ    0x01
 TECM8_RTC_ERR_UNSUPPORTED   .equ    0xE0
 
 TECM8_ABI_BANK1_NESTED      .equ    0x80C0
+TECM8_ABI_BANK1_PRESERVE    .equ    0x80E0
 TECM8_ABI_BANK2_NESTED      .equ    0x80D0
 TECM8_ABI_BANK3_FARJUMP     .equ    0x80C0
+TECM8_ABI_BANK3_RETURNING_FARJUMP .equ 0x80D0
 
 op farCall(bank imm8, target imm16)
-        ld a,bank
+        push hl
+        push de
+        push af
+        ld b,bank
         ld hl,target
         ld c,TECM8_BIOS_BANK_CALL
         rst 10H
 end
 
 op farJump(bank imm8, target imm16)
-        ld a,bank
+        push hl
+        push de
+        push af
+        ld b,bank
         ld hl,target
         ld c,TECM8_BIOS_FAR_JUMP
         rst 10H

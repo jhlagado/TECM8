@@ -15,13 +15,17 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   const runner = readRepoFile('tools/run-bank-abi-proof.ts');
   const packageJson = readRepoFile('package.json');
 
-  assert.match(proof, /TECM8_BIOS_BANK_CALL/);
-  assert.match(proof, /TECM8_BIOS_FAR_JUMP/);
+  assert.match(proof, /farCall 0x01,TECM8_VDU_INIT/);
+  assert.match(proof, /farJump 0x03,TECM8_ABI_BANK3_FARJUMP/);
   assert.match(proof, /TECM8_ABI_BANK1_NESTED/);
+  assert.match(proof, /TECM8_ABI_BANK1_PRESERVE/);
   assert.match(proof, /TECM8_ABI_BANK3_FARJUMP/);
+  assert.match(proof, /TECM8_ABI_BANK3_RETURNING_FARJUMP/);
   assert.match(runner, /loadTec1gExpansionRomImage/);
   assert.match(runner, /applyExpansionRomMemory/);
   assert.match(runner, /SYS_CTRL restored after nested farCall/);
+  assert.match(runner, /farCall target sees original A argument/);
+  assert.match(runner, /returning farJump target did not resume after farJump op/);
   assert.match(runner, /farJump did not return to caller/);
   assert.match(packageJson, /"proof:bank-abi"/);
   assert.match(packageJson, /proof:bank-abi/);

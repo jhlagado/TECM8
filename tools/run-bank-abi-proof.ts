@@ -185,14 +185,29 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
 
 function runUntilHalt(runtime: Runtime, platformRuntime: PlatformRuntime): number {
   const maxInstructions = 1_000_000;
+  const pcHistory: number[] = [];
   for (let i = 0; i < maxInstructions; i += 1) {
+    pcHistory.push(runtime.cpu.pc & 0xffff);
+    if (pcHistory.length > 64) {
+      pcHistory.shift();
+    }
     const result = runtime.step();
     platformRuntime.recordCycles(result.cycles ?? 0);
     if (runtime.cpu.halted || result.halted) {
       return i + 1;
     }
   }
-  throw new Error(`bank ABI proof did not halt; pc=0x${runtime.cpu.pc.toString(16)}`);
+  const sp = runtime.cpu.sp & 0xffff;
+  const stack = Array.from(runtime.hardware.memory.slice(sp, sp + 16))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join(' ');
+  const trace = Array.from(runtime.hardware.memory.slice(0x3100, 0x3110))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join(' ');
+  const pcs = pcHistory.map((value) => value.toString(16).padStart(4, '0')).join(' ');
+  throw new Error(
+    `bank ABI proof did not halt; pc=0x${runtime.cpu.pc.toString(16)} sp=0x${sp.toString(16)} stack=${stack} trace=${trace} pcs=${pcs}`,
+  );
 }
 
 function readTrace(runtime: Runtime, base: number, length: number): number[] {
@@ -212,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'TECM8_ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 10);
+  const trace = readTrace(runtime, traceBase, 18);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -226,6 +241,14 @@ async function main(): Promise<void> {
   assertEqual(trace[7], 0xB2, 'nested bank 2 return reached bank 1');
   assertEqual(trace[8], BANK2_SYS_CTRL, 'nested bank 2 saw its own bank selected');
   assertEqual(trace[9], 0x00, 'farJump did not return to caller');
+  assertEqual(trace[10], 0x5A, 'farCall target sees original A argument');
+  assertEqual(trace[11], 0xD3, 'farCall target sees original D argument');
+  assertEqual(trace[12], 0xE4, 'farCall target sees original E argument');
+  assertEqual(trace[13], 0x12, 'farCall target sees original H argument');
+  assertEqual(trace[14], 0x34, 'farCall target sees original L argument');
+  assertEqual(trace[15], 0xC1, 'farCall preserve probe returned through gateway');
+  assertEqual(trace[16], 0xD3, 'returning farJump target ran');
+  assertEqual(trace[17], 0xD4, 'returning farJump target did not resume after farJump op');
 
   writeFileSync(
     LAST_RUN,

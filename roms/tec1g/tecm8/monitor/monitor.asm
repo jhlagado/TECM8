@@ -3071,22 +3071,33 @@ BiosBankSelectBadBank:
         ret
 
 ; Call a routine through the expansion window and restore the previous SYS_CTRL.
-; Input: A = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+; Input: B = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+; Stack below RST return: saved AF, saved DE, saved HL from farCall op.
 BiosBankCall:
-        ld d,a
+        pop ix
+        push hl
+        pop iy
         ld a,(SYS_MODE)
-        ld e,a
-        push de
-        ld a,d
+        ld c,a
+        ld a,b
+        ld b,00H
+        push bc
         call BiosBankSelect
         jr c,BiosBankCallError
-        ld de,BiosBankCallReturn
-        push de
-        jp (hl)
-BiosBankCallReturn:
+        pop bc
+        pop af
         pop de
+        pop hl
+        push ix
+        push bc
+        ld bc,BiosBankCallReturn
+        push bc
+        push iy
+        ret
+BiosBankCallReturn:
+        pop bc
         push af
-        ld a,e
+        ld a,c
         out (SYS_CTRL),a
         ld (SYS_MODE),a
         and EXPAND
@@ -3094,17 +3105,34 @@ BiosBankCallReturn:
         pop af
         ret
 BiosBankCallError:
+        pop bc
+        pop bc
         pop de
+        pop hl
+        push ix
         ret
 
-; Jump to a routine through the expansion window. This does not return.
-; Input: A = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+; Tail-jump to a routine through the expansion window.
+; Input: B = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+; Stack below RST return: saved AF, saved DE, saved HL from farJump op.
 BiosFarJump:
+        pop ix
+        push hl
+        pop iy
+        ld a,b
         call BiosBankSelect
-        ret c
-        inc sp
-        inc sp
-        jp (hl)
+        jr c,BiosFarJumpError
+        pop af
+        pop de
+        pop hl
+        push iy
+        ret
+BiosFarJumpError:
+        pop bc
+        pop de
+        pop hl
+        push ix
+        ret
 
 ; Toggle Key Press Beep
 ; Input: none
