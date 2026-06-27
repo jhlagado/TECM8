@@ -201,7 +201,7 @@ async function main(): Promise<void> {
   const resultAddr = symbolNumber(symbols, 'TECFS_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'TECFS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
-  const params = readTrace(runtime, paramBase, 20);
+  const params = readTrace(runtime, paramBase, 21);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
   assertEqual(params[0], 0x05, 'active TEC-FS volume');
@@ -224,6 +224,7 @@ async function main(): Promise<void> {
   assertEqual(params[17], 0x00, 'TEC-FS mapped sector byte 3');
   assertEqual(params[18], 0x00, 'TEC-FS sector buffer low byte');
   assertEqual(params[19], 0x60, 'TEC-FS sector buffer high byte');
+  assertEqual(params[20], 0x01, 'TEC-FS final sector driver operation');
 
   writeFileSync(
     LAST_RUN,

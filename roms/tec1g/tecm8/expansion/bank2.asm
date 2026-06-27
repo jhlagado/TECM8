@@ -28,11 +28,11 @@ TECFS_TOTAL_VOLUMES           .equ    31
 
         .org    0x8030
 @tecfsRead:
-        jp tecfsSectorIoNoDriver
+        jp tecfsReadSectorImpl
 
         .org    0x8040
 @tecfsWrite:
-        jp tecfsSectorIoNoDriver
+        jp tecfsWriteSectorImpl
 
         .org    0x8050
 @tecfsLoadRange:
@@ -134,13 +134,26 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-@tecfsSectorIoNoDriver:
+@tecfsReadSectorImpl:
+        ld a,TECFS_DRIVER_OP_READ
+        jr tecfsSectorIoWithDriverOp
+
+@tecfsWriteSectorImpl:
+        ld a,TECFS_DRIVER_OP_WRITE
+        jr tecfsSectorIoWithDriverOp
+
+@tecfsSectorIoWithDriverOp:
+        ld (TECFS_PARAM_DRIVER_OP),a
         call tecfsValidateSector
         jr c,tecfsBadSector
         ld hl,(TECFS_PARAM_BUFFER_LO)
         ld a,h
         or l
         jr z,tecfsBadBuffer
+        call tecfsSectorDriverHook
+        ret
+
+@tecfsSectorDriverHook:
         ld a,TECFS_ERR_NO_DRIVER
         ld (TECFS_PARAM_STATUS),a
         ld (TECFS_PARAM_LAST_ERROR),a

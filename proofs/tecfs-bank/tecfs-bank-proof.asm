@@ -21,6 +21,7 @@ PROOF_FAIL_READ_CONTRACT    .equ    0xE8
 PROOF_FAIL_WRITE_CONTRACT   .equ    0xE9
 PROOF_FAIL_BAD_BUFFER       .equ    0xEA
 PROOF_FAIL_BAD_SECTOR       .equ    0xEB
+PROOF_FAIL_DRIVER_HOOK      .equ    0xEC
 TECFS_PROOF_TRACE_BASE      .equ    0x3B80
 TECFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -133,6 +134,9 @@ ClearParams:
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_ERR_NO_DRIVER
         jp nz,FailReadContract
+        ld a,(TECFS_PARAM_DRIVER_OP)
+        cp TECFS_DRIVER_OP_READ
+        jp nz,FailDriverHook
 
         farCall 0x02,TECM8_TECFS_WRITE
         jp nc,FailWriteContract
@@ -141,6 +145,9 @@ ClearParams:
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_ERR_NO_DRIVER
         jp nz,FailWriteContract
+        ld a,(TECFS_PARAM_DRIVER_OP)
+        cp TECFS_DRIVER_OP_WRITE
+        jp nz,FailDriverHook
 
         ld hl,0x0000
         ld (TECFS_PARAM_BUFFER_LO),hl
@@ -215,6 +222,9 @@ FailBadBuffer:
         jr Fail
 FailBadSector:
         ld a,PROOF_FAIL_BAD_SECTOR
+        jr Fail
+FailDriverHook:
+        ld a,PROOF_FAIL_DRIVER_HOOK
 Fail:
         ld (TECFS_PROOF_RESULT),a
         halt

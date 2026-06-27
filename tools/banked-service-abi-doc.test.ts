@@ -150,6 +150,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECFS_PARAM_SECTOR_3',
     'TECFS_PARAM_BUFFER_LO',
     'TECFS_PARAM_BUFFER_HI',
+    'TECFS_PARAM_DRIVER_OP',
+    'TECFS_DRIVER_OP_READ',
+    'TECFS_DRIVER_OP_WRITE',
     'TECFS_STATUS_OK',
     'TECFS_ERR_BAD_VOLUME',
     'TECFS_ERR_BAD_BLOCK',
@@ -161,6 +164,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     assertDocRow(name);
   }
   assert.match(doc, /sector I\/O contract/);
+  assert.match(doc, /sector driver hook/);
   assert.match(doc, /128 MiB/);
   assert.match(doc, /32768/);
   assert.match(doc, /30 user volumes/);
