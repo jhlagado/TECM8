@@ -125,15 +125,18 @@ MON3Lite and Debug80 can identify the selected bank, discover its entry point,
 and show a meaningful source/debug label for the code currently mapped at
 `8000h-BFFFh`.
 
-Likely early bank roles:
+The earliest proof used the first banks only. The current working bank
+allocation is maintained in
+[TecMate Banked Service Architecture](tecmate-banked-service-architecture.md).
+Historically, the likely early bank roles were:
 
 ```text
 bank 0  TECM8 front end, command/menu shell, launcher, common services
 bank 1  editor and first tool payloads
 ```
 
-This is only the first layout. The manifest should make it possible to rearrange
-tool placement without changing fixed-ROM code.
+This was only the first proof layout. The manifest should make it possible to
+rearrange tool placement without changing fixed-ROM code.
 
 ## Source Layout
 

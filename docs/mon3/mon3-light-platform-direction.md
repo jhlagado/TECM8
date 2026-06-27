@@ -114,8 +114,10 @@ tools and higher-level libraries.
 ## Banked Application Framework
 
 The `8000h-BFFFh` window is the normal home for tools and larger libraries.
-The first implementation target should assume the default two 16K banks, while
-leaving room for the later 16-bank ROM/RAM expansion option.
+The first proof used the default two 16K banks, but the current TECM8
+development target is Debug80's nine-bank TEC-1G expansion model: two legacy
+expand pages plus seven additional 16K decoded windows. The software model
+should still leave room for later ROM/RAM expansion options.
 
 Required framework pieces:
 
@@ -258,6 +260,8 @@ tools:
 
 - [TECM8 ROM Artifact Plan](tecm8-rom-artifact-plan.md): fixed ROM, banked
   expansion ROM, build artifact, and Debug80 support requirements.
+- [TecMate Banked Service Architecture](tecmate-banked-service-architecture.md):
+  banked ROM roles for VDU/TMS9918, TEC-FS, RTC tools, and larger applications.
 - [MON3 Decomposition Plan](decomposition.md): current 16K ROM shape and broad
   reduction strategy.
 - [MON3 Core And Auxiliary Services](core-and-auxiliary-services.md): fixed ROM
