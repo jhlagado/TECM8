@@ -70,6 +70,8 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
     'TECM8_SERVICE_RTC_TOOL_ADDR',
     'TECM8_SERVICE_GLCD_ENTRY_BANK',
     'TECM8_SERVICE_GLCD_ENTRY_ADDR',
+    'TECM8_SERVICE_SHELL_ENTRY_BANK',
+    'TECM8_SERVICE_SHELL_ENTRY_ADDR',
   ]) {
     assertDocRow(name);
   }
@@ -96,6 +98,22 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'TECM8_TMS_PARAM_REGISTER',
     'TECM8_TMS_PARAM_ADDR_LO',
     'TECM8_TMS_PARAM_ADDR_HI',
+  ]) {
+    assertDocRow(name);
+  }
+});
+
+test('banked service ABI doc covers bank 0 shell entry slots and parameters', () => {
+  for (const name of [
+    'TECM8_SHELL_ENTRY',
+    'TECM8_SHELL_PARAM_BASE',
+    'TECM8_SHELL_PARAM_STATUS',
+    'TECM8_SHELL_PARAM_LAST_ERROR',
+    'TECM8_SHELL_PARAM_BANK',
+    'TECM8_SHELL_PARAM_VERSION',
+    'TECM8_SHELL_PARAM_FEATURES',
+    'TECM8_SHELL_STATUS_OK',
+    'TECM8_SHELL_FEATURE_ENTRY',
   ]) {
     assertDocRow(name);
   }

@@ -37,6 +37,8 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         jr z,Tecm8ServiceCallRtcTool
         cp TECM8_SERVICE_GLCD_ENTRY
         jr z,Tecm8ServiceCallGlcdEntry
+        cp TECM8_SERVICE_SHELL_ENTRY
+        jr z,Tecm8ServiceCallShellEntry
         pop af
         pop de
         pop hl
@@ -72,6 +74,28 @@ Tecm8ServiceCallGlcdEntry:
         farCall TECM8_SERVICE_GLCD_ENTRY_BANK,TECM8_SERVICE_GLCD_ENTRY_ADDR
         ret
 
-        .org    0x8100
+Tecm8ServiceCallShellEntry:
+        pop af
+        pop de
+        pop hl
+        call Tecm8ShellEntry
+        ret
+
+        .org    TECM8_SHELL_ENTRY
+@Tecm8ShellEntry:
+        ld a,TECM8_EXPANSION_BANK
+        ld (TECM8_SHELL_PARAM_BANK),a
+        ld a,TECM8_EXPANSION_VERSION
+        ld (TECM8_SHELL_PARAM_VERSION),a
+        ld a,TECM8_SHELL_FEATURE_ENTRY
+        ld (TECM8_SHELL_PARAM_FEATURES),a
+        xor a
+        ld (TECM8_SHELL_PARAM_STATUS),a
+        ld (TECM8_SHELL_PARAM_LAST_ERROR),a
+        ld a,0x80
+        or a
+        ret
+
+        .org    0x8160
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

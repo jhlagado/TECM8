@@ -62,7 +62,38 @@ final banked service still receives the caller's original `AF`, `DE`, and `HL`.
 | `TECM8_SERVICE_GLCD_ENTRY` | `04h` | GLCD boundary service ID. |
 | `TECM8_SERVICE_GLCD_ENTRY_BANK` | `04h` | GLCD boundary physical bank. |
 | `TECM8_SERVICE_GLCD_ENTRY_ADDR` | `8000h` | GLCD boundary address. |
+| `TECM8_SERVICE_SHELL_ENTRY` | `80h` | Resident shell entry service ID. |
+| `TECM8_SERVICE_SHELL_ENTRY_BANK` | `00h` | Resident shell physical bank. |
+| `TECM8_SERVICE_SHELL_ENTRY_ADDR` | `8120h` | Resident shell entry address. |
 | `TECM8_SERVICE_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
+
+## Bank 0: Shell Entry
+
+Physical bank 0 owns the first resident TecMate shell and launcher boundary.
+The current entry is a descriptor stub; it gives MON3/menu code a stable service
+to call before the full shell loop is moved into the expansion ROM.
+
+| Constant | Address | Status |
+| --- | ---: | --- |
+| `TECM8_SHELL_ENTRY` | `8120h` | Publishes service descriptor, returns `A=80h`, carry clear. |
+
+Shell parameter block:
+
+| Constant | Address | Meaning |
+| --- | ---: | --- |
+| `TECM8_SHELL_PARAM_BASE` | `3BA0h` | Base of shell parameter block. |
+| `TECM8_SHELL_PARAM_STATUS` | `3BA0h` | Last status code. |
+| `TECM8_SHELL_PARAM_LAST_ERROR` | `3BA1h` | Last error code. |
+| `TECM8_SHELL_PARAM_BANK` | `3BA2h` | Service bank marker. |
+| `TECM8_SHELL_PARAM_VERSION` | `3BA3h` | Service ABI version. |
+| `TECM8_SHELL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
+
+Shell status and feature values:
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `TECM8_SHELL_STATUS_OK` | `00h` | Success. |
+| `TECM8_SHELL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
 
 ## Bank 1: VDU/TMS9918
 

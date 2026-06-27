@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'TECM8_ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 23);
+  const trace = readTrace(runtime, traceBase, 24);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -254,6 +254,7 @@ async function main(): Promise<void> {
   assertEqual(trace[20], 0x83, 'service registry dispatched RTC tool entry');
   assertEqual(trace[21], 0xEE, 'service registry rejected unknown service');
   assertEqual(trace[22], 0x84, 'service registry dispatched GLCD boundary entry');
+  assertEqual(trace[23], 0x80, 'service registry dispatched shell entry');
 
   writeFileSync(
     LAST_RUN,
