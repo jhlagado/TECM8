@@ -3073,10 +3073,11 @@ BiosBankSelectBadBank:
 ; Call a routine through the expansion window and restore the previous SYS_CTRL.
 ; Input: A = physical bank 0-8, HL = routine address in 8000h-BFFFh.
 BiosBankCall:
+        ld d,a
         ld a,(SYS_MODE)
         ld e,a
-        ld d,00H
         push de
+        ld a,d
         call BiosBankSelect
         jr c,BiosBankCallError
         ld de,BiosBankCallReturn
