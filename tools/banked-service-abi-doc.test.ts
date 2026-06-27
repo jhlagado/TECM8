@@ -108,6 +108,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECM8_TECFS_WRITE',
     'TECM8_TECFS_LOAD_RANGE',
     'TECM8_TECFS_SAVE_RANGE',
+    'TECM8_TECFS_MAP_BLOCK',
     'TECFS_PARAM_BASE',
     'TECFS_PARAM_ACTIVE_VOLUME',
     'TECFS_PARAM_REQUEST_VOLUME',
@@ -121,8 +122,15 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECFS_PARAM_USER_VOLUMES',
     'TECFS_PARAM_SPARE_VOLUME',
     'TECFS_PARAM_TOTAL_VOLUMES',
+    'TECFS_PARAM_BLOCK_INDEX_LO',
+    'TECFS_PARAM_BLOCK_INDEX_HI',
+    'TECFS_PARAM_SECTOR_0',
+    'TECFS_PARAM_SECTOR_1',
+    'TECFS_PARAM_SECTOR_2',
+    'TECFS_PARAM_SECTOR_3',
     'TECFS_STATUS_OK',
     'TECFS_ERR_BAD_VOLUME',
+    'TECFS_ERR_BAD_BLOCK',
     'TECFS_ERR_UNSUPPORTED',
   ]) {
     assertDocRow(name);

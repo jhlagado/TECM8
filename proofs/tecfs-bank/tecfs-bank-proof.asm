@@ -15,6 +15,8 @@ PROOF_FAIL_VOLUME_BLOCKS    .equ    0xE2
 PROOF_FAIL_SELECT_VALID     .equ    0xE3
 PROOF_FAIL_SELECT_INVALID   .equ    0xE4
 PROOF_FAIL_UNSUPPORTED      .equ    0xE5
+PROOF_FAIL_MAP_BLOCK        .equ    0xE6
+PROOF_FAIL_MAP_INVALID      .equ    0xE7
 TECFS_PROOF_TRACE_BASE      .equ    0x3B80
 TECFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -50,39 +52,74 @@ ClearParams:
         ld a,0x05
         ld (TECFS_PARAM_REQUEST_VOLUME),a
         farCall 0x02,TECM8_TECFS_SELECT_VOLUME
-        jr c,FailSelectValid
+        jp c,FailSelectValid
         ld a,(TECFS_PARAM_ACTIVE_VOLUME)
         cp 0x05
-        jr nz,FailSelectValid
+        jp nz,FailSelectValid
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_STATUS_OK
-        jr nz,FailSelectValid
+        jp nz,FailSelectValid
 
         ld a,0x1E
         ld (TECFS_PARAM_REQUEST_VOLUME),a
         farCall 0x02,TECM8_TECFS_SELECT_VOLUME
-        jr c,FailSelectValid
+        jp c,FailSelectValid
         ld a,(TECFS_PARAM_ACTIVE_VOLUME)
         cp 0x1E
-        jr nz,FailSelectValid
+        jp nz,FailSelectValid
 
         ld a,0x1F
         ld (TECFS_PARAM_REQUEST_VOLUME),a
         farCall 0x02,TECM8_TECFS_SELECT_VOLUME
-        jr nc,FailSelectInvalid
+        jp nc,FailSelectInvalid
         cp TECFS_ERR_BAD_VOLUME
-        jr nz,FailSelectInvalid
+        jp nz,FailSelectInvalid
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_ERR_BAD_VOLUME
-        jr nz,FailSelectInvalid
+        jp nz,FailSelectInvalid
+
+        ld a,0x05
+        ld (TECFS_PARAM_REQUEST_VOLUME),a
+        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        jp c,FailSelectValid
+        ld a,0x34
+        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,0x12
+        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
+        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        jp c,FailMapBlock
+        cp 0x82
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0xA0
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x91
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x14
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailMapBlock
+
+        ld a,0x80
+        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
+        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        jp nc,FailMapInvalid
+        cp TECFS_ERR_BAD_BLOCK
+        jp nz,FailMapInvalid
+        ld a,(TECFS_PARAM_LAST_ERROR)
+        cp TECFS_ERR_BAD_BLOCK
+        jp nz,FailMapInvalid
 
         farCall 0x02,TECM8_TECFS_READ
-        jr nc,FailUnsupported
+        jp nc,FailUnsupported
         cp TECFS_ERR_UNSUPPORTED
-        jr nz,FailUnsupported
+        jp nz,FailUnsupported
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_ERR_UNSUPPORTED
-        jr nz,FailUnsupported
+        jp nz,FailUnsupported
 
         ld a,PROOF_PASS
         ld (TECFS_PROOF_RESULT),a
@@ -105,6 +142,12 @@ FailSelectInvalid:
         jr Fail
 FailUnsupported:
         ld a,PROOF_FAIL_UNSUPPORTED
+        jr Fail
+FailMapBlock:
+        ld a,PROOF_FAIL_MAP_BLOCK
+        jr Fail
+FailMapInvalid:
+        ld a,PROOF_FAIL_MAP_INVALID
 Fail:
         ld (TECFS_PROOF_RESULT),a
         halt

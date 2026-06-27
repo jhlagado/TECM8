@@ -201,11 +201,11 @@ async function main(): Promise<void> {
   const resultAddr = symbolNumber(symbols, 'TECFS_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'TECFS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
-  const params = readTrace(runtime, paramBase, 16);
+  const params = readTrace(runtime, paramBase, 18);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
-  assertEqual(params[0], 0x1e, 'active TEC-FS volume');
-  assertEqual(params[1], 0x1f, 'last requested TEC-FS volume');
+  assertEqual(params[0], 0x05, 'active TEC-FS volume');
+  assertEqual(params[1], 0x05, 'last requested TEC-FS volume');
   assertEqual(params[2], 0xe0, 'unsupported status');
   assertEqual(params[3], 0xe0, 'last TEC-FS error');
   assertEqual(params[4], 128, 'TEC-FS volume MiB');
@@ -216,6 +216,12 @@ async function main(): Promise<void> {
   assertEqual(params[9], 30, 'TEC-FS user volume count');
   assertEqual(params[10], 30, 'TEC-FS spare volume index');
   assertEqual(params[11], 31, 'TEC-FS total selectable volumes');
+  assertEqual(params[12], 0x34, 'TEC-FS mapped block index low');
+  assertEqual(params[13], 0x80, 'TEC-FS invalid block index high remains visible');
+  assertEqual(params[14], 0xa0, 'TEC-FS mapped sector byte 0');
+  assertEqual(params[15], 0x91, 'TEC-FS mapped sector byte 1');
+  assertEqual(params[16], 0x14, 'TEC-FS mapped sector byte 2');
+  assertEqual(params[17], 0x00, 'TEC-FS mapped sector byte 3');
 
   writeFileSync(
     LAST_RUN,

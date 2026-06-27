@@ -43,6 +43,18 @@ TECFS_TOTAL_VOLUMES           .equ    31
         jp tecfsUnsupported
 
         .org    0x8070
+@tecfsMapBlock:
+        jp tecfsMapBlockImpl
+
+        .org    TECM8_ABI_BANK2_NESTED
+@BankAbiNestedTarget:
+        ld c,TECM8_BIOS_SYS_GET
+        rst 10H
+        ld (TECM8_ABI_TRACE_8),a
+        ld a,0xB2
+        ret
+
+        .org    0x8120
 @tecfsMountImpl:
         xor a
         ld (TECFS_PARAM_STATUS),a
@@ -82,6 +94,46 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
+@tecfsMapBlockImpl:
+        ld a,(TECFS_PARAM_BLOCK_INDEX_HI)
+        bit 7,a
+        jr nz,tecfsBadBlock
+        ld d,a
+        and 0x60
+        rrca
+        rrca
+        rrca
+        rrca
+        rrca
+        ld e,a
+        ld a,(TECFS_PARAM_ACTIVE_VOLUME)
+        cp TECFS_TOTAL_VOLUMES
+        jr nc,tecfsBadVolume
+        add a,a
+        add a,a
+        add a,e
+        ld (TECFS_PARAM_SECTOR_2),a
+        xor a
+        ld (TECFS_PARAM_SECTOR_3),a
+        ld hl,(TECFS_PARAM_BLOCK_INDEX_LO)
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld (TECFS_PARAM_SECTOR_0),hl
+        xor a
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsBadBlock:
+        ld a,TECFS_ERR_BAD_BLOCK
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
 @tecfsUnsupported:
         ld a,TECFS_ERR_UNSUPPORTED
         ld (TECFS_PARAM_STATUS),a
@@ -89,14 +141,6 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-        .org    TECM8_ABI_BANK2_NESTED
-@BankAbiNestedTarget:
-        ld c,TECM8_BIOS_SYS_GET
-        rst 10H
-        ld (TECM8_ABI_TRACE_8),a
-        ld a,0xB2
-        ret
-
-        .org    0x8100
+        .org    0x8200
 @Tecm8ExpansionBank2Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

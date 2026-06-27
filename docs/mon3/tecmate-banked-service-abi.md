@@ -106,6 +106,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TECM8_TECFS_WRITE` | `8040h` | Explicit unsupported error. |
 | `TECM8_TECFS_LOAD_RANGE` | `8050h` | Explicit unsupported error. |
 | `TECM8_TECFS_SAVE_RANGE` | `8060h` | Explicit unsupported error. |
+| `TECM8_TECFS_MAP_BLOCK` | `8070h` | Maps active volume/block index to a 32-bit sector number. |
 
 Current TEC-FS geometry:
 
@@ -120,6 +121,12 @@ total selectable: 31
 
 In prose: the current layout exposes 30 user volumes plus one spare/work
 volume, for 31 selectable volumes total.
+
+Because a 4K block is eight 512-byte sectors, `TECM8_TECFS_MAP_BLOCK` computes:
+
+```text
+sector = activeVolume * 40000h + blockIndex * 8
+```
 
 TEC-FS parameter block:
 
@@ -138,6 +145,12 @@ TEC-FS parameter block:
 | `TECFS_PARAM_USER_VOLUMES` | `3B49h` | User volume count. |
 | `TECFS_PARAM_SPARE_VOLUME` | `3B4Ah` | Spare/work volume index. |
 | `TECFS_PARAM_TOTAL_VOLUMES` | `3B4Bh` | Total selectable volumes. |
+| `TECFS_PARAM_BLOCK_INDEX_LO` | `3B4Ch` | Requested 4K block index low byte. |
+| `TECFS_PARAM_BLOCK_INDEX_HI` | `3B4Dh` | Requested 4K block index high byte. |
+| `TECFS_PARAM_SECTOR_0` | `3B4Eh` | Mapped 512-byte sector number byte 0. |
+| `TECFS_PARAM_SECTOR_1` | `3B4Fh` | Mapped 512-byte sector number byte 1. |
+| `TECFS_PARAM_SECTOR_2` | `3B50h` | Mapped 512-byte sector number byte 2. |
+| `TECFS_PARAM_SECTOR_3` | `3B51h` | Mapped 512-byte sector number byte 3. |
 
 TEC-FS status codes:
 
@@ -145,6 +158,7 @@ TEC-FS status codes:
 | --- | ---: | --- |
 | `TECFS_STATUS_OK` | `00h` | Success. |
 | `TECFS_ERR_BAD_VOLUME` | `0Bh` | Requested volume is out of range. |
+| `TECFS_ERR_BAD_BLOCK` | `0Ch` | Requested block index is out of range. |
 | `TECFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
 ## Bank 3: RTC Boundary
