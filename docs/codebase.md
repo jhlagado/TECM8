@@ -271,7 +271,15 @@ session now expect:
   artifact packs those 16 KiB banks into
   `build/roms/tec1g/tecm8/expansion/expansion-144k.bin`, which is loaded
   through `tec1g.expansionRomHex` into the TEC-1G banked window at
-  `0x8000-0xBFFF`.
+  `0x8000-0xBFFF`. `bank_ops.asmi` is the shared AZM interface for that tree:
+  it keeps the fixed-ROM RST `10h` bank service numbers, the `farCall` and
+  `farJump` helpers, the proof trace RAM slots, and the current service-slot
+  addresses aligned across bank sources, proofs, and ABI documentation. Bank 1
+  now owns the VDU and TMS9918 service skeletons at `0x8010-0x80A0`, bank 2
+  publishes the TEC-FS geometry and volume-selection boundary at
+  `0x8010-0x8060`, and bank 3 publishes the RTC service descriptor plus the
+  explicit unsupported UI slots at `0x8010-0x8030`. The later banks are still
+  placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1251,11 +1259,15 @@ The `run-*.ts` files assemble proof programs through the npm
 `@jhlagado/azm` package and run them through Debug80. Set `AZM_ROOT` only when
 intentionally testing against a local AZM checkout:
 
+- `tools/run-bank-abi-proof.ts`
 - `tools/run-project-config-proof.ts`
 - `tools/run-project-config-storage-proof.ts`
+- `tools/run-rtc-bank-proof.ts`
 - `tools/run-shell-commands-proof.ts`
 - `tools/run-display-proof.ts`
 - `tools/run-editor-viewport-storage-proof.ts`
+- `tools/run-tecfs-bank-proof.ts`
+- `tools/run-tms9918-bank-proof.ts`
 - `tools/run-debug80-editor-session.ts`
 
 `tools/run-storage-proof.ts` is the exception: it builds a very small proof
@@ -1266,6 +1278,16 @@ The storage-backed runners also create FAT32 images, load MON3 ROM, configure
 the TEC-1G runtime, disable shadow ROM where needed, seed SD card state, and
 inspect proof-visible symbols, GLCD pixels, source-record buffers, and result
 markers.
+
+The banked-service runners follow the same Debug80 model without the FAT32
+image layer. They load the tracked fixed monitor and 144K expansion image,
+switch the TEC-1G bank window through the fixed-ROM RST `10h` service
+trampolines, and inspect shared proof RAM to check ABI behavior. The current
+coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
+`farCall` restore behavior plus the one-way `farJump` handoff, the TMS9918
+runner checks the VDU and TMS9918 entry points in bank 1, the TEC-FS runner
+checks the geometry and volume-selection contract in bank 2, and the RTC
+runner checks the bank 3 descriptor and unsupported UI status path.
 
 The proof runners run AZM register-contract checking in strict mode. They pass
 `src/mon3.asmi` for MON3 ROM calls and rely on the `;!` comments in included
@@ -1366,6 +1388,8 @@ coverage:
 - static checks that local entry points carry `;!` contract comments
 - static checks that `debug80.json` keeps the `tecm8` profile, ROM source
   roots, and ROM artifact declarations aligned with the tracked files
+- static checks that the checked banked-service ABI document matches the live
+  `.equ` constants, proof hooks, and npm proof scripts
 - proof wiring checks that package scripts invoke the right proof runners
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
@@ -1373,6 +1397,13 @@ verifies the `tecm8` profile selection, target source roots, active monitor and
 expansion artifact wiring, the current local MON-3 monitor source tree, the
 absence of the old `monitor.main.asm` include path, ROM build npm scripts, and
 tracked fixed-size ROM images.
+
+`tools/bank-abi-proof.test.ts`, `tools/tms9918-bank-proof.test.ts`,
+`tools/tecfs-bank-proof.test.ts`, and `tools/rtc-bank-proof.test.ts` are the
+banked-proof wiring checks. They keep the banked proof sources, runners, and
+package scripts attached to the current expansion image.
+`tools/banked-service-abi-doc.test.ts` is the documentation freshness check for
+`docs/mon3/tecmate-banked-service-abi.md`.
 
 ## Documentation Map
 
@@ -1399,6 +1430,9 @@ toward.
 - `docs/mon3/service-inventory.md`: generated MON3 service classification.
 - `docs/mon3/storage-split.md`: generated MON3 storage code analysis.
 - `docs/mon3/glcd-split.md`: generated MON3 GLCD code and RAM analysis.
+- `docs/mon3/tecmate-banked-service-abi.md`: checked map of the current
+  fixed-ROM bank calls, banked service slots, parameter blocks, and proof
+  hooks.
 - `docs/mon3/tecm8-rom-artifact-plan.md`: the TECM8-owned fixed-ROM and
   expansion-ROM source, artifact, and handoff plan for the Debug80 profile.
 - `docs/codebase.md`: this tour.
