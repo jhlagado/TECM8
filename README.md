@@ -58,12 +58,13 @@ npm run rom:check
 Debug80 declares both the monitor and expansion ROMs as active source-backed
 `tec1g.romArtifacts` entries. Launch builds the monitor to
 `build/roms/tec1g/tecm8/monitor/monitor.bin` and uses it through
-`tec1g.romHex`. Launch also builds
-`build/roms/tec1g/tecm8/expansion/expansion.bin` and loads it through
-`tec1g.expansionRomHex`. The image is available through the TEC-1G banked
-expansion window at `0x8000-0xBFFF`. The configured expansion backing image is
-nine 16K slots: two legacy expand pages plus seven additional TECM8 expansion
-slots.
+`tec1g.romHex`. Launch also builds each expansion bank source under
+`roms/tec1g/tecm8/expansion/bank0.asm` through `bank8.asm`, packs them into
+`build/roms/tec1g/tecm8/expansion/expansion-144k.bin`, and loads that image
+through `tec1g.expansionRomHex`. Each bank is assembled for the visible TEC-1G
+banked expansion window at `0x8000-0xBFFF`. The configured expansion backing
+image is nine 16K slots: two legacy expand pages plus seven additional TECM8
+expansion slots.
 
 Useful local checks:
 

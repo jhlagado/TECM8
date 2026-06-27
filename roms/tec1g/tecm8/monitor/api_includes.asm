@@ -62,6 +62,13 @@ openFile_         .equ 59
 readSector_       .equ 60
 writeSector_      .equ 61
 RGBScan_          .equ 62
+TECM8_BIOS_SYS_GET_    .equ 0x50
+TECM8_BIOS_SYS_SET_    .equ 0x51
+BiosBankSelect_        .equ 0x52
+BiosBankCall_          .equ 0x53
+BiosFarJump_           .equ 0x54
+TECM8_BIOS_PROTECT_SET_ .equ 0x55
+TECM8_BIOS_SHADOW_SET_  .equ 0x56
 
 APINames2:
 initLCD_          .equ 0  ;Initalise the LCD
@@ -119,4 +126,3 @@ binToBcd_         .equ 15
 formatTime_       .equ 16
 formatDate_       .equ 17
 RTCSetup_         .equ 18
-

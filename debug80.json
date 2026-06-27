@@ -55,19 +55,73 @@
         "appStart": 16384,
         "entry": 0,
         "romHex": "build/roms/tec1g/tecm8/monitor/monitor.bin",
-        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion-144k.bin",
         "romArtifacts": [
           {
             "id": "tecm8-expansion",
             "role": "expansion",
-            "sourceFile": "roms/tec1g/tecm8/expansion/expansion.asm",
-            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion.bin",
-            "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
+            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion-144k.bin",
             "windowAddress": 32768,
             "windowSize": 16384,
             "imageSize": 147456,
             "bankSize": 16384,
-            "bankCount": 9
+            "bankCount": 9,
+            "banks": [
+              {
+                "physicalBank": 0,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank0.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank0.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank0.d8.json"
+              },
+              {
+                "physicalBank": 1,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank1.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank1.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank1.d8.json"
+              },
+              {
+                "physicalBank": 2,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank2.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank2.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank2.d8.json"
+              },
+              {
+                "physicalBank": 3,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank3.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank3.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank3.d8.json"
+              },
+              {
+                "physicalBank": 4,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank4.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank4.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank4.d8.json"
+              },
+              {
+                "physicalBank": 5,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank5.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank5.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank5.d8.json"
+              },
+              {
+                "physicalBank": 6,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank6.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank6.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank6.d8.json"
+              },
+              {
+                "physicalBank": 7,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank7.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank7.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank7.d8.json"
+              },
+              {
+                "physicalBank": 8,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank8.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank8.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank8.d8.json"
+              }
+            ]
           },
           {
             "id": "tecm8-monitor",
@@ -115,19 +169,73 @@
         "appStart": 16384,
         "entry": 0,
         "romHex": "build/roms/tec1g/tecm8/monitor/monitor.bin",
-        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion.bin",
+        "expansionRomHex": "build/roms/tec1g/tecm8/expansion/expansion-144k.bin",
         "romArtifacts": [
           {
             "id": "tecm8-expansion",
             "role": "expansion",
-            "sourceFile": "roms/tec1g/tecm8/expansion/expansion.asm",
-            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion.bin",
-            "outputDebugMap": "build/roms/tec1g/tecm8/expansion/expansion.d8.json",
+            "outputBin": "build/roms/tec1g/tecm8/expansion/expansion-144k.bin",
             "windowAddress": 32768,
             "windowSize": 16384,
             "imageSize": 147456,
             "bankSize": 16384,
-            "bankCount": 9
+            "bankCount": 9,
+            "banks": [
+              {
+                "physicalBank": 0,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank0.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank0.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank0.d8.json"
+              },
+              {
+                "physicalBank": 1,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank1.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank1.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank1.d8.json"
+              },
+              {
+                "physicalBank": 2,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank2.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank2.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank2.d8.json"
+              },
+              {
+                "physicalBank": 3,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank3.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank3.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank3.d8.json"
+              },
+              {
+                "physicalBank": 4,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank4.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank4.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank4.d8.json"
+              },
+              {
+                "physicalBank": 5,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank5.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank5.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank5.d8.json"
+              },
+              {
+                "physicalBank": 6,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank6.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank6.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank6.d8.json"
+              },
+              {
+                "physicalBank": 7,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank7.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank7.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank7.d8.json"
+              },
+              {
+                "physicalBank": 8,
+                "sourceFile": "roms/tec1g/tecm8/expansion/bank8.asm",
+                "outputBin": "build/roms/tec1g/tecm8/expansion/bank8.bin",
+                "outputDebugMap": "build/roms/tec1g/tecm8/expansion/bank8.d8.json"
+              }
+            ]
           },
           {
             "id": "tecm8-monitor",

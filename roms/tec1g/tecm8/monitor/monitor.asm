@@ -35,6 +35,8 @@ PROTECT:    .equ    02H         ;Memory Protect
 EXPAND:     .equ    04H         ;Expand
 CART:       .equ    10H         ;Cartridge
 CAPSLOCK:   .equ    80H         ;Caps lock for Keyboard
+EXPAND_FIELD_MASK: .equ 7CH     ;EXPAND plus expansion select bits 3-6
+TECM8_BANK_MAX: .equ 09H        ;Physical banks 0-8
 
 ; Monitor Control Bit
 ;MCB = Bits 0,1 = Data Nibbles Entered
@@ -3002,6 +3004,107 @@ toggleGLCDTerminal:
 initGLCDTerminal:
         ret
 
+tecm8ApiReserved:
+        ld a,0FFH
+        scf
+        ret
+
+; Return cached SYS_CTRL state.
+; Output: A = SYS_MODE cached latch value.
+TECM8_BIOS_SYS_GET:
+        ld a,(SYS_MODE)
+        ret
+
+; Set masked SYS_CTRL bits while preserving unrelated latch state.
+; Input: A = desired values, B = bit mask.
+; Output: A = resulting SYS_CTRL value, carry clear.
+TECM8_BIOS_SYS_SET:
+        ld c,a
+        ld a,b
+        cpl
+        ld d,a
+        ld a,(SYS_MODE)
+        and d
+        ld d,a
+        ld a,c
+        and b
+        or d
+        out (SYS_CTRL),a
+        ld (SYS_MODE),a
+        ld c,a
+        and EXPAND
+        ld (XPND_MODE),a
+        ld a,c
+        or a
+        ret
+
+; Select a physical expansion bank in the 8000h-BFFFh window.
+; Input: A = physical bank 0-8.
+; Output: carry clear on success, carry set with A = 0Bh on bad bank.
+BiosBankSelect:
+        cp TECM8_BANK_MAX
+        jr nc,BiosBankSelectBadBank
+        or a
+        jr z,BiosBankSelectLegacy0
+        cp 01H
+        jr z,BiosBankSelectLegacy1
+        dec a
+        add a,a
+        add a,a
+        add a,a
+        add a,a
+        or EXPAND
+        jr BiosBankSelectApply
+BiosBankSelectLegacy0:
+        ld a,EXPAND
+        jr BiosBankSelectApply
+BiosBankSelectLegacy1:
+        ld a,EXPAND+08H
+BiosBankSelectApply:
+        ld b,EXPAND_FIELD_MASK
+        call TECM8_BIOS_SYS_SET
+        or a
+        ret
+BiosBankSelectBadBank:
+        ld a,0BH
+        scf
+        ret
+
+; Call a routine through the expansion window and restore the previous SYS_CTRL.
+; Input: A = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+BiosBankCall:
+        ld a,(SYS_MODE)
+        ld e,a
+        ld d,00H
+        push de
+        call BiosBankSelect
+        jr c,BiosBankCallError
+        ld de,BiosBankCallReturn
+        push de
+        jp (hl)
+BiosBankCallReturn:
+        pop de
+        push af
+        ld a,e
+        out (SYS_CTRL),a
+        ld (SYS_MODE),a
+        and EXPAND
+        ld (XPND_MODE),a
+        pop af
+        ret
+BiosBankCallError:
+        pop de
+        ret
+
+; Jump to a routine through the expansion window. This does not return.
+; Input: A = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+BiosFarJump:
+        call BiosBankSelect
+        ret c
+        inc sp
+        inc sp
+        jp (hl)
+
 ; Toggle Key Press Beep
 ; Input: none
 ; Destroy: A
@@ -3045,8 +3148,8 @@ displaySettings:
 
 ; Launch TecMate from the expansion ROM window.
 launchTecMate:
-        ld a,EXPAND
-        call setExpand
+        xor a
+        call BiosBankSelect
         jp 08000H
 
 ; Display baud rate menu
@@ -3443,6 +3546,30 @@ APITable:
         .dw readSector
         .dw writeSector
         .dw RGBScan
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw TECM8_BIOS_SYS_GET
+        .dw TECM8_BIOS_SYS_SET
+        .dw BiosBankSelect
+        .dw BiosBankCall
+        .dw BiosFarJump
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
 
 API_COUNT:  .equ    $-APITable  ;Total number of API functions
 

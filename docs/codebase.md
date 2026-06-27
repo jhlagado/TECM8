@@ -266,10 +266,12 @@ session now expect:
   project-local MON-3 source modules kept beside the active monitor tree for
   reference and future relocation work. The trimmed fixed monitor no longer
   includes them directly. `monitor.main.asm` is no longer part of this tree.
-- `roms/tec1g/tecm8/expansion/expansion.asm`: a bank-0 expansion stub at
-  `0x8000` with `Tecm8ExpansionEntry` and a matching `TM8` info signature. The
-  `tecm8-expansion` artifact is active and is loaded through
-  `tec1g.expansionRomHex` into the TEC-1G banked window at `0x8000-0xBFFF`.
+- `roms/tec1g/tecm8/expansion/bank0.asm` through `bank8.asm`: per-bank
+  expansion sources assembled independently at `0x8000`. The `tecm8-expansion`
+  artifact packs those 16 KiB banks into
+  `build/roms/tec1g/tecm8/expansion/expansion-144k.bin`, which is loaded
+  through `tec1g.expansionRomHex` into the TEC-1G banked window at
+  `0x8000-0xBFFF`.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build

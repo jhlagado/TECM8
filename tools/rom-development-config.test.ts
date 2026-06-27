@@ -13,6 +13,15 @@ function readText(path: string): string {
   return readFileSync(resolve(root, path), 'utf8');
 }
 
+function expectedExpansionBanks(): Array<Record<string, unknown>> {
+  return Array.from({ length: 9 }, (_, physicalBank) => ({
+    physicalBank,
+    sourceFile: `roms/tec1g/tecm8/expansion/bank${physicalBank}.asm`,
+    outputBin: `build/roms/tec1g/tecm8/expansion/bank${physicalBank}.bin`,
+    outputDebugMap: `build/roms/tec1g/tecm8/expansion/bank${physicalBank}.d8.json`,
+  }));
+}
+
 test('TECM8 Debug80 config uses a custom profile with monitor and expansion ROM source roots', () => {
   const config = readJson('debug80.json') as {
     defaultProfile?: string;
@@ -46,20 +55,19 @@ test('TECM8 Debug80 config uses a custom profile with monitor and expansion ROM 
     assert.equal(resolvedTarget.tec1g?.romHex, 'build/roms/tec1g/tecm8/monitor/monitor.bin');
     assert.equal(
       resolvedTarget.tec1g?.expansionRomHex,
-      'build/roms/tec1g/tecm8/expansion/expansion.bin'
+      'build/roms/tec1g/tecm8/expansion/expansion-144k.bin'
     );
     assert.deepEqual(resolvedTarget.tec1g?.romArtifacts, [
       {
         id: 'tecm8-expansion',
         role: 'expansion',
-        sourceFile: 'roms/tec1g/tecm8/expansion/expansion.asm',
-        outputBin: 'build/roms/tec1g/tecm8/expansion/expansion.bin',
-        outputDebugMap: 'build/roms/tec1g/tecm8/expansion/expansion.d8.json',
+        outputBin: 'build/roms/tec1g/tecm8/expansion/expansion-144k.bin',
         windowAddress: 32768,
         windowSize: 16384,
         imageSize: 147456,
         bankSize: 16384,
         bankCount: 9,
+        banks: expectedExpansionBanks(),
       },
       {
         id: 'tecm8-monitor',
@@ -80,9 +88,9 @@ test('TECM8 project tracks ROM source folders and has ROM build scripts', () => 
 
   for (const path of [
     'roms/tec1g/tecm8/monitor/monitor.asm',
-    'roms/tec1g/tecm8/expansion/expansion.asm',
     'tools/build-monitor-rom.ts',
     'tools/build-expansion-rom.ts',
+    ...Array.from({ length: 9 }, (_, bank) => `roms/tec1g/tecm8/expansion/bank${bank}.asm`),
   ]) {
     assert.equal(existsSync(resolve(root, path)), true, `${path} should exist`);
   }
@@ -124,7 +132,7 @@ test('TECM8 monitor ROM binary is a full fixed ROM image', () => {
   assert.equal(statSync(monitorBin).size, 16384);
 });
 
-test('TECM8 expansion ROM binary is a full nine-bank backing image', () => {
+test('TECM8 expansion ROM binary is a full packed nine-bank backing image', () => {
   const expansionBin = resolve(root, 'roms/tec1g/tecm8/expansion/expansion.bin');
 
   assert.equal(existsSync(expansionBin), true, 'expansion ROM binary should exist');

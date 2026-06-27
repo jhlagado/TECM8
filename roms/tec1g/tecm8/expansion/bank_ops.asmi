@@ -1,0 +1,25 @@
+; TECM8 expansion-bank call helpers.
+;
+; These constants deliberately mirror the fixed-ROM RST 10h service numbers.
+
+TECM8_BIOS_SYS_GET          .equ    0x50
+TECM8_BIOS_SYS_SET          .equ    0x51
+TECM8_BIOS_BANK_SELECT      .equ    0x52
+TECM8_BIOS_BANK_CALL        .equ    0x53
+TECM8_BIOS_FAR_JUMP         .equ    0x54
+
+TECM8_DEMO_TRACE_BASE       .equ    0x3000
+TECM8_DEMO_TRACE_0          .equ    TECM8_DEMO_TRACE_BASE+0
+TECM8_DEMO_TRACE_1          .equ    TECM8_DEMO_TRACE_BASE+1
+TECM8_DEMO_TRACE_2          .equ    TECM8_DEMO_TRACE_BASE+2
+TECM8_DEMO_TRACE_3          .equ    TECM8_DEMO_TRACE_BASE+3
+TECM8_DEMO_TRACE_4          .equ    TECM8_DEMO_TRACE_BASE+4
+TECM8_DEMO_TRACE_5          .equ    TECM8_DEMO_TRACE_BASE+5
+TECM8_DEMO_TRACE_6          .equ    TECM8_DEMO_TRACE_BASE+6
+TECM8_DEMO_TRACE_7          .equ    TECM8_DEMO_TRACE_BASE+7
+
+TECM8_DEMO_BANK0_ENTRY      .equ    0x8000
+TECM8_DEMO_BANK1_ENTRY      .equ    0x8000
+TECM8_DEMO_BANK1_HELPER     .equ    0x8010
+TECM8_DEMO_BANK2_ENTRY      .equ    0x8000
+TECM8_DEMO_BANK2_TARGET     .equ    0x8020
