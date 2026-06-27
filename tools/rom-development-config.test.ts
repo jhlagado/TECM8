@@ -13,6 +13,17 @@ function readText(path: string): string {
   return readFileSync(resolve(root, path), 'utf8');
 }
 
+function readDebugSymbols(path: string): Array<{ name: string; address?: number; value?: number }> {
+  const debugMap = readJson(path) as {
+    files?: Record<string, { symbols?: Array<{ name: string; address?: number; value?: number }> }>;
+  };
+  return Object.values(debugMap.files ?? {}).flatMap((file) => file.symbols ?? []);
+}
+
+function symbolAddress(path: string, name: string): number | undefined {
+  return readDebugSymbols(path).find((symbol) => symbol.name === name)?.address;
+}
+
 function expectedExpansionBanks(): Array<Record<string, unknown>> {
   return Array.from({ length: 9 }, (_, physicalBank) => ({
     physicalBank,
@@ -137,4 +148,25 @@ test('TECM8 expansion ROM binary is a full packed nine-bank backing image', () =
 
   assert.equal(existsSync(expansionBin), true, 'expansion ROM binary should exist');
   assert.equal(statSync(expansionBin).size, 147456);
+});
+
+test('TECM8 expansion banks expose the first service skeleton entry points', () => {
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduInit'), 0x8010);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduClear'), 0x8020);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduSetCursor'), 0x8030);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduPutChar'), 0x8040);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsInit'), 0x8080);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsSetRegister'), 0x8090);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsWriteVram'), 0x80A0);
+
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsMount'), 0x8010);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsSelectVolume'), 0x8020);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsRead'), 0x8030);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsWrite'), 0x8040);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsLoadRange'), 0x8050);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsSaveRange'), 0x8060);
+
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank3.d8.json', 'rtcToolEntry'), 0x8010);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank3.d8.json', 'rtcSetupUi'), 0x8020);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank3.d8.json', 'rtcPramViewer'), 0x8030);
 });

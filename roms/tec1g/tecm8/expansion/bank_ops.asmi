@@ -17,12 +17,32 @@ TECM8_DEMO_TRACE_4          .equ    TECM8_DEMO_TRACE_BASE+4
 TECM8_DEMO_TRACE_5          .equ    TECM8_DEMO_TRACE_BASE+5
 TECM8_DEMO_TRACE_6          .equ    TECM8_DEMO_TRACE_BASE+6
 TECM8_DEMO_TRACE_7          .equ    TECM8_DEMO_TRACE_BASE+7
+TECM8_DEMO_TRACE_8          .equ    TECM8_DEMO_TRACE_BASE+8
+TECM8_DEMO_TRACE_9          .equ    TECM8_DEMO_TRACE_BASE+9
 
 TECM8_DEMO_BANK0_ENTRY      .equ    0x8000
-TECM8_DEMO_BANK1_ENTRY      .equ    0x8000
-TECM8_DEMO_BANK1_HELPER     .equ    0x8010
-TECM8_DEMO_BANK2_ENTRY      .equ    0x8000
-TECM8_DEMO_BANK2_TARGET     .equ    0x8020
+
+TECM8_VDU_ENTRY             .equ    0x8000
+TECM8_VDU_INIT              .equ    0x8010
+TECM8_VDU_CLEAR             .equ    0x8020
+TECM8_VDU_SET_CURSOR        .equ    0x8030
+TECM8_VDU_PUT_CHAR          .equ    0x8040
+TECM8_TMS_INIT              .equ    0x8080
+TECM8_TMS_SET_REGISTER      .equ    0x8090
+TECM8_TMS_WRITE_VRAM        .equ    0x80A0
+
+TECM8_TECFS_ENTRY           .equ    0x8000
+TECM8_TECFS_MOUNT           .equ    0x8010
+TECM8_TECFS_SELECT_VOLUME   .equ    0x8020
+TECM8_TECFS_READ            .equ    0x8030
+TECM8_TECFS_WRITE           .equ    0x8040
+TECM8_TECFS_LOAD_RANGE      .equ    0x8050
+TECM8_TECFS_SAVE_RANGE      .equ    0x8060
+
+TECM8_RTC_ENTRY             .equ    0x8000
+TECM8_RTC_TOOL_ENTRY        .equ    0x8010
+TECM8_RTC_SETUP_UI          .equ    0x8020
+TECM8_RTC_PRAM_VIEWER       .equ    0x8030
 
 op farCall(bank imm8, target imm16)
         ld a,bank

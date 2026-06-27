@@ -13,11 +13,14 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
-        farCall 0x01,TECM8_DEMO_BANK1_ENTRY
+        farCall 0x01,TECM8_VDU_INIT
         ld (TECM8_DEMO_TRACE_4),a
-        farJump 0x02,TECM8_DEMO_BANK2_TARGET
-        ld (TECM8_DEMO_TRACE_7),a
-        RET
+        farCall 0x02,TECM8_TECFS_MOUNT
+        ld (TECM8_DEMO_TRACE_5),a
+        farCall 0x03,TECM8_RTC_TOOL_ENTRY
+        ld (TECM8_DEMO_TRACE_6),a
+        ret
 
+        .org    0x8100
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
