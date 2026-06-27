@@ -1,0 +1,167 @@
+const { readFileSync } = require('node:fs');
+const { resolve } = require('node:path');
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const root = resolve(__dirname, '..');
+const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
+const ops = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+
+function equateExpression(name: string): string {
+  const match = ops.match(new RegExp(`^${name}\\s+\\.equ\\s+([^\\n;]+)`, 'm'));
+  assert.ok(match, `missing equate ${name}`);
+  return match[1].trim();
+}
+
+function parseNumber(token: string): number {
+  const trimmed = token.trim();
+  if (/^0x[0-9a-f]+$/i.test(trimmed)) {
+    return Number.parseInt(trimmed.slice(2), 16);
+  }
+  if (/^[0-9a-f]+h$/i.test(trimmed)) {
+    return Number.parseInt(trimmed.slice(0, -1), 16);
+  }
+  if (/^[0-9]+$/.test(trimmed)) {
+    return Number.parseInt(trimmed, 10);
+  }
+  return equateValue(trimmed);
+}
+
+function equateValue(name: string): number {
+  const expression = equateExpression(name);
+  return expression
+    .split('+')
+    .map((part) => parseNumber(part))
+    .reduce((sum, value) => sum + value, 0);
+}
+
+function hexForDoc(value: number): string {
+  const width = value <= 0xff ? 2 : 4;
+  return `${value.toString(16).toUpperCase().padStart(width, '0')}h`;
+}
+
+function assertDocRow(name: string): void {
+  const expected = hexForDoc(equateValue(name));
+  const row = doc.split('\n').find((line: string) => line.includes(`\`${name}\``));
+  assert.ok(row, `doc should mention ${name}`);
+  assert.match(row, new RegExp(`\\|\\s*\\\`${name}\\\`\\s*\\|\\s*\\\`?${expected}\\\`?\\s*\\|`, 'i'));
+}
+
+test('banked service ABI doc covers fixed monitor bank services', () => {
+  for (const name of [
+    'TECM8_BIOS_SYS_GET',
+    'TECM8_BIOS_SYS_SET',
+    'TECM8_BIOS_BANK_SELECT',
+    'TECM8_BIOS_BANK_CALL',
+    'TECM8_BIOS_FAR_JUMP',
+  ]) {
+    assertDocRow(name);
+  }
+});
+
+test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => {
+  for (const name of [
+    'TECM8_VDU_ENTRY',
+    'TECM8_VDU_INIT',
+    'TECM8_VDU_CLEAR',
+    'TECM8_VDU_SET_CURSOR',
+    'TECM8_VDU_PUT_CHAR',
+    'TECM8_TMS_INIT',
+    'TECM8_TMS_SET_REGISTER',
+    'TECM8_TMS_WRITE_VRAM',
+    'TECM8_TMS_DATA_PORT',
+    'TECM8_TMS_CONTROL_PORT',
+    'TECM8_TMS_PARAM_BASE',
+    'TECM8_TMS_PARAM_VALUE',
+    'TECM8_TMS_PARAM_REGISTER',
+    'TECM8_TMS_PARAM_ADDR_LO',
+    'TECM8_TMS_PARAM_ADDR_HI',
+  ]) {
+    assertDocRow(name);
+  }
+});
+
+test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
+  for (const name of [
+    'TECM8_TECFS_ENTRY',
+    'TECM8_TECFS_MOUNT',
+    'TECM8_TECFS_SELECT_VOLUME',
+    'TECM8_TECFS_READ',
+    'TECM8_TECFS_WRITE',
+    'TECM8_TECFS_LOAD_RANGE',
+    'TECM8_TECFS_SAVE_RANGE',
+    'TECFS_PARAM_BASE',
+    'TECFS_PARAM_ACTIVE_VOLUME',
+    'TECFS_PARAM_REQUEST_VOLUME',
+    'TECFS_PARAM_STATUS',
+    'TECFS_PARAM_LAST_ERROR',
+    'TECFS_PARAM_VOLUME_MIB',
+    'TECFS_PARAM_BLOCK_BYTES_LO',
+    'TECFS_PARAM_BLOCK_BYTES_HI',
+    'TECFS_PARAM_VOLUME_BLOCKS_LO',
+    'TECFS_PARAM_VOLUME_BLOCKS_HI',
+    'TECFS_PARAM_USER_VOLUMES',
+    'TECFS_PARAM_SPARE_VOLUME',
+    'TECFS_PARAM_TOTAL_VOLUMES',
+    'TECFS_STATUS_OK',
+    'TECFS_ERR_BAD_VOLUME',
+    'TECFS_ERR_UNSUPPORTED',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(doc, /128 MiB/);
+  assert.match(doc, /32768/);
+  assert.match(doc, /30 user volumes/);
+});
+
+test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
+  for (const name of [
+    'TECM8_RTC_ENTRY',
+    'TECM8_RTC_TOOL_ENTRY',
+    'TECM8_RTC_SETUP_UI',
+    'TECM8_RTC_PRAM_VIEWER',
+    'TECM8_RTC_PARAM_BASE',
+    'TECM8_RTC_PARAM_STATUS',
+    'TECM8_RTC_PARAM_LAST_ERROR',
+    'TECM8_RTC_PARAM_BANK',
+    'TECM8_RTC_PARAM_VERSION',
+    'TECM8_RTC_PARAM_FEATURES',
+    'TECM8_RTC_STATUS_OK',
+    'TECM8_RTC_FEATURE_SERVICE',
+    'TECM8_RTC_ERR_UNSUPPORTED',
+  ]) {
+    assertDocRow(name);
+  }
+});
+
+test('banked service ABI doc covers proof hooks and proof scripts', () => {
+  for (const name of [
+    'TECM8_ABI_TRACE_BASE',
+    'TECM8_ABI_TRACE_0',
+    'TECM8_ABI_TRACE_1',
+    'TECM8_ABI_TRACE_2',
+    'TECM8_ABI_TRACE_3',
+    'TECM8_ABI_TRACE_4',
+    'TECM8_ABI_TRACE_5',
+    'TECM8_ABI_TRACE_6',
+    'TECM8_ABI_TRACE_7',
+    'TECM8_ABI_TRACE_8',
+    'TECM8_ABI_TRACE_9',
+    'TECM8_ABI_FARJUMP_LANDED',
+    'TECM8_ABI_BANK1_NESTED',
+    'TECM8_ABI_BANK2_NESTED',
+    'TECM8_ABI_BANK3_FARJUMP',
+  ]) {
+    assertDocRow(name);
+  }
+  for (const script of [
+    'proof:bank-abi',
+    'proof:tms9918-bank',
+    'proof:tecfs-bank',
+    'proof:rtc-bank',
+  ]) {
+    assert.ok(pkg.scripts[script], `missing npm script ${script}`);
+    assert.match(doc, new RegExp(`npm run ${script}`));
+  }
+});
