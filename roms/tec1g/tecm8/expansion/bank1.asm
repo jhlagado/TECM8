@@ -8,14 +8,23 @@ TECM8_EXPANSION_BANK          .equ    0x01
 TECM8_EXPANSION_VERSION       .equ    0x01
 
 @Tecm8ExpansionBank1Entry:
-        ld a,TECM8_EXPANSION_BANK
-        ld (TECM8_DEMO_TRACE_1),a
-        ret
+        push af
+        ld a,(TECM8_ABI_PROBE_REQUEST)
+        cp TECM8_ABI_PROBE_PRESERVE
+        jr z,Tecm8ExpansionBank1PreserveProbe
+        pop af
+        cp TECM8_ABI_PROBE_NESTED
+        jp z,BankAbiNestedCall
+        jp vduServiceCall
+Tecm8ExpansionBank1PreserveProbe:
+        xor a
+        ld (TECM8_ABI_PROBE_REQUEST),a
+        pop af
+        jp BankAbiPreserveProbe
 
 @Tecm8ExpansionBank1Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
 
-        .org    TECM8_VDU_SERVICE_CALL
 @vduServiceCall:
         cp TECM8_TMS_SVC_INIT
         jr nc,tmsServiceCall
@@ -47,7 +56,6 @@ vduServiceUnknown:
         scf
         ret
 
-        .org    TECM8_VDU_SERVICE_TABLE
 Tecm8VduServiceTable:
         jp      vduInitImpl
         jp      vduClearImpl
@@ -170,16 +178,15 @@ tmsWriteVramImpl:
         or a
         ret
 
-        .org    TECM8_ABI_BANK1_NESTED
 @BankAbiNestedCall:
         ld a,0xA1
         ld (TECM8_ABI_TRACE_6),a
-        farCall 0x02,TECM8_ABI_BANK2_NESTED
+        ld a,TECM8_ABI_PROBE_NESTED
+        farCall 0x02,TECM8_TECFS_ENTRY
         ld (TECM8_ABI_TRACE_7),a
         ld a,0x91
         ret
 
-        .org    TECM8_ABI_BANK1_PRESERVE
 @BankAbiPreserveProbe:
         ld (TECM8_ABI_TRACE_BASE+10),a
         ld a,d

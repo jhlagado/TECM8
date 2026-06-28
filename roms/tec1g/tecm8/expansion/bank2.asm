@@ -14,43 +14,52 @@ TECFS_SPARE_VOLUME            .equ    30
 TECFS_TOTAL_VOLUMES           .equ    31
 
 @Tecm8ExpansionBank2Entry:
-        ld a,TECM8_EXPANSION_BANK
-        ld (TECM8_DEMO_TRACE_2),a
+        cp TECM8_ABI_PROBE_NESTED
+        jp z,BankAbiNestedTarget
+        cp TECM8_TECFS_SVC_MOUNT
+        jp z,tecfsMountImpl
+        cp TECM8_TECFS_SVC_SELECT_VOLUME
+        jp z,tecfsSelectVolumeImpl
+        cp TECM8_TECFS_SVC_READ
+        jp z,tecfsReadSectorImpl
+        cp TECM8_TECFS_SVC_WRITE
+        jp z,tecfsWriteSectorImpl
+        cp TECM8_TECFS_SVC_LOAD_RANGE
+        jp z,tecfsUnsupported
+        cp TECM8_TECFS_SVC_SAVE_RANGE
+        jp z,tecfsUnsupported
+        cp TECM8_TECFS_SVC_MAP_BLOCK
+        jp z,tecfsMapBlockImpl
+        cp TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        jp z,tecfsTranslateSectorImpl
+        ld a,TECM8_SERVICE_ERR_UNKNOWN
+        scf
         ret
 
-        .org    0x8010
 @tecfsMount:
         jp tecfsMountImpl
 
-        .org    0x8020
 @tecfsSelectVolume:
         jp tecfsSelectVolumeImpl
 
-        .org    0x8030
 @tecfsRead:
         jp tecfsReadSectorImpl
 
-        .org    0x8040
 @tecfsWrite:
         jp tecfsWriteSectorImpl
 
-        .org    0x8050
 @tecfsLoadRange:
         jp tecfsUnsupported
 
-        .org    0x8060
 @tecfsSaveRange:
         jp tecfsUnsupported
 
-        .org    0x8070
 @tecfsMapBlock:
         jp tecfsMapBlockImpl
 
-        .org    0x8080
 @tecfsTranslateSector:
         jp tecfsTranslateSectorImpl
 
-        .org    TECM8_ABI_BANK2_NESTED
 @BankAbiNestedTarget:
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
@@ -58,7 +67,6 @@ TECFS_TOTAL_VOLUMES           .equ    31
         ld a,0xB2
         ret
 
-        .org    0x8120
 @tecfsMountImpl:
         xor a
         ld (TECFS_PARAM_STATUS),a
@@ -255,6 +263,5 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-        .org    0x8280
 @Tecm8ExpansionBank2Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

@@ -38,7 +38,8 @@ ClearParams:
         inc hl
         djnz ClearParams
 
-        farCall 0x02,TECM8_TECFS_MOUNT
+        ld a,TECM8_TECFS_SVC_MOUNT
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailMount
         cp 0x82
         jp nz,FailMount
@@ -85,7 +86,8 @@ ClearParams:
 
         ld a,0x05
         ld (TECFS_PARAM_REQUEST_VOLUME),a
-        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailSelectValid
         ld a,(TECFS_PARAM_ACTIVE_VOLUME)
         cp 0x05
@@ -96,7 +98,8 @@ ClearParams:
 
         ld a,0x1E
         ld (TECFS_PARAM_REQUEST_VOLUME),a
-        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailSelectValid
         ld a,(TECFS_PARAM_ACTIVE_VOLUME)
         cp 0x1E
@@ -104,7 +107,8 @@ ClearParams:
 
         ld a,0x1F
         ld (TECFS_PARAM_REQUEST_VOLUME),a
-        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailSelectInvalid
         cp TECFS_ERR_BAD_VOLUME
         jp nz,FailSelectInvalid
@@ -117,13 +121,15 @@ ClearParams:
 
         ld a,0x05
         ld (TECFS_PARAM_REQUEST_VOLUME),a
-        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailSelectValid
         ld a,0x34
         ld (TECFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        ld a,TECM8_TECFS_SVC_MAP_BLOCK
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailMapBlock
         cp 0x82
         jp nz,FailMapBlock
@@ -140,7 +146,8 @@ ClearParams:
         cp 0x00
         jp nz,FailMapBlock
 
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
         cp 0x82
         jp nz,FailTranslate
@@ -159,13 +166,15 @@ ClearParams:
 
         ld a,0x1D
         ld (TECFS_PARAM_REQUEST_VOLUME),a
-        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailSelectValid
         ld a,0x34
         ld (TECFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        ld a,TECM8_TECFS_SVC_MAP_BLOCK
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailMapBlock
         ld a,(TECFS_PARAM_SECTOR_0)
         cp 0xA0
@@ -180,7 +189,8 @@ ClearParams:
         cp 0x00
         jp nz,FailMapBlock
 
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
         cp 0x82
         jp nz,FailTranslate
@@ -203,7 +213,8 @@ ClearParams:
         xor a
         ld (TECFS_PARAM_SECTOR_2),a
         ld (TECFS_PARAM_SECTOR_3),a
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
         ld a,(TECFS_PARAM_SECTOR_0)
         cp 0x01
@@ -220,7 +231,8 @@ ClearParams:
 
         ld a,0x80
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        ld a,TECM8_TECFS_SVC_MAP_BLOCK
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailMapInvalid
         cp TECFS_ERR_BAD_BLOCK
         jp nz,FailMapInvalid
@@ -232,14 +244,17 @@ ClearParams:
         ld (TECFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        ld a,TECM8_TECFS_SVC_MAP_BLOCK
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailMapBlock
         ld hl,0x6000
         ld (TECFS_PARAM_BUFFER_LO),hl
 
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
-        farCall 0x02,TECM8_TECFS_READ
+        ld a,TECM8_TECFS_SVC_READ
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailReadContract
         cp TECFS_ERR_NO_DRIVER
         jp nz,FailReadContract
@@ -250,7 +265,8 @@ ClearParams:
         cp TECFS_DRIVER_OP_READ
         jp nz,FailDriverHook
 
-        farCall 0x02,TECM8_TECFS_WRITE
+        ld a,TECM8_TECFS_SVC_WRITE
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailWriteContract
         cp TECFS_ERR_NO_DRIVER
         jp nz,FailWriteContract
@@ -263,7 +279,8 @@ ClearParams:
 
         ld hl,0x0000
         ld (TECFS_PARAM_BUFFER_LO),hl
-        farCall 0x02,TECM8_TECFS_READ
+        ld a,TECM8_TECFS_SVC_READ
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailBadBuffer
         cp TECFS_ERR_BAD_BUFFER
         jp nz,FailBadBuffer
@@ -277,7 +294,8 @@ ClearParams:
         xor a
         ld (TECFS_PARAM_SECTOR_1),a
         ld (TECFS_PARAM_SECTOR_3),a
-        farCall 0x02,TECM8_TECFS_READ
+        ld a,TECM8_TECFS_SVC_READ
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailBadSector
         cp TECFS_ERR_BAD_SECTOR
         jp nz,FailBadSector
@@ -290,16 +308,19 @@ ClearParams:
         ld (TECFS_PARAM_SECTOR_2),a
         xor a
         ld (TECFS_PARAM_SECTOR_3),a
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
 
         ld a,0x34
         ld (TECFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        ld a,TECM8_TECFS_SVC_MAP_BLOCK
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailMapBlock
-        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp c,FailTranslate
         ld a,(TECFS_PARAM_SECTOR_0)
         cp 0xA2
@@ -314,7 +335,8 @@ ClearParams:
         cp 0x00
         jp nz,FailTranslate
 
-        farCall 0x02,TECM8_TECFS_LOAD_RANGE
+        ld a,TECM8_TECFS_SVC_LOAD_RANGE
+        farCall 0x02,TECM8_TECFS_ENTRY
         jp nc,FailUnsupported
         cp TECFS_ERR_UNSUPPORTED
         jp nz,FailUnsupported

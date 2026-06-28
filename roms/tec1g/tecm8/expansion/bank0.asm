@@ -83,6 +83,8 @@ Tecm8BootstrapShell:
         jp z,Tecm8ServiceCallGlcdEntry
         cp TECM8_SERVICE_SHELL_ENTRY
         jp z,Tecm8ServiceCallShellEntry
+        cp TECM8_ABI_PROBE_NESTED
+        jp z,Tecm8ServiceCallAbiNested
         pop af
         pop de
         pop hl
@@ -102,6 +104,7 @@ Tecm8ServiceCallTecfsMount:
         pop af
         pop de
         pop hl
+        ld a,TECM8_TECFS_SVC_MOUNT
         farCall TECM8_SERVICE_TECFS_MOUNT_BANK,TECM8_SERVICE_TECFS_MOUNT_ADDR
         ret
 
@@ -109,6 +112,7 @@ Tecm8ServiceCallRtcTool:
         pop af
         pop de
         pop hl
+        ld a,TECM8_RTC_SVC_TOOL_ENTRY
         farCall TECM8_SERVICE_RTC_TOOL_BANK,TECM8_SERVICE_RTC_TOOL_ADDR
         ret
 
@@ -124,6 +128,14 @@ Tecm8ServiceCallShellEntry:
         pop de
         pop hl
         call Tecm8ShellEntry
+        ret
+
+Tecm8ServiceCallAbiNested:
+        pop af
+        pop de
+        pop hl
+        ld a,TECM8_ABI_PROBE_NESTED
+        farCall 0x01,TECM8_VDU_ENTRY
         ret
 
 @Tecm8ShellEntry:
@@ -167,7 +179,6 @@ Tecm8ShellCopySplashNext:
 Tecm8ShellSplashText:
         .db     "TecMate",0
 
-        .org    0x8180
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
 

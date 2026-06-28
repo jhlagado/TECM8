@@ -33,7 +33,7 @@ ClearTrace:
         rst 10H
         ld (TECM8_ABI_TRACE_2),a
 
-        farCall 0x01,TECM8_ABI_BANK1_NESTED
+        callService TECM8_ABI_PROBE_NESTED
         ld (TECM8_ABI_TRACE_3),a
 
         ld c,TECM8_BIOS_SYS_GET
@@ -49,7 +49,12 @@ ClearTrace:
         ld a,0x5A
         ld de,0xD3E4
         ld hl,0x1234
-        farCall 0x01,TECM8_ABI_BANK1_PRESERVE
+        ld a,TECM8_ABI_PROBE_PRESERVE
+        ld (TECM8_ABI_PROBE_REQUEST),a
+        ld a,0x5A
+        ld de,0xD3E4
+        ld hl,0x1234
+        farCall 0x01,TECM8_VDU_ENTRY
         ld (TECM8_ABI_TRACE_BASE+15),a
         ld hl,0
         add hl,sp
@@ -75,7 +80,8 @@ ClearTrace:
         ld a,0xD4
         ld (TECM8_ABI_TRACE_BASE+17),a
 
-        farJump 0x03,TECM8_ABI_BANK3_FARJUMP
+        ld a,TECM8_ABI_PROBE_FARJUMP
+        farJump 0x03,TECM8_RTC_ENTRY
 
         ld a,PROOF_FAIL_FARJUMP_RETURNED
         ld (TECM8_ABI_TRACE_9),a
@@ -83,7 +89,8 @@ ClearTrace:
         halt
 
 ReturningFarJumpProbe:
-        farJump 0x03,TECM8_ABI_BANK3_RETURNING_FARJUMP
+        ld a,TECM8_ABI_PROBE_RETURNING_FARJUMP
+        farJump 0x03,TECM8_RTC_ENTRY
         ld a,PROOF_FAIL_FARJUMP_LOCAL_RET
         ld (TECM8_ABI_TRACE_9),a
         ld (ResultMarker),a

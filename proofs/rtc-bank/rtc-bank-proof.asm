@@ -42,12 +42,14 @@ ClearParams:
         cp TECM8_RTC_FEATURE_SERVICE
         jp nz,FailEntry
 
-        farCall 0x03,TECM8_RTC_TOOL_ENTRY
+        ld a,TECM8_RTC_SVC_TOOL_ENTRY
+        farCall 0x03,TECM8_RTC_ENTRY
         jr c,FailTool
         cp 0x83
         jr nz,FailTool
 
-        farCall 0x03,TECM8_RTC_SETUP_UI
+        ld a,TECM8_RTC_SVC_SETUP_UI
+        farCall 0x03,TECM8_RTC_ENTRY
         jr nc,FailSetupUi
         cp TECM8_RTC_ERR_UNSUPPORTED
         jr nz,FailSetupUi
@@ -58,7 +60,8 @@ ClearParams:
         cp TECM8_RTC_ERR_UNSUPPORTED
         jr nz,FailSetupUi
 
-        farCall 0x03,TECM8_RTC_PRAM_VIEWER
+        ld a,TECM8_RTC_SVC_PRAM_VIEWER
+        farCall 0x03,TECM8_RTC_ENTRY
         jr nc,FailPramViewer
         cp TECM8_RTC_ERR_UNSUPPORTED
         jr nz,FailPramViewer

@@ -96,13 +96,13 @@ published as fixed callable addresses.
 | `TECM8_SERVICE_REGISTRY_END` | `00h` | Registry terminator service ID. |
 | `TECM8_SERVICE_VDU_INIT` | `01h` | VDU init service ID. |
 | `TECM8_SERVICE_VDU_INIT_BANK` | `01h` | VDU init physical bank. |
-| `TECM8_SERVICE_VDU_INIT_ADDR` | `8010h` | VDU init address. |
+| `TECM8_SERVICE_VDU_INIT_ADDR` | `8000h` | VDU init enters the bank-origin dispatcher. |
 | `TECM8_SERVICE_TECFS_MOUNT` | `02h` | TEC-FS mount service ID. |
 | `TECM8_SERVICE_TECFS_MOUNT_BANK` | `02h` | TEC-FS mount physical bank. |
-| `TECM8_SERVICE_TECFS_MOUNT_ADDR` | `8010h` | TEC-FS mount address. |
+| `TECM8_SERVICE_TECFS_MOUNT_ADDR` | `8000h` | TEC-FS mount enters the bank-origin dispatcher. |
 | `TECM8_SERVICE_RTC_TOOL` | `03h` | RTC tool service ID. |
 | `TECM8_SERVICE_RTC_TOOL_BANK` | `03h` | RTC tool physical bank. |
-| `TECM8_SERVICE_RTC_TOOL_ADDR` | `8010h` | RTC tool address. |
+| `TECM8_SERVICE_RTC_TOOL_ADDR` | `8000h` | RTC tool enters the bank-origin dispatcher. |
 | `TECM8_SERVICE_GLCD_ENTRY` | `04h` | GLCD boundary service ID. |
 | `TECM8_SERVICE_GLCD_ENTRY_BANK` | `04h` | GLCD boundary physical bank. |
 | `TECM8_SERVICE_GLCD_ENTRY_ADDR` | `8000h` | GLCD boundary address. |
@@ -170,8 +170,8 @@ move as the bank grows.
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TECM8_VDU_ENTRY` | `8000h` | Bank entry marker. |
-| `TECM8_VDU_SERVICE_CALL` | `8010h` | Bank-local dispatcher. Input `A` = VDU/TMS service ID. |
-| `TECM8_VDU_SERVICE_TABLE` | `8030h` | Bank-local service table records. |
+| `TECM8_VDU_SERVICE_CALL` | `8000h` | Bank-origin dispatcher. Input `A` = VDU/TMS service ID. |
+| `TECM8_VDU_SERVICE_TABLE` | private label | Bank-local service table records. |
 
 Bank-local VDU/TMS service IDs:
 
@@ -233,14 +233,22 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TECM8_TECFS_ENTRY` | `8000h` | Bank entry marker. |
-| `TECM8_TECFS_MOUNT` | `8010h` | Publishes geometry, returns `A=82h`, carry clear. |
-| `TECM8_TECFS_SELECT_VOLUME` | `8020h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
-| `TECM8_TECFS_READ` | `8030h` | 512-byte sector I/O contract; validates request, then enters the sector driver hook. |
-| `TECM8_TECFS_WRITE` | `8040h` | 512-byte sector I/O contract; validates request, then enters the sector driver hook. |
-| `TECM8_TECFS_LOAD_RANGE` | `8050h` | Explicit unsupported error. |
-| `TECM8_TECFS_SAVE_RANGE` | `8060h` | Explicit unsupported error. |
-| `TECM8_TECFS_MAP_BLOCK` | `8070h` | Maps active volume/block index to a 32-bit sector number. |
-| `TECM8_TECFS_TRANSLATE_SECTOR` | `8080h` | Adds the mounted image-base LBA to the logical sector in place. |
+| `TECM8_TECFS_MOUNT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_MOUNT`. |
+| `TECM8_TECFS_SELECT_VOLUME` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_SELECT_VOLUME`. |
+| `TECM8_TECFS_READ` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_READ`. |
+| `TECM8_TECFS_WRITE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_WRITE`. |
+| `TECM8_TECFS_LOAD_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_LOAD_RANGE`. |
+| `TECM8_TECFS_SAVE_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_SAVE_RANGE`. |
+| `TECM8_TECFS_MAP_BLOCK` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_MAP_BLOCK`. |
+| `TECM8_TECFS_TRANSLATE_SECTOR` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_TRANSLATE_SECTOR`. |
+| `TECM8_TECFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
+| `TECM8_TECFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
+| `TECM8_TECFS_SVC_READ` | `03h` | 512-byte sector read contract. |
+| `TECM8_TECFS_SVC_WRITE` | `04h` | 512-byte sector write contract. |
+| `TECM8_TECFS_SVC_LOAD_RANGE` | `05h` | Explicit unsupported error. |
+| `TECM8_TECFS_SVC_SAVE_RANGE` | `06h` | Explicit unsupported error. |
+| `TECM8_TECFS_SVC_MAP_BLOCK` | `07h` | Maps active volume/block index to a 32-bit sector number. |
+| `TECM8_TECFS_SVC_TRANSLATE_SECTOR` | `08h` | Adds the mounted image-base LBA to the logical sector in place. |
 
 Current TEC-FS geometry:
 
@@ -399,9 +407,12 @@ RTC calls still need to be moved or wrapped; UI entries fail explicitly.
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TECM8_RTC_ENTRY` | `8000h` | Publishes service descriptor, returns `A=83h`, carry clear. |
-| `TECM8_RTC_TOOL_ENTRY` | `8010h` | Same descriptor path as entry. |
-| `TECM8_RTC_SETUP_UI` | `8020h` | Explicit unsupported error. |
-| `TECM8_RTC_PRAM_VIEWER` | `8030h` | Explicit unsupported error. |
+| `TECM8_RTC_TOOL_ENTRY` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_TOOL_ENTRY`. |
+| `TECM8_RTC_SETUP_UI` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_SETUP_UI`. |
+| `TECM8_RTC_PRAM_VIEWER` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_PRAM_VIEWER`. |
+| `TECM8_RTC_SVC_TOOL_ENTRY` | `01h` | Same descriptor path as entry. |
+| `TECM8_RTC_SVC_SETUP_UI` | `02h` | Explicit unsupported error. |
+| `TECM8_RTC_SVC_PRAM_VIEWER` | `03h` | Explicit unsupported error. |
 
 RTC parameter block:
 
@@ -431,9 +442,12 @@ stubs so monitor callers can move to a banked GLCD ABI.
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TECM8_GLCD_ENTRY` | `8000h` | Publishes service descriptor, returns `A=84h`, carry clear. |
-| `TECM8_GLCD_INIT` | `8010h` | Explicit unsupported error. |
-| `TECM8_GLCD_CLEAR` | `8020h` | Explicit unsupported error. |
-| `TECM8_GLCD_PLOT` | `8030h` | Explicit unsupported error. |
+| `TECM8_GLCD_INIT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_INIT`. |
+| `TECM8_GLCD_CLEAR` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_CLEAR`. |
+| `TECM8_GLCD_PLOT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_PLOT`. |
+| `TECM8_GLCD_SVC_INIT` | `01h` | Explicit unsupported error. |
+| `TECM8_GLCD_SVC_CLEAR` | `02h` | Explicit unsupported error. |
+| `TECM8_GLCD_SVC_PLOT` | `03h` | Explicit unsupported error. |
 
 GLCD parameter block:
 
@@ -473,9 +487,15 @@ reused accidentally by service implementations.
 | `TECM8_ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
 | `TECM8_ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
 | `TECM8_ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
-| `TECM8_ABI_BANK1_NESTED` | `8180h` | Bank-call nested proof target in bank 1. |
-| `TECM8_ABI_BANK2_NESTED` | `80D0h` | Bank-call nested proof target in bank 2. |
-| `TECM8_ABI_BANK3_FARJUMP` | `80C0h` | Far-jump proof target in bank 3. |
+| `TECM8_ABI_PROBE_REQUEST` | `311Ch` | RAM selector used when a proof must preserve caller `A`. |
+| `TECM8_ABI_PROBE_NESTED` | `90h` | Proof selector for nested bank-call dispatch. |
+| `TECM8_ABI_PROBE_PRESERVE` | `91h` | Proof selector for register-preservation dispatch. |
+| `TECM8_ABI_PROBE_FARJUMP` | `92h` | Proof selector for non-returning far-jump dispatch. |
+| `TECM8_ABI_PROBE_RETURNING_FARJUMP` | `93h` | Proof selector for far-jump return-suppression dispatch. |
+
+The bank ABI proof deliberately does not publish fixed expansion-ROM target
+addresses. It enters banks through their bank origin or the installed service
+bridge and lets each bank dispatch to private labels.
 
 The active proofs are:
 

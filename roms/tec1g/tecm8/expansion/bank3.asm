@@ -8,21 +8,25 @@ TECM8_EXPANSION_BANK          .equ    0x03
 TECM8_EXPANSION_VERSION       .equ    0x01
 
 @Tecm8ExpansionBank3Entry:
+        cp TECM8_ABI_PROBE_FARJUMP
+        jp z,BankAbiFarJumpTarget
+        cp TECM8_ABI_PROBE_RETURNING_FARJUMP
+        jp z,BankAbiReturningFarJumpTarget
+        cp TECM8_RTC_SVC_SETUP_UI
+        jp z,rtcUnsupportedUi
+        cp TECM8_RTC_SVC_PRAM_VIEWER
+        jp z,rtcUnsupportedUi
         jp rtcServiceEntryImpl
 
-        .org    0x8010
 @rtcToolEntry:
         jp rtcServiceEntryImpl
 
-        .org    0x8020
 @rtcSetupUi:
         jp rtcUnsupportedUi
 
-        .org    0x8030
 @rtcPramViewer:
         jp rtcUnsupportedUi
 
-        .org    0x8040
 @rtcServiceEntryImpl:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_3),a
@@ -45,16 +49,13 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         scf
         ret
 
-        .org    0x80C0
 @BankAbiFarJumpTarget:
         jp TECM8_ABI_FARJUMP_LANDED
 
-        .org    TECM8_ABI_BANK3_RETURNING_FARJUMP
 @BankAbiReturningFarJumpTarget:
         ld a,0xD3
         ld (TECM8_ABI_TRACE_BASE+16),a
         ret
 
-        .org    0x8100
 @Tecm8ExpansionBank3Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

@@ -22,8 +22,8 @@ test('TEC-FS bank proof covers runtime volume selection in sector translation', 
   const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
   const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
 
-  assert.match(proof, /ld a,0x1F[\s\S]*farCall 0x02,TECM8_TECFS_SELECT_VOLUME[\s\S]*cp TECFS_ERR_BAD_VOLUME[\s\S]*ld a,\(TECFS_PARAM_ACTIVE_VOLUME\)[\s\S]*cp 0x1E/);
-  assert.match(proof, /ld a,0x1D[\s\S]*farCall 0x02,TECM8_TECFS_SELECT_VOLUME[\s\S]*farCall 0x02,TECM8_TECFS_MAP_BLOCK[\s\S]*cp 0x74[\s\S]*farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR[\s\S]*cp 0x74/);
+  assert.match(proof, /ld a,0x1F[\s\S]*ld a,TECM8_TECFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp TECFS_ERR_BAD_VOLUME[\s\S]*ld a,\(TECFS_PARAM_ACTIVE_VOLUME\)[\s\S]*cp 0x1E/);
+  assert.match(proof, /ld a,0x1D[\s\S]*ld a,TECM8_TECFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*ld a,TECM8_TECFS_SVC_MAP_BLOCK[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp 0x74[\s\S]*ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp 0x74/);
   assert.match(runner, /active TEC-FS volume/);
   assert.match(runner, /assertEqual\(params\[0\], 0x1d, 'active TEC-FS volume'\)/);
   assert.match(runner, /assertEqual\(params\[1\], 0x1d, 'last requested TEC-FS volume'\)/);

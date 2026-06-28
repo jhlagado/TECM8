@@ -102,7 +102,6 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
   for (const name of [
     'TECM8_VDU_ENTRY',
     'TECM8_VDU_SERVICE_CALL',
-    'TECM8_VDU_SERVICE_TABLE',
     'TECM8_VDU_SVC_INIT',
     'TECM8_VDU_SVC_CLEAR',
     'TECM8_VDU_SVC_SET_CURSOR',
@@ -130,6 +129,7 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
   assert.match(doc, /Minimal VDU text-console contract/);
   assert.match(doc, /one public dispatcher, not one fixed callable address per VDU/);
   assert.match(doc, /implementation labels are not ABI/);
+  assert.match(doc, /`TECM8_VDU_SERVICE_TABLE` \| private label/);
   assert.match(doc, /writes `TECM8_TMS_PARAM_VALUE` at the current cursor/);
 });
 
@@ -313,12 +313,15 @@ test('banked service ABI doc covers proof hooks and proof scripts', () => {
     'TECM8_ABI_TRACE_8',
     'TECM8_ABI_TRACE_9',
     'TECM8_ABI_FARJUMP_LANDED',
-    'TECM8_ABI_BANK1_NESTED',
-    'TECM8_ABI_BANK2_NESTED',
-    'TECM8_ABI_BANK3_FARJUMP',
+    'TECM8_ABI_PROBE_REQUEST',
+    'TECM8_ABI_PROBE_NESTED',
+    'TECM8_ABI_PROBE_PRESERVE',
+    'TECM8_ABI_PROBE_FARJUMP',
+    'TECM8_ABI_PROBE_RETURNING_FARJUMP',
   ]) {
     assertDocRow(name);
   }
+  assert.match(doc, /does not publish fixed expansion-ROM target\s+addresses/);
   for (const script of [
     'proof:bank-abi',
     'proof:tms9918-bank',

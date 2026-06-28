@@ -273,13 +273,12 @@ session now expect:
   through `tec1g.expansionRomHex` into the TEC-1G banked window at
   `0x8000-0xBFFF`. `bank_ops.asmi` is the shared AZM interface for that tree:
   it keeps the fixed-ROM RST `10h` bank service numbers, the `farCall` and
-  `farJump` helpers, the proof trace RAM slots, and the current service-slot
-  addresses aligned across bank sources, proofs, and ABI documentation. Bank 1
-  now owns the VDU and TMS9918 service skeletons at `0x8010-0x80A0`, bank 2
-  publishes the TEC-FS geometry and volume-selection boundary at
-  `0x8010-0x8060`, and bank 3 publishes the RTC service descriptor plus the
-  explicit unsupported UI slots at `0x8010-0x8030`. The later banks are still
-  placeholder images.
+  `farJump` helpers, the proof trace RAM slots, and the bank-local selector
+  IDs aligned across bank sources, proofs, and ABI documentation. Banks enter
+  through their `0x8000` origin dispatcher; VDU/TMS9918, TEC-FS, RTC, and GLCD
+  operations are selected with `A` or through the monitor service bridge.
+  Internal implementation labels are private and movable. The later banks are
+  still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
