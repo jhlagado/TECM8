@@ -30,3 +30,20 @@ test('TEC-FS bank proof covers runtime volume selection in sector translation', 
   assert.match(runner, /assertEqual\(params\[16\], 0x74, 'TEC-FS mapped sector byte 2'\)/);
   assert.match(doc, /leaves the previous active\s+volume\s+unchanged/);
 });
+
+test('TEC-FS direction documents the volume directory contract', () => {
+  const direction = readFileSync(resolve(root, 'docs/mon3/tec-fs-direction.md'), 'utf8');
+
+  assert.match(direction, /^## Volume Directory Contract/m);
+  assert.match(direction, /locator sector lives at absolute LBA 1/);
+  assert.match(direction, /LBA 0 is the MBR/);
+  assert.match(direction, /user volume count: 30/);
+  assert.match(direction, /reserved work volume: 30/);
+  assert.match(direction, /total selectable volumes: 31/);
+  assert.match(direction, /volume sectors: 262,144 = 0x00040000/);
+  assert.match(direction, /allocation block size: 4 KiB/);
+  assert.match(direction, /allocation blocks per volume: 32,768/);
+  assert.match(direction, /absolute_sd_sector = volume_start_sector\[active_volume\] \+ sector_inside_volume/);
+  assert.match(direction, /not the live allocation system used by TEC-FS after\s+mount/);
+  assert.match(direction, /ordinary file\s+open\/save code should not present it as a normal user drive/);
+});

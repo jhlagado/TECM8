@@ -164,6 +164,53 @@ the rebuilt image becomes the new volume 5. If power fails before the final
 locator update, the old volume remains the live copy. If power fails after the
 locator update, the new verified volume is live.
 
+## Volume Directory Contract
+
+The TEC-side mount path should treat the locator sector as a small volume
+directory. It is not a FAT32 directory parser. It is a fixed TEC-FS structure
+written by the TEC formatter and optionally checked or repaired by a PC utility.
+
+The v1 locator sector lives at absolute LBA 1. LBA 0 is the MBR. Each mounted
+volume entry records:
+
+```text
+volume number
+role: user or reserved-work
+absolute start sector
+sector count
+generation
+flags
+checksum
+```
+
+For the standard 4 GiB-class layout the directory should describe:
+
+```text
+user volume count: 30
+reserved work volume: 30
+total selectable volumes: 31
+volume size: 128 MiB
+volume sectors: 262,144 = 0x00040000
+allocation block size: 4 KiB
+allocation blocks per volume: 32,768
+```
+
+The important mount rule is that the TEC reads this directory, validates it,
+and then uses absolute sector starts from the table:
+
+```text
+absolute_sd_sector = volume_start_sector[active_volume] + sector_inside_volume
+```
+
+That keeps the runtime path simple. FAT32 is only the outer card layout created
+by the formatter; it is not the live allocation system used by TEC-FS after
+mount.
+
+The reserved work volume is selectable for maintenance code, but ordinary file
+open/save code should not present it as a normal user drive. It exists so
+whole-volume operations can build a replacement image, verify it, and then
+commit by updating the locator generation/checksum.
+
 ## Allocation Block Size
 
 The standard TEC-FS allocation block should be 4 KiB:
