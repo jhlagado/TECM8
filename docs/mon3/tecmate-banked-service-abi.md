@@ -28,6 +28,7 @@ arguments still use small RAM parameter blocks.
 | `TECM8_BIOS_BANK_SELECT` | `52h` | Select a physical expansion bank. |
 | `TECM8_BIOS_BANK_CALL` | `53h` | Call into a bank and restore previous bank on `ret`. |
 | `TECM8_BIOS_FAR_JUMP` | `54h` | Tail-jump into a bank without resuming after the helper. |
+| `TECM8_BIOS_SERVICE_BRIDGE` | `60h` | Planned fixed-ROM bridge from RST 10h into the bank 0 service registry. |
 
 The bank-call return path preserves the callee's `AF`, so carry and `A` status
 values survive the fixed-ROM bank restore. The previous `SYS_CTRL` value is
@@ -41,6 +42,30 @@ target routine. The target returns with a normal `ret`; fixed ROM receives that
 return first, restores the saved `SYS_CTRL` value, preserves the callee's final
 `AF`, and then returns to the original caller with `SP` back where it started.
 There is no separate banked return instruction.
+
+## Planned Fixed-ROM Service Bridge
+
+`TECM8_BIOS_SERVICE_BRIDGE` reserves `RST 10h` selector `C=60h` for the first
+monitor-to-expansion service bridge. It is not implemented in fixed ROM yet.
+The contract is:
+
+```asm
+        ld a,TECM8_SERVICE_VDU_INIT  ; TecMate service ID
+        ld c,TECM8_BIOS_SERVICE_BRIDGE
+        rst 10H
+```
+
+`C` selects the monitor bridge. `A` carries the TecMate service ID and is not an
+argument to the target service. The fixed-ROM shim must build the same per-call
+stack-word request used by `callService`, enter physical bank 0 at
+`TECM8_SERVICE_CALL` through `BiosBankCall`, and let bank 0 dispatch through the
+published registry table.
+
+Target services should take arguments through documented parameter blocks or
+registers other than `A` for this bridge form. Return values follow the banked
+service contract: `A` and carry are returned from the target service after fixed
+ROM restores the previous `SYS_CTRL` state. Unknown service IDs return
+`TECM8_SERVICE_ERR_UNKNOWN` with carry set.
 
 ## Bank 0: Service Registry
 

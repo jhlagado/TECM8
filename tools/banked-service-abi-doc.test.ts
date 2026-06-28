@@ -55,9 +55,16 @@ test('banked service ABI doc covers fixed monitor bank services', () => {
     'TECM8_BIOS_BANK_SELECT',
     'TECM8_BIOS_BANK_CALL',
     'TECM8_BIOS_FAR_JUMP',
+    'TECM8_BIOS_SERVICE_BRIDGE',
   ]) {
     assertDocRow(name);
   }
+  assert.match(doc, /## Planned Fixed-ROM Service Bridge/);
+  assert.match(doc, /reserves `RST 10h` selector `C=60h`/);
+  assert.match(doc, /`A` carries the TecMate service ID and is not an\s+argument to the target service/);
+  assert.match(doc, /build the same per-call\s+stack-word request used by `callService`/);
+  assert.match(doc, /enter physical bank 0 at\s+`TECM8_SERVICE_CALL` through `BiosBankCall`/);
+  assert.match(doc, /Unknown service IDs return\s+`TECM8_SERVICE_ERR_UNKNOWN` with carry set/);
 });
 
 test('banked service ABI doc covers bank 0 service registry entries', () => {
