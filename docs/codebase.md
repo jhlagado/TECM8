@@ -277,8 +277,12 @@ session now expect:
   IDs aligned across bank sources, proofs, and ABI documentation. Banks enter
   through their `0x8000` origin dispatcher; VDU/TMS9918, TEC-FS, RTC, and GLCD
   operations are selected with `A` or through the monitor service bridge.
-  Internal implementation labels are private and movable. The later banks are
-  still placeholder images.
+  Internal implementation labels are private and movable. Bank 0 owns the
+  discovery install entry, expansion vectors, the first private service
+  registry, and the current shell-splash placeholder. Bank 1 owns the VDU and
+  TMS9918 dispatchers, bank 2 owns the TEC-FS geometry and sector-contract
+  boundary, bank 3 owns the RTC descriptor boundary, and bank 4 owns the GLCD
+  containment boundary. Banks 5-8 are still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1266,6 +1270,8 @@ intentionally testing against a local AZM checkout:
 - `tools/run-display-proof.ts`
 - `tools/run-editor-viewport-storage-proof.ts`
 - `tools/run-tecfs-bank-proof.ts`
+- `tools/run-tecmate-monitor-launch-proof.ts`
+- `tools/run-tecmate-shell-launch-proof.ts`
 - `tools/run-tms9918-bank-proof.ts`
 - `tools/run-debug80-editor-session.ts`
 
@@ -1287,6 +1293,16 @@ coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
 runner checks the VDU and TMS9918 entry points in bank 1, the TEC-FS runner
 checks the geometry and volume-selection contract in bank 2, and the RTC
 runner checks the bank 3 descriptor and unsupported UI status path.
+
+`tools/run-tecmate-monitor-launch-proof.ts` and
+`tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
+that sits on top of those bank boundaries. The monitor-launch runner boots the
+fixed ROM, drives `launchExpansion`, checks that bank 0 installs the menu and
+service vectors, and re-enters the monitor bridge with a TEC-FS service call to
+confirm the fixed-ROM bank trampoline restores `SYS_CTRL`. The shell-launch
+runner assembles a small RAM proof that calls the monitor bridge with
+`TECM8_SERVICE_SHELL_ENTRY`, then checks the bank 0 shell parameter block,
+feature bits, splash buffer, and TMS9918 cursor side effects.
 
 The proof runners run AZM register-contract checking in strict mode. They pass
 `src/mon3.asmi` for MON3 ROM calls and rely on the `;!` comments in included
@@ -1369,6 +1385,7 @@ current:
 - `tools/mon3-service-inventory.ts`
 - `tools/mon3-storage-split.ts`
 - `tools/mon3-glcd-split.ts`
+- `tools/audit-monitor-register-contracts.ts`
 
 They support the future BIOS decomposition work by measuring which MON3
 services should be kept, rewritten, relocated, or removed.
@@ -1403,6 +1420,16 @@ banked-proof wiring checks. They keep the banked proof sources, runners, and
 package scripts attached to the current expansion image.
 `tools/banked-service-abi-doc.test.ts` is the documentation freshness check for
 `docs/mon3/tecmate-banked-service-abi.md`.
+`tools/tecmate-monitor-launch-proof.test.ts`,
+`tools/tecmate-monitor-launch-contract.test.ts`,
+`tools/tecmate-shell-launch-proof.test.ts`, and
+`tools/tecmate-shell-exit-contract.test.ts` keep the fixed-ROM discovery path,
+the monitor bridge, the bank 0 shell-entry contract, and the current shell-exit
+assumptions aligned across source, proofs, npm scripts, and checked docs.
+`tools/banked-service-architecture.test.ts`, `tools/rom-space-map.test.ts`,
+`tools/mon3-shrink-checklist.test.ts`, and `tools/monitor-contract-audit.test.ts`
+keep the public MON3/TecMate direction notes tied to the measured ROM layout,
+the current shrink priorities, and the strict-contract audit output.
 
 ## Documentation Map
 
@@ -1429,9 +1456,23 @@ toward.
 - `docs/mon3/service-inventory.md`: generated MON3 service classification.
 - `docs/mon3/storage-split.md`: generated MON3 storage code analysis.
 - `docs/mon3/glcd-split.md`: generated MON3 GLCD code and RAM analysis.
+- `docs/mon3/expansion-menu-hook-design.md`: generic MON3 expansion-menu socket
+  design that the current bank 0 supervisor now follows.
+- `docs/mon3/monitor-register-contract-audit.md`: generated strict-contract
+  baseline for the copied MON3 monitor tree.
+- `docs/mon3/tec-fs-direction.md`: TEC-FS direction note covering the fixed
+  FAT32 container model and the current native-volume contract.
 - `docs/mon3/tecmate-banked-service-abi.md`: checked map of the current
   fixed-ROM bank calls, banked service slots, parameter blocks, and proof
   hooks.
+- `docs/mon3/tecmate-banked-service-architecture.md`: the higher-level fixed
+  ROM versus expansion-ROM service split and the RST `10h` bridge plan.
+- `docs/mon3/tecmate-monitor-launch-contract.md`: checked description of the
+  fixed-ROM expansion discovery path and the bank 0 install contract.
+- `docs/mon3/tecmate-os-progress.md`: current TecMate ROM-program progress note
+  that ties the banked-service work to the next storage and shell steps.
+- `docs/mon3/tecmate-rom-space-map.md`: measured fixed-ROM and per-bank
+  high-water map derived from the current monitor and expansion builds.
 - `docs/mon3/tecm8-rom-artifact-plan.md`: the TECM8-owned fixed-ROM and
   expansion-ROM source, artifact, and handoff plan for the Debug80 profile.
 - `docs/codebase.md`: this tour.
