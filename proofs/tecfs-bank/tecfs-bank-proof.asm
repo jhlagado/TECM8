@@ -22,6 +22,8 @@ PROOF_FAIL_WRITE_CONTRACT   .equ    0xE9
 PROOF_FAIL_BAD_BUFFER       .equ    0xEA
 PROOF_FAIL_BAD_SECTOR       .equ    0xEB
 PROOF_FAIL_DRIVER_HOOK      .equ    0xEC
+PROOF_FAIL_LOCATOR          .equ    0xED
+PROOF_FAIL_VOLUME_SECTORS   .equ    0xEE
 TECFS_PROOF_TRACE_BASE      .equ    0x3B80
 TECFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -53,6 +55,32 @@ ClearParams:
         ld a,(TECFS_PARAM_VOLUME_BLOCKS_HI)
         cp 0x80
         jp nz,FailVolumeBlocks
+
+        ld a,(TECFS_PARAM_LOCATOR_SECTOR_0)
+        cp TECFS_LOCATOR_LBA_0
+        jp nz,FailLocator
+        ld a,(TECFS_PARAM_LOCATOR_SECTOR_1)
+        cp TECFS_LOCATOR_LBA_1
+        jp nz,FailLocator
+        ld a,(TECFS_PARAM_LOCATOR_SECTOR_2)
+        cp TECFS_LOCATOR_LBA_2
+        jp nz,FailLocator
+        ld a,(TECFS_PARAM_LOCATOR_SECTOR_3)
+        cp TECFS_LOCATOR_LBA_3
+        jp nz,FailLocator
+
+        ld a,(TECFS_PARAM_VOLUME_SECTORS_0)
+        cp TECFS_VOLUME_SECTORS_0
+        jp nz,FailVolumeSectors
+        ld a,(TECFS_PARAM_VOLUME_SECTORS_1)
+        cp TECFS_VOLUME_SECTORS_1
+        jp nz,FailVolumeSectors
+        ld a,(TECFS_PARAM_VOLUME_SECTORS_2)
+        cp TECFS_VOLUME_SECTORS_2
+        jp nz,FailVolumeSectors
+        ld a,(TECFS_PARAM_VOLUME_SECTORS_3)
+        cp TECFS_VOLUME_SECTORS_3
+        jp nz,FailVolumeSectors
 
         ld a,0x05
         ld (TECFS_PARAM_REQUEST_VOLUME),a
@@ -225,6 +253,12 @@ FailBadSector:
         jr Fail
 FailDriverHook:
         ld a,PROOF_FAIL_DRIVER_HOOK
+        jr Fail
+FailLocator:
+        ld a,PROOF_FAIL_LOCATOR
+        jr Fail
+FailVolumeSectors:
+        ld a,PROOF_FAIL_VOLUME_SECTORS
 Fail:
         ld (TECFS_PROOF_RESULT),a
         halt

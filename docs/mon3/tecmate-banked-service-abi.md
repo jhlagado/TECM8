@@ -156,11 +156,17 @@ total selectable: 31
 In prose: the current layout exposes 30 user volumes plus one spare/work
 volume, for 31 selectable volumes total.
 
-Because a 4K block is eight 512-byte sectors, `TECM8_TECFS_MAP_BLOCK` computes:
+Because a 4K block is eight 512-byte sectors, the current
+`TECM8_TECFS_MAP_BLOCK` computes a logical TEC-FS volume-set sector:
 
 ```text
 sector = activeVolume * 40000h + blockIndex * 8
 ```
+
+This is not yet an absolute card LBA. The locator-aware mount step will add the
+card-level start sector for the TEC-FS image area before issuing raw SD reads or
+writes. Until that step exists, `TECFS_PARAM_SECTOR_0..3` should be read as the
+logical sector inside the TEC-FS volume set produced by the mapper.
 
 TEC-FS parameter block:
 
@@ -188,6 +194,14 @@ TEC-FS parameter block:
 | `TECFS_PARAM_BUFFER_LO` | `3B52h` | 512-byte sector buffer address low byte. |
 | `TECFS_PARAM_BUFFER_HI` | `3B53h` | 512-byte sector buffer address high byte. |
 | `TECFS_PARAM_DRIVER_OP` | `3B54h` | Last sector driver operation requested. |
+| `TECFS_PARAM_LOCATOR_SECTOR_0` | `3B55h` | TEC-FS locator sector byte 0. |
+| `TECFS_PARAM_LOCATOR_SECTOR_1` | `3B56h` | TEC-FS locator sector byte 1. |
+| `TECFS_PARAM_LOCATOR_SECTOR_2` | `3B57h` | TEC-FS locator sector byte 2. |
+| `TECFS_PARAM_LOCATOR_SECTOR_3` | `3B58h` | TEC-FS locator sector byte 3. |
+| `TECFS_PARAM_VOLUME_SECTORS_0` | `3B59h` | 128 MiB volume sector count byte 0. |
+| `TECFS_PARAM_VOLUME_SECTORS_1` | `3B5Ah` | 128 MiB volume sector count byte 1. |
+| `TECFS_PARAM_VOLUME_SECTORS_2` | `3B5Bh` | 128 MiB volume sector count byte 2. |
+| `TECFS_PARAM_VOLUME_SECTORS_3` | `3B5Ch` | 128 MiB volume sector count byte 3. |
 
 TEC-FS sector driver operation values:
 
@@ -196,11 +210,34 @@ TEC-FS sector driver operation values:
 | `TECFS_DRIVER_OP_READ` | `01h` | Sector driver hook read operation. |
 | `TECFS_DRIVER_OP_WRITE` | `02h` | Sector driver hook write operation. |
 
-The sector I/O contract uses `TECFS_PARAM_SECTOR_0..3` for the absolute
-512-byte sector and `TECFS_PARAM_BUFFER_LO..HI` for the RAM buffer. The current
-implementation records the requested sector driver hook operation, validates
-the request, and then calls a replaceable hook. The default hook reports that no
-low-level SD sector driver is linked behind the boundary yet.
+TEC-FS card locator constants:
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `TECFS_LOCATOR_LBA_0` | `01h` | Locator absolute LBA byte 0. |
+| `TECFS_LOCATOR_LBA_1` | `00h` | Locator absolute LBA byte 1. |
+| `TECFS_LOCATOR_LBA_2` | `00h` | Locator absolute LBA byte 2. |
+| `TECFS_LOCATOR_LBA_3` | `00h` | Locator absolute LBA byte 3. |
+| `TECFS_VOLUME_SECTORS_0` | `00h` | 128 MiB volume sector count byte 0. |
+| `TECFS_VOLUME_SECTORS_1` | `00h` | 128 MiB volume sector count byte 1. |
+| `TECFS_VOLUME_SECTORS_2` | `04h` | 128 MiB volume sector count byte 2. |
+| `TECFS_VOLUME_SECTORS_3` | `00h` | 128 MiB volume sector count byte 3. |
+
+The TEC-FS locator sector is a card-level sector, not part of any single
+volume. The current contract places it at absolute LBA 1 on a TEC-formatted
+MBR/FAT32 card. LBA 0 remains the MBR. The locator records the volume table used
+by the TEC-side mount path; each 128 MiB TEC-FS volume occupies 262,144
+512-byte sectors. Future mount code should read this sector, validate its magic
+and checksum, then use its volume-start table instead of parsing FAT32
+directories on the TEC.
+
+The sector I/O contract currently uses `TECFS_PARAM_SECTOR_0..3` for the
+logical TEC-FS volume-set sector and `TECFS_PARAM_BUFFER_LO..HI` for the RAM
+buffer. A later locator-aware mount will translate that logical sector to an
+absolute card LBA before calling the raw SD driver. The current implementation
+records the requested sector driver hook operation, validates the request, and
+then calls a replaceable hook. The default hook reports that no low-level SD
+sector driver is linked behind the boundary yet.
 
 TEC-FS status codes:
 

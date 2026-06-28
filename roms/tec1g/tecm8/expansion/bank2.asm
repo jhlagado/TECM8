@@ -71,6 +71,22 @@ TECFS_TOTAL_VOLUMES           .equ    31
         ld (TECFS_PARAM_SPARE_VOLUME),a
         ld a,TECFS_TOTAL_VOLUMES
         ld (TECFS_PARAM_TOTAL_VOLUMES),a
+        ld a,TECFS_LOCATOR_LBA_0
+        ld (TECFS_PARAM_LOCATOR_SECTOR_0),a
+        ld a,TECFS_LOCATOR_LBA_1
+        ld (TECFS_PARAM_LOCATOR_SECTOR_1),a
+        ld a,TECFS_LOCATOR_LBA_2
+        ld (TECFS_PARAM_LOCATOR_SECTOR_2),a
+        ld a,TECFS_LOCATOR_LBA_3
+        ld (TECFS_PARAM_LOCATOR_SECTOR_3),a
+        ld a,TECFS_VOLUME_SECTORS_0
+        ld (TECFS_PARAM_VOLUME_SECTORS_0),a
+        ld a,TECFS_VOLUME_SECTORS_1
+        ld (TECFS_PARAM_VOLUME_SECTORS_1),a
+        ld a,TECFS_VOLUME_SECTORS_2
+        ld (TECFS_PARAM_VOLUME_SECTORS_2),a
+        ld a,TECFS_VOLUME_SECTORS_3
+        ld (TECFS_PARAM_VOLUME_SECTORS_3),a
         ld a,0x82
         or a
         ret
@@ -191,6 +207,6 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-        .org    0x8200
+        .org    0x8240
 @Tecm8ExpansionBank2Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

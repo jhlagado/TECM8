@@ -151,8 +151,24 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECFS_PARAM_BUFFER_LO',
     'TECFS_PARAM_BUFFER_HI',
     'TECFS_PARAM_DRIVER_OP',
+    'TECFS_PARAM_LOCATOR_SECTOR_0',
+    'TECFS_PARAM_LOCATOR_SECTOR_1',
+    'TECFS_PARAM_LOCATOR_SECTOR_2',
+    'TECFS_PARAM_LOCATOR_SECTOR_3',
+    'TECFS_PARAM_VOLUME_SECTORS_0',
+    'TECFS_PARAM_VOLUME_SECTORS_1',
+    'TECFS_PARAM_VOLUME_SECTORS_2',
+    'TECFS_PARAM_VOLUME_SECTORS_3',
     'TECFS_DRIVER_OP_READ',
     'TECFS_DRIVER_OP_WRITE',
+    'TECFS_LOCATOR_LBA_0',
+    'TECFS_LOCATOR_LBA_1',
+    'TECFS_LOCATOR_LBA_2',
+    'TECFS_LOCATOR_LBA_3',
+    'TECFS_VOLUME_SECTORS_0',
+    'TECFS_VOLUME_SECTORS_1',
+    'TECFS_VOLUME_SECTORS_2',
+    'TECFS_VOLUME_SECTORS_3',
     'TECFS_STATUS_OK',
     'TECFS_ERR_BAD_VOLUME',
     'TECFS_ERR_BAD_BLOCK',
@@ -168,6 +184,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /128 MiB/);
   assert.match(doc, /32768/);
   assert.match(doc, /30 user volumes/);
+  assert.match(doc, /TEC-FS locator sector/);
+  assert.match(doc, /absolute LBA 1/);
+  assert.match(doc, /262,144/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
