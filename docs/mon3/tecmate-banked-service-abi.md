@@ -33,6 +33,15 @@ The bank-call return path preserves the callee's `AF`, so carry and `A` status
 values survive the fixed-ROM bank restore. The previous `SYS_CTRL` value is
 stored in the stack frame, so nested far calls restore the correct bank state.
 
+The current proof also treats the far-call stack frame as part of the ABI. A
+caller may pass arguments in `AF`, `DE`, and `HL`; the helper saves those before
+loading `B`, `C`, and `HL` for the fixed-ROM gateway. The fixed-ROM bank-call
+service then restores the original `AF`, `DE`, and `HL` before entering the
+target routine. The target returns with a normal `ret`; fixed ROM receives that
+return first, restores the saved `SYS_CTRL` value, preserves the callee's final
+`AF`, and then returns to the original caller with `SP` back where it started.
+There is no separate banked return instruction.
+
 ## Bank 0: Service Registry
 
 Bank 0 owns the first assembly-time service registry. Callers can use:
@@ -374,7 +383,7 @@ reused accidentally by service implementations.
 | `TECM8_ABI_TRACE_7` | `3107h` | Bank ABI proof trace byte 7. |
 | `TECM8_ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
 | `TECM8_ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
-| `TECM8_ABI_FARJUMP_LANDED` | `4100h` | RAM landing routine for the far-jump proof. |
+| `TECM8_ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
 | `TECM8_ABI_BANK1_NESTED` | `80C0h` | Bank-call nested proof target in bank 1. |
 | `TECM8_ABI_BANK2_NESTED` | `80D0h` | Bank-call nested proof target in bank 2. |
 | `TECM8_ABI_BANK3_FARJUMP` | `80C0h` | Far-jump proof target in bank 3. |

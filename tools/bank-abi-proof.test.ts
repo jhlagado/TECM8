@@ -30,6 +30,8 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(runner, /applyExpansionRomMemory/);
   assert.match(runner, /SYS_CTRL restored after nested farCall/);
   assert.match(runner, /farCall target sees original A argument/);
+  assert.match(runner, /farCall preserved stack pointer low byte/);
+  assert.match(runner, /farCall preserved stack pointer high byte/);
   assert.match(runner, /returning farJump target did not resume after farJump op/);
   assert.match(runner, /service registry dispatched VDU init/);
   assert.match(runner, /service registry dispatched GLCD boundary entry/);

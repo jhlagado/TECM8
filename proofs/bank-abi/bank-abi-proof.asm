@@ -16,7 +16,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,TECM8_ABI_TRACE_BASE
-        ld b,24
+        ld b,32
 ClearTrace:
         ld (hl),0
         inc hl
@@ -40,11 +40,23 @@ ClearTrace:
         rst 10H
         ld (TECM8_ABI_TRACE_4),a
 
+        ld hl,0
+        add hl,sp
+        ld a,l
+        ld (TECM8_ABI_TRACE_BASE+24),a
+        ld a,h
+        ld (TECM8_ABI_TRACE_BASE+25),a
         ld a,0x5A
         ld de,0xD3E4
         ld hl,0x1234
         farCall 0x01,TECM8_ABI_BANK1_PRESERVE
         ld (TECM8_ABI_TRACE_BASE+15),a
+        ld hl,0
+        add hl,sp
+        ld a,l
+        ld (TECM8_ABI_TRACE_BASE+26),a
+        ld a,h
+        ld (TECM8_ABI_TRACE_BASE+27),a
 
         callService TECM8_SERVICE_VDU_INIT
         ld (TECM8_ABI_TRACE_BASE+18),a
@@ -77,7 +89,7 @@ ReturningFarJumpProbe:
         ld (ResultMarker),a
         halt
 
-        .org    0x4100
+        .org    TECM8_ABI_FARJUMP_LANDED
 @BankAbiFarJumpLanded:
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
