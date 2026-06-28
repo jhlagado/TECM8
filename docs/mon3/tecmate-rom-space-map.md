@@ -22,6 +22,28 @@ assembled image still reaches the end of the fixed ROM window. The active
 strategy remains to keep fixed-ROM changes small, put bank-switching and stable
 BIOS entry points there, and move larger subsystems into expansion banks.
 
+## Fixed-ROM Service Policy
+
+The fixed monitor should be treated as the non-bank-switched BIOS and recovery
+anchor. Anything that must be callable while the expansion window is changing
+belongs here; anything larger that can live behind a stable entry point should
+move to expansion ROM.
+
+| Area | Fixed-ROM requirement | Direction |
+| --- | --- | --- |
+| Reset, soft boot, NMI/INT/RST stubs | Required recovery and compatibility entry points. | Keep fixed. |
+| Monitor menu and memory monitor | Required TEC-1G turn-on personality and manual recovery path. | Keep fixed, but keep text compact. |
+| Bank switching and far-call services | Required because `C000h-FFFFh` is the only stable code region while `8000h-BFFFh` changes banks. | Keep fixed. |
+| Core RST 10h BIOS services | Required stable ABI for higher ROMs and RAM programs. | Keep fixed and document carefully. |
+| TecMate launcher | Required bridge from the MON3 menu into expansion bank 0. | Keep fixed as a tiny handoff. |
+| SD sector primitive | Candidate fixed service if it remains compact and reliable. | Keep only the low-level sector boundary. |
+| PATA and FAT32 compatibility | Not a fixed-ROM requirement for the TecMate direction. | Replace with TEC-FS path; move compatibility elsewhere if retained. |
+| TEC-FS volume/file logic | Useful operating-system service, but not necessarily fixed-ROM resident. | Prefer expansion ROM unless a tiny sector bridge is needed. |
+| VDU/TMS9918 console | Core TecMate user interface service. | Keep in expansion ROM behind the banked ABI. |
+| RTC base services | Useful if already resident and compact. | Keep low-level calls if needed; move RTC UI out. |
+| GLCD support | Low priority unless it blocks fixed-ROM space or compatibility tests. | Leave alone until it interferes; then contain behind expansion services. |
+| Disassembler | Useful MON3 personality and recovery tool. | Keep for now; reserve as a later space tradeoff. |
+
 ## Expansion ROM
 
 The expansion image is a 144K artifact made from nine physical 16K banks. Each
@@ -81,5 +103,9 @@ The most important fixed expansion entry points are:
 - Bank 0 layout now needs active care because it contains both the registry and
   shell launcher boundary. The `8160h` info marker leaves room for registry
   growth, but it should move again if the dispatcher gets larger.
-- The next meaningful space work should measure real candidate moves from fixed
-  monitor ROM: PATA/FAT32, GLCD terminal/library code, and RTC UI.
+- The next meaningful fixed-ROM space work should focus on replacing the old
+  PATA/FAT32 storage path with the TEC-FS direction and moving user-interface
+  workflows out of the monitor.
+- GLCD remains a low-priority containment issue. Do not spend near-term effort
+  moving it unless it blocks fixed-ROM space, service layout, or compatibility
+  testing.

@@ -66,3 +66,21 @@ test('TecMate ROM space map records current monitor and expansion measurements',
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
 });
+
+test('TecMate ROM space map classifies fixed-ROM and expansion responsibilities', () => {
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-rom-space-map.md'), 'utf8');
+
+  for (const text of [
+    '| Reset, soft boot, NMI/INT/RST stubs | Required recovery and compatibility entry points. | Keep fixed. |',
+    '| Bank switching and far-call services | Required because `C000h-FFFFh` is the only stable code region while `8000h-BFFFh` changes banks. | Keep fixed. |',
+    '| Core RST 10h BIOS services | Required stable ABI for higher ROMs and RAM programs. | Keep fixed and document carefully. |',
+    '| TecMate launcher | Required bridge from the MON3 menu into expansion bank 0. | Keep fixed as a tiny handoff. |',
+    '| PATA and FAT32 compatibility | Not a fixed-ROM requirement for the TecMate direction. | Replace with TEC-FS path; move compatibility elsewhere if retained. |',
+    '| VDU/TMS9918 console | Core TecMate user interface service. | Keep in expansion ROM behind the banked ABI. |',
+  ]) {
+    assert.ok(doc.includes(text), `space map should classify: ${text}`);
+  }
+
+  assert.match(doc, /GLCD remains a low-priority containment issue/);
+  assert.doesNotMatch(doc, /next meaningful space work should measure real candidate moves.*GLCD/s);
+});
