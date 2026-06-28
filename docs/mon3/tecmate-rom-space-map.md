@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `331` | `480` | `81E0h` | `15904` |
+| 0 | Shell, launcher, registry | `325` | `410` | `819Ah` | `15974` |
 | 1 | VDU/TMS9918 boundary | `296` | `438` | `81B6h` | `15946` |
 | 2 | TEC-FS boundary and block mapper | `373` | `645` | `8285h` | `15739` |
 | 3 | RTC boundary | `65` | `261` | `8105h` | `16123` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `1142`
+Expansion occupied bytes: `1136`
 
-Expansion high-water span total: `2109`
+Expansion high-water span total: `2039`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -81,15 +81,18 @@ fixed monitor carry every subsystem.
 
 ## Current Boundary Locations
 
-The most important fixed expansion entry points are:
+The most important expansion locations are below. Only the header/install
+contract and monitor RAM vectors are public discovery ABI; dispatcher, shell,
+registry, and marker labels are current private bank-0 layout.
 
 | Entry | Address | Notes |
 | --- | ---: | --- |
 | Bank 0 header | `8000h` | `EXPR` discovery header data, not a routine entry. |
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
-| Bank 0 service registry | `811Eh` | Dispatches `callService` requests. |
-| Bank 0 shell entry | `818Ah` | Descriptor and VDU splash path for `TECM8_SERVICE_SHELL_ENTRY`. |
+| Bank 0 service dispatcher | `8062h` | Private label installed into the service vector. |
+| Bank 0 service registry | `8185h` | Service ID to bank/address table. |
+| Bank 0 shell entry | `80D3h` | Private descriptor and VDU splash path for `TECM8_SERVICE_SHELL_ENTRY`. |
 | Bank 0 info marker | `8180h` | Moved after shell splash code to avoid overlap. |
 | Bank 1 VDU/TMS dispatcher | `8010h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS mount | `8010h` | Publishes TEC-FS geometry. |

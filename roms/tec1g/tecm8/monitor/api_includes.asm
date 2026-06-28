@@ -69,6 +69,7 @@ BiosBankCall_          .equ 0x53
 BiosFarJump_           .equ 0x54
 TECM8_BIOS_PROTECT_SET_ .equ 0x55
 TECM8_BIOS_SHADOW_SET_  .equ 0x56
+TECM8_BIOS_SERVICE_BRIDGE_ .equ 0x60
 
 APINames2:
 initLCD_          .equ 0  ;Initalise the LCD

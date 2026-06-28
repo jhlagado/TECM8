@@ -35,7 +35,6 @@ TECM8_DEMO_TRACE_8          .equ    TECM8_DEMO_TRACE_BASE+8
 TECM8_DEMO_TRACE_9          .equ    TECM8_DEMO_TRACE_BASE+9
 TECM8_BOOTSTRAP_INPUT_READY .equ    0x70
 TECM8_BOOTSTRAP_SHELL_READY .equ    0x71
-TECM8_SERVICE_CALL          .equ    0x80A0
 TECM8_SERVICE_VDU_INIT      .equ    0x01
 TECM8_SERVICE_VDU_INIT_BANK .equ    0x01
 TECM8_SERVICE_VDU_INIT_ADDR .equ    TECM8_VDU_SERVICE_CALL
@@ -50,9 +49,7 @@ TECM8_SERVICE_GLCD_ENTRY_BANK .equ  0x04
 TECM8_SERVICE_GLCD_ENTRY_ADDR .equ  TECM8_GLCD_ENTRY
 TECM8_SERVICE_SHELL_ENTRY   .equ    0x80
 TECM8_SERVICE_SHELL_ENTRY_BANK .equ 0x00
-TECM8_SERVICE_SHELL_ENTRY_ADDR .equ TECM8_SHELL_ENTRY
 TECM8_SERVICE_ERR_UNKNOWN   .equ    0xEE
-TECM8_SERVICE_REGISTRY      .equ    0x8170
 TECM8_SERVICE_REGISTRY_ENTRY_SIZE .equ 0x04
 TECM8_SERVICE_REGISTRY_END  .equ    0x00
 
@@ -70,7 +67,6 @@ TECM8_ABI_TRACE_9           .equ    TECM8_ABI_TRACE_BASE+9
 TECM8_ABI_FARJUMP_LANDED    .equ    0x4200
 
 TECM8_BANK0_INSTALL         .equ    0x800B
-TECM8_SHELL_ENTRY           .equ    0x8120
 TECM8_SHELL_PARAM_BASE      .equ    0x3BA0
 TECM8_SHELL_PARAM_STATUS    .equ    TECM8_SHELL_PARAM_BASE+0
 TECM8_SHELL_PARAM_LAST_ERROR .equ   TECM8_SHELL_PARAM_BASE+1
@@ -250,18 +246,9 @@ op farJump(bank imm8, target imm16)
 end
 
 op callService(service imm8)
-        ld b,0x00
-        ld c,service
-        push bc
-        push hl
-        push de
-        push af
-        ld b,0x00
-        ld hl,TECM8_SERVICE_CALL
-        ld c,TECM8_BIOS_BANK_CALL
+        ld a,service
+        ld c,TECM8_BIOS_SERVICE_BRIDGE
         rst 10H
-        inc sp
-        inc sp
 end
 
 op callBankService(bank imm8, dispatcher imm16, service imm8)

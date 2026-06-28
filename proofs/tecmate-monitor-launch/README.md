@@ -9,6 +9,12 @@ Debug80 TEC-1G runtime. It verifies the path used by the MON3/MON3Lite menu:
 4. bank 0 runs its TecMate entry chain
 5. bank 0 returns to the caller-provided monitor return address
 
+After that, the same runtime executes a RAM stub that calls `RST 10h` with
+`C=60h` and `A=TECM8_SERVICE_TECFS_MOUNT`. That verifies the generic MON3
+service bridge calls the installed service vector and restores `SYS_CTRL` on
+return.
+
 The runner uses the monitor D8 map to locate `launchExpansion` and the bank-0
 D8 map to locate the installed menu provider, so the proof fails if discovery,
-installation, or vector launch stops reaching the bank-0 entry.
+installation, vector launch, or bridge dispatch stops reaching the bank-0
+service path.

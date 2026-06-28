@@ -66,7 +66,6 @@ Tecm8BootstrapShell:
         ld (TECM8_DEMO_TRACE_8),a
         ret
 
-        .org    TECM8_SERVICE_CALL
 @Tecm8ServiceCall:
         push hl
         push de
@@ -75,15 +74,15 @@ Tecm8BootstrapShell:
         add ix,sp
         ld a,(ix+12)
         cp TECM8_SERVICE_VDU_INIT
-        jr z,Tecm8ServiceCallVduInit
+        jp z,Tecm8ServiceCallVduInit
         cp TECM8_SERVICE_TECFS_MOUNT
-        jr z,Tecm8ServiceCallTecfsMount
+        jp z,Tecm8ServiceCallTecfsMount
         cp TECM8_SERVICE_RTC_TOOL
-        jr z,Tecm8ServiceCallRtcTool
+        jp z,Tecm8ServiceCallRtcTool
         cp TECM8_SERVICE_GLCD_ENTRY
-        jr z,Tecm8ServiceCallGlcdEntry
+        jp z,Tecm8ServiceCallGlcdEntry
         cp TECM8_SERVICE_SHELL_ENTRY
-        jr z,Tecm8ServiceCallShellEntry
+        jp z,Tecm8ServiceCallShellEntry
         pop af
         pop de
         pop hl
@@ -127,7 +126,6 @@ Tecm8ServiceCallShellEntry:
         call Tecm8ShellEntry
         ret
 
-        .org    TECM8_SHELL_ENTRY
 @Tecm8ShellEntry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_SHELL_PARAM_BANK),a
@@ -144,7 +142,7 @@ Tecm8ServiceCallShellEntry:
         ld hl,TECM8_SHELL_SPLASH_BUFFER
         ld (TECM8_TMS_PARAM_STRING_LO),hl
         callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_PUT_STRING
-        jr c,Tecm8ShellSplashError
+        jp c,Tecm8ShellSplashError
         ld a,0x80
         or a
         ret
@@ -163,7 +161,7 @@ Tecm8ShellCopySplashNext:
         inc hl
         inc de
         or a
-        jr nz,Tecm8ShellCopySplashNext
+        jp nz,Tecm8ShellCopySplashNext
         ret
 
 Tecm8ShellSplashText:
@@ -173,7 +171,6 @@ Tecm8ShellSplashText:
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
 
-        .org    TECM8_SERVICE_REGISTRY
 @Tecm8ServiceRegistry:
         .db     TECM8_SERVICE_VDU_INIT,TECM8_SERVICE_VDU_INIT_BANK
         .dw     TECM8_SERVICE_VDU_INIT_ADDR
@@ -184,6 +181,6 @@ Tecm8ShellSplashText:
         .db     TECM8_SERVICE_GLCD_ENTRY,TECM8_SERVICE_GLCD_ENTRY_BANK
         .dw     TECM8_SERVICE_GLCD_ENTRY_ADDR
         .db     TECM8_SERVICE_SHELL_ENTRY,TECM8_SERVICE_SHELL_ENTRY_BANK
-        .dw     TECM8_SERVICE_SHELL_ENTRY_ADDR
+        .dw     Tecm8ShellEntry
 @Tecm8ServiceRegistryEnd:
         .db     TECM8_SERVICE_REGISTRY_END

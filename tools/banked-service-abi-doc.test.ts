@@ -48,6 +48,10 @@ function assertDocRow(name: string): void {
   assert.match(row, new RegExp(`\\|\\s*\\\`${name}\\\`\\s*\\|\\s*\\\`?${expected}\\\`?\\s*\\|`, 'i'));
 }
 
+function assertDocMentions(name: string): void {
+  assert.match(doc, new RegExp(`\\\`${name}\\\``));
+}
+
 test('banked service ABI doc covers fixed monitor bank services', () => {
   for (const name of [
     'TECM8_BIOS_SYS_GET',
@@ -59,12 +63,14 @@ test('banked service ABI doc covers fixed monitor bank services', () => {
   ]) {
     assertDocRow(name);
   }
-  assert.match(doc, /## Planned Fixed-ROM Service Bridge/);
-  assert.match(doc, /reserves `RST 10h` selector `C=60h`/);
+  assert.match(doc, /## Fixed-ROM Service Bridge/);
+  assert.match(doc, /is `RST 10h` selector `C=60h`/);
   assert.match(doc, /`A` carries the TecMate service ID and is not an\s+argument to the target service/);
-  assert.match(doc, /build the same per-call\s+stack-word request used by `callService`/);
-  assert.match(doc, /enter physical bank 0 at\s+`TECM8_SERVICE_CALL` through `BiosBankCall`/);
-  assert.match(doc, /Unknown service IDs return\s+`TECM8_SERVICE_ERR_UNKNOWN` with carry set/);
+  assert.match(doc, /builds the same per-call\s+stack-word request used by the old direct `callService` path/);
+  assert.match(doc, /validates the\s+installed service vector/);
+  assert.match(doc, /enters that bank\/address through `BiosBankCall`/);
+  assert.match(doc, /Unknown service IDs are returned by\s+the installed dispatcher as `TECM8_SERVICE_ERR_UNKNOWN` with carry set/);
+  assert.match(doc, /If no\s+valid service vector is installed, fixed ROM returns `A=FFh` with carry set/);
 });
 
 test('banked service ABI doc covers bank 0 service registry entries', () => {
@@ -78,14 +84,18 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
     'TECM8_SERVICE_GLCD_ENTRY_BANK',
     'TECM8_SERVICE_GLCD_ENTRY_ADDR',
     'TECM8_SERVICE_SHELL_ENTRY_BANK',
-    'TECM8_SERVICE_SHELL_ENTRY_ADDR',
   ]) {
     assertDocRow(name);
   }
   assert.match(ops, /op callService\(service imm8\)/);
+  assert.match(ops, /ld a,service\s+ld c,TECM8_BIOS_SERVICE_BRIDGE\s+rst 10H/);
+  assert.doesNotMatch(ops, /ld hl,TECM8_SERVICE_CALL\s+ld c,TECM8_BIOS_BANK_CALL\s+rst 10H/);
   assert.doesNotMatch(ops, /TECM8_SERVICE_REQUEST/);
   assert.match(doc, /callService TECM8_SERVICE_VDU_INIT/);
   assert.match(doc, /per-call stack word/);
+  assert.match(doc, /dispatcher and registry labels are private implementation details/);
+  assert.doesNotMatch(doc, /`TECM8_SERVICE_CALL`/);
+  assert.doesNotMatch(doc, /`TECM8_SERVICE_REGISTRY`/);
 });
 
 test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => {
@@ -124,8 +134,8 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
 });
 
 test('banked service ABI doc covers bank 0 shell entry slots and parameters', () => {
+  assertDocMentions('TECM8_SERVICE_SHELL_ENTRY');
   for (const name of [
-    'TECM8_SHELL_ENTRY',
     'TECM8_SHELL_PARAM_BASE',
     'TECM8_SHELL_PARAM_STATUS',
     'TECM8_SHELL_PARAM_LAST_ERROR',
@@ -139,6 +149,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   ]) {
     assertDocRow(name);
   }
+  assert.match(doc, /private `Tecm8ShellEntry` label/);
+  assert.match(doc, /do not\s+call that label directly/);
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {

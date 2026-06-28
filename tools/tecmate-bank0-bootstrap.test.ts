@@ -31,16 +31,17 @@ test('monitor launch proof and contract cover the bootstrap phases', () => {
   assert.match(doc, /call Tecm8BootstrapShell/);
 });
 
-test('bank 0 publishes a fixed service registry table', () => {
-  assert.match(ops, /^TECM8_SERVICE_REGISTRY\s+\.equ\s+0x8170/m);
+test('bank 0 publishes a private service registry table', () => {
+  assert.doesNotMatch(ops, /^TECM8_SERVICE_REGISTRY\s+\.equ\s+/m);
   assert.match(ops, /^TECM8_SERVICE_REGISTRY_ENTRY_SIZE\s+\.equ\s+0x04/m);
   assert.match(ops, /^TECM8_SERVICE_REGISTRY_END\s+\.equ\s+0x00/m);
   assert.match(bank0, /@Tecm8ServiceRegistry:\s*[\s\S]*\.db\s+TECM8_SERVICE_VDU_INIT,TECM8_SERVICE_VDU_INIT_BANK\s*[\s\S]*\.dw\s+TECM8_SERVICE_VDU_INIT_ADDR/);
   assert.match(bank0, /\.db\s+TECM8_SERVICE_TECFS_MOUNT,TECM8_SERVICE_TECFS_MOUNT_BANK\s*[\s\S]*\.dw\s+TECM8_SERVICE_TECFS_MOUNT_ADDR/);
   assert.match(bank0, /\.db\s+TECM8_SERVICE_RTC_TOOL,TECM8_SERVICE_RTC_TOOL_BANK\s*[\s\S]*\.dw\s+TECM8_SERVICE_RTC_TOOL_ADDR/);
   assert.match(bank0, /\.db\s+TECM8_SERVICE_GLCD_ENTRY,TECM8_SERVICE_GLCD_ENTRY_BANK\s*[\s\S]*\.dw\s+TECM8_SERVICE_GLCD_ENTRY_ADDR/);
-  assert.match(bank0, /\.db\s+TECM8_SERVICE_SHELL_ENTRY,TECM8_SERVICE_SHELL_ENTRY_BANK\s*[\s\S]*\.dw\s+TECM8_SERVICE_SHELL_ENTRY_ADDR/);
+  assert.match(bank0, /\.db\s+TECM8_SERVICE_SHELL_ENTRY,TECM8_SERVICE_SHELL_ENTRY_BANK\s*[\s\S]*\.dw\s+Tecm8ShellEntry/);
   assert.match(bank0, /@Tecm8ServiceRegistryEnd:\s*[\s\S]*\.db\s+TECM8_SERVICE_REGISTRY_END/);
   assert.match(abiDoc, /byte 0: service ID/);
   assert.match(abiDoc, /later table-driven dispatcher/);
+  assert.match(abiDoc, /registry labels are private implementation details/);
 });

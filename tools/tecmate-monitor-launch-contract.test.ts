@@ -56,8 +56,6 @@ test('TecMate monitor launch contract documents the fixed-ROM discovery handoff'
 test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
   for (const name of [
     'TECM8_BANK0_INSTALL',
-    'TECM8_SERVICE_CALL',
-    'TECM8_SHELL_ENTRY',
     'TECM8_SERVICE_SHELL_ENTRY',
   ]) {
     assert.match(ops, new RegExp(`^${name}\\s+\\.equ\\s+`, 'm'));
@@ -65,9 +63,10 @@ test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
   }
 
   assert.match(doc, new RegExp(`\\\`TECM8_BANK0_INSTALL\\\` \\| \\\`${docHex('TECM8_BANK0_INSTALL')}\\\``));
-  assert.match(doc, new RegExp(`\\\`TECM8_SERVICE_CALL\\\` \\| \\\`${docHex('TECM8_SERVICE_CALL')}\\\``));
-  assert.match(doc, new RegExp(`\\\`TECM8_SHELL_ENTRY\\\` \\| \\\`${docHex('TECM8_SHELL_ENTRY')}\\\``));
   assert.match(doc, new RegExp(`\\\`TECM8_SERVICE_SHELL_ENTRY\\\` \\| \\\`${docHex('TECM8_SERVICE_SHELL_ENTRY')}\\\``));
+  assert.match(doc, /installed menu vector \| monitor RAM/);
+  assert.match(doc, /installed service vector \| monitor RAM/);
+  assert.match(doc, /private\s+bank-0 source labels, not fixed public entry addresses/);
 });
 
 test('TecMate monitor launch contract is tied to the proof runner', () => {
@@ -81,4 +80,5 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry'\)/);
   assert.match(runner, /bank 0 entry marker/);
   assert.match(runner, /TEC-FS service marker/);
+  assert.match(runner, /bridge TEC-FS service marker/);
 });

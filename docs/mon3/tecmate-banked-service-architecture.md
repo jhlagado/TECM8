@@ -101,17 +101,18 @@ The near-term split should be:
 RST 10h C=50h-54h    fixed monitor bank-control services
 RST 10h C=60h        generic TecMate monitor-to-expansion bridge
 RST 10h C=61h-6Fh    reserved TecMate bridge/service range
-bank 0 80A0h         expansion service registry dispatcher
+bank 0 installed vector -> private service dispatcher
 banked services      VDU/TMS9918, TEC-FS, RTC tools, applications
 ```
 
 The first bridge service should be deliberately small. `C=60h` selects the
 monitor bridge itself; `A` carries the TecMate service ID. The fixed-ROM shim
-should construct the same per-call stack-word request used by the current
-`callService` helper, enter bank 0 through the fixed `BiosBankCall` path, and
-let bank 0 dispatch through the registry. That keeps physical bank selection
-out of ordinary callers while still preserving the fixed ROM as the only code
-that changes `SYS_CTRL`.
+constructs the same per-call stack-word request used by the current
+`callService` helper, validates the installed expansion service vector, enters
+that bank/address through the fixed `BiosBankCall` path, and lets the installed
+dispatcher route through its registry. That keeps physical bank selection out
+of ordinary callers while still preserving the fixed ROM as the only code that
+changes `SYS_CTRL`.
 
 The bridge must preserve the existing bank-call rules:
 

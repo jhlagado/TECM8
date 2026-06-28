@@ -79,12 +79,13 @@ Bank 0 now exposes a resident TecMate shell entry contract:
 
 ```text
 TECM8_SERVICE_SHELL_ENTRY = 80h
-TECM8_SHELL_ENTRY = 8120h
 ```
 
 The current implementation is a descriptor stub, not the full interactive shell.
 That is the right level for this stage. It proves the launch path and reserves a
-stable service number before the shell loop is moved into ROM.
+stable service number before the shell loop is moved into ROM. The actual shell
+label is private to bank 0 and is reached through the installed expansion
+service vector, not by a fixed address.
 
 The intended boot path can now become:
 

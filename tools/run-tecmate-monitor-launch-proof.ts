@@ -22,6 +22,8 @@ const TECM8_DEMO_TRACE_BASE = 0x3000;
 const EXP_MENU_VEC_BANK = 0x3bf0;
 const EXP_MENU_VEC_ADDR = 0x3bf1;
 const EXP_MENU_VEC_FLAGS = 0x3bf3;
+const TECM8_BIOS_SERVICE_BRIDGE = 0x60;
+const TECM8_SERVICE_TECFS_MOUNT = 0x02;
 
 type Runtime = {
   cpu: {
@@ -158,6 +160,18 @@ function readTrace(runtime: Runtime, base: number, length: number): number[] {
   return Array.from(runtime.hardware.memory.slice(base, base + length));
 }
 
+function writeBridgeServiceStub(runtime: Runtime, serviceId: number): void {
+  runtime.hardware.forceMemWrite?.(RETURN_STUB, 0x3e);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 1, serviceId);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 2, 0x0e);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 3, TECM8_BIOS_SERVICE_BRIDGE);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 4, 0xd7);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 5, 0x32);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 6, (TECM8_DEMO_TRACE_BASE + 5) & 0xff);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 7, (TECM8_DEMO_TRACE_BASE + 5) >> 8);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 8, 0x76);
+}
+
 function assertEqual(actual: number, expected: number, name: string): void {
   if (actual !== expected) {
     throw new Error(`${name}: got 0x${actual.toString(16)}, expected 0x${expected.toString(16)}`);
@@ -185,12 +199,23 @@ function main(): void {
   assertEqual(trace[8], 0x71, 'shell bootstrap marker');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'final SYS_CTRL restored');
 
+  runtime.hardware.forceMemWrite?.(TECM8_DEMO_TRACE_BASE + 5, 0x00);
+  writeBridgeServiceStub(runtime, TECM8_SERVICE_TECFS_MOUNT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  const bridgeInstructions = runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.cpu.pc, RETURN_STUB + 9, 'bridge service halt pc');
+  assertEqual(runtime.hardware.memory[TECM8_DEMO_TRACE_BASE + 5], 0x82, 'bridge TEC-FS service marker');
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'bridge SYS_CTRL restored');
+
   writeFileSync(
     LAST_RUN,
     `${JSON.stringify(
       {
         result: 'ok',
         instructions,
+        bridgeInstructions,
         launchAddress,
         expectedMenuAddress,
         menuVectorAddress,

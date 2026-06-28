@@ -28,7 +28,7 @@ arguments still use small RAM parameter blocks.
 | `TECM8_BIOS_BANK_SELECT` | `52h` | Select a physical expansion bank. |
 | `TECM8_BIOS_BANK_CALL` | `53h` | Call into a bank and restore previous bank on `ret`. |
 | `TECM8_BIOS_FAR_JUMP` | `54h` | Tail-jump into a bank without resuming after the helper. |
-| `TECM8_BIOS_SERVICE_BRIDGE` | `60h` | Planned fixed-ROM bridge from RST 10h into the bank 0 service registry. |
+| `TECM8_BIOS_SERVICE_BRIDGE` | `60h` | Fixed-ROM bridge from RST 10h into the installed expansion service vector. |
 
 The bank-call return path preserves the callee's `AF`, so carry and `A` status
 values survive the fixed-ROM bank restore. The previous `SYS_CTRL` value is
@@ -43,11 +43,11 @@ return first, restores the saved `SYS_CTRL` value, preserves the callee's final
 `AF`, and then returns to the original caller with `SP` back where it started.
 There is no separate banked return instruction.
 
-## Planned Fixed-ROM Service Bridge
+## Fixed-ROM Service Bridge
 
-`TECM8_BIOS_SERVICE_BRIDGE` reserves `RST 10h` selector `C=60h` for the first
-monitor-to-expansion service bridge. It is not implemented in fixed ROM yet.
-The contract is:
+`TECM8_BIOS_SERVICE_BRIDGE` is `RST 10h` selector `C=60h`. It calls the
+installed expansion service vector registered by bank 0 during discovery. The
+contract is:
 
 ```asm
         ld a,TECM8_SERVICE_VDU_INIT  ; TecMate service ID
@@ -56,16 +56,17 @@ The contract is:
 ```
 
 `C` selects the monitor bridge. `A` carries the TecMate service ID and is not an
-argument to the target service. The fixed-ROM shim must build the same per-call
-stack-word request used by `callService`, enter physical bank 0 at
-`TECM8_SERVICE_CALL` through `BiosBankCall`, and let bank 0 dispatch through the
-published registry table.
+argument to the target service. The fixed-ROM shim builds the same per-call
+stack-word request used by the old direct `callService` path, validates the
+installed service vector, enters that bank/address through `BiosBankCall`, and
+lets the installed dispatcher route through its private registry table.
 
 Target services should take arguments through documented parameter blocks or
 registers other than `A` for this bridge form. Return values follow the banked
 service contract: `A` and carry are returned from the target service after fixed
-ROM restores the previous `SYS_CTRL` state. Unknown service IDs return
-`TECM8_SERVICE_ERR_UNKNOWN` with carry set.
+ROM restores the previous `SYS_CTRL` state. Unknown service IDs are returned by
+the installed dispatcher as `TECM8_SERVICE_ERR_UNKNOWN` with carry set. If no
+valid service vector is installed, fixed ROM returns `A=FFh` with carry set.
 
 ## Bank 0: Service Registry
 
@@ -75,20 +76,22 @@ Bank 0 owns the first assembly-time service registry. Callers can use:
         callService TECM8_SERVICE_VDU_INIT
 ```
 
-`callService` stores the requested service ID, enters bank 0 through the fixed
-bank-call gateway, and bank 0 dispatches to the service's registered bank and
-address. The service ID is carried in a per-call stack word, not a shared RAM
+`callService` loads the requested service ID into `A`, enters fixed ROM with
+`C=TECM8_BIOS_SERVICE_BRIDGE`, and MON3 calls the installed service dispatcher.
+The bridge carries the service ID in a per-call stack word, not a shared RAM
 byte, so nested or interrupted calls do not overwrite each other's request.
-Plain registered services receive the caller's original `AF`, `DE`, and `HL`.
-Dispatcher-backed services are different: bank 0 must load `A` with the
-bank-local service selector before calling the bank dispatcher, so those targets
-must take arguments through documented parameter blocks or registers other than
-`A`.
+The bridge uses `A` for the service ID, so `A` is not a general argument for
+bridge-dispatched services. Services that need more input must use documented
+parameter blocks or other service-specific register conventions. The dispatcher
+preserves the normal fixed-ROM bank-call return behaviour: target `A` and carry
+are returned after the previous `SYS_CTRL` state is restored.
+
+The bank-0 dispatcher and registry labels are private implementation details
+installed through the expansion service vector. They are intentionally not
+published as fixed callable addresses.
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECM8_SERVICE_CALL` | `80A0h` | Bank 0 registry dispatcher. |
-| `TECM8_SERVICE_REGISTRY` | `8170h` | Bank 0 assembly-time service registry table. |
 | `TECM8_SERVICE_REGISTRY_ENTRY_SIZE` | `04h` | Bytes per service registry entry: service ID, bank, address low, address high. |
 | `TECM8_SERVICE_REGISTRY_END` | `00h` | Registry terminator service ID. |
 | `TECM8_SERVICE_VDU_INIT` | `01h` | VDU init service ID. |
@@ -105,7 +108,6 @@ must take arguments through documented parameter blocks or registers other than
 | `TECM8_SERVICE_GLCD_ENTRY_ADDR` | `8000h` | GLCD boundary address. |
 | `TECM8_SERVICE_SHELL_ENTRY` | `80h` | Resident shell entry service ID. |
 | `TECM8_SERVICE_SHELL_ENTRY_BANK` | `00h` | Resident shell physical bank. |
-| `TECM8_SERVICE_SHELL_ENTRY_ADDR` | `8120h` | Resident shell entry address. |
 | `TECM8_SERVICE_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 The registry table is laid out as repeated four-byte records:
@@ -118,7 +120,7 @@ byte 3: entry address high byte
 ```
 
 The current dispatcher still uses explicit comparisons for minimum ROM risk, but
-the table is now present in bank 0 as the stable published map for tools, docs,
+the table is now present in bank 0 as the source-of-truth map for tools, docs,
 and a later table-driven dispatcher. Any service that targets a bank-local
 dispatcher, such as `TECM8_SERVICE_VDU_INIT`, still needs an explicit shim or an
 extended future registry record that includes the bank-local service selector.
@@ -126,13 +128,10 @@ extended future registry record that includes the bank-local service selector.
 ## Bank 0: Shell Entry
 
 Physical bank 0 owns the first resident TecMate shell and launcher boundary.
-The current entry publishes a descriptor and writes a short splash string through
-the bank-1 VDU dispatcher. It gives MON3/menu code a stable service to call
-before the full shell loop is moved into the expansion ROM.
-
-| Constant | Address | Status |
-| --- | ---: | --- |
-| `TECM8_SHELL_ENTRY` | `8120h` | Publishes service descriptor and splash; on success returns `A=80h`, carry clear. |
+The current private `Tecm8ShellEntry` label publishes a descriptor and writes a
+short splash string through the bank-1 VDU dispatcher. MON3 and user code do not
+call that label directly; they request `TECM8_SERVICE_SHELL_ENTRY` through the
+installed service vector.
 
 Shell parameter block:
 
@@ -154,7 +153,7 @@ Shell status and feature values:
 | `TECM8_SHELL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
 | `TECM8_SHELL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
 
-If the VDU splash call fails, `TECM8_SHELL_ENTRY` stores the returned error code
+If the VDU splash call fails, the shell service stores the returned error code
 in `TECM8_SHELL_PARAM_STATUS` and `TECM8_SHELL_PARAM_LAST_ERROR`, then returns
 with carry set.
 

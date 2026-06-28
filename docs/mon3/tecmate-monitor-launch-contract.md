@@ -71,13 +71,19 @@ shape is already in place:
 | Item | Current value | Purpose |
 | --- | --- | --- |
 | `TECM8_BANK0_INSTALL` | `800Bh` | bank-0 install routine advertised by the header |
-| `TECM8_SERVICE_CALL` | `80A0h` | bank-0 service registry |
-| `TECM8_SHELL_ENTRY` | `8120h` | provisional shell entry |
+| installed menu vector | monitor RAM | menu launch target supplied by bank 0 |
+| installed service vector | monitor RAM | service dispatcher supplied by bank 0 |
 | `TECM8_SERVICE_SHELL_ENTRY` | `80h` | registry service number for shell launch |
 
 Bank 0 is allowed to call into other physical banks through the fixed monitor's
 bank services. The `farCall` and `callService` ops are source-level wrappers
 around that ABI; they do not change the monitor discovery contract.
+
+`callService` now enters MON3 with `RST 10h` selector `C=60h` and the requested
+service ID in `A`. MON3 validates the installed expansion service vector, builds
+the per-call service request word expected by bank 0, and calls the installed
+dispatcher through `BiosBankCall`. The dispatcher and shell labels are private
+bank-0 source labels, not fixed public entry addresses.
 
 ## Return behaviour
 
@@ -118,6 +124,7 @@ target. The proof starts at `launchExpansion` and checks that:
 3. the monitor calls the installed menu vector through the bank-call path
 4. bank 0 runs the TecMate bootstrap/service chain
 5. the test-only return path reaches the proof halt stub
+6. a RAM `RST 10h C=60h` call reaches the installed service dispatcher
 
 This is the first stable bridge between the old monitor menu and a
 cartridge-like expansion supervisor.

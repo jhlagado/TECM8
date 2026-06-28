@@ -20,7 +20,6 @@ test('shell exit contract is grounded in the monitor menu return path', () => {
 test('shell exit contract distinguishes proof returns from production shell policy', () => {
   assert.match(monitorLaunchRunner, /STACK_RETURN/);
   assert.match(monitorLaunchRunner, /RETURN_STUB/);
-  assert.match(shellLaunchProof, /farCall 0x00,TECM8_SHELL_ENTRY/);
   assert.match(shellLaunchProof, /callService TECM8_SERVICE_SHELL_ENTRY/);
   assert.match(doc, /Monitor-launch proof-launched TecMate \| bank 0 may exit with a plain `ret`/);
   assert.match(doc, /Full shell exit \| still undecided/);

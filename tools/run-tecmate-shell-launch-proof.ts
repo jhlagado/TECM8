@@ -204,14 +204,13 @@ async function main(): Promise<void> {
   const shellSplashBuffer = symbolNumber(symbols, 'TECM8_SHELL_SPLASH_BUFFER');
   const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
-  const trace = readTrace(runtime, traceBase, 2);
+  const trace = readTrace(runtime, traceBase, 1);
   const params = readTrace(runtime, shellParamBase, 5);
   const splash = readTrace(runtime, shellSplashBuffer, 8);
   const tmsParams = readTrace(runtime, tmsParamBase, 8);
 
   assertEqual(result, PROOF_PASS, 'shell launch proof result marker');
-  assertEqual(trace[0], 0x80, 'direct shell launch return');
-  assertEqual(trace[1], 0x80, 'registry shell launch return');
+  assertEqual(trace[0], 0x80, 'service bridge shell launch return');
   assertEqual(params[0], 0x00, 'shell status');
   assertEqual(params[1], 0x00, 'shell last error');
   assertEqual(params[2], 0x00, 'shell bank marker');

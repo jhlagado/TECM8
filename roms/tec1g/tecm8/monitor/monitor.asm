@@ -3251,6 +3251,37 @@ validateExpansionServiceVectorClear:
         scf
         ret
 
+expansionServiceBridge:
+        push af
+        push de
+        push hl
+        call discoverExpansion
+        call validateExpansionServiceVector
+        jr c,expansionServiceBridgeMissing
+        pop hl
+        pop de
+        pop af
+        ld c,a
+        ld b,00H
+        push bc
+        push hl
+        push de
+        push af
+        ld a,(EXP_SVC_VEC_BANK)
+        ld b,a
+        ld hl,(EXP_SVC_VEC_ADDR)
+        call BiosBankCall
+        inc sp
+        inc sp
+        ret
+expansionServiceBridgeMissing:
+        pop hl
+        pop de
+        pop af
+        ld a,0FFH
+        scf
+        ret
+
 discoverExpansion:
         call clearExpansionVectors
         ld a,(SYS_MODE)
@@ -3779,6 +3810,16 @@ APITable:
         .dw BiosFarJump
         .dw tecm8ApiReserved
         .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw tecm8ApiReserved
+        .dw expansionServiceBridge
 
 API_COUNT:  .equ    $-APITable  ;Total number of API functions
 
