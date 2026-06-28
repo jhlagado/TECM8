@@ -78,8 +78,12 @@ Bank 0 owns the first assembly-time service registry. Callers can use:
 `callService` stores the requested service ID, enters bank 0 through the fixed
 bank-call gateway, and bank 0 dispatches to the service's registered bank and
 address. The service ID is carried in a per-call stack word, not a shared RAM
-byte, so nested or interrupted calls do not overwrite each other's request. The
-final banked service still receives the caller's original `AF`, `DE`, and `HL`.
+byte, so nested or interrupted calls do not overwrite each other's request.
+Plain registered services receive the caller's original `AF`, `DE`, and `HL`.
+Dispatcher-backed services are different: bank 0 must load `A` with the
+bank-local service selector before calling the bank dispatcher, so those targets
+must take arguments through documented parameter blocks or registers other than
+`A`.
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
@@ -115,7 +119,9 @@ byte 3: entry address high byte
 
 The current dispatcher still uses explicit comparisons for minimum ROM risk, but
 the table is now present in bank 0 as the stable published map for tools, docs,
-and a later table-driven dispatcher.
+and a later table-driven dispatcher. Any service that targets a bank-local
+dispatcher, such as `TECM8_SERVICE_VDU_INIT`, still needs an explicit shim or an
+extended future registry record that includes the bank-local service selector.
 
 ## Bank 0: Shell Entry
 
@@ -149,17 +155,31 @@ Shell status and feature values:
 
 Physical bank 1 currently owns the first TMS9918-facing services.
 
+Bank 1 exposes one public dispatcher, not one fixed callable address per VDU
+routine. Callers enter the dispatcher with `A` set to a bank-local service ID.
+The dispatcher looks up that service ID in the bank-local jump table and jumps
+to the private implementation. The implementation labels are not ABI; they may
+move as the bank grows.
+
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TECM8_VDU_ENTRY` | `8000h` | Bank entry marker. |
-| `TECM8_VDU_INIT` | `8010h` | Calls TMS init and returns `A=81h`, carry clear. |
-| `TECM8_VDU_CLEAR` | `8020h` | Writes zero to VRAM address `0000h`. |
-| `TECM8_VDU_SET_CURSOR` | `8030h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
-| `TECM8_VDU_PUT_CHAR` | `8040h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
-| `TECM8_VDU_PUT_STRING` | `8060h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
-| `TECM8_TMS_INIT` | `8080h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
-| `TECM8_TMS_SET_REGISTER` | `8090h` | Writes TMS register from the parameter block. |
-| `TECM8_TMS_WRITE_VRAM` | `80A0h` | Writes one byte to TMS VRAM from the parameter block. |
+| `TECM8_VDU_SERVICE_CALL` | `8010h` | Bank-local dispatcher. Input `A` = VDU/TMS service ID. |
+| `TECM8_VDU_SERVICE_TABLE` | `8030h` | Bank-local service table records. |
+
+Bank-local VDU/TMS service IDs:
+
+| Constant | Value | Status |
+| --- | ---: | --- |
+| `TECM8_VDU_SVC_INIT` | `01h` | Calls TMS init and returns `A=81h`, carry clear. |
+| `TECM8_VDU_SVC_CLEAR` | `02h` | Writes zero to VRAM address `0000h`. |
+| `TECM8_VDU_SVC_SET_CURSOR` | `03h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
+| `TECM8_VDU_SVC_PUT_CHAR` | `04h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
+| `TECM8_VDU_SVC_PUT_STRING` | `05h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
+| `TECM8_VDU_SVC_NEWLINE` | `06h` | Advances the cursor to the next 32-byte text row, returns `A=81h`. |
+| `TECM8_TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
+| `TECM8_TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
+| `TECM8_TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
 
 TMS ports:
 
@@ -181,19 +201,23 @@ TMS parameter block:
 | `TECM8_TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
 | `TECM8_TMS_PARAM_STRING_LO` | `3B06h` | Zero-terminated RAM string pointer low byte. |
 | `TECM8_TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
+| `TECM8_VDU_TEXT_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
 
 Minimal VDU text-console contract:
 
-- `TECM8_VDU_INIT` prepares the TMS backend and returns `A=81h`.
-- `TECM8_VDU_CLEAR` currently clears the first VRAM byte only; full-screen clear
+- `TECM8_VDU_SVC_INIT` prepares the TMS backend and returns `A=81h`.
+- `TECM8_VDU_SVC_CLEAR` currently clears the first VRAM byte only; full-screen clear
   is still future work.
-- `TECM8_VDU_SET_CURSOR` takes `TECM8_TMS_PARAM_ADDR_LO/HI` as the cursor
+- `TECM8_VDU_SVC_SET_CURSOR` takes `TECM8_TMS_PARAM_ADDR_LO/HI` as the cursor
   address and masks the high byte to the 16K VRAM range.
-- `TECM8_VDU_PUT_CHAR` writes `TECM8_TMS_PARAM_VALUE` at the current cursor and
+- `TECM8_VDU_SVC_PUT_CHAR` writes `TECM8_TMS_PARAM_VALUE` at the current cursor and
   advances the cursor by one byte.
-- `TECM8_VDU_PUT_STRING` reads a zero-terminated RAM string from
-  `TECM8_TMS_PARAM_STRING_LO/HI`, writes each byte through `TECM8_VDU_PUT_CHAR`,
+- `TECM8_VDU_SVC_PUT_STRING` reads a zero-terminated RAM string from
+  `TECM8_TMS_PARAM_STRING_LO/HI`, writes each byte through `TECM8_VDU_SVC_PUT_CHAR`,
   and leaves the cursor after the last character written.
+- `TECM8_VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
+  start, adds one row, masks the high byte to the 16K VRAM range, and returns
+  `A=81h`.
 - The low-level TMS calls remain available for backend work and diagnostics.
 
 ## Bank 2: TEC-FS
@@ -415,7 +439,7 @@ reused accidentally by service implementations.
 | `TECM8_ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
 | `TECM8_ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
 | `TECM8_ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
-| `TECM8_ABI_BANK1_NESTED` | `80C0h` | Bank-call nested proof target in bank 1. |
+| `TECM8_ABI_BANK1_NESTED` | `8180h` | Bank-call nested proof target in bank 1. |
 | `TECM8_ABI_BANK2_NESTED` | `80D0h` | Bank-call nested proof target in bank 2. |
 | `TECM8_ABI_BANK3_FARJUMP` | `80C0h` | Far-jump proof target in bank 3. |
 

@@ -12,46 +12,96 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         ld (TECM8_DEMO_TRACE_1),a
         ret
 
-        .org    0x8010
-@vduInit:
-        call tmsInit
-        ld a,0x81
+@Tecm8ExpansionBank1Info:
+        .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
+
+        .org    TECM8_VDU_SERVICE_CALL
+@vduServiceCall:
+        cp TECM8_TMS_SVC_INIT
+        jr nc,tmsServiceCall
+        cp TECM8_VDU_SVC_INIT
+        jr c,vduServiceUnknown
+        cp TECM8_VDU_SVC_NEWLINE+1
+        jr nc,vduServiceUnknown
+        sub TECM8_VDU_SVC_INIT
+        ld e,a
+        ld d,0x00
+        ld hl,Tecm8VduServiceTable
+        add hl,de
+        add hl,de
+        add hl,de
+        jp (hl)
+tmsServiceCall:
+        cp TECM8_TMS_SVC_WRITE_VRAM+1
+        jr nc,vduServiceUnknown
+        sub TECM8_TMS_SVC_INIT
+        ld e,a
+        ld d,0x00
+        ld hl,Tecm8TmsServiceTable
+        add hl,de
+        add hl,de
+        add hl,de
+        jp (hl)
+vduServiceUnknown:
+        ld a,TECM8_SERVICE_ERR_UNKNOWN
+        scf
         ret
 
-        .org    0x8020
-@vduClear:
+        .org    TECM8_VDU_SERVICE_TABLE
+Tecm8VduServiceTable:
+        jp      vduInitImpl
+        jp      vduClearImpl
+        jp      vduSetCursorImpl
+        jp      vduPutCharImpl
+        jp      vduPutStringImpl
+        jp      vduNewlineImpl
+
+Tecm8TmsServiceTable:
+        jp      tmsInitImpl
+        jp      tmsSetRegisterImpl
+        jp      tmsWriteVramImpl
+
+vduInitImpl:
+        call tmsInitImpl
+        ld a,0x81
+        or a
+        ret
+
+vduClearImpl:
         xor a
         ld (TECM8_TMS_PARAM_ADDR_LO),a
         ld (TECM8_TMS_PARAM_ADDR_HI),a
         ld (TECM8_TMS_PARAM_VALUE),a
-        jp tmsWriteVram
+        call tmsWriteVramImpl
+        ld a,0x81
+        or a
+        ret
 
-        .org    0x8030
-@vduSetCursor:
+vduSetCursorImpl:
         ld hl,(TECM8_TMS_PARAM_ADDR_LO)
         res 6,h
         res 7,h
         ld (TECM8_TMS_PARAM_CURSOR_LO),hl
         ld a,0x81
+        or a
         ret
 
-        .org    0x8040
-@vduPutChar:
+vduPutCharImpl:
         ld a,(TECM8_TMS_PARAM_CURSOR_LO)
         ld (TECM8_TMS_PARAM_ADDR_LO),a
         ld a,(TECM8_TMS_PARAM_CURSOR_HI)
         ld (TECM8_TMS_PARAM_ADDR_HI),a
-        call tmsWriteVram
+        call tmsWriteVramImpl
         ld hl,(TECM8_TMS_PARAM_CURSOR_LO)
         inc hl
         res 6,h
         res 7,h
         ld (TECM8_TMS_PARAM_CURSOR_LO),hl
         ld a,0x81
+        or a
         ret
 
-        .org    TECM8_VDU_PUT_STRING
-@vduPutString:
+vduPutStringImpl:
         ld hl,(TECM8_TMS_PARAM_STRING_LO)
 vduPutStringNext:
         ld a,(hl)
@@ -59,40 +109,55 @@ vduPutStringNext:
         jr z,vduPutStringDone
         ld (TECM8_TMS_PARAM_VALUE),a
         push hl
-        call vduPutChar
+        call vduPutCharImpl
         pop hl
         inc hl
         jr vduPutStringNext
 vduPutStringDone:
         ld a,0x81
+        or a
         ret
 
-        .org    0x8080
-@tmsInit:
+vduNewlineImpl:
+        ld hl,(TECM8_TMS_PARAM_CURSOR_LO)
+        ld a,l
+        and 0xE0
+        ld l,a
+        ld de,TECM8_VDU_TEXT_ROW_BYTES
+        add hl,de
+        res 6,h
+        res 7,h
+        ld (TECM8_TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
+        or a
+        ret
+
+tmsInitImpl:
         ld a,0x07
         ld (TECM8_TMS_PARAM_REGISTER),a
         ld a,0xF1
         ld (TECM8_TMS_PARAM_VALUE),a
-        call tmsSetRegister
+        call tmsSetRegisterImpl
         ld a,0x81
+        or a
         ret
 
-        .org    0x8090
 ; Input: TECM8_TMS_PARAM_REGISTER = TMS register 0-7,
 ;        TECM8_TMS_PARAM_VALUE = value.
-@tmsSetRegister:
+tmsSetRegisterImpl:
         ld a,(TECM8_TMS_PARAM_VALUE)
         out (TECM8_TMS_CONTROL_PORT),a
         ld a,(TECM8_TMS_PARAM_REGISTER)
         and 0x07
         or 0x80
         out (TECM8_TMS_CONTROL_PORT),a
+        ld a,0x81
+        or a
         ret
 
-        .org    0x80A0
 ; Input: TECM8_TMS_PARAM_ADDR_LO/HI = VRAM address,
 ;        TECM8_TMS_PARAM_VALUE = byte value.
-@tmsWriteVram:
+tmsWriteVramImpl:
         ld a,(TECM8_TMS_PARAM_ADDR_LO)
         out (TECM8_TMS_CONTROL_PORT),a
         ld a,(TECM8_TMS_PARAM_ADDR_HI)
@@ -101,9 +166,11 @@ vduPutStringDone:
         out (TECM8_TMS_CONTROL_PORT),a
         ld a,(TECM8_TMS_PARAM_VALUE)
         out (TECM8_TMS_DATA_PORT),a
+        ld a,0x81
+        or a
         ret
 
-        .org    0x80C0
+        .org    TECM8_ABI_BANK1_NESTED
 @BankAbiNestedCall:
         ld a,0xA1
         ld (TECM8_ABI_TRACE_6),a
@@ -125,7 +192,3 @@ vduPutStringDone:
         ld (TECM8_ABI_TRACE_BASE+14),a
         ld a,0xC1
         ret
-
-        .org    0x8100
-@Tecm8ExpansionBank1Info:
-        .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION

@@ -185,14 +185,29 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
 
 function runUntilHalt(runtime: Runtime, platformRuntime: PlatformRuntime): number {
   const maxInstructions = 1_000_000;
+  const pcHistory: number[] = [];
   for (let i = 0; i < maxInstructions; i += 1) {
+    pcHistory.push(runtime.cpu.pc & 0xffff);
+    if (pcHistory.length > 64) {
+      pcHistory.shift();
+    }
     const result = runtime.step();
     platformRuntime.recordCycles(result.cycles ?? 0);
     if (runtime.cpu.halted || result.halted) {
       return i + 1;
     }
   }
-  throw new Error(`TMS9918 bank proof did not halt; pc=0x${runtime.cpu.pc.toString(16)}`);
+  const sp = runtime.cpu.sp & 0xffff;
+  const stack = Array.from(runtime.hardware.memory.slice(sp, sp + 16))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join(' ');
+  const trace = Array.from(runtime.hardware.memory.slice(0x3b10, 0x3b18))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join(' ');
+  const pcs = pcHistory.map((value) => value.toString(16).padStart(4, '0')).join(' ');
+  throw new Error(
+    `TMS9918 bank proof did not halt; pc=0x${runtime.cpu.pc.toString(16)} sp=0x${sp.toString(16)} stack=${stack} trace=${trace} pcs=${pcs}`,
+  );
 }
 
 function readTrace(runtime: Runtime, base: number, length: number): number[] {
@@ -211,7 +226,7 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const traceBase = symbolNumber(symbols, 'TMS_PROOF_TRACE_BASE');
   const resultAddr = symbolNumber(symbols, 'TMS_PROOF_RESULT');
-  const trace = readTrace(runtime, traceBase, 7);
+  const trace = readTrace(runtime, traceBase, 8);
   const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
   const tmsParams = readTrace(runtime, tmsParamBase, 8);
   const result = runtime.hardware.memory[resultAddr];
@@ -229,13 +244,14 @@ async function main(): Promise<void> {
   assertEqual(trace[4], 0x81, 'VDU set cursor return value');
   assertEqual(trace[5], 0x81, 'VDU put char return value');
   assertEqual(trace[6], 0x81, 'VDU put string return value');
+  assertEqual(trace[7], 0x81, 'VDU newline return value');
   assertEqual(tms9918.registers[7] ?? 0, 0xf4, 'TMS register 7');
   assertEqual(tms9918.vram[0x0123] ?? 0, 0x5a, 'TMS VRAM write');
   assertEqual(tms9918.vram[0x0124] ?? 0, 0x42, 'VDU put character write');
   assertEqual(tms9918.vram[0x0125] ?? 0, 0x4f, 'VDU string first character write');
   assertEqual(tms9918.vram[0x0126] ?? 0, 0x4b, 'VDU string second character write');
-  assertEqual(tmsParams[4], 0x27, 'VDU cursor low after put string');
-  assertEqual(tmsParams[5], 0x01, 'VDU cursor high after put string');
+  assertEqual(tmsParams[4], 0x40, 'VDU cursor low after newline');
+  assertEqual(tmsParams[5], 0x01, 'VDU cursor high after newline');
 
   writeFileSync(
     LAST_RUN,

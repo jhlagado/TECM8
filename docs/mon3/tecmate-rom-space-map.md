@@ -60,8 +60,8 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `253` | `389` | `8185h` | `15995` |
-| 1 | VDU/TMS9918 boundary | `188` | `261` | `8105h` | `16123` |
+| 0 | Shell, launcher, registry | `255` | `389` | `8185h` | `15995` |
+| 1 | VDU/TMS9918 boundary | `296` | `438` | `81B6h` | `15946` |
 | 2 | TEC-FS boundary and block mapper | `373` | `645` | `8285h` | `15739` |
 | 3 | RTC boundary | `65` | `261` | `8105h` | `16123` |
 | 4 | GLCD boundary | `53` | `261` | `8105h` | `16123` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `956`
+Expansion occupied bytes: `1066`
 
-Expansion high-water span total: `1841`
+Expansion high-water span total: `2018`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -89,7 +89,7 @@ The most important fixed expansion entry points are:
 | Bank 0 service registry | `80A0h` | Dispatches `callService` requests. |
 | Bank 0 shell entry | `8120h` | Descriptor stub for `TECM8_SERVICE_SHELL_ENTRY`. |
 | Bank 0 info marker | `8160h` | Moved after shell stub to avoid overlap. |
-| Bank 1 VDU init | `8010h` | First TMS9918-facing service. |
+| Bank 1 VDU/TMS dispatcher | `8010h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS mount | `8010h` | Publishes TEC-FS geometry. |
 | Bank 2 TEC-FS map block | `8070h` | Maps active volume/block to 512-byte sector. |
 | Bank 3 RTC entry | `8000h` | RTC boundary descriptor. |

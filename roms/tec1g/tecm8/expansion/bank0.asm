@@ -70,6 +70,7 @@ Tecm8ServiceCallVduInit:
         pop af
         pop de
         pop hl
+        ld a,TECM8_VDU_SVC_INIT
         farCall TECM8_SERVICE_VDU_INIT_BANK,TECM8_SERVICE_VDU_INIT_ADDR
         ret
 

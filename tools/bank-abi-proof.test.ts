@@ -15,7 +15,7 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   const runner = readRepoFile('tools/run-bank-abi-proof.ts');
   const packageJson = readRepoFile('package.json');
 
-  assert.match(proof, /farCall 0x01,TECM8_VDU_INIT/);
+  assert.match(proof, /callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_INIT/);
   assert.match(proof, /farJump 0x03,TECM8_ABI_BANK3_FARJUMP/);
   assert.match(proof, /TECM8_ABI_BANK1_NESTED/);
   assert.match(proof, /TECM8_ABI_BANK1_PRESERVE/);

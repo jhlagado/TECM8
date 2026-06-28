@@ -91,13 +91,17 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
 test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => {
   for (const name of [
     'TECM8_VDU_ENTRY',
-    'TECM8_VDU_INIT',
-    'TECM8_VDU_CLEAR',
-    'TECM8_VDU_SET_CURSOR',
-    'TECM8_VDU_PUT_CHAR',
-    'TECM8_TMS_INIT',
-    'TECM8_TMS_SET_REGISTER',
-    'TECM8_TMS_WRITE_VRAM',
+    'TECM8_VDU_SERVICE_CALL',
+    'TECM8_VDU_SERVICE_TABLE',
+    'TECM8_VDU_SVC_INIT',
+    'TECM8_VDU_SVC_CLEAR',
+    'TECM8_VDU_SVC_SET_CURSOR',
+    'TECM8_VDU_SVC_PUT_CHAR',
+    'TECM8_VDU_SVC_PUT_STRING',
+    'TECM8_VDU_SVC_NEWLINE',
+    'TECM8_TMS_SVC_INIT',
+    'TECM8_TMS_SVC_SET_REGISTER',
+    'TECM8_TMS_SVC_WRITE_VRAM',
     'TECM8_TMS_DATA_PORT',
     'TECM8_TMS_CONTROL_PORT',
     'TECM8_TMS_PARAM_BASE',
@@ -107,10 +111,15 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'TECM8_TMS_PARAM_ADDR_HI',
     'TECM8_TMS_PARAM_CURSOR_LO',
     'TECM8_TMS_PARAM_CURSOR_HI',
+    'TECM8_TMS_PARAM_STRING_LO',
+    'TECM8_TMS_PARAM_STRING_HI',
+    'TECM8_VDU_TEXT_ROW_BYTES',
   ]) {
     assertDocRow(name);
   }
   assert.match(doc, /Minimal VDU text-console contract/);
+  assert.match(doc, /one public dispatcher, not one fixed callable address per VDU/);
+  assert.match(doc, /implementation labels are not ABI/);
   assert.match(doc, /writes `TECM8_TMS_PARAM_VALUE` at the current cursor/);
 });
 

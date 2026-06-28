@@ -26,7 +26,7 @@ ClearTrace:
         rst 10H
         ld (TECM8_ABI_TRACE_0),a
 
-        farCall 0x01,TECM8_VDU_INIT
+        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_INIT
         ld (TECM8_ABI_TRACE_1),a
 
         ld c,TECM8_BIOS_SYS_GET
