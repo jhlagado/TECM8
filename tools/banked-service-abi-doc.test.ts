@@ -194,6 +194,33 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECFS_IMAGE_BASE_LBA_1',
     'TECFS_IMAGE_BASE_LBA_2',
     'TECFS_IMAGE_BASE_LBA_3',
+    'TECFS_LOCATOR_MAGIC_0',
+    'TECFS_LOCATOR_MAGIC_1',
+    'TECFS_LOCATOR_MAGIC_2',
+    'TECFS_LOCATOR_MAGIC_3',
+    'TECFS_LOCATOR_VERSION',
+    'TECFS_LOCATOR_HEADER_BYTES',
+    'TECFS_LOCATOR_ENTRY_BYTES',
+    'TECFS_LOCATOR_OFFSET_MAGIC',
+    'TECFS_LOCATOR_OFFSET_VERSION',
+    'TECFS_LOCATOR_OFFSET_ENTRY_SIZE',
+    'TECFS_LOCATOR_OFFSET_TOTAL_VOLUMES',
+    'TECFS_LOCATOR_OFFSET_USER_VOLUMES',
+    'TECFS_LOCATOR_OFFSET_SPARE_VOLUME',
+    'TECFS_LOCATOR_OFFSET_VOLUME_SECTORS',
+    'TECFS_LOCATOR_OFFSET_GENERATION',
+    'TECFS_LOCATOR_OFFSET_CHECKSUM',
+    'TECFS_LOCATOR_OFFSET_ENTRIES',
+    'TECFS_LOCATOR_ENTRY_VOLUME',
+    'TECFS_LOCATOR_ENTRY_ROLE',
+    'TECFS_LOCATOR_ENTRY_FLAGS',
+    'TECFS_LOCATOR_ENTRY_START_LBA',
+    'TECFS_LOCATOR_ENTRY_SECTORS',
+    'TECFS_LOCATOR_ENTRY_GENERATION',
+    'TECFS_LOCATOR_ENTRY_CHECKSUM',
+    'TECFS_LOCATOR_ROLE_USER',
+    'TECFS_LOCATOR_ROLE_WORK',
+    'TECFS_LOCATOR_FLAG_ACTIVE',
     'TECFS_STATUS_OK',
     'TECFS_ERR_BAD_VOLUME',
     'TECFS_ERR_BAD_BLOCK',
@@ -211,6 +238,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /30 user volumes/);
   assert.match(doc, /TEC-FS locator sector/);
   assert.match(doc, /absolute LBA 1/);
+  assert.match(doc, /magic is `TFS1`/);
+  assert.match(doc, /16-byte volume records/);
   assert.match(doc, /262,144/);
   assert.match(doc, /logical-to-card translation/);
   assert.match(doc, /image-base LBA/);

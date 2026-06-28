@@ -170,17 +170,35 @@ The TEC-side mount path should treat the locator sector as a small volume
 directory. It is not a FAT32 directory parser. It is a fixed TEC-FS structure
 written by the TEC formatter and optionally checked or repaired by a PC utility.
 
-The v1 locator sector lives at absolute LBA 1. LBA 0 is the MBR. Each mounted
-volume entry records:
+The v1 locator sector lives at absolute LBA 1. LBA 0 is the MBR. The sector
+starts with a fixed 32-byte header, followed by fixed 16-byte volume records.
+
+Header:
 
 ```text
-volume number
-role: user or reserved-work
-absolute start sector
-sector count
-generation
-flags
-checksum
+00h  4  magic: "TFS1"
+04h  1  locator format version: 01h
+05h  1  volume entry size: 10h
+06h  1  total selectable volumes
+07h  1  user volume count
+08h  1  reserved work volume index
+09h  4  sectors per volume, little-endian
+0Dh  4  locator generation, little-endian
+11h  1  header checksum
+12h  14 reserved, zero
+20h     first volume entry
+```
+
+Volume entry:
+
+```text
+00h  1  volume number
+01h  1  role: 01h user, 02h reserved-work
+02h  1  flags: bit 0 active/valid
+03h  4  absolute start sector, little-endian
+07h  4  sector count, little-endian
+0Bh  4  volume generation, little-endian
+0Fh  1  entry checksum
 ```
 
 For the standard 4 GiB-class layout the directory should describe:

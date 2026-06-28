@@ -33,10 +33,16 @@ test('TEC-FS bank proof covers runtime volume selection in sector translation', 
 
 test('TEC-FS direction documents the volume directory contract', () => {
   const direction = readFileSync(resolve(root, 'docs/mon3/tec-fs-direction.md'), 'utf8');
+  const bankOps = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');
 
   assert.match(direction, /^## Volume Directory Contract/m);
   assert.match(direction, /locator sector lives at absolute LBA 1/);
   assert.match(direction, /LBA 0 is the MBR/);
+  assert.match(direction, /magic: "TFS1"/);
+  assert.match(direction, /volume entry size: 10h/);
+  assert.match(direction, /first volume entry/);
+  assert.match(direction, /01h user, 02h reserved-work/);
+  assert.match(direction, /absolute start sector, little-endian/);
   assert.match(direction, /user volume count: 30/);
   assert.match(direction, /reserved work volume: 30/);
   assert.match(direction, /total selectable volumes: 31/);
@@ -46,4 +52,22 @@ test('TEC-FS direction documents the volume directory contract', () => {
   assert.match(direction, /absolute_sd_sector = volume_start_sector\[active_volume\] \+ sector_inside_volume/);
   assert.match(direction, /not the live allocation system used by TEC-FS after\s+mount/);
   assert.match(direction, /ordinary file\s+open\/save code should not present it as a normal user drive/);
+
+  for (const [name, value] of [
+    ['TECFS_LOCATOR_MAGIC_0', '0x54'],
+    ['TECFS_LOCATOR_MAGIC_1', '0x46'],
+    ['TECFS_LOCATOR_MAGIC_2', '0x53'],
+    ['TECFS_LOCATOR_MAGIC_3', '0x31'],
+    ['TECFS_LOCATOR_VERSION', '0x01'],
+    ['TECFS_LOCATOR_HEADER_BYTES', '0x20'],
+    ['TECFS_LOCATOR_ENTRY_BYTES', '0x10'],
+    ['TECFS_LOCATOR_OFFSET_ENTRIES', '0x20'],
+    ['TECFS_LOCATOR_ENTRY_START_LBA', '0x03'],
+    ['TECFS_LOCATOR_ENTRY_SECTORS', '0x07'],
+    ['TECFS_LOCATOR_ROLE_USER', '0x01'],
+    ['TECFS_LOCATOR_ROLE_WORK', '0x02'],
+    ['TECFS_LOCATOR_FLAG_ACTIVE', '0x01'],
+  ]) {
+    assert.match(bankOps, new RegExp(`^${name}\\s+\\.equ\\s+${value}`, 'm'));
+  }
 });

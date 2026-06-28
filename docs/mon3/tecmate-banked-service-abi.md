@@ -328,14 +328,42 @@ TEC-FS card locator constants:
 | `TECFS_IMAGE_BASE_LBA_1` | `00h` | Current image-base LBA byte 1. |
 | `TECFS_IMAGE_BASE_LBA_2` | `00h` | Current image-base LBA byte 2. |
 | `TECFS_IMAGE_BASE_LBA_3` | `00h` | Current image-base LBA byte 3. |
+| `TECFS_LOCATOR_MAGIC_0` | `54h` | Locator magic byte 0, `T`. |
+| `TECFS_LOCATOR_MAGIC_1` | `46h` | Locator magic byte 1, `F`. |
+| `TECFS_LOCATOR_MAGIC_2` | `53h` | Locator magic byte 2, `S`. |
+| `TECFS_LOCATOR_MAGIC_3` | `31h` | Locator magic byte 3, `1`. |
+| `TECFS_LOCATOR_VERSION` | `01h` | Locator sector format version. |
+| `TECFS_LOCATOR_HEADER_BYTES` | `20h` | Locator sector header size. |
+| `TECFS_LOCATOR_ENTRY_BYTES` | `10h` | Bytes per fixed volume record. |
+| `TECFS_LOCATOR_OFFSET_MAGIC` | `00h` | Header magic offset. |
+| `TECFS_LOCATOR_OFFSET_VERSION` | `04h` | Header version offset. |
+| `TECFS_LOCATOR_OFFSET_ENTRY_SIZE` | `05h` | Header entry-size offset. |
+| `TECFS_LOCATOR_OFFSET_TOTAL_VOLUMES` | `06h` | Header total-volume count offset. |
+| `TECFS_LOCATOR_OFFSET_USER_VOLUMES` | `07h` | Header user-volume count offset. |
+| `TECFS_LOCATOR_OFFSET_SPARE_VOLUME` | `08h` | Header reserved work-volume index offset. |
+| `TECFS_LOCATOR_OFFSET_VOLUME_SECTORS` | `09h` | Header sectors-per-volume field offset. |
+| `TECFS_LOCATOR_OFFSET_GENERATION` | `0Dh` | Header generation field offset. |
+| `TECFS_LOCATOR_OFFSET_CHECKSUM` | `11h` | Header checksum offset. |
+| `TECFS_LOCATOR_OFFSET_ENTRIES` | `20h` | First volume record offset. |
+| `TECFS_LOCATOR_ENTRY_VOLUME` | `00h` | Volume record volume-number offset. |
+| `TECFS_LOCATOR_ENTRY_ROLE` | `01h` | Volume record role offset. |
+| `TECFS_LOCATOR_ENTRY_FLAGS` | `02h` | Volume record flags offset. |
+| `TECFS_LOCATOR_ENTRY_START_LBA` | `03h` | Volume record absolute-start-LBA offset. |
+| `TECFS_LOCATOR_ENTRY_SECTORS` | `07h` | Volume record sector-count offset. |
+| `TECFS_LOCATOR_ENTRY_GENERATION` | `0Bh` | Volume record generation offset. |
+| `TECFS_LOCATOR_ENTRY_CHECKSUM` | `0Fh` | Volume record checksum offset. |
+| `TECFS_LOCATOR_ROLE_USER` | `01h` | Ordinary user volume role. |
+| `TECFS_LOCATOR_ROLE_WORK` | `02h` | Reserved work/safety volume role. |
+| `TECFS_LOCATOR_FLAG_ACTIVE` | `01h` | Volume record is active/valid. |
 
 The TEC-FS locator sector is a card-level sector, not part of any single
 volume. The current contract places it at absolute LBA 1 on a TEC-formatted
-MBR/FAT32 card. LBA 0 remains the MBR. The locator records the volume table used
-by the TEC-side mount path; each 128 MiB TEC-FS volume occupies 262,144
-512-byte sectors. Future mount code should read this sector, validate its magic
-and checksum, then use its volume-start table instead of parsing FAT32
-directories on the TEC.
+MBR/FAT32 card. LBA 0 remains the MBR. The locator starts with a 32-byte header
+whose magic is `TFS1`, then stores 16-byte volume records. Each record contains
+the volume number, role, flags, absolute start LBA, sector count, generation, and
+checksum. Each 128 MiB TEC-FS volume occupies 262,144 512-byte sectors. Future
+mount code should read this sector, validate its magic and checksum, then use its
+volume-start table instead of parsing FAT32 directories on the TEC.
 
 The sector I/O contract uses `TECFS_PARAM_SECTOR_0..3` for the sector to pass
 to the driver hook and `TECFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers
