@@ -89,6 +89,48 @@ control.
 The fixed ROM should preserve unrelated `SYS_CTRL` bits when switching banks.
 Only the expansion-selection bits should be changed.
 
+## Monitor RST 10h Dispatch Plan
+
+The monitor should expose TecMate expansion services through RST 10h rather
+than asking applications to know physical bank numbers. The fixed ROM remains
+the stable doorway; bank 0 owns the first published expansion service map.
+
+The near-term split should be:
+
+```text
+RST 10h C=50h-54h    fixed monitor bank-control services
+RST 10h C=60h        generic TecMate monitor-to-expansion bridge
+RST 10h C=61h-6Fh    reserved TecMate bridge/service range
+bank 0 80A0h         expansion service registry dispatcher
+banked services      VDU/TMS9918, TEC-FS, RTC tools, applications
+```
+
+The first bridge service should be deliberately small. `C=60h` selects the
+monitor bridge itself; `A` carries the TecMate service ID. The fixed-ROM shim
+should construct the same per-call stack-word request used by the current
+`callService` helper, enter bank 0 through the fixed `BiosBankCall` path, and
+let bank 0 dispatch through the registry. That keeps physical bank selection
+out of ordinary callers while still preserving the fixed ROM as the only code
+that changes `SYS_CTRL`.
+
+The bridge must preserve the existing bank-call rules:
+
+- fixed ROM masks `SYS_CTRL` so unrelated bits are preserved
+- for the `C=60h` bridge, `A` is the dispatch service ID and is not an
+  argument to the target service
+- target service arguments should use the remaining documented registers or
+  parameter blocks
+- banked services return with a normal `ret`
+- fixed ROM restores the previous `SYS_CTRL` state before returning to the
+  original caller
+- unsupported service IDs return a carry-set error rather than jumping through
+  an unknown address
+
+This plan does not make GLCD movement a near-term dependency. GLCD should stay
+as a containment boundary unless it blocks fixed-ROM space, service layout, or
+compatibility testing. The first bridge users should be TecMate shell launch,
+VDU/TMS9918 text services, and TEC-FS mount/volume/sector services.
+
 ## Service Registry Direction
 
 Direct `farCall bank,target` is good enough for the first proof programs, but it
