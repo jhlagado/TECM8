@@ -157,6 +157,12 @@ total selectable: 31
 In prose: the current layout exposes 30 user volumes plus one spare/work
 volume, for 31 selectable volumes total.
 
+`TECM8_TECFS_SELECT_VOLUME` reads the request-volume parameter, accepts values
+`0..30`, stores the accepted value as the active volume, clears status and last
+error, and returns `A=82h` with carry clear. A request of `31` or above returns
+the bad-volume error with carry set and leaves the previous active volume
+unchanged.
+
 Because a 4K block is eight 512-byte sectors, the current
 `TECM8_TECFS_MAP_BLOCK` computes a logical TEC-FS volume-set sector:
 

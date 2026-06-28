@@ -111,6 +111,9 @@ ClearParams:
         ld a,(TECFS_PARAM_LAST_ERROR)
         cp TECFS_ERR_BAD_VOLUME
         jp nz,FailSelectInvalid
+        ld a,(TECFS_PARAM_ACTIVE_VOLUME)
+        cp 0x1E
+        jp nz,FailSelectInvalid
 
         ld a,0x05
         ld (TECFS_PARAM_REQUEST_VOLUME),a
@@ -149,6 +152,46 @@ ClearParams:
         jp nz,FailTranslate
         ld a,(TECFS_PARAM_SECTOR_2)
         cp 0x14
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailTranslate
+
+        ld a,0x1D
+        ld (TECFS_PARAM_REQUEST_VOLUME),a
+        farCall 0x02,TECM8_TECFS_SELECT_VOLUME
+        jp c,FailSelectValid
+        ld a,0x34
+        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,0x12
+        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
+        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        jp c,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0xA0
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x91
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x74
+        jp nz,FailMapBlock
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailMapBlock
+
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
+        cp 0x82
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0xA2
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x91
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x74
         jp nz,FailTranslate
         ld a,(TECFS_PARAM_SECTOR_3)
         cp 0x00
@@ -249,6 +292,27 @@ ClearParams:
         ld (TECFS_PARAM_SECTOR_3),a
         farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
         jp c,FailTranslate
+
+        ld a,0x34
+        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,0x12
+        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
+        farCall 0x02,TECM8_TECFS_MAP_BLOCK
+        jp c,FailMapBlock
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0xA2
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x91
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x74
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailTranslate
 
         farCall 0x02,TECM8_TECFS_LOAD_RANGE
         jp nc,FailUnsupported

@@ -204,8 +204,8 @@ async function main(): Promise<void> {
   const params = readTrace(runtime, paramBase, 29);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
-  assertEqual(params[0], 0x05, 'active TEC-FS volume');
-  assertEqual(params[1], 0x05, 'last requested TEC-FS volume');
+  assertEqual(params[0], 0x1d, 'active TEC-FS volume');
+  assertEqual(params[1], 0x1d, 'last requested TEC-FS volume');
   assertEqual(params[2], 0xe0, 'unsupported status');
   assertEqual(params[3], 0xe0, 'last TEC-FS error');
   assertEqual(params[4], 128, 'TEC-FS volume MiB');
@@ -220,7 +220,7 @@ async function main(): Promise<void> {
   assertEqual(params[13], 0x12, 'TEC-FS mapped block index high');
   assertEqual(params[14], 0xa2, 'TEC-FS translated sector byte 0');
   assertEqual(params[15], 0x91, 'TEC-FS mapped sector byte 1');
-  assertEqual(params[16], 0x14, 'TEC-FS mapped sector byte 2');
+  assertEqual(params[16], 0x74, 'TEC-FS mapped sector byte 2');
   assertEqual(params[17], 0x00, 'TEC-FS mapped sector byte 3');
   assertEqual(params[18], 0x00, 'TEC-FS sector buffer low byte');
   assertEqual(params[19], 0x60, 'TEC-FS sector buffer high byte');
