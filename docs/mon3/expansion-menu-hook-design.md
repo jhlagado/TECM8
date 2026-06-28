@@ -6,15 +6,19 @@ MON3 should not hardcode TecMate as a special monitor feature. MON3 should expos
 one generic expansion menu hook. TecMate, BASIC, a games cartridge, or another
 bank-0 supervisor can install itself behind that hook.
 
-The first implementation should use a hybrid model:
+The first implementation should use a hybrid discovery model:
 
 1. MON3 keeps a static main-menu item called `Expansion`.
-2. The `Expansion` item calls a small MON3 launcher.
-3. The launcher checks an installed expansion menu vector in RAM.
-4. If the vector is zero, MON3 reports that no expansion menu is installed.
-5. If the vector is nonzero, MON3 transfers control to the installed expansion
-   menu provider.
-6. Bank 0 owns the richer policy: scanning subordinate banks, validating ROM
+2. MON3 has a small expansion discovery routine.
+3. Discovery selects physical bank 0 and checks a header at `8000h`.
+4. If the bank-0 header is valid, MON3 calls the header-provided install entry.
+5. The install entry writes expansion menu/service vectors into MON3 RAM.
+6. The `Expansion` item calls a small MON3 launcher.
+7. The launcher checks the installed expansion menu vector.
+8. If the vector is zero, MON3 reports that no expansion menu is installed.
+9. If the vector is nonzero, MON3 validates the bank/address pair and calls the
+   expansion menu provider through the monitor bank-call machinery.
+10. Bank 0 owns the richer policy: scanning subordinate banks, validating ROM
    headers, building service tables, and presenting an expansion-specific menu.
 
 This keeps MON3 generic and small while allowing bank 0 to behave like a
@@ -51,13 +55,50 @@ the existing menu engine.
 MON3 should provide only the socket:
 
 - a generic `Expansion` main-menu item
-- an installed expansion menu vector in RAM
-- an installed expansion service vector in RAM, if needed for `RST 10h` bridging
+- an expansion discovery routine that checks physical bank 0 for a valid header
+- installed expansion menu vector fields in RAM
+- installed expansion service vector fields in RAM, if needed for `RST 10h`
+  bridging
 - a small launcher routine that checks whether the menu vector is installed
 - compact failure handling when no expansion menu is installed
 
 MON3 should not know TecMate service numbers, VDU bank layout, TEC-FS bank
 layout, or cartridge-specific menu contents.
+
+The installed vectors must not be plain 16-bit addresses. A vector into the
+expansion window is a fixed four-byte v1 structure:
+
+```text
+byte 0  physical bank, 0..8
+byte 1  address low byte
+byte 2  address high byte
+byte 3  flags, reserved in v1 and written as 00h
+```
+
+An address of `0000h` means the vector is uninstalled. If installed, MON3 must
+validate that the bank is in range and the address is inside the expansion
+window, `8000h-BFFFh`, before transferring control.
+
+The v1 MON3 RAM contract should publish these fields:
+
+```text
+EXP_MENU_VEC_BANK   physical bank for the expansion menu provider
+EXP_MENU_VEC_ADDR   two-byte little-endian address, or 0000h if uninstalled
+EXP_MENU_VEC_FLAGS  reserved, must be 00h in v1
+
+EXP_SVC_VEC_BANK    physical bank for the expansion service dispatcher
+EXP_SVC_VEC_ADDR    two-byte little-endian address, or 0000h if uninstalled
+EXP_SVC_VEC_FLAGS   reserved, must be 00h in v1
+```
+
+Returning calls must go through the monitor bank-call machinery so the previous
+`SYS_CTRL` state is restored on `RET`. MON3 code should not open-code "select
+bank, then call" for installed vectors.
+
+For v1, both the expansion menu vector and expansion service vector are
+returning calls. A permanent handoff to an expansion operating environment can
+be added later with an explicit non-returning flag or separate vector, but it is
+not part of the first contract.
 
 ## Bank 0 Responsibilities
 
@@ -65,7 +106,8 @@ Bank 0 is the supervisor for a particular expansion system.
 
 For TecMate, bank 0 should:
 
-- run when entered through the expansion window
+- publish a valid supervisor header at `8000h`
+- provide an install entry through that header
 - install the MON3 expansion menu vector
 - optionally install a MON3 expansion service vector
 - scan subordinate banks if the ROM set uses bank headers
@@ -79,16 +121,18 @@ policy.
 
 ## ROM Presence
 
-The minimal ROM presence test should be a header at the start of each mapped
-bank:
+The minimal ROM presence test should be a header at the start of the mapped
+bank. MON3 only needs to discover physical bank 0 for the first version:
 
 ```text
-8000h  magic, for example "TM8R"
+8000h  magic, for example "EXPR"
 8004h  header version
 8005h  expected physical bank id
 8006h  ROM type
 8007h  flags
-8008h  optional install/menu/service table offsets
+8008h  install address low byte
+8009h  install address high byte
+800Ah  reserved, must be 00h in v1
 ```
 
 This header is not a routine entry point. It is data. Its job is to answer:
@@ -101,15 +145,42 @@ The only fixed address implied here is the hardware-mapped bank start
 `8000h`. Routine addresses remain private to the ROM set unless registered by
 bank 0.
 
+For bank 0, a valid install address allows MON3 to perform a late-bound install:
+
+```text
+save the pre-discovery SYS_CTRL state
+select bank 0
+read and validate header at 8000h
+if valid, install address != 0000h, and install address is in 8000h-BFFFh:
+    call bank 0 install address through the monitor bank-call machinery
+restore the pre-discovery SYS_CTRL state
+```
+
+Discovery must preserve the `SYS_CTRL` state that existed before probing bank 0.
+If the implementation selects bank 0 before using `BiosBankCall`, it must save
+the pre-probe state separately and restore it after the probe/install path.
+Otherwise `BiosBankCall` would restore to bank 0 rather than to the caller's
+original expansion mapping.
+
+The install routine must return normally. It may write MON3 vector RAM, installed
+flags, and optional display/debug state. It should not require MON3 to know any
+TecMate-specific service numbers.
+
+MON3 must reject malformed headers and malformed installed vectors. A bad bank
+number, a zero vector where installation is required, nonzero reserved flags,
+nonzero reserved header bytes, or an address outside `8000h-BFFFh` should leave
+the relevant vector uninstalled.
+
 ## Service Routing
 
 The first service bridge should be late-bound:
 
 ```text
 RST 10h expansion service request
-  -> MON3 checks expansion service vector
+  -> MON3 checks installed expansion service vector
   -> if zero: unknown service
-  -> if nonzero: call the installed supervisor dispatcher
+  -> if nonzero: validate bank/address and call the installed supervisor
+     dispatcher through the monitor bank-call machinery
 ```
 
 Bank 0 then owns the actual dispatch. It can use source-aware calls to private
@@ -124,19 +195,27 @@ complexity.
 ## Near-Term Implementation Shape
 
 The next implementation should replace the hardcoded `TecMate` main-menu item
-with a generic `Expansion` item.
+with a generic `Expansion` item and add MON3 discovery for a bank-0 supervisor
+header.
 
 Initial behaviour:
 
 ```text
+MON3 reset or first Expansion selection
+  clear installed expansion vectors
+  select physical bank 0
+  check 8000h header magic/version/bank/type
+  if valid:
+      call header install address through the monitor bank-call machinery
+
 Expansion selected
-  if EXP_MENU_VECTOR == 0000h:
+  if EXP_MENU_ADDR == 0000h:
       show no-expansion message and return to MON3
   else:
-      call or jump through the vector
+      validate EXP_MENU_BANK and EXP_MENU_ADDR
+      call EXP_MENU_ADDR through the monitor bank-call machinery
 ```
 
 TecMate bank 0 can then install that vector during its startup path and present
 its own menu. Later, the same mechanism can support BASIC, games, diagnostics,
 or another cartridge-like system without MON3 knowing those names.
-
