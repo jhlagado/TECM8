@@ -201,9 +201,13 @@ async function main(): Promise<void> {
   const resultAddr = symbolNumber(symbols, 'PROOF_RESULT');
   const traceBase = symbolNumber(symbols, 'PROOF_TRACE_BASE');
   const shellParamBase = symbolNumber(symbols, 'TECM8_SHELL_PARAM_BASE');
+  const shellSplashBuffer = symbolNumber(symbols, 'TECM8_SHELL_SPLASH_BUFFER');
+  const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const trace = readTrace(runtime, traceBase, 2);
   const params = readTrace(runtime, shellParamBase, 5);
+  const splash = readTrace(runtime, shellSplashBuffer, 8);
+  const tmsParams = readTrace(runtime, tmsParamBase, 8);
 
   assertEqual(result, PROOF_PASS, 'shell launch proof result marker');
   assertEqual(trace[0], 0x80, 'direct shell launch return');
@@ -212,7 +216,17 @@ async function main(): Promise<void> {
   assertEqual(params[1], 0x00, 'shell last error');
   assertEqual(params[2], 0x00, 'shell bank marker');
   assertEqual(params[3], 0x01, 'shell version marker');
-  assertEqual(params[4], 0x01, 'shell feature marker');
+  assertEqual(params[4], 0x03, 'shell feature marker');
+  assertEqual(splash[0], 0x54, 'shell splash T');
+  assertEqual(splash[1], 0x65, 'shell splash e');
+  assertEqual(splash[2], 0x63, 'shell splash c');
+  assertEqual(splash[3], 0x4d, 'shell splash M');
+  assertEqual(splash[4], 0x61, 'shell splash a');
+  assertEqual(splash[5], 0x74, 'shell splash t');
+  assertEqual(splash[6], 0x65, 'shell splash e');
+  assertEqual(splash[7], 0x00, 'shell splash terminator');
+  assertEqual(tmsParams[4], 0x07, 'shell splash cursor low');
+  assertEqual(tmsParams[5], 0x00, 'shell splash cursor high');
 
   writeFileSync(
     LAST_RUN,
@@ -223,6 +237,8 @@ async function main(): Promise<void> {
         resultMarker: result,
         trace,
         params,
+        splash,
+        tmsParams,
         finalPc: runtime.cpu.pc & 0xffff,
         finalSysCtrl: platformRuntime.state.system?.sysCtrl,
         finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,

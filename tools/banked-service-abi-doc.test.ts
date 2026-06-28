@@ -132,8 +132,10 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'TECM8_SHELL_PARAM_BANK',
     'TECM8_SHELL_PARAM_VERSION',
     'TECM8_SHELL_PARAM_FEATURES',
+    'TECM8_SHELL_SPLASH_BUFFER',
     'TECM8_SHELL_STATUS_OK',
     'TECM8_SHELL_FEATURE_ENTRY',
+    'TECM8_SHELL_FEATURE_SPLASH',
   ]) {
     assertDocRow(name);
   }

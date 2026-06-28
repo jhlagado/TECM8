@@ -12,6 +12,7 @@ PROOF_PASS                  .equ    0x42
 PROOF_FAIL_DIRECT           .equ    0xE0
 PROOF_FAIL_REGISTRY         .equ    0xE1
 PROOF_FAIL_PARAMS           .equ    0xE2
+PROOF_FAIL_SPLASH           .equ    0xE3
 PROOF_TRACE_BASE            .equ    0x3BC0
 PROOF_RESULT                .equ    0x3BD0
 
@@ -32,6 +33,8 @@ ClearShellParams:
         ld (PROOF_TRACE_BASE+0),a
         call CheckShellParams
         jp c,FailParams
+        call CheckShellSplash
+        jp c,FailSplash
 
         ld hl,TECM8_SHELL_PARAM_BASE
         ld b,16
@@ -47,6 +50,8 @@ ClearShellParamsAgain:
         ld (PROOF_TRACE_BASE+1),a
         call CheckShellParams
         jp c,FailParams
+        call CheckShellSplash
+        jp c,FailSplash
 
         ld a,PROOF_PASS
         ld (PROOF_RESULT),a
@@ -70,11 +75,37 @@ CheckShellParams:
         scf
         ret nz
         ld a,(TECM8_SHELL_PARAM_FEATURES)
-        cp TECM8_SHELL_FEATURE_ENTRY
+        cp TECM8_SHELL_FEATURE_ENTRY+TECM8_SHELL_FEATURE_SPLASH
         scf
         ret nz
         or a
         ret
+
+CheckShellSplash:
+        ld hl,TECM8_SHELL_SPLASH_BUFFER
+        ld de,ExpectedSplash
+CheckShellSplashNext:
+        ld a,(de)
+        cp (hl)
+        scf
+        ret nz
+        inc hl
+        inc de
+        or a
+        jr nz,CheckShellSplashNext
+        ld a,(TECM8_TMS_PARAM_CURSOR_LO)
+        cp 0x07
+        scf
+        ret nz
+        ld a,(TECM8_TMS_PARAM_CURSOR_HI)
+        cp 0x00
+        scf
+        ret nz
+        or a
+        ret
+
+ExpectedSplash:
+        .db     "TecMate",0
 
 FailDirect:
         ld a,PROOF_FAIL_DIRECT
@@ -84,6 +115,9 @@ FailRegistry:
         jr Fail
 FailParams:
         ld a,PROOF_FAIL_PARAMS
+        jr Fail
+FailSplash:
+        ld a,PROOF_FAIL_SPLASH
 Fail:
         ld (PROOF_RESULT),a
         halt

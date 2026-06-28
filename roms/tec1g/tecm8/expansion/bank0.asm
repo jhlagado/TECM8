@@ -108,16 +108,43 @@ Tecm8ServiceCallShellEntry:
         ld (TECM8_SHELL_PARAM_BANK),a
         ld a,TECM8_EXPANSION_VERSION
         ld (TECM8_SHELL_PARAM_VERSION),a
-        ld a,TECM8_SHELL_FEATURE_ENTRY
+        ld a,TECM8_SHELL_FEATURE_ENTRY+TECM8_SHELL_FEATURE_SPLASH
         ld (TECM8_SHELL_PARAM_FEATURES),a
         xor a
         ld (TECM8_SHELL_PARAM_STATUS),a
         ld (TECM8_SHELL_PARAM_LAST_ERROR),a
+        call Tecm8ShellCopySplash
+        ld (TECM8_TMS_PARAM_CURSOR_LO),a
+        ld (TECM8_TMS_PARAM_CURSOR_HI),a
+        ld hl,TECM8_SHELL_SPLASH_BUFFER
+        ld (TECM8_TMS_PARAM_STRING_LO),hl
+        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_PUT_STRING
+        jr c,Tecm8ShellSplashError
         ld a,0x80
         or a
         ret
+Tecm8ShellSplashError:
+        ld (TECM8_SHELL_PARAM_LAST_ERROR),a
+        ld (TECM8_SHELL_PARAM_STATUS),a
+        scf
+        ret
 
-        .org    0x8160
+Tecm8ShellCopySplash:
+        ld hl,Tecm8ShellSplashText
+        ld de,TECM8_SHELL_SPLASH_BUFFER
+Tecm8ShellCopySplashNext:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jr nz,Tecm8ShellCopySplashNext
+        ret
+
+Tecm8ShellSplashText:
+        .db     "TecMate",0
+
+        .org    0x8180
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
 

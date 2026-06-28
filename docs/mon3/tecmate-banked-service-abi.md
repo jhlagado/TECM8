@@ -126,12 +126,13 @@ extended future registry record that includes the bank-local service selector.
 ## Bank 0: Shell Entry
 
 Physical bank 0 owns the first resident TecMate shell and launcher boundary.
-The current entry is a descriptor stub; it gives MON3/menu code a stable service
-to call before the full shell loop is moved into the expansion ROM.
+The current entry publishes a descriptor and writes a short splash string through
+the bank-1 VDU dispatcher. It gives MON3/menu code a stable service to call
+before the full shell loop is moved into the expansion ROM.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
-| `TECM8_SHELL_ENTRY` | `8120h` | Publishes service descriptor, returns `A=80h`, carry clear. |
+| `TECM8_SHELL_ENTRY` | `8120h` | Publishes service descriptor and splash; on success returns `A=80h`, carry clear. |
 
 Shell parameter block:
 
@@ -143,6 +144,7 @@ Shell parameter block:
 | `TECM8_SHELL_PARAM_BANK` | `3BA2h` | Service bank marker. |
 | `TECM8_SHELL_PARAM_VERSION` | `3BA3h` | Service ABI version. |
 | `TECM8_SHELL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
+| `TECM8_SHELL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 
 Shell status and feature values:
 
@@ -150,6 +152,11 @@ Shell status and feature values:
 | --- | ---: | --- |
 | `TECM8_SHELL_STATUS_OK` | `00h` | Success. |
 | `TECM8_SHELL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
+| `TECM8_SHELL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
+
+If the VDU splash call fails, `TECM8_SHELL_ENTRY` stores the returned error code
+in `TECM8_SHELL_PARAM_STATUS` and `TECM8_SHELL_PARAM_LAST_ERROR`, then returns
+with carry set.
 
 ## Bank 1: VDU/TMS9918
 
