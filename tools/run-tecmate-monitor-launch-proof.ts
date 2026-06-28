@@ -164,13 +164,15 @@ function main(): void {
   const launchAddress = symbolNumber('launchTecMate');
   const { runtime, platformRuntime } = loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
-  const trace = readTrace(runtime, TECM8_DEMO_TRACE_BASE, 8);
+  const trace = readTrace(runtime, TECM8_DEMO_TRACE_BASE, 9);
 
   assertEqual(runtime.cpu.pc, RETURN_STUB + 1, 'return stub halt pc');
   assertEqual(trace[0], 0x00, 'bank 0 entry marker');
   assertEqual(trace[4], 0x81, 'VDU service marker');
   assertEqual(trace[5], 0x82, 'TEC-FS service marker');
   assertEqual(trace[6], 0x83, 'RTC service marker');
+  assertEqual(trace[7], 0x70, 'input bootstrap marker');
+  assertEqual(trace[8], 0x71, 'shell bootstrap marker');
   assertEqual(platformRuntime.state.system?.memoryExpansionPhysicalBank ?? -1, 0, 'final physical bank');
 
   writeFileSync(

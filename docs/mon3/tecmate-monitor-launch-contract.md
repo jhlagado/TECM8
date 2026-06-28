@@ -41,9 +41,10 @@ the first service chain:
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
-        callService TECM8_SERVICE_VDU_INIT
-        callService TECM8_SERVICE_TECFS_MOUNT
-        callService TECM8_SERVICE_RTC_TOOL
+        call Tecm8BootstrapVdu
+        call Tecm8BootstrapTecfs
+        call Tecm8BootstrapInput
+        call Tecm8BootstrapShell
         ret
 ```
 

@@ -13,12 +13,32 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
+        call Tecm8BootstrapVdu
+        call Tecm8BootstrapTecfs
+        call Tecm8BootstrapInput
+        call Tecm8BootstrapShell
+        ret
+
+Tecm8BootstrapVdu:
         callService TECM8_SERVICE_VDU_INIT
         ld (TECM8_DEMO_TRACE_4),a
+        ret
+
+Tecm8BootstrapTecfs:
         callService TECM8_SERVICE_TECFS_MOUNT
         ld (TECM8_DEMO_TRACE_5),a
+        ret
+
+Tecm8BootstrapInput:
+        ld a,TECM8_BOOTSTRAP_INPUT_READY
+        ld (TECM8_DEMO_TRACE_7),a
+        ret
+
+Tecm8BootstrapShell:
         callService TECM8_SERVICE_RTC_TOOL
         ld (TECM8_DEMO_TRACE_6),a
+        ld a,TECM8_BOOTSTRAP_SHELL_READY
+        ld (TECM8_DEMO_TRACE_8),a
         ret
 
         .org    TECM8_SERVICE_CALL
