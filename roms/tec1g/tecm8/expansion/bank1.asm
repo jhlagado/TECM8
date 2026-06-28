@@ -50,6 +50,23 @@ TECM8_EXPANSION_VERSION       .equ    0x01
         ld a,0x81
         ret
 
+        .org    TECM8_VDU_PUT_STRING
+@vduPutString:
+        ld hl,(TECM8_TMS_PARAM_STRING_LO)
+vduPutStringNext:
+        ld a,(hl)
+        or a
+        jr z,vduPutStringDone
+        ld (TECM8_TMS_PARAM_VALUE),a
+        push hl
+        call vduPutChar
+        pop hl
+        inc hl
+        jr vduPutStringNext
+vduPutStringDone:
+        ld a,0x81
+        ret
+
         .org    0x8080
 @tmsInit:
         ld a,0x07

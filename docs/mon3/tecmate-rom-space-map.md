@@ -61,7 +61,7 @@ Terms:
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `253` | `389` | `8185h` | `15995` |
-| 1 | VDU/TMS9918 boundary | `167` | `261` | `8105h` | `16123` |
+| 1 | VDU/TMS9918 boundary | `188` | `261` | `8105h` | `16123` |
 | 2 | TEC-FS boundary and block mapper | `373` | `645` | `8285h` | `15739` |
 | 3 | RTC boundary | `65` | `261` | `8105h` | `16123` |
 | 4 | GLCD boundary | `53` | `261` | `8105h` | `16123` |
@@ -70,7 +70,7 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `935`
+Expansion occupied bytes: `956`
 
 Expansion high-water span total: `1841`
 

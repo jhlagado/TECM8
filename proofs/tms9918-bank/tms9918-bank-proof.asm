@@ -16,6 +16,7 @@ TMS_PROOF_TRACE_2           .equ    TMS_PROOF_TRACE_BASE+2
 TMS_PROOF_TRACE_3           .equ    TMS_PROOF_TRACE_BASE+3
 TMS_PROOF_TRACE_4           .equ    TMS_PROOF_TRACE_BASE+4
 TMS_PROOF_TRACE_5           .equ    TMS_PROOF_TRACE_BASE+5
+TMS_PROOF_TRACE_6           .equ    TMS_PROOF_TRACE_BASE+6
 TMS_PROOF_RESULT            .equ    0x3B20
 
 ;! out carry,zero
@@ -65,6 +66,11 @@ ClearTrace:
         farCall 0x01,TECM8_VDU_PUT_CHAR
         ld (TMS_PROOF_TRACE_5),a
 
+        ld hl,TmsProofString
+        ld (TECM8_TMS_PARAM_STRING_LO),hl
+        farCall 0x01,TECM8_VDU_PUT_STRING
+        ld (TMS_PROOF_TRACE_6),a
+
         ld c,TECM8_BIOS_SYS_GET
         rst 10H
         ld (TMS_PROOF_TRACE_3),a
@@ -72,3 +78,6 @@ ClearTrace:
         ld a,PROOF_PASS
         ld (TMS_PROOF_RESULT),a
         halt
+
+TmsProofString:
+        .db     "O","K",0

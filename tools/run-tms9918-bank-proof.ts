@@ -211,9 +211,9 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const traceBase = symbolNumber(symbols, 'TMS_PROOF_TRACE_BASE');
   const resultAddr = symbolNumber(symbols, 'TMS_PROOF_RESULT');
-  const trace = readTrace(runtime, traceBase, 6);
+  const trace = readTrace(runtime, traceBase, 7);
   const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
-  const tmsParams = readTrace(runtime, tmsParamBase, 6);
+  const tmsParams = readTrace(runtime, tmsParamBase, 8);
   const result = runtime.hardware.memory[resultAddr];
   const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();
 
@@ -228,11 +228,14 @@ async function main(): Promise<void> {
   assertEqual(trace[3], INITIAL_SYS_CTRL, 'SYS_CTRL restored after TMS writes');
   assertEqual(trace[4], 0x81, 'VDU set cursor return value');
   assertEqual(trace[5], 0x81, 'VDU put char return value');
+  assertEqual(trace[6], 0x81, 'VDU put string return value');
   assertEqual(tms9918.registers[7] ?? 0, 0xf4, 'TMS register 7');
   assertEqual(tms9918.vram[0x0123] ?? 0, 0x5a, 'TMS VRAM write');
   assertEqual(tms9918.vram[0x0124] ?? 0, 0x42, 'VDU put character write');
-  assertEqual(tmsParams[4], 0x25, 'VDU cursor low after put character');
-  assertEqual(tmsParams[5], 0x01, 'VDU cursor high after put character');
+  assertEqual(tms9918.vram[0x0125] ?? 0, 0x4f, 'VDU string first character write');
+  assertEqual(tms9918.vram[0x0126] ?? 0, 0x4b, 'VDU string second character write');
+  assertEqual(tmsParams[4], 0x27, 'VDU cursor low after put string');
+  assertEqual(tmsParams[5], 0x01, 'VDU cursor high after put string');
 
   writeFileSync(
     LAST_RUN,
