@@ -98,9 +98,13 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'TECM8_TMS_PARAM_REGISTER',
     'TECM8_TMS_PARAM_ADDR_LO',
     'TECM8_TMS_PARAM_ADDR_HI',
+    'TECM8_TMS_PARAM_CURSOR_LO',
+    'TECM8_TMS_PARAM_CURSOR_HI',
   ]) {
     assertDocRow(name);
   }
+  assert.match(doc, /Minimal VDU text-console contract/);
+  assert.match(doc, /writes `TECM8_TMS_PARAM_VALUE` at the current cursor/);
 });
 
 test('banked service ABI doc covers bank 0 shell entry slots and parameters', () => {

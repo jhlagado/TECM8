@@ -15,6 +15,7 @@ TMS_PROOF_TRACE_1           .equ    TMS_PROOF_TRACE_BASE+1
 TMS_PROOF_TRACE_2           .equ    TMS_PROOF_TRACE_BASE+2
 TMS_PROOF_TRACE_3           .equ    TMS_PROOF_TRACE_BASE+3
 TMS_PROOF_TRACE_4           .equ    TMS_PROOF_TRACE_BASE+4
+TMS_PROOF_TRACE_5           .equ    TMS_PROOF_TRACE_BASE+5
 TMS_PROOF_RESULT            .equ    0x3B20
 
 ;! out carry,zero
@@ -52,9 +53,17 @@ ClearTrace:
         ld (TECM8_TMS_PARAM_VALUE),a
         farCall 0x01,TECM8_TMS_WRITE_VRAM
 
-        ld a,0x41
+        ld a,0x24
+        ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld a,0x01
+        ld (TECM8_TMS_PARAM_ADDR_HI),a
+        farCall 0x01,TECM8_VDU_SET_CURSOR
+        ld (TMS_PROOF_TRACE_4),a
+
+        ld a,0x42
         ld (TECM8_TMS_PARAM_VALUE),a
         farCall 0x01,TECM8_VDU_PUT_CHAR
+        ld (TMS_PROOF_TRACE_5),a
 
         ld c,TECM8_BIOS_SYS_GET
         rst 10H

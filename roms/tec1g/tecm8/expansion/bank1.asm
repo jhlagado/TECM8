@@ -28,14 +28,27 @@ TECM8_EXPANSION_VERSION       .equ    0x01
 
         .org    0x8030
 @vduSetCursor:
+        ld hl,(TECM8_TMS_PARAM_ADDR_LO)
+        res 6,h
+        res 7,h
+        ld (TECM8_TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
         ret
 
         .org    0x8040
 @vduPutChar:
-        xor a
+        ld a,(TECM8_TMS_PARAM_CURSOR_LO)
         ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld a,(TECM8_TMS_PARAM_CURSOR_HI)
         ld (TECM8_TMS_PARAM_ADDR_HI),a
-        jp tmsWriteVram
+        call tmsWriteVram
+        ld hl,(TECM8_TMS_PARAM_CURSOR_LO)
+        inc hl
+        res 6,h
+        res 7,h
+        ld (TECM8_TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
+        ret
 
         .org    0x8080
 @tmsInit:

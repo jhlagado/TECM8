@@ -104,8 +104,8 @@ Physical bank 1 currently owns the first TMS9918-facing services.
 | `TECM8_VDU_ENTRY` | `8000h` | Bank entry marker. |
 | `TECM8_VDU_INIT` | `8010h` | Calls TMS init and returns `A=81h`, carry clear. |
 | `TECM8_VDU_CLEAR` | `8020h` | Writes zero to VRAM address `0000h`. |
-| `TECM8_VDU_SET_CURSOR` | `8030h` | Reserved stub. |
-| `TECM8_VDU_PUT_CHAR` | `8040h` | Writes parameter byte to VRAM address `0000h`. |
+| `TECM8_VDU_SET_CURSOR` | `8030h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
+| `TECM8_VDU_PUT_CHAR` | `8040h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
 | `TECM8_TMS_INIT` | `8080h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
 | `TECM8_TMS_SET_REGISTER` | `8090h` | Writes TMS register from the parameter block. |
 | `TECM8_TMS_WRITE_VRAM` | `80A0h` | Writes one byte to TMS VRAM from the parameter block. |
@@ -126,6 +126,19 @@ TMS parameter block:
 | `TECM8_TMS_PARAM_REGISTER` | `3B01h` | TMS register number. |
 | `TECM8_TMS_PARAM_ADDR_LO` | `3B02h` | VRAM address low byte. |
 | `TECM8_TMS_PARAM_ADDR_HI` | `3B03h` | VRAM address high byte. |
+| `TECM8_TMS_PARAM_CURSOR_LO` | `3B04h` | VDU cursor low byte. |
+| `TECM8_TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
+
+Minimal VDU text-console contract:
+
+- `TECM8_VDU_INIT` prepares the TMS backend and returns `A=81h`.
+- `TECM8_VDU_CLEAR` currently clears the first VRAM byte only; full-screen clear
+  is still future work.
+- `TECM8_VDU_SET_CURSOR` takes `TECM8_TMS_PARAM_ADDR_LO/HI` as the cursor
+  address and masks the high byte to the 16K VRAM range.
+- `TECM8_VDU_PUT_CHAR` writes `TECM8_TMS_PARAM_VALUE` at the current cursor and
+  advances the cursor by one byte.
+- The low-level TMS calls remain available for backend work and diagnostics.
 
 ## Bank 2: TEC-FS
 
