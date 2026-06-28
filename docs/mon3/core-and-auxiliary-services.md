@@ -310,6 +310,39 @@ Before changing the ROM, these should be measured from a buildable source tree:
 - exact ROM budget required by Tiny BASIC and its required service calls
 
 The first practical build target should be an SD-only MON3 profile with PATA
-removed, storage UI separated from storage services, and the GLCD banner moved
-out. That gives a measured base before deciding whether GLCD terminal code,
-RTC UI, or the disassembler must also move.
+removed and storage UI separated from storage services. GLCD banner removal is a
+measured optional cut if it blocks that work, not a near-term goal by itself.
+That gives a measured base before deciding whether GLCD terminal code, RTC UI,
+or the disassembler must also move.
+
+## Near-Term Shrink Checklist
+
+The immediate MON3-light work should not try to shrink everything at once. The
+expansion ROM now has enough space to carry TecMate services, so fixed-ROM
+pressure should be relieved in the order that best supports the operating-system
+direction:
+
+1. Keep the current monitor command set, reset/restart behaviour, disassembler,
+   keyboard/LCD/seven-segment basics, timing, sound, and bank-switching services.
+2. Replace the old PATA/FAT32 default with the TEC-FS direction: fixed ROM should
+   keep or rebuild compact SD sector primitives, while TEC-FS mount, volume,
+   locator, block, and file services grow behind the banked ABI.
+3. Remove PATA from the standard ROM profile. PATA is board-specific and should
+   live in an auxiliary compatibility bank if it remains supported.
+4. Move storage UI, RAM backup/restore flows, Intel HEX storage workflows, and
+   long storage messages out of fixed ROM. Keep compact error codes and service
+   calls instead.
+5. Treat FAT32 compatibility as tooling or compatibility code, not the normal
+   runtime filesystem. The TEC-formatted FAT32 card plus TEC-FS locator model
+   lets the TEC use absolute sectors without parsing FAT32 directories during
+   normal operation.
+6. Leave RTC hardware services alone for now if they remain resident and useful.
+   RTC setup UI and PRAM viewer can move later, but they are lower priority than
+   storage replacement.
+7. Treat GLCD as low priority unless it blocks another change. The current aim is
+   to use TMS9918/VDU text services for TecMate, keep GLCD behind a banked
+   boundary, and avoid spending near-term effort moving or rewriting GLCD code
+   unless fixed-ROM space, service layout, or compatibility testing requires it.
+8. Re-measure after each cut. Do not remove the disassembler or classic monitor
+   commands until storage replacement has been measured and the remaining
+   pressure is known.

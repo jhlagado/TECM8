@@ -99,9 +99,9 @@ The most important fixed expansion entry points are:
 
 - The immediate pressure is still in fixed monitor ROM, not the expansion ROM.
 - Banked services are cheap at this stage; the total occupied expansion code is
-  under 1K.
+  still only a little over 1K.
 - Bank 0 layout now needs active care because it contains both the registry and
-  shell launcher boundary. The `8160h` info marker leaves room for registry
+  shell launcher boundary. The `8180h` info marker leaves room for registry
   growth, but it should move again if the dispatcher gets larger.
 - The next meaningful fixed-ROM space work should focus on replacing the old
   PATA/FAT32 storage path with the TEC-FS direction and moving user-interface
