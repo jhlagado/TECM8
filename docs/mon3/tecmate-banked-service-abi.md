@@ -50,6 +50,9 @@ final banked service still receives the caller's original `AF`, `DE`, and `HL`.
 | Constant | Value | Meaning |
 | --- | ---: | --- |
 | `TECM8_SERVICE_CALL` | `80A0h` | Bank 0 registry dispatcher. |
+| `TECM8_SERVICE_REGISTRY` | `8170h` | Bank 0 assembly-time service registry table. |
+| `TECM8_SERVICE_REGISTRY_ENTRY_SIZE` | `04h` | Bytes per service registry entry: service ID, bank, address low, address high. |
+| `TECM8_SERVICE_REGISTRY_END` | `00h` | Registry terminator service ID. |
 | `TECM8_SERVICE_VDU_INIT` | `01h` | VDU init service ID. |
 | `TECM8_SERVICE_VDU_INIT_BANK` | `01h` | VDU init physical bank. |
 | `TECM8_SERVICE_VDU_INIT_ADDR` | `8010h` | VDU init address. |
@@ -66,6 +69,19 @@ final banked service still receives the caller's original `AF`, `DE`, and `HL`.
 | `TECM8_SERVICE_SHELL_ENTRY_BANK` | `00h` | Resident shell physical bank. |
 | `TECM8_SERVICE_SHELL_ENTRY_ADDR` | `8120h` | Resident shell entry address. |
 | `TECM8_SERVICE_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
+
+The registry table is laid out as repeated four-byte records:
+
+```text
+byte 0: service ID
+byte 1: physical expansion bank
+byte 2: entry address low byte
+byte 3: entry address high byte
+```
+
+The current dispatcher still uses explicit comparisons for minimum ROM risk, but
+the table is now present in bank 0 as the stable published map for tools, docs,
+and a later table-driven dispatcher.
 
 ## Bank 0: Shell Entry
 
