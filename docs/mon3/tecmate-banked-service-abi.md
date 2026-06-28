@@ -141,6 +141,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TECM8_TECFS_LOAD_RANGE` | `8050h` | Explicit unsupported error. |
 | `TECM8_TECFS_SAVE_RANGE` | `8060h` | Explicit unsupported error. |
 | `TECM8_TECFS_MAP_BLOCK` | `8070h` | Maps active volume/block index to a 32-bit sector number. |
+| `TECM8_TECFS_TRANSLATE_SECTOR` | `8080h` | Adds the mounted image-base LBA to the logical sector in place. |
 
 Current TEC-FS geometry:
 
@@ -163,10 +164,12 @@ Because a 4K block is eight 512-byte sectors, the current
 sector = activeVolume * 40000h + blockIndex * 8
 ```
 
-This is not yet an absolute card LBA. The locator-aware mount step will add the
-card-level start sector for the TEC-FS image area before issuing raw SD reads or
-writes. Until that step exists, `TECFS_PARAM_SECTOR_0..3` should be read as the
-logical sector inside the TEC-FS volume set produced by the mapper.
+This is not yet an absolute card LBA. `TECM8_TECFS_TRANSLATE_SECTOR` performs
+the current logical-to-card translation by adding the mounted image-base LBA to
+`TECFS_PARAM_SECTOR_0..3` in place. For now the image-base LBA is the fixed
+contract value `00000002h`, immediately after the MBR at LBA 0 and the locator
+at LBA 1. A later mount implementation should replace that fixed base with the
+value read from the locator sector.
 
 TEC-FS parameter block:
 
@@ -222,6 +225,10 @@ TEC-FS card locator constants:
 | `TECFS_VOLUME_SECTORS_1` | `00h` | 128 MiB volume sector count byte 1. |
 | `TECFS_VOLUME_SECTORS_2` | `04h` | 128 MiB volume sector count byte 2. |
 | `TECFS_VOLUME_SECTORS_3` | `00h` | 128 MiB volume sector count byte 3. |
+| `TECFS_IMAGE_BASE_LBA_0` | `02h` | Current image-base LBA byte 0. |
+| `TECFS_IMAGE_BASE_LBA_1` | `00h` | Current image-base LBA byte 1. |
+| `TECFS_IMAGE_BASE_LBA_2` | `00h` | Current image-base LBA byte 2. |
+| `TECFS_IMAGE_BASE_LBA_3` | `00h` | Current image-base LBA byte 3. |
 
 The TEC-FS locator sector is a card-level sector, not part of any single
 volume. The current contract places it at absolute LBA 1 on a TEC-formatted
@@ -231,10 +238,10 @@ by the TEC-side mount path; each 128 MiB TEC-FS volume occupies 262,144
 and checksum, then use its volume-start table instead of parsing FAT32
 directories on the TEC.
 
-The sector I/O contract currently uses `TECFS_PARAM_SECTOR_0..3` for the
-logical TEC-FS volume-set sector and `TECFS_PARAM_BUFFER_LO..HI` for the RAM
-buffer. A later locator-aware mount will translate that logical sector to an
-absolute card LBA before calling the raw SD driver. The current implementation
+The sector I/O contract uses `TECFS_PARAM_SECTOR_0..3` for the sector to pass
+to the driver hook and `TECFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers
+that start with a volume/block pair should call `TECM8_TECFS_MAP_BLOCK`, then
+`TECM8_TECFS_TRANSLATE_SECTOR`, then read or write. The current implementation
 records the requested sector driver hook operation, validates the request, and
 then calls a replaceable hook. The default hook reports that no low-level SD
 sector driver is linked behind the boundary yet.

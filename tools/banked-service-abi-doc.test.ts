@@ -129,6 +129,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECM8_TECFS_LOAD_RANGE',
     'TECM8_TECFS_SAVE_RANGE',
     'TECM8_TECFS_MAP_BLOCK',
+    'TECM8_TECFS_TRANSLATE_SECTOR',
     'TECFS_PARAM_BASE',
     'TECFS_PARAM_ACTIVE_VOLUME',
     'TECFS_PARAM_REQUEST_VOLUME',
@@ -169,6 +170,10 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TECFS_VOLUME_SECTORS_1',
     'TECFS_VOLUME_SECTORS_2',
     'TECFS_VOLUME_SECTORS_3',
+    'TECFS_IMAGE_BASE_LBA_0',
+    'TECFS_IMAGE_BASE_LBA_1',
+    'TECFS_IMAGE_BASE_LBA_2',
+    'TECFS_IMAGE_BASE_LBA_3',
     'TECFS_STATUS_OK',
     'TECFS_ERR_BAD_VOLUME',
     'TECFS_ERR_BAD_BLOCK',
@@ -187,6 +192,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /TEC-FS locator sector/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /262,144/);
+  assert.match(doc, /logical-to-card translation/);
+  assert.match(doc, /image-base LBA/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {

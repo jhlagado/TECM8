@@ -24,6 +24,7 @@ PROOF_FAIL_BAD_SECTOR       .equ    0xEB
 PROOF_FAIL_DRIVER_HOOK      .equ    0xEC
 PROOF_FAIL_LOCATOR          .equ    0xED
 PROOF_FAIL_VOLUME_SECTORS   .equ    0xEE
+PROOF_FAIL_TRANSLATE        .equ    0xEF
 TECFS_PROOF_TRACE_BASE      .equ    0x3B80
 TECFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -136,6 +137,44 @@ ClearParams:
         cp 0x00
         jp nz,FailMapBlock
 
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
+        cp 0x82
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0xA2
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x91
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x14
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailTranslate
+
+        ld a,0xFF
+        ld (TECFS_PARAM_SECTOR_0),a
+        ld (TECFS_PARAM_SECTOR_1),a
+        xor a
+        ld (TECFS_PARAM_SECTOR_2),a
+        ld (TECFS_PARAM_SECTOR_3),a
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_0)
+        cp 0x01
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_1)
+        cp 0x00
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x01
+        jp nz,FailTranslate
+        ld a,(TECFS_PARAM_SECTOR_3)
+        cp 0x00
+        jp nz,FailTranslate
+
         ld a,0x80
         ld (TECFS_PARAM_BLOCK_INDEX_HI),a
         farCall 0x02,TECM8_TECFS_MAP_BLOCK
@@ -155,6 +194,8 @@ ClearParams:
         ld hl,0x6000
         ld (TECFS_PARAM_BUFFER_LO),hl
 
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
         farCall 0x02,TECM8_TECFS_READ
         jp nc,FailReadContract
         cp TECFS_ERR_NO_DRIVER
@@ -188,8 +229,9 @@ ClearParams:
         ld (TECFS_PARAM_BUFFER_LO),hl
         ld a,0x7C
         ld (TECFS_PARAM_SECTOR_2),a
-        xor a
+        ld a,0x02
         ld (TECFS_PARAM_SECTOR_0),a
+        xor a
         ld (TECFS_PARAM_SECTOR_1),a
         ld (TECFS_PARAM_SECTOR_3),a
         farCall 0x02,TECM8_TECFS_READ
@@ -205,6 +247,8 @@ ClearParams:
         ld (TECFS_PARAM_SECTOR_2),a
         xor a
         ld (TECFS_PARAM_SECTOR_3),a
+        farCall 0x02,TECM8_TECFS_TRANSLATE_SECTOR
+        jp c,FailTranslate
 
         farCall 0x02,TECM8_TECFS_LOAD_RANGE
         jp nc,FailUnsupported
@@ -259,6 +303,9 @@ FailLocator:
         jr Fail
 FailVolumeSectors:
         ld a,PROOF_FAIL_VOLUME_SECTORS
+        jr Fail
+FailTranslate:
+        ld a,PROOF_FAIL_TRANSLATE
 Fail:
         ld (TECFS_PROOF_RESULT),a
         halt

@@ -218,7 +218,7 @@ async function main(): Promise<void> {
   assertEqual(params[11], 31, 'TEC-FS total selectable volumes');
   assertEqual(params[12], 0x34, 'TEC-FS mapped block index low');
   assertEqual(params[13], 0x12, 'TEC-FS mapped block index high');
-  assertEqual(params[14], 0xa0, 'TEC-FS mapped sector byte 0');
+  assertEqual(params[14], 0xa2, 'TEC-FS translated sector byte 0');
   assertEqual(params[15], 0x91, 'TEC-FS mapped sector byte 1');
   assertEqual(params[16], 0x14, 'TEC-FS mapped sector byte 2');
   assertEqual(params[17], 0x00, 'TEC-FS mapped sector byte 3');

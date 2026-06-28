@@ -46,6 +46,10 @@ TECFS_TOTAL_VOLUMES           .equ    31
 @tecfsMapBlock:
         jp tecfsMapBlockImpl
 
+        .org    0x8080
+@tecfsTranslateSector:
+        jp tecfsTranslateSectorImpl
+
         .org    TECM8_ABI_BANK2_NESTED
 @BankAbiNestedTarget:
         ld c,TECM8_BIOS_SYS_GET
@@ -150,6 +154,26 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
+@tecfsTranslateSectorImpl:
+        call tecfsValidateSector
+        jr c,tecfsBadSector
+        ld hl,(TECFS_PARAM_SECTOR_0)
+        ld de,TECFS_IMAGE_BASE_LBA_0 + (TECFS_IMAGE_BASE_LBA_1 * 256)
+        add hl,de
+        ld (TECFS_PARAM_SECTOR_0),hl
+        ld a,(TECFS_PARAM_SECTOR_2)
+        adc a,TECFS_IMAGE_BASE_LBA_2
+        ld (TECFS_PARAM_SECTOR_2),a
+        ld a,(TECFS_PARAM_SECTOR_3)
+        adc a,TECFS_IMAGE_BASE_LBA_3
+        ld (TECFS_PARAM_SECTOR_3),a
+        xor a
+        ld (TECFS_PARAM_STATUS),a
+        ld (TECFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
 @tecfsReadSectorImpl:
         ld a,TECFS_DRIVER_OP_READ
         jr tecfsSectorIoWithDriverOp
@@ -160,7 +184,7 @@ TECFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsSectorIoWithDriverOp:
         ld (TECFS_PARAM_DRIVER_OP),a
-        call tecfsValidateSector
+        call tecfsValidateCardSector
         jr c,tecfsBadSector
         ld hl,(TECFS_PARAM_BUFFER_LO)
         ld a,h
@@ -186,6 +210,30 @@ TECFS_TOTAL_VOLUMES           .equ    31
         ccf
         ret
 
+@tecfsValidateCardSector:
+        ld a,(TECFS_PARAM_SECTOR_3)
+        or a
+        scf
+        ret nz
+        ld a,(TECFS_PARAM_SECTOR_2)
+        cp 0x7C
+        jr c,tecfsCardSectorValid
+        jr nz,tecfsCardSectorInvalid
+        ld hl,(TECFS_PARAM_SECTOR_0)
+        ld de,TECFS_IMAGE_BASE_LBA_0 + (TECFS_IMAGE_BASE_LBA_1 * 256)
+        or a
+        sbc hl,de
+        ccf
+        ret
+
+@tecfsCardSectorValid:
+        or a
+        ret
+
+@tecfsCardSectorInvalid:
+        scf
+        ret
+
 @tecfsBadSector:
         ld a,TECFS_ERR_BAD_SECTOR
         ld (TECFS_PARAM_STATUS),a
@@ -207,6 +255,6 @@ TECFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-        .org    0x8240
+        .org    0x8280
 @Tecm8ExpansionBank2Info:
         .db     "T","M","8",TECM8_EXPANSION_BANK,TECM8_EXPANSION_VERSION
