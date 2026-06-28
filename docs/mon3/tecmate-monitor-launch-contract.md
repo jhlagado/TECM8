@@ -76,6 +76,22 @@ shell-exit policy, and it does not restore whatever expansion bank was selected
 before launch. A formal shell-exit contract still needs to decide whether
 TecMate exits by `ret`, soft boot, warm restart, or a dedicated monitor service.
 
+## Shell exit contract
+
+The initial TecMate shell-exit contract is deliberately conservative:
+
+| Exit path | Contract |
+| --- | --- |
+| Menu-launched TecMate | bank 0 may exit with a plain `ret`; the monitor menu has already placed `softBoot` on the stack |
+| Monitor-launch proof-launched TecMate | bank 0 may exit with a plain `ret`; the proof harness supplies a RAM halt return address |
+| Far-called TecMate service | service routines must return through the fixed monitor `BiosBankCall` mechanism, not through the menu launcher |
+| Full shell exit | still undecided; future shell code must choose between `ret`, soft boot, warm restart, or a dedicated monitor service |
+
+This means the current bootstrap may be tested as a returning routine, but the
+operating-system shell should not assume that arbitrary expansion banks can
+return to arbitrary callers with only a near `ret`. Cross-bank calls remain the
+job of the fixed monitor bank ABI.
+
 ## What the proof covers
 
 `npm run proof:tecmate-monitor-launch` rebuilds the monitor and expansion ROMs,
