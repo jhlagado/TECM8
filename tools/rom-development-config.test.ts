@@ -151,13 +151,13 @@ test('TECM8 expansion ROM binary is a full packed nine-bank backing image', () =
 });
 
 test('TECM8 expansion banks expose the first service skeleton entry points', () => {
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduInit'), 0x8010);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduClear'), 0x8020);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduSetCursor'), 0x8030);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduPutChar'), 0x8040);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsInit'), 0x8080);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsSetRegister'), 0x8090);
-  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsWriteVram'), 0x80A0);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduServiceCall'), 0x8010);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsServiceCall'), 0x8028);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduInitImpl'), 0x8057);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'vduClearImpl'), 0x805e);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsInitImpl'), 0x80c7);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsSetRegisterImpl'), 0x80d8);
+  assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank1.d8.json', 'tmsWriteVramImpl'), 0x80ea);
 
   assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsMount'), 0x8010);
   assert.equal(symbolAddress('build/roms/tec1g/tecm8/expansion/bank2.d8.json', 'tecfsSelectVolume'), 0x8020);

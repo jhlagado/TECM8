@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Run the fixed-monitor TecMate launch path in Debug80.
+ * Run the fixed-monitor expansion discovery launch path in Debug80.
  */
 
 const { readFileSync, writeFileSync } = require('node:fs');
@@ -11,6 +11,7 @@ const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/proje
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json');
 const MONITOR_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const MONITOR_D8_PATH = resolve(TECM8_ROOT, 'build/roms/tec1g/tecm8/monitor/monitor.d8.json');
+const BANK0_D8_PATH = resolve(TECM8_ROOT, 'build/roms/tec1g/tecm8/expansion/bank0.d8.json');
 const EXPANSION_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
 const RETURN_STUB = 0x4000;
 const STACK_RETURN = 0x7fee;
@@ -18,6 +19,9 @@ const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
 const TECM8_DEMO_TRACE_BASE = 0x3000;
+const EXP_MENU_VEC_BANK = 0x3bf0;
+const EXP_MENU_VEC_ADDR = 0x3bf1;
+const EXP_MENU_VEC_FLAGS = 0x3bf3;
 
 type Runtime = {
   cpu: {
@@ -55,12 +59,12 @@ function requireFromDebug80(modulePath: string): unknown {
   return require(resolve(DEBUG80_ROOT, modulePath));
 }
 
-function symbolNumber(name: string): number {
-  const d8 = JSON.parse(readFileSync(MONITOR_D8_PATH, 'utf8')) as { symbols?: D8Symbol[] };
+function symbolNumber(d8Path: string, name: string): number {
+  const d8 = JSON.parse(readFileSync(d8Path, 'utf8')) as { symbols?: D8Symbol[] };
   const symbol = d8.symbols?.find((entry) => entry.name === name);
   const value = symbol?.address ?? symbol?.value;
   if (typeof value !== 'number') {
-    throw new Error(`missing numeric monitor symbol: ${name}`);
+    throw new Error(`missing numeric symbol ${name} in ${d8Path}`);
   }
   return value;
 }
@@ -161,19 +165,25 @@ function assertEqual(actual: number, expected: number, name: string): void {
 }
 
 function main(): void {
-  const launchAddress = symbolNumber('launchTecMate');
+  const launchAddress = symbolNumber(MONITOR_D8_PATH, 'launchExpansion');
+  const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
   const { runtime, platformRuntime } = loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
   const trace = readTrace(runtime, TECM8_DEMO_TRACE_BASE, 9);
+  const menuVectorAddress =
+    runtime.hardware.memory[EXP_MENU_VEC_ADDR] | (runtime.hardware.memory[EXP_MENU_VEC_ADDR + 1] << 8);
 
   assertEqual(runtime.cpu.pc, RETURN_STUB + 1, 'return stub halt pc');
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'installed expansion menu bank');
+  assertEqual(menuVectorAddress, expectedMenuAddress, 'installed expansion menu address');
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_FLAGS], 0x00, 'installed expansion menu flags');
   assertEqual(trace[0], 0x00, 'bank 0 entry marker');
   assertEqual(trace[4], 0x81, 'VDU service marker');
   assertEqual(trace[5], 0x82, 'TEC-FS service marker');
   assertEqual(trace[6], 0x83, 'RTC service marker');
   assertEqual(trace[7], 0x70, 'input bootstrap marker');
   assertEqual(trace[8], 0x71, 'shell bootstrap marker');
-  assertEqual(platformRuntime.state.system?.memoryExpansionPhysicalBank ?? -1, 0, 'final physical bank');
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'final SYS_CTRL restored');
 
   writeFileSync(
     LAST_RUN,
@@ -182,6 +192,8 @@ function main(): void {
         result: 'ok',
         instructions,
         launchAddress,
+        expectedMenuAddress,
+        menuVectorAddress,
         trace,
         finalPc: runtime.cpu.pc & 0xffff,
         finalSp: runtime.cpu.sp & 0xffff,

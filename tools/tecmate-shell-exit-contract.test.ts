@@ -12,8 +12,8 @@ const shellLaunchProof = readFileSync(resolve(root, 'proofs/tecmate-shell-launch
 
 test('shell exit contract is grounded in the monitor menu return path', () => {
   assert.match(monitor, /runRoutine:[\s\S]*ld de,softBoot\s+;get return address\s+push de\s+;put return address on stack\s+jp \(hl\)/);
-  assert.match(monitor, /launchTecMate:\s+xor a\s+call BiosBankSelect\s+jp 08000H/);
-  assert.match(doc, /Menu-launched TecMate \| bank 0 may exit with a plain `ret`/);
+  assert.match(monitor, /launchExpansion:[\s\S]*call discoverExpansion[\s\S]*call BiosBankCallDirect/);
+  assert.match(doc, /Menu-launched expansion \| bank 0 is called through the fixed monitor bank-call path/);
   assert.match(doc, /`softBoot` on the stack/);
 });
 

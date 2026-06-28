@@ -16,11 +16,14 @@ function hex(value: number): string {
 
 function bankMeasurement(bank: number): { occupied: number; span: number; highWaterEnd: number; freeAfterHighWater: number } {
   const d8 = readJson(`build/roms/tec1g/tecm8/expansion/bank${bank}.d8.json`);
-  const occupied = d8.segments.reduce((sum: number, segment: { start: number; end: number }) => {
+  const visibleSegments = d8.segments.filter((segment: { start: number; end: number }) => {
+    return segment.end > 0x8000 && segment.start < 0xc000;
+  });
+  const occupied = visibleSegments.reduce((sum: number, segment: { start: number; end: number }) => {
     return sum + segment.end - segment.start;
   }, 0);
-  const low = Math.min(...d8.segments.map((segment: { start: number }) => segment.start));
-  const highWaterEnd = Math.max(...d8.segments.map((segment: { end: number }) => segment.end));
+  const low = Math.min(...visibleSegments.map((segment: { start: number }) => segment.start));
+  const highWaterEnd = Math.max(...visibleSegments.map((segment: { end: number }) => segment.end));
   const span = highWaterEnd - low;
 
   return {
@@ -74,7 +77,7 @@ test('TecMate ROM space map classifies fixed-ROM and expansion responsibilities'
     '| Reset, soft boot, NMI/INT/RST stubs | Required recovery and compatibility entry points. | Keep fixed. |',
     '| Bank switching and far-call services | Required because `C000h-FFFFh` is the only stable code region while `8000h-BFFFh` changes banks. | Keep fixed. |',
     '| Core RST 10h BIOS services | Required stable ABI for higher ROMs and RAM programs. | Keep fixed and document carefully. |',
-    '| TecMate launcher | Required bridge from the MON3 menu into expansion bank 0. | Keep fixed as a tiny handoff. |',
+    '| Expansion discovery hook | Required bridge from the MON3 menu into a bank-0 supervisor. | Keep fixed as a tiny generic socket. |',
     '| PATA and FAT32 compatibility | Not a fixed-ROM requirement for the TecMate direction. | Replace with TEC-FS path; move compatibility elsewhere if retained. |',
     '| VDU/TMS9918 console | Core TecMate user interface service. | Keep in expansion ROM behind the banked ABI. |',
   ]) {

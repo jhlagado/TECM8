@@ -1,41 +1,58 @@
 # TecMate Monitor Launch Contract
 
-This document records the current fixed-ROM launch path for TecMate. It is the
-contract between the MON3-derived monitor at `C000h-FFFFh` and the banked
-TecMate expansion image at `8000h-BFFFh`.
-
-The current monitor still boots into the familiar TEC-1G menu. TecMate is
-entered through the first main-menu item, not by replacing the reset path. This
-keeps the turn-on experience compatible while giving the new operating system a
-stable entry point.
+This document records the current fixed-ROM launch path for a TecMate-style
+expansion supervisor. The monitor at `C000h-FFFFh` keeps the familiar TEC-1G
+menu, but its first menu item is now a generic `Expansion` hook rather than a
+hardcoded TecMate jump.
 
 ## Fixed monitor responsibility
 
-The monitor owns the launch because it is the only code region that is not
+The monitor owns discovery because it is the only code region that is not
 bank-switched. The launcher is intentionally small:
 
 ```asm
-launchTecMate:
-        xor a
-        call BiosBankSelect
-        jp 08000H
+launchExpansion:
+        call discoverExpansion
+        call validateExpansionVector
+        jr c,launchExpansionMissing
+        ld a,(EXP_MENU_VEC_BANK)
+        ld b,a
+        ld hl,(EXP_MENU_VEC_ADDR)
+        call BiosBankCallDirect
+        ret
 ```
 
 That sequence means:
 
 | Step | Meaning |
 | --- | --- |
-| `xor a` | select physical expansion bank `0` |
-| `call BiosBankSelect` | update the expansion bits in `SYS_CTRL` while preserving unrelated control bits |
-| `jp 08000H` | transfer control to the start of the selected expansion window |
+| `discoverExpansion` | selects physical bank 0, discovers an `EXPR` header, and calls the advertised install routine |
+| `validateExpansionVector` | checks the installed menu vector is a bank/address pair inside `8000h-BFFFh` |
+| `BiosBankCallDirect` | calls the installed menu vector and restores the previous `SYS_CTRL` state on return |
 
-The fixed monitor does not know the TecMate shell internals. Its only launch
-contract is: select expansion physical bank 0, then jump to `8000h`.
+The fixed monitor does not know the TecMate shell internals. It knows only the
+generic expansion header, the monitor RAM vector contract, and the bank-call
+mechanism.
 
 ## Expansion bank 0 responsibility
 
-Physical bank 0 is the TecMate bootstrap bank. Its `8000h` entry currently runs
-the first service chain:
+Physical bank 0 is the supervisor bank. Its `8000h` bytes are header data, not
+a routine entry point:
+
+```asm
+@Tecm8ExpansionHeader:
+        .db     TECM8_EXP_MAGIC_0,TECM8_EXP_MAGIC_1
+        .db     TECM8_EXP_MAGIC_2,TECM8_EXP_MAGIC_3
+        .db     TECM8_EXP_HEADER_VERSION
+        .db     TECM8_EXPANSION_BANK
+        .db     TECM8_EXP_TYPE_SUPERVISOR
+        .db     0x00
+        .dw     Tecm8ExpansionInstall
+        .db     0x00
+```
+
+The install routine writes the menu and service vectors into monitor RAM. The
+menu vector currently points at the TecMate bootstrap scaffold:
 
 ```asm
 @Tecm8ExpansionBank0Entry:
@@ -53,29 +70,26 @@ shape is already in place:
 
 | Item | Current value | Purpose |
 | --- | --- | --- |
-| `TECM8_DEMO_BANK0_ENTRY` | `8000h` | monitor launch target |
+| `TECM8_BANK0_INSTALL` | `800Bh` | bank-0 install routine advertised by the header |
 | `TECM8_SERVICE_CALL` | `80A0h` | bank-0 service registry |
 | `TECM8_SHELL_ENTRY` | `8120h` | provisional shell entry |
 | `TECM8_SERVICE_SHELL_ENTRY` | `80h` | registry service number for shell launch |
 
 Bank 0 is allowed to call into other physical banks through the fixed monitor's
 bank services. The `farCall` and `callService` ops are source-level wrappers
-around that ABI; they do not change the monitor launch contract.
+around that ABI; they do not change the monitor discovery contract.
 
 ## Return behaviour
 
-The `launchTecMate` routine itself uses `jp 08000H`, so it is not a far call
-and it does not provide an automatic expansion-bank return. The current monitor
-menu reaches menu routines through `runRoutine`, which pushes `softBoot` before
-it jumps to the selected routine. That means the present bank-0 scaffold can
-use a plain `ret` to return to the monitor soft-boot path.
+The `Expansion` menu item is entered through the normal MON3 `runRoutine` path,
+which pushes `softBoot` before jumping to the selected menu routine. The
+expansion provider itself is then called through `BiosBankCallDirect`, so the
+pre-launch `SYS_CTRL` state is restored before `launchExpansion` returns.
 
-The proof harness supplies its own RAM return address so the same bank-0 `ret`
-can be observed without running the whole monitor menu loop. That proves the
-handoff reaches code that can return normally. It does not prove a full TecMate
-shell-exit policy, and it does not restore whatever expansion bank was selected
-before launch. A formal shell-exit contract still needs to decide whether
-TecMate exits by `ret`, soft boot, warm restart, or a dedicated monitor service.
+The proof harness supplies its own RAM return address so the same returning
+path can be observed without running the whole monitor menu loop. That proves
+the handoff reaches the installed menu vector and returns through the monitor
+bank-call machinery. It does not yet define a final full-shell exit policy.
 
 ## Shell exit contract
 
@@ -83,7 +97,7 @@ The initial TecMate shell-exit contract is deliberately conservative:
 
 | Exit path | Contract |
 | --- | --- |
-| Menu-launched TecMate | bank 0 may exit with a plain `ret`; the monitor menu has already placed `softBoot` on the stack |
+| Menu-launched expansion | bank 0 is called through the fixed monitor bank-call path; `launchExpansion` then returns to the monitor menu path with `softBoot` on the stack |
 | Monitor-launch proof-launched TecMate | bank 0 may exit with a plain `ret`; the proof harness supplies a RAM halt return address |
 | Far-called TecMate service | service routines must return through the fixed monitor `BiosBankCall` mechanism, not through the menu launcher |
 | Full shell exit | still undecided; future shell code must choose between `ret`, soft boot, warm restart, or a dedicated monitor service |
@@ -96,20 +110,22 @@ job of the fixed monitor bank ABI.
 ## What the proof covers
 
 `npm run proof:tecmate-monitor-launch` rebuilds the monitor and expansion ROMs,
-then uses the monitor D8 map to locate `launchTecMate`. The proof starts there
-and checks that:
+then uses the D8 maps to locate `launchExpansion` and the installed bank-0 menu
+target. The proof starts at `launchExpansion` and checks that:
 
-1. the monitor selects expansion physical bank 0
-2. execution reaches the visible expansion window at `8000h`
-3. bank 0 runs the TecMate bootstrap/service chain
-4. the test-only return path reaches the proof halt stub
+1. the monitor discovers the bank-0 `EXPR` header
+2. bank 0 installs a menu vector into monitor RAM
+3. the monitor calls the installed menu vector through the bank-call path
+4. bank 0 runs the TecMate bootstrap/service chain
+5. the test-only return path reaches the proof halt stub
 
-This is the first stable bridge between the old monitor menu and the new
-TecMate expansion-resident operating system.
+This is the first stable bridge between the old monitor menu and a
+cartridge-like expansion supervisor.
 
 ## Design implication
 
 This lets MON3 shrink slowly. The fixed monitor only needs enough permanent code
-to boot, expose core BIOS services, manage expansion-bank selection, and enter
-TecMate. Larger services such as TMS9918/VDU support, TEC-FS, RTC UI, and GLCD
-compatibility can live behind the banked service ABI in expansion ROMs.
+to boot, expose core BIOS services, manage expansion-bank selection, discover an
+expansion supervisor, and call installed vectors. Larger services such as
+TMS9918/VDU support, TEC-FS, RTC UI, and GLCD compatibility can live behind the
+banked service ABI in expansion ROMs.

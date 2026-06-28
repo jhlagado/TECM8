@@ -43,20 +43,19 @@ function docHex(name: string): string {
   return `${value.toString(16).toUpperCase().padStart(width, '0')}h`;
 }
 
-test('TecMate monitor launch contract documents the fixed-ROM handoff', () => {
-  assert.match(monitor, /launchTecMate:\s+xor a\s+call BiosBankSelect\s+jp 08000H/);
+test('TecMate monitor launch contract documents the fixed-ROM discovery handoff', () => {
+  assert.match(monitor, /launchExpansion:[\s\S]*call discoverExpansion[\s\S]*call validateExpansionVector[\s\S]*call BiosBankCallDirect/);
+  assert.match(monitor, /discoverExpansion:[\s\S]*cp "E"[\s\S]*cp "X"[\s\S]*cp "P"[\s\S]*cp "R"[\s\S]*call BiosBankCallDirect/);
   assert.match(monitor, /runRoutine:[\s\S]*ld de,softBoot\s+;get return address\s+push de\s+;put return address on stack\s+jp \(hl\)/);
-  assert.match(doc, /select expansion physical bank 0/);
-  assert.match(doc, /jump to `8000h`/);
-  assert.match(doc, /not a far call/);
-  assert.match(doc, /pushes `softBoot`/);
-  assert.match(doc, /plain `ret`/);
-  assert.match(doc, /does not restore whatever expansion bank was selected/);
+  assert.match(doc, /discovers an `EXPR` header/);
+  assert.match(doc, /installed menu vector/);
+  assert.match(doc, /bank-call machinery/);
+  assert.match(doc, /restores the previous `SYS_CTRL`/);
 });
 
 test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
   for (const name of [
-    'TECM8_DEMO_BANK0_ENTRY',
+    'TECM8_BANK0_INSTALL',
     'TECM8_SERVICE_CALL',
     'TECM8_SHELL_ENTRY',
     'TECM8_SERVICE_SHELL_ENTRY',
@@ -65,7 +64,7 @@ test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
     assert.match(doc, new RegExp(`\\\`${name}\\\``));
   }
 
-  assert.match(doc, new RegExp(`\\\`TECM8_DEMO_BANK0_ENTRY\\\` \\| \\\`${docHex('TECM8_DEMO_BANK0_ENTRY')}\\\``));
+  assert.match(doc, new RegExp(`\\\`TECM8_BANK0_INSTALL\\\` \\| \\\`${docHex('TECM8_BANK0_INSTALL')}\\\``));
   assert.match(doc, new RegExp(`\\\`TECM8_SERVICE_CALL\\\` \\| \\\`${docHex('TECM8_SERVICE_CALL')}\\\``));
   assert.match(doc, new RegExp(`\\\`TECM8_SHELL_ENTRY\\\` \\| \\\`${docHex('TECM8_SHELL_ENTRY')}\\\``));
   assert.match(doc, new RegExp(`\\\`TECM8_SERVICE_SHELL_ENTRY\\\` \\| \\\`${docHex('TECM8_SERVICE_SHELL_ENTRY')}\\\``));
@@ -78,7 +77,8 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   );
   assert.match(pkg.scripts.check, /npm run proof:tecmate-monitor-launch/);
   assert.match(doc, /npm run proof:tecmate-monitor-launch/);
-  assert.match(runner, /symbolNumber\('launchTecMate'\)/);
+  assert.match(runner, /symbolNumber\(MONITOR_D8_PATH, 'launchExpansion'\)/);
+  assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry'\)/);
   assert.match(runner, /bank 0 entry marker/);
   assert.match(runner, /TEC-FS service marker/);
 });

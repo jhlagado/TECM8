@@ -120,14 +120,18 @@ async function compileBank(
       `Expansion ROM bank ${physicalBank} exceeds the 16K visible window: mapped end ${toHex(mappedEnd)}, limit ${toHex(ROM_WINDOW_END_EXCLUSIVE)}`
     );
   }
-  if (bin.bytes.length > ROM_BANK_BYTES) {
+  let bankBytes = Buffer.from(bin.bytes);
+  if (bankBytes.length > ROM_BANK_BYTES && bankBytes.length <= ROM_WINDOW_END_EXCLUSIVE) {
+    bankBytes = bankBytes.subarray(ROM_START, ROM_WINDOW_END_EXCLUSIVE);
+  }
+  if (bankBytes.length > ROM_BANK_BYTES) {
     throw new Error(
       `Expansion ROM bank ${physicalBank} binary is ${bin.bytes.length} bytes; limit is ${ROM_BANK_BYTES}`
     );
   }
 
   const image = Buffer.alloc(ROM_BANK_BYTES);
-  Buffer.from(bin.bytes).copy(image);
+  bankBytes.copy(image);
 
   mkdirSync(dirname(projectBin), { recursive: true });
   mkdirSync(dirname(buildBin), { recursive: true });
@@ -143,7 +147,7 @@ async function compileBank(
       projectBin,
       buildBin,
       d8: d8Path,
-      sourceBytes: bin.bytes.length,
+      sourceBytes: bankBytes.length,
     },
   };
 }

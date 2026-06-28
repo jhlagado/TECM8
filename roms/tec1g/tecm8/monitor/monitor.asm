@@ -121,6 +121,22 @@ XPND_MODE:  .equ    STACK_TOP+31    ;Expand Mode
 ; Free Monitor RAM area for specific functions (08A0H).  Areas can overlap
 MON_FRAM:   .equ    STACK_TOP+32    ;Free Monitor RAM Starts Here
 
+EXP_MENU_VEC_BANK:  .equ    03BF0H      ;Expansion menu vector bank
+EXP_MENU_VEC_ADDR:  .equ    03BF1H      ;Expansion menu vector address
+EXP_MENU_VEC_FLAGS: .equ    03BF3H      ;Expansion menu vector flags
+EXP_SVC_VEC_BANK:   .equ    03BF4H      ;Expansion service vector bank
+EXP_SVC_VEC_ADDR:   .equ    03BF5H      ;Expansion service vector address
+EXP_SVC_VEC_FLAGS:  .equ    03BF7H      ;Expansion service vector flags
+EXP_HEADER_MAGIC:   .equ    08000H
+EXP_HEADER_VERSION: .equ    08004H
+EXP_HEADER_BANK:    .equ    08005H
+EXP_HEADER_TYPE:    .equ    08006H
+EXP_HEADER_FLAGS:   .equ    08007H
+EXP_HEADER_INSTALL: .equ    08008H
+EXP_HEADER_RESERVED:.equ    0800AH
+EXP_HEADER_VERSION_V1: .equ 01H
+EXP_HEADER_TYPE_SUPERVISOR: .equ 01H
+
 ; Parameter Base Address.  All parameters are two bytes long from this address
 PARAM_DATA  .equ    MON_FRAM+32     ;Start of Parameter storage (08C0H)
 
@@ -309,10 +325,8 @@ preInit:
         out (LED8X8V),a
         ld a,05H            ;Set SD Card to Idle; turns off activity LED
         out (SDIO),a
-        in a,(SYS_INPUT)    ;Check for CART presence
-        ld b,a
-        and CART            ;Check bit 4
-        jp nz,08000H        ;Launch CARTridge code if CART present
+        in a,(SYS_INPUT)    ;Read system input bits
+        ld b,a              ;CART auto-run is disabled; 8000H is header data
         ld a,b              ;Honor PROTECT bit
         and PROTECT
         ld (PROT_MODE),a
@@ -3134,6 +3148,163 @@ BiosFarJumpError:
         push ix
         ret
 
+; Call a banked routine from fixed MON3 code.
+; Input: B = physical bank 0-8, HL = routine address in 8000h-BFFFh.
+; Output: carry set if bank select fails, otherwise target routine result.
+BiosBankCallDirect:
+        ld a,(SYS_MODE)
+        ld c,a
+        ld a,b
+        ld b,00H
+        push bc
+        call BiosBankSelect
+        jr c,BiosBankCallDirectError
+        pop bc
+        push bc
+        ld bc,BiosBankCallDirectReturn
+        push bc
+        jp (hl)
+BiosBankCallDirectReturn:
+        pop bc
+        push af
+        ld a,c
+        out (SYS_CTRL),a
+        ld (SYS_MODE),a
+        and EXPAND
+        ld (XPND_MODE),a
+        pop af
+        ret
+BiosBankCallDirectError:
+        pop bc
+        ret
+
+clearExpansionVectors:
+        xor a
+        call clearExpansionMenuVector
+        call clearExpansionServiceVector
+        ret
+
+clearExpansionMenuVector:
+        xor a
+        ld (EXP_MENU_VEC_BANK),a
+        ld (EXP_MENU_VEC_ADDR),a
+        ld (EXP_MENU_VEC_ADDR+1),a
+        ld (EXP_MENU_VEC_FLAGS),a
+        ret
+
+clearExpansionServiceVector:
+        xor a
+        ld (EXP_SVC_VEC_BANK),a
+        ld (EXP_SVC_VEC_ADDR),a
+        ld (EXP_SVC_VEC_ADDR+1),a
+        ld (EXP_SVC_VEC_FLAGS),a
+        ret
+
+validateExpansionAddress:
+        ld a,h
+        cp 080H
+        jr c,validateExpansionAddressBad
+        cp 0C0H
+        jr nc,validateExpansionAddressBad
+        or a
+        ret
+validateExpansionAddressBad:
+        scf
+        ret
+
+validateExpansionVector:
+        ld a,(EXP_MENU_VEC_FLAGS)
+        or a
+        jr nz,validateExpansionVectorBad
+        ld a,(EXP_MENU_VEC_BANK)
+        cp TECM8_BANK_MAX
+        jr nc,validateExpansionVectorBad
+        ld hl,(EXP_MENU_VEC_ADDR)
+        ld a,h
+        or l
+        jr z,validateExpansionVectorBad
+        call validateExpansionAddress
+        ret nc
+validateExpansionVectorBad:
+        call clearExpansionMenuVector
+        scf
+        ret
+
+validateExpansionServiceVector:
+        ld a,(EXP_SVC_VEC_ADDR)
+        ld h,a
+        ld a,(EXP_SVC_VEC_ADDR+1)
+        or h
+        jr z,validateExpansionServiceVectorClear
+        ld a,(EXP_SVC_VEC_FLAGS)
+        or a
+        jr nz,validateExpansionServiceVectorBad
+        ld a,(EXP_SVC_VEC_BANK)
+        cp TECM8_BANK_MAX
+        jr nc,validateExpansionServiceVectorBad
+        ld hl,(EXP_SVC_VEC_ADDR)
+        call validateExpansionAddress
+        ret nc
+validateExpansionServiceVectorBad:
+validateExpansionServiceVectorClear:
+        call clearExpansionServiceVector
+        scf
+        ret
+
+discoverExpansion:
+        call clearExpansionVectors
+        ld a,(SYS_MODE)
+        push af
+        xor a
+        call BiosBankSelect
+        jr c,discoverExpansionRestore
+        ld a,(EXP_HEADER_MAGIC)
+        cp "E"
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_MAGIC+1)
+        cp "X"
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_MAGIC+2)
+        cp "P"
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_MAGIC+3)
+        cp "R"
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_VERSION)
+        cp EXP_HEADER_VERSION_V1
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_BANK)
+        or a
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_TYPE)
+        cp EXP_HEADER_TYPE_SUPERVISOR
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_FLAGS)
+        or a
+        jr nz,discoverExpansionRestore
+        ld a,(EXP_HEADER_RESERVED)
+        or a
+        jr nz,discoverExpansionRestore
+        ld hl,(EXP_HEADER_INSTALL)
+        ld a,h
+        or l
+        jr z,discoverExpansionRestore
+        call validateExpansionAddress
+        jr c,discoverExpansionRestore
+        ld b,00H
+        call BiosBankCallDirect
+        call validateExpansionVector
+        call validateExpansionServiceVector
+discoverExpansionRestore:
+        pop af
+        push af
+        out (SYS_CTRL),a
+        ld (SYS_MODE),a
+        and EXPAND
+        ld (XPND_MODE),a
+        pop af
+        ret
+
 ; Toggle Key Press Beep
 ; Input: none
 ; Destroy: A
@@ -3175,11 +3346,20 @@ displaySettings:
         ld hl,settingsCFG
         call menuDriver
 
-; Launch TecMate from the expansion ROM window.
-launchTecMate:
-        xor a
-        call BiosBankSelect
-        jp 08000H
+; Launch the installed expansion menu provider.
+launchExpansion:
+        call discoverExpansion
+        call validateExpansionVector
+        jr c,launchExpansionMissing
+        ld a,(EXP_MENU_VEC_BANK)
+        ld b,a
+        ld hl,(EXP_MENU_VEC_ADDR)
+        call BiosBankCallDirect
+        ret
+launchExpansionMissing:
+        ld hl,noExpansionMessage
+        call stringToLCD
+        ret
 
 ; Display baud rate menu
 displayBaud:
@@ -3738,8 +3918,8 @@ mainMenuCFG:
         .db "TEC-1G"    ;7segment Text
            ;"                   " <- Max LCD entry width
         .db "= TEC-1G Main Menu =",0
-        .db "TecMate",0
-        .dw launchTecMate
+        .db "Expansion",0
+        .dw launchExpansion
 intelLabel:
         .db "Intel HEX Load",0
         .dw intelHexLoad
@@ -3763,6 +3943,9 @@ intelLabel:
         .dw displayCredits
         .db " Version: ",REL_TXT,0
         .dw softBoot
+
+noExpansionMessage:
+        .db "No expansion menu",0
 
 ;Settings Menu
 settingsCFG:

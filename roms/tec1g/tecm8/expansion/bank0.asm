@@ -10,6 +10,31 @@
 TECM8_EXPANSION_BANK          .equ    0x00
 TECM8_EXPANSION_VERSION       .equ    0x01
 
+@Tecm8ExpansionHeader:
+        .db     TECM8_EXP_MAGIC_0,TECM8_EXP_MAGIC_1
+        .db     TECM8_EXP_MAGIC_2,TECM8_EXP_MAGIC_3
+        .db     TECM8_EXP_HEADER_VERSION
+        .db     TECM8_EXPANSION_BANK
+        .db     TECM8_EXP_TYPE_SUPERVISOR
+        .db     0x00
+        .dw     Tecm8ExpansionInstall
+        .db     0x00
+
+Tecm8ExpansionInstall:
+        ld a,TECM8_EXPANSION_BANK
+        ld (TECM8_EXP_MENU_VEC_BANK),a
+        ld hl,Tecm8ExpansionBank0Entry
+        ld (TECM8_EXP_MENU_VEC_ADDR),hl
+        xor a
+        ld (TECM8_EXP_MENU_VEC_FLAGS),a
+        ld a,TECM8_EXPANSION_BANK
+        ld (TECM8_EXP_SVC_VEC_BANK),a
+        ld hl,Tecm8ServiceCall
+        ld (TECM8_EXP_SVC_VEC_ADDR),hl
+        xor a
+        ld (TECM8_EXP_SVC_VEC_FLAGS),a
+        ret
+
 @Tecm8ExpansionBank0Entry:
         ld a,TECM8_EXPANSION_BANK
         ld (TECM8_DEMO_TRACE_0),a
