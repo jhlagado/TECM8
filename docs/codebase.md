@@ -1297,9 +1297,11 @@ runner checks the bank 3 descriptor and unsupported UI status path.
 `tools/run-tecmate-monitor-launch-proof.ts` and
 `tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
 that sits on top of those bank boundaries. The monitor-launch runner boots the
-fixed ROM, drives `launchExpansion`, checks that bank 0 installs the menu and
-service vectors, and re-enters the monitor bridge with a TEC-FS service call to
-confirm the fixed-ROM bank trampoline restores `SYS_CTRL`. The shell-launch
+fixed ROM, drives `launchExpansion` with and without an expansion image,
+checks that bank 0 installs the menu and service vectors on the discovered
+path, confirms the missing-expansion return path leaves those vectors cleared,
+and re-enters the monitor bridge with a TEC-FS service call to confirm the
+fixed-ROM bank trampoline restores `SYS_CTRL`. The shell-launch
 runner assembles a small RAM proof that calls the monitor bridge with
 `SHL_ENTRY`, then checks the bank 0 shell parameter block,
 feature bits, splash buffer, and TMS9918 cursor side effects.
