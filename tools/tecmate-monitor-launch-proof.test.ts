@@ -18,7 +18,8 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(monitor, /launchExpansion:[\s\S]*call discoverExpansion[\s\S]*call validateExpansionVector[\s\S]*call BiosBankCallDirect/);
   assert.match(runner, /symbolNumber\(MONITOR_D8_PATH, 'launchExpansion'\)/);
   assert.match(runner, /installed expansion menu address/);
-  assert.match(runner, /TECM8_BIOS_SERVICE_BRIDGE/);
+  assert.match(runner, /const TFS_MOUNT = 0x61/);
+  assert.doesNotMatch(runner, /TECM8_BIOS_SERVICE_BRIDGE/);
   assert.match(runner, /bridge TEC-FS service marker/);
   assert.match(runner, /bridge SYS_CTRL restored/);
   assert.match(runner, /bank 0 entry marker/);

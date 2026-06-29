@@ -20,14 +20,14 @@ test('shell exit contract is grounded in the monitor menu return path', () => {
 test('shell exit contract distinguishes proof returns from production shell policy', () => {
   assert.match(monitorLaunchRunner, /STACK_RETURN/);
   assert.match(monitorLaunchRunner, /RETURN_STUB/);
-  assert.match(shellLaunchProof, /callService TECM8_SERVICE_SHELL_ENTRY/);
+  assert.match(shellLaunchProof, /callService SHL_ENTRY/);
   assert.match(doc, /Monitor-launch proof-launched TecMate \| bank 0 may exit with a plain `ret`/);
   assert.match(doc, /Full shell exit \| still undecided/);
 });
 
 test('shell exit contract keeps cross-bank returns on the fixed monitor ABI', () => {
-  assert.match(bank0, /@Tecm8ExpansionBank0Entry:[\s\S]*callService TECM8_SERVICE_VDU_INIT[\s\S]*ret/);
-  assert.match(bank0, /farCall TECM8_SERVICE_TECFS_MOUNT_BANK,TECM8_SERVICE_TECFS_MOUNT_ADDR/);
+  assert.match(bank0, /@Tecm8ExpansionBank0Entry:[\s\S]*callService VDU_INIT[\s\S]*ret/);
+  assert.match(bank0, /farCall TFS_MOUNT_BANK,TFS_MOUNT_ADDR/);
   assert.match(doc, /Far-called TecMate service \| service routines must return through the fixed monitor `BiosBankCall` mechanism/);
   assert.match(doc, /Cross-bank calls remain the\s+job of the fixed monitor bank ABI/);
 });

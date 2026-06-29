@@ -24,7 +24,7 @@ ClearShellParams:
         inc hl
         djnz ClearShellParams
 
-        callService TECM8_SERVICE_SHELL_ENTRY
+        callService SHL_ENTRY
         jp c,FailService
         cp 0x80
         jp nz,FailService

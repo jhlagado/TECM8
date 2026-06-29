@@ -15,7 +15,7 @@ test('TecMate shell launch proof exercises the service bridge launch path', () =
   const runner = readFileSync(resolve(root, 'tools/run-tecmate-shell-launch-proof.ts'), 'utf8');
   const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
-  assert.match(proof, /callService TECM8_SERVICE_SHELL_ENTRY/);
+  assert.match(proof, /callService SHL_ENTRY/);
   assert.match(proof, /TECM8_SHELL_PARAM_BANK/);
   assert.match(proof, /TECM8_SHELL_PARAM_FEATURES/);
   assert.match(proof, /CheckShellSplash:/);

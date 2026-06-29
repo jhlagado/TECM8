@@ -37,6 +37,7 @@ CART:       .equ    10H         ;Cartridge
 CAPSLOCK:   .equ    80H         ;Caps lock for Keyboard
 EXPAND_FIELD_MASK: .equ 7CH     ;EXPAND plus expansion select bits 3-6
 TECM8_BANK_MAX: .equ 09H        ;Physical banks 0-8
+SVC_BASE:   .equ    060H        ;Expansion service threshold for RST 10h
 
 ; Monitor Control Bit
 ;MCB = Bits 0,1 = Data Nibbles Entered
@@ -270,10 +271,12 @@ NMI:
 ;API Call Routine
 ; Input:   C = Function index
 ;          A, B, DE, HL = Parameters if needed
-; Corrupt: IX
+; Corrupt: IX; expansion service dispatch also corrupts IY
 APICall:
         push af             ;save AF
         ld a,c              ;Check index is within range
+        cp SVC_BASE         ;Expansion services are late-bound by C
+        jp nc,expansionServiceBridge
         cp API_COUNT/2      ;Adjust for real count
         jr c,APIGood
         pop af              ;restore AF
@@ -3252,31 +3255,64 @@ validateExpansionServiceVectorClear:
         ret
 
 expansionServiceBridge:
+        pop af
         push af
+        push bc
         push de
         push hl
         call discoverExpansion
         call validateExpansionServiceVector
         jr c,expansionServiceBridgeMissing
-        pop hl
-        pop de
-        pop af
+        ld hl,(EXP_SVC_VEC_ADDR)
+        push hl
+        pop iy
+        ld a,(SYS_MODE)
         ld c,a
         ld b,00H
         push bc
+        pop ix
+        pop hl
+        pop de
+        pop bc
+        pop af
+        push af
+        push bc
         push hl
         push de
-        push af
         ld a,(EXP_SVC_VEC_BANK)
-        ld b,a
-        ld hl,(EXP_SVC_VEC_ADDR)
-        call BiosBankCall
-        inc sp
-        inc sp
+        call BiosBankSelect
+        jr c,expansionServiceBridgeSelectError
+        pop de
+        pop hl
+        pop bc
+        pop af
+        push ix
+        ld ix,expansionServiceBridgeReturn
+        push ix
+        push iy
+        ret
+expansionServiceBridgeReturn:
+        pop bc
+        push af
+        ld a,c
+        out (SYS_CTRL),a
+        ld (SYS_MODE),a
+        and EXPAND
+        ld (XPND_MODE),a
+        pop af
+        ret
+expansionServiceBridgeSelectError:
+        pop de
+        pop hl
+        pop bc
+        pop af
+        ld a,0BH
+        scf
         ret
 expansionServiceBridgeMissing:
         pop hl
         pop de
+        pop bc
         pop af
         ld a,0FFH
         scf
@@ -3819,7 +3855,6 @@ APITable:
         .dw tecm8ApiReserved
         .dw tecm8ApiReserved
         .dw tecm8ApiReserved
-        .dw expansionServiceBridge
 
 API_COUNT:  .equ    $-APITable  ;Total number of API functions
 

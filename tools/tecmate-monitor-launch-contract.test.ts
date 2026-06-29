@@ -56,14 +56,14 @@ test('TecMate monitor launch contract documents the fixed-ROM discovery handoff'
 test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
   for (const name of [
     'TECM8_BANK0_INSTALL',
-    'TECM8_SERVICE_SHELL_ENTRY',
+    'SHL_ENTRY',
   ]) {
     assert.match(ops, new RegExp(`^${name}\\s+\\.equ\\s+`, 'm'));
     assert.match(doc, new RegExp(`\\\`${name}\\\``));
   }
 
   assert.match(doc, new RegExp(`\\\`TECM8_BANK0_INSTALL\\\` \\| \\\`${docHex('TECM8_BANK0_INSTALL')}\\\``));
-  assert.match(doc, new RegExp(`\\\`TECM8_SERVICE_SHELL_ENTRY\\\` \\| \\\`${docHex('TECM8_SERVICE_SHELL_ENTRY')}\\\``));
+  assert.match(doc, new RegExp(`\\\`SHL_ENTRY\\\` \\| \\\`${docHex('SHL_ENTRY')}\\\``));
   assert.match(doc, /installed menu vector \| monitor RAM/);
   assert.match(doc, /installed service vector \| monitor RAM/);
   assert.match(doc, /private\s+bank-0 source labels, not fixed public entry addresses/);

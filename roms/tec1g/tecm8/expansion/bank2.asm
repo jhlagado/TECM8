@@ -32,7 +32,7 @@ TECFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsMapBlockImpl
         cp TECM8_TECFS_SVC_TRANSLATE_SECTOR
         jp z,tecfsTranslateSectorImpl
-        ld a,TECM8_SERVICE_ERR_UNKNOWN
+        ld a,SVC_ERR_UNKNOWN
         scf
         ret
 

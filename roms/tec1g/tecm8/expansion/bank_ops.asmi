@@ -7,7 +7,7 @@ TECM8_BIOS_SYS_SET          .equ    0x51
 TECM8_BIOS_BANK_SELECT      .equ    0x52
 TECM8_BIOS_BANK_CALL        .equ    0x53
 TECM8_BIOS_FAR_JUMP         .equ    0x54
-TECM8_BIOS_SERVICE_BRIDGE   .equ    0x60
+SVC_BASE                    .equ    0x60
 
 TECM8_EXP_MAGIC_0           .equ    0x45    ; "E"
 TECM8_EXP_MAGIC_1           .equ    0x58    ; "X"
@@ -35,23 +35,23 @@ TECM8_DEMO_TRACE_8          .equ    TECM8_DEMO_TRACE_BASE+8
 TECM8_DEMO_TRACE_9          .equ    TECM8_DEMO_TRACE_BASE+9
 TECM8_BOOTSTRAP_INPUT_READY .equ    0x70
 TECM8_BOOTSTRAP_SHELL_READY .equ    0x71
-TECM8_SERVICE_VDU_INIT      .equ    0x01
-TECM8_SERVICE_VDU_INIT_BANK .equ    0x01
-TECM8_SERVICE_VDU_INIT_ADDR .equ    TECM8_VDU_SERVICE_CALL
-TECM8_SERVICE_TECFS_MOUNT   .equ    0x02
-TECM8_SERVICE_TECFS_MOUNT_BANK .equ 0x02
-TECM8_SERVICE_TECFS_MOUNT_ADDR .equ TECM8_TECFS_MOUNT
-TECM8_SERVICE_RTC_TOOL      .equ    0x03
-TECM8_SERVICE_RTC_TOOL_BANK .equ    0x03
-TECM8_SERVICE_RTC_TOOL_ADDR .equ    TECM8_RTC_TOOL_ENTRY
-TECM8_SERVICE_GLCD_ENTRY    .equ    0x04
-TECM8_SERVICE_GLCD_ENTRY_BANK .equ  0x04
-TECM8_SERVICE_GLCD_ENTRY_ADDR .equ  TECM8_GLCD_ENTRY
-TECM8_SERVICE_SHELL_ENTRY   .equ    0x80
-TECM8_SERVICE_SHELL_ENTRY_BANK .equ 0x00
-TECM8_SERVICE_ERR_UNKNOWN   .equ    0xEE
-TECM8_SERVICE_REGISTRY_ENTRY_SIZE .equ 0x04
-TECM8_SERVICE_REGISTRY_END  .equ    0x00
+VDU_INIT                    .equ    SVC_BASE+0x00
+VDU_INIT_BANK               .equ    0x01
+VDU_INIT_ADDR               .equ    TECM8_VDU_SERVICE_CALL
+TFS_MOUNT                   .equ    SVC_BASE+0x01
+TFS_MOUNT_BANK              .equ    0x02
+TFS_MOUNT_ADDR              .equ    TECM8_TECFS_MOUNT
+RTC_TOOL                    .equ    SVC_BASE+0x02
+RTC_TOOL_BANK               .equ    0x03
+RTC_TOOL_ADDR               .equ    TECM8_RTC_TOOL_ENTRY
+GLC_ENTRY                   .equ    SVC_BASE+0x03
+GLC_ENTRY_BANK              .equ    0x04
+GLC_ENTRY_ADDR              .equ    TECM8_GLCD_ENTRY
+SHL_ENTRY                   .equ    SVC_BASE+0x20
+SHL_ENTRY_BANK              .equ    0x00
+SVC_ERR_UNKNOWN             .equ    0xEE
+SVC_REG_ENTRY_SIZE          .equ    0x04
+SVC_REG_END                 .equ    0x00
 
 TECM8_ABI_TRACE_BASE        .equ    0x3100
 TECM8_ABI_TRACE_0           .equ    TECM8_ABI_TRACE_BASE+0
@@ -259,8 +259,7 @@ op farJump(bank imm8, target imm16)
 end
 
 op callService(service imm8)
-        ld a,service
-        ld c,TECM8_BIOS_SERVICE_BRIDGE
+        ld c,service
         rst 10H
 end
 

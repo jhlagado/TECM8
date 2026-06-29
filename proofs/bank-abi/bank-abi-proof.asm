@@ -63,16 +63,18 @@ ClearTrace:
         ld a,h
         ld (TECM8_ABI_TRACE_BASE+27),a
 
-        callService TECM8_SERVICE_VDU_INIT
+        callService VDU_INIT
         ld (TECM8_ABI_TRACE_BASE+18),a
-        callService TECM8_SERVICE_TECFS_MOUNT
+        callService TFS_MOUNT
         ld (TECM8_ABI_TRACE_BASE+19),a
-        callService TECM8_SERVICE_RTC_TOOL
+        callService RTC_TOOL
         ld (TECM8_ABI_TRACE_BASE+20),a
-        callService TECM8_SERVICE_GLCD_ENTRY
+        callService GLC_ENTRY
         ld (TECM8_ABI_TRACE_BASE+22),a
-        callService TECM8_SERVICE_SHELL_ENTRY
+        callService SHL_ENTRY
         ld (TECM8_ABI_TRACE_BASE+23),a
+        ld a,0xA5
+        ld b,0xB6
         callService 0x7F
         ld (TECM8_ABI_TRACE_BASE+21),a
 

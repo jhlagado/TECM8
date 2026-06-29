@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `351` | `351` | `815Fh` | `16033` |
+| 0 | Shell, launcher, registry | `353` | `353` | `8161h` | `16031` |
 | 1 | VDU/TMS9918 boundary | `317` | `317` | `813Dh` | `16067` |
 | 2 | TEC-FS boundary and block mapper | `416` | `416` | `81A0h` | `15968` |
 | 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `1261`
+Expansion occupied bytes: `1263`
 
-Expansion high-water span total: `1261`
+Expansion high-water span total: `1263`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -92,7 +92,7 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `8062h` | Private label installed into the service vector. |
 | Bank 0 service registry | `814Ah` | Service ID to bank/address table. |
-| Bank 0 shell entry | `80EDh` | Private descriptor and VDU splash path for `TECM8_SERVICE_SHELL_ENTRY`. |
+| Bank 0 shell entry | `80EDh` | Private descriptor and VDU splash path for `SHL_ENTRY`. |
 | Bank 0 info marker | `8145h` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |

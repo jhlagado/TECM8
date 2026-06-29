@@ -1301,7 +1301,7 @@ fixed ROM, drives `launchExpansion`, checks that bank 0 installs the menu and
 service vectors, and re-enters the monitor bridge with a TEC-FS service call to
 confirm the fixed-ROM bank trampoline restores `SYS_CTRL`. The shell-launch
 runner assembles a small RAM proof that calls the monitor bridge with
-`TECM8_SERVICE_SHELL_ENTRY`, then checks the bank 0 shell parameter block,
+`SHL_ENTRY`, then checks the bank 0 shell parameter block,
 feature bits, splash buffer, and TMS9918 cursor side effects.
 
 The proof runners run AZM register-contract checking in strict mode. They pass

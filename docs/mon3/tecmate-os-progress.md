@@ -78,7 +78,7 @@ routines into expansion ROM without changing the call shape each time.
 Bank 0 now exposes a resident TecMate shell entry contract:
 
 ```text
-TECM8_SERVICE_SHELL_ENTRY = 80h
+SHL_ENTRY = 80h
 ```
 
 The current implementation is a descriptor stub, not the full interactive shell.

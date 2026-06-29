@@ -52,7 +52,7 @@ tmsServiceCall:
         add hl,de
         jp (hl)
 vduServiceUnknown:
-        ld a,TECM8_SERVICE_ERR_UNKNOWN
+        ld a,SVC_ERR_UNKNOWN
         scf
         ret
 

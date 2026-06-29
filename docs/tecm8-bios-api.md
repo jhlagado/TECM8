@@ -52,10 +52,13 @@ services can use grouped extension ranges if a later BIOS profile has room.
 30h-3Fh  input services
 40h-4Fh  serial services
 50h-5Fh  system control and banking
-60h-6Fh  sound, timing, RTC, utilities
-70h-7Fh  compatibility display/input services
-80h-8Fh  resident TECM8 system services, if promoted into ROM
+60h-7Fh  expansion service selectors in the current MON3/TecMate profile
+80h-FFh  expansion application/tool selectors
 ```
+
+Earlier drafts placed sound, timing, RTC, and utility calls at `60h-6Fh`.
+That range is now superseded for the MON3/TecMate profile: `RST 10h` routes
+`C >= 60h` to the installed expansion service vector.
 
 ## Hardware Profiles And Display Boundary
 
@@ -499,6 +502,10 @@ registers, discards the RST continuation, pushes the target address, and enters
 it with `RET`. It does not install a fixed-ROM return trampoline.
 
 ## Sound, Timing, RTC, Utilities
+
+The call numbers below are retained as a planning sketch only. They are not the
+current MON3/TecMate `RST 10h` ABI, because `60h-FFh` is now the expansion
+service range.
 
 | Call | Name | Purpose |
 | ---: | --- | --- |

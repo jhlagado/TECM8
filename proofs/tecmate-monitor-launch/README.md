@@ -10,7 +10,7 @@ Debug80 TEC-1G runtime. It verifies the path used by the MON3/MON3Lite menu:
 5. bank 0 returns to the caller-provided monitor return address
 
 After that, the same runtime executes a RAM stub that calls `RST 10h` with
-`C=60h` and `A=TECM8_SERVICE_TECFS_MOUNT`. That verifies the generic MON3
+`C=TFS_MOUNT`. That verifies the generic MON3
 service bridge calls the installed service vector and restores `SYS_CTRL` on
 return.
 

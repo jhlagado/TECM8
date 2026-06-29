@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'TECM8_ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 28);
+  const trace = readTrace(runtime, traceBase, 30);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -257,6 +257,8 @@ async function main(): Promise<void> {
   assertEqual(trace[23], 0x80, 'service registry dispatched shell entry');
   assertEqual(trace[26], trace[24], 'farCall preserved stack pointer low byte');
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
+  assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');
+  assertEqual(trace[29], 0xB6, 'service bridge preserved caller B into bank 0');
 
   writeFileSync(
     LAST_RUN,
