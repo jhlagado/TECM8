@@ -51,6 +51,8 @@ test('TecMate monitor launch contract documents the fixed-ROM discovery handoff'
   assert.match(doc, /installed menu vector/);
   assert.match(doc, /bank-call machinery/);
   assert.match(doc, /restores the previous `SYS_CTRL`/);
+  assert.match(doc, /If discovery fails/);
+  assert.match(doc, /returns `A=FFh` with carry set/);
 });
 
 test('TecMate monitor launch contract names the bank-0 bootstrap ABI', () => {
@@ -78,7 +80,16 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(doc, /npm run proof:tecmate-monitor-launch/);
   assert.match(runner, /symbolNumber\(MONITOR_D8_PATH, 'launchExpansion'\)/);
   assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry'\)/);
+  assert.match(runner, /runInstalledExpansionCase/);
+  assert.match(runner, /runMissingExpansionCase/);
+  assert.match(runner, /expansionImage: false/);
+  assert.match(runner, /assertClearedExpansionVectors/);
   assert.match(runner, /bank 0 entry marker/);
   assert.match(runner, /TEC-FS service marker/);
-  assert.match(runner, /bridge TEC-FS service marker/);
+  assert.match(runner, /bridge TEC-FS mount side effect/);
+  assert.match(runner, /bridge returned carry clear/);
+  assert.match(runner, /missing expansion TEC-FS mount side effect remains clear/);
+  assert.match(runner, /missing expansion returned carry set/);
+  assert.match(doc, /Installed expansion case:/);
+  assert.match(doc, /Missing expansion case:/);
 });

@@ -34,6 +34,12 @@ The fixed monitor does not know the TecMate shell internals. It knows only the
 generic expansion header, the monitor RAM vector contract, and the bank-call
 mechanism.
 
+If discovery fails, or if the installed vector is invalid, the monitor clears
+the menu/service vectors and returns through `launchExpansionMissing` after
+displaying the short "No Expansion" LCD message. Expansion service requests
+made through `RST 10h` also rediscover the supervisor before dispatch. If no
+valid service vector is installed, the bridge returns `A=FFh` with carry set.
+
 ## Expansion bank 0 responsibility
 
 Physical bank 0 is the supervisor bank. Its `8000h` bytes are header data, not
@@ -116,7 +122,9 @@ job of the fixed monitor bank ABI.
 
 `npm run proof:tecmate-monitor-launch` rebuilds the monitor and expansion ROMs,
 then uses the D8 maps to locate `launchExpansion` and the installed bank-0 menu
-target. The proof starts at `launchExpansion` and checks that:
+target. The proof runs two isolated cases.
+
+Installed expansion case:
 
 1. the monitor discovers the bank-0 `EXPR` header
 2. bank 0 installs a menu vector into monitor RAM
@@ -124,6 +132,15 @@ target. The proof starts at `launchExpansion` and checks that:
 4. bank 0 runs the TecMate bootstrap/service chain
 5. the test-only return path reaches the proof halt stub
 6. a RAM `RST 10h C=TFS_MOUNT` call reaches the installed service dispatcher
+
+Missing expansion case:
+
+1. no expansion image is installed in the Debug80 expansion banks
+2. `launchExpansion` returns through the missing-expansion path
+3. menu and service vectors remain cleared
+4. no bank-0 bootstrap trace markers are written
+5. a RAM `RST 10h C=TFS_MOUNT` call returns `A=FFh` with no service dispatch
+6. `SYS_CTRL` is restored after both launch and service-bridge paths
 
 This is the first stable bridge between the old monitor menu and a
 cartridge-like expansion supervisor.

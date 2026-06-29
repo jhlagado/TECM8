@@ -19,10 +19,17 @@ const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
 const DBG_TRACE_BASE = 0x3000;
+const BRIDGE_RESULT_F = DBG_TRACE_BASE + 10;
+const BRIDGE_RESULT_A = DBG_TRACE_BASE + 11;
 const EXP_MENU_VEC_BANK = 0x3bf0;
 const EXP_MENU_VEC_ADDR = 0x3bf1;
 const EXP_MENU_VEC_FLAGS = 0x3bf3;
+const EXP_SVC_VEC_BANK = 0x3bf4;
+const EXP_SVC_VEC_ADDR = 0x3bf5;
+const EXP_SVC_VEC_FLAGS = 0x3bf7;
 const TFS_MOUNT = 0x61;
+const TFS_PARAM_VOLUME_MIB = 0x3b44;
+const TFS_VOLUME_MIB = 128;
 
 type Runtime = {
   cpu: {
@@ -96,7 +103,10 @@ function makeConfig() {
   };
 }
 
-function loadRuntime(entryAddress: number): { runtime: Runtime; platformRuntime: PlatformRuntime } {
+function loadRuntime(
+  entryAddress: number,
+  options: { expansionImage?: boolean } = {},
+): { runtime: Runtime; platformRuntime: PlatformRuntime } {
   const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
     createTec1gRuntime: Function;
   };
@@ -128,8 +138,10 @@ function loadRuntime(entryAddress: number): { runtime: Runtime; platformRuntime:
     config.romRanges,
     tec1gRuntime.state.system,
   );
-  const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
-  applyExpansionRomMemory(hooks.expandBanks, expansionImage);
+  if (options.expansionImage !== false) {
+    const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
+    applyExpansionRomMemory(hooks.expandBanks, expansionImage);
+  }
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
   runtime.hardware.forceMemWrite = hooks.forceMemWrite;
@@ -163,10 +175,12 @@ function writeBridgeServiceStub(runtime: Runtime, serviceId: number): void {
   runtime.hardware.forceMemWrite?.(RETURN_STUB, 0x0e);
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 1, serviceId);
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 2, 0xd7);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 3, 0x32);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 4, (DBG_TRACE_BASE + 5) & 0xff);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 5, (DBG_TRACE_BASE + 5) >> 8);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 6, 0x76);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 3, 0xf5);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 4, 0xe1);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 5, 0x22);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 6, BRIDGE_RESULT_F & 0xff);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 7, BRIDGE_RESULT_F >> 8);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 8, 0x76);
 }
 
 function assertEqual(actual: number, expected: number, name: string): void {
@@ -175,8 +189,28 @@ function assertEqual(actual: number, expected: number, name: string): void {
   }
 }
 
-function main(): void {
-  const launchAddress = symbolNumber(MONITOR_D8_PATH, 'launchExpansion');
+function assertClearedExpansionVectors(runtime: Runtime): void {
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'cleared expansion menu bank');
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_ADDR], 0x00, 'cleared expansion menu address lo');
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_ADDR + 1], 0x00, 'cleared expansion menu address hi');
+  assertEqual(runtime.hardware.memory[EXP_MENU_VEC_FLAGS], 0x00, 'cleared expansion menu flags');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_BANK], 0x00, 'cleared expansion service bank');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_ADDR], 0x00, 'cleared expansion service address lo');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_ADDR + 1], 0x00, 'cleared expansion service address hi');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_FLAGS], 0x00, 'cleared expansion service flags');
+}
+
+function runInstalledExpansionCase(launchAddress: number): {
+  instructions: number;
+  bridgeInstructions: number;
+  expectedMenuAddress: number;
+  menuVectorAddress: number;
+  trace: number[];
+  finalPc: number;
+  finalSp: number;
+  finalSysCtrl?: number;
+  finalPhysicalBank?: number;
+} {
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
   const { runtime, platformRuntime } = loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
@@ -196,38 +230,102 @@ function main(): void {
   assertEqual(trace[8], 0x71, 'shell bootstrap marker');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'final SYS_CTRL restored');
 
-  runtime.hardware.forceMemWrite?.(DBG_TRACE_BASE + 5, 0x00);
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_VOLUME_MIB, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
   writeBridgeServiceStub(runtime, TFS_MOUNT);
   runtime.cpu.halted = false;
   runtime.cpu.pc = RETURN_STUB;
   runtime.cpu.sp = STACK_RETURN;
   const bridgeInstructions = runUntilHalt(runtime, platformRuntime);
-  assertEqual(runtime.cpu.pc, RETURN_STUB + 7, 'bridge service halt pc');
-  assertEqual(runtime.hardware.memory[DBG_TRACE_BASE + 5], 0x82, 'bridge TEC-FS service marker');
+  assertEqual(runtime.cpu.pc, RETURN_STUB + 9, 'bridge service halt pc');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], TFS_VOLUME_MIB, 'bridge TEC-FS mount side effect');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x82, 'bridge returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'bridge returned carry clear');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'bridge SYS_CTRL restored');
+
+  return {
+    instructions,
+    bridgeInstructions,
+    expectedMenuAddress,
+    menuVectorAddress,
+    trace,
+    finalPc: runtime.cpu.pc & 0xffff,
+    finalSp: runtime.cpu.sp & 0xffff,
+    finalSysCtrl: platformRuntime.state.system?.sysCtrl,
+    finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
+  };
+}
+
+function runMissingExpansionCase(launchAddress: number): {
+  instructions: number;
+  bridgeInstructions: number;
+  trace: number[];
+  finalPc: number;
+  finalSp: number;
+  finalSysCtrl?: number;
+  finalPhysicalBank?: number;
+} {
+  const { runtime, platformRuntime } = loadRuntime(launchAddress, { expansionImage: false });
+  const instructions = runUntilHalt(runtime, platformRuntime);
+  const trace = readTrace(runtime, DBG_TRACE_BASE, 9);
+
+  assertEqual(runtime.cpu.pc, RETURN_STUB + 1, 'missing expansion return stub halt pc');
+  assertClearedExpansionVectors(runtime);
+  assertEqual(trace[0], 0x00, 'missing expansion bank 0 marker remains clear');
+  assertEqual(trace[4], 0x00, 'missing expansion VDU marker remains clear');
+  assertEqual(trace[5], 0x00, 'missing expansion TEC-FS marker remains clear');
+  assertEqual(trace[6], 0x00, 'missing expansion RTC marker remains clear');
+  assertEqual(trace[7], 0x00, 'missing expansion input marker remains clear');
+  assertEqual(trace[8], 0x00, 'missing expansion shell marker remains clear');
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'missing expansion SYS_CTRL restored');
+
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_VOLUME_MIB, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, TFS_MOUNT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  const bridgeInstructions = runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.cpu.pc, RETURN_STUB + 9, 'missing expansion bridge halt pc');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], 0x00, 'missing expansion TEC-FS mount side effect remains clear');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0xff, 'missing expansion returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x01, 'missing expansion returned carry set');
+  assertClearedExpansionVectors(runtime);
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'missing bridge SYS_CTRL restored');
+
+  return {
+    instructions,
+    bridgeInstructions,
+    trace,
+    finalPc: runtime.cpu.pc & 0xffff,
+    finalSp: runtime.cpu.sp & 0xffff,
+    finalSysCtrl: platformRuntime.state.system?.sysCtrl,
+    finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
+  };
+}
+
+function main(): void {
+  const launchAddress = symbolNumber(MONITOR_D8_PATH, 'launchExpansion');
+  const installed = runInstalledExpansionCase(launchAddress);
+  const missing = runMissingExpansionCase(launchAddress);
 
   writeFileSync(
     LAST_RUN,
     `${JSON.stringify(
       {
         result: 'ok',
-        instructions,
-        bridgeInstructions,
         launchAddress,
-        expectedMenuAddress,
-        menuVectorAddress,
-        trace,
-        finalPc: runtime.cpu.pc & 0xffff,
-        finalSp: runtime.cpu.sp & 0xffff,
-        finalSysCtrl: platformRuntime.state.system?.sysCtrl,
-        finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
+        installed,
+        missing,
       },
       null,
       2,
     )}\n`,
   );
 
-  console.log(`TecMate monitor launch proof passed in ${instructions} instructions`);
+  console.log(`TecMate monitor launch proof passed in ${installed.instructions} instructions`);
 }
 
 main();
