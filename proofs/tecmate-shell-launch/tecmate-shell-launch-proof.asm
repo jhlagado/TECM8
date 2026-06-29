@@ -17,7 +17,7 @@ PROOF_RESULT                .equ    0x3BD0
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
-        ld hl,TECM8_SHELL_PARAM_BASE
+        ld hl,SHL_PARAM_BASE
         ld b,16
 ClearShellParams:
         ld (hl),0
@@ -39,31 +39,31 @@ ClearShellParams:
         halt
 
 CheckShellParams:
-        ld a,(TECM8_SHELL_PARAM_STATUS)
-        cp TECM8_SHELL_STATUS_OK
+        ld a,(SHL_PARAM_STATUS)
+        cp SHL_STATUS_OK
         scf
         ret nz
-        ld a,(TECM8_SHELL_PARAM_LAST_ERROR)
-        cp TECM8_SHELL_STATUS_OK
+        ld a,(SHL_PARAM_LAST_ERROR)
+        cp SHL_STATUS_OK
         scf
         ret nz
-        ld a,(TECM8_SHELL_PARAM_BANK)
+        ld a,(SHL_PARAM_BANK)
         cp 0x00
         scf
         ret nz
-        ld a,(TECM8_SHELL_PARAM_VERSION)
+        ld a,(SHL_PARAM_VERSION)
         cp 0x01
         scf
         ret nz
-        ld a,(TECM8_SHELL_PARAM_FEATURES)
-        cp TECM8_SHELL_FEATURE_ENTRY+TECM8_SHELL_FEATURE_SPLASH
+        ld a,(SHL_PARAM_FEATURES)
+        cp SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH
         scf
         ret nz
         or a
         ret
 
 CheckShellSplash:
-        ld hl,TECM8_SHELL_SPLASH_BUFFER
+        ld hl,SHL_SPLASH_BUFFER
         ld de,ExpectedSplash
 CheckShellSplashNext:
         ld a,(de)
@@ -74,11 +74,11 @@ CheckShellSplashNext:
         inc de
         or a
         jr nz,CheckShellSplashNext
-        ld a,(TECM8_TMS_PARAM_CURSOR_LO)
+        ld a,(TMS_PARAM_CURSOR_LO)
         cp 0x07
         scf
         ret nz
-        ld a,(TECM8_TMS_PARAM_CURSOR_HI)
+        ld a,(TMS_PARAM_CURSOR_HI)
         cp 0x00
         scf
         ret nz

@@ -41,11 +41,11 @@ a routine entry point:
 
 ```asm
 @Tecm8ExpansionHeader:
-        .db     TECM8_EXP_MAGIC_0,TECM8_EXP_MAGIC_1
-        .db     TECM8_EXP_MAGIC_2,TECM8_EXP_MAGIC_3
-        .db     TECM8_EXP_HEADER_VERSION
-        .db     TECM8_EXPANSION_BANK
-        .db     TECM8_EXP_TYPE_SUPERVISOR
+        .db     EXP_MAGIC_0,EXP_MAGIC_1
+        .db     EXP_MAGIC_2,EXP_MAGIC_3
+        .db     EXP_HEADER_VERSION
+        .db     EXP_BANK
+        .db     EXP_TYPE_SUPERVISOR
         .db     0x00
         .dw     Tecm8ExpansionInstall
         .db     0x00
@@ -56,8 +56,8 @@ menu vector currently points at the TecMate bootstrap scaffold:
 
 ```asm
 @Tecm8ExpansionBank0Entry:
-        ld a,TECM8_EXPANSION_BANK
-        ld (TECM8_DEMO_TRACE_0),a
+        ld a,EXP_BANK
+        ld (DBG_TRACE_0),a
         call Tecm8BootstrapVdu
         call Tecm8BootstrapTecfs
         call Tecm8BootstrapInput
@@ -70,7 +70,7 @@ shape is already in place:
 
 | Item | Current value | Purpose |
 | --- | --- | --- |
-| `TECM8_BANK0_INSTALL` | `800Bh` | bank-0 install routine advertised by the header |
+| `EXP_BANK0_INSTALL` | `800Bh` | bank-0 install routine advertised by the header |
 | installed menu vector | monitor RAM | menu launch target supplied by bank 0 |
 | installed service vector | monitor RAM | service dispatcher supplied by bank 0 |
 | `SHL_ENTRY` | `80h` | expansion service number for shell launch |

@@ -199,7 +199,7 @@ async function main(): Promise<void> {
   const { runtime, platformRuntime } = loadRuntime(bytes);
   const instructions = runUntilHalt(runtime, platformRuntime);
   const resultAddr = symbolNumber(symbols, 'RTC_PROOF_RESULT');
-  const paramBase = symbolNumber(symbols, 'TECM8_RTC_PARAM_BASE');
+  const paramBase = symbolNumber(symbols, 'RTC_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const params = readTrace(runtime, paramBase, 8);
 

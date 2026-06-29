@@ -226,7 +226,7 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
-  const traceBase = symbolNumber(symbols, 'TECM8_ABI_TRACE_BASE');
+  const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
   const trace = readTrace(runtime, traceBase, 30);
   const result = runtime.hardware.memory[resultAddr];
 

@@ -62,10 +62,10 @@ implementation yet. That is deliberate.
 The boundary exposes:
 
 ```text
-TECM8_GLCD_ENTRY
-TECM8_GLCD_INIT
-TECM8_GLCD_CLEAR
-TECM8_GLCD_PLOT
+GLC_ENTRY_ADDR
+GLC_INIT
+GLC_CLEAR
+GLC_PLOT
 ```
 
 The entry reports that the GLCD boundary exists. The operation slots currently

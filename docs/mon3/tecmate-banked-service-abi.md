@@ -23,11 +23,11 @@ arguments still use small RAM parameter blocks.
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECM8_BIOS_SYS_GET` | `50h` | Return current `SYS_CTRL` shadow. |
-| `TECM8_BIOS_SYS_SET` | `51h` | Update masked `SYS_CTRL` bits. |
-| `TECM8_BIOS_BANK_SELECT` | `52h` | Select a physical expansion bank. |
-| `TECM8_BIOS_BANK_CALL` | `53h` | Call into a bank and restore previous bank on `ret`. |
-| `TECM8_BIOS_FAR_JUMP` | `54h` | Tail-jump into a bank without resuming after the helper. |
+| `MON_SYS_GET` | `50h` | Return current `SYS_CTRL` shadow. |
+| `MON_SYS_SET` | `51h` | Update masked `SYS_CTRL` bits. |
+| `MON_BANK_SELECT` | `52h` | Select a physical expansion bank. |
+| `MON_BANK_CALL` | `53h` | Call into a bank and restore previous bank on `ret`. |
+| `MON_FAR_JUMP` | `54h` | Tail-jump into a bank without resuming after the helper. |
 | `SVC_BASE` | `60h` | First RST 10h selector routed to the installed expansion service vector. |
 
 The bank-call return path preserves the callee's `AF`, so carry and `A` status
@@ -94,19 +94,19 @@ published as fixed callable addresses.
 | `SVC_REG_ENTRY_SIZE` | `04h` | Bytes per service registry entry: service ID, bank, address low, address high. |
 | `SVC_REG_END` | `00h` | Registry terminator service ID. |
 | `VDU_INIT` | `60h` | VDU init service ID. |
-| `VDU_INIT_BANK` | `01h` | VDU init physical bank. |
-| `VDU_INIT_ADDR` | `8000h` | VDU init enters the bank-origin dispatcher. |
+| `VDU_BANK` | `01h` | VDU init physical bank. |
+| `VDU_ADDR` | `8000h` | VDU init enters the bank-origin dispatcher. |
 | `TFS_MOUNT` | `61h` | TEC-FS mount service ID. |
-| `TFS_MOUNT_BANK` | `02h` | TEC-FS mount physical bank. |
-| `TFS_MOUNT_ADDR` | `8000h` | TEC-FS mount enters the bank-origin dispatcher. |
+| `TFS_BANK` | `02h` | TEC-FS mount physical bank. |
+| `TFS_ADDR` | `8000h` | TEC-FS mount enters the bank-origin dispatcher. |
 | `RTC_TOOL` | `62h` | RTC tool service ID. |
-| `RTC_TOOL_BANK` | `03h` | RTC tool physical bank. |
-| `RTC_TOOL_ADDR` | `8000h` | RTC tool enters the bank-origin dispatcher. |
+| `RTC_BANK` | `03h` | RTC tool physical bank. |
+| `RTC_ADDR` | `8000h` | RTC tool enters the bank-origin dispatcher. |
 | `GLC_ENTRY` | `63h` | GLCD boundary service ID. |
-| `GLC_ENTRY_BANK` | `04h` | GLCD boundary physical bank. |
-| `GLC_ENTRY_ADDR` | `8000h` | GLCD boundary address. |
+| `GLC_BANK` | `04h` | GLCD boundary physical bank. |
+| `GLC_ADDR` | `8000h` | GLCD boundary address. |
 | `SHL_ENTRY` | `80h` | Resident shell entry service ID. |
-| `SHL_ENTRY_BANK` | `00h` | Resident shell physical bank. |
+| `SHL_BANK` | `00h` | Resident shell physical bank. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 The registry table is laid out as repeated four-byte records:
@@ -136,24 +136,24 @@ Shell parameter block:
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |
-| `TECM8_SHELL_PARAM_BASE` | `3BA0h` | Base of shell parameter block. |
-| `TECM8_SHELL_PARAM_STATUS` | `3BA0h` | Last status code. |
-| `TECM8_SHELL_PARAM_LAST_ERROR` | `3BA1h` | Last error code. |
-| `TECM8_SHELL_PARAM_BANK` | `3BA2h` | Service bank marker. |
-| `TECM8_SHELL_PARAM_VERSION` | `3BA3h` | Service ABI version. |
-| `TECM8_SHELL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
-| `TECM8_SHELL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
+| `SHL_PARAM_BASE` | `3BA0h` | Base of shell parameter block. |
+| `SHL_PARAM_STATUS` | `3BA0h` | Last status code. |
+| `SHL_PARAM_LAST_ERROR` | `3BA1h` | Last error code. |
+| `SHL_PARAM_BANK` | `3BA2h` | Service bank marker. |
+| `SHL_PARAM_VERSION` | `3BA3h` | Service ABI version. |
+| `SHL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
+| `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 
 Shell status and feature values:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECM8_SHELL_STATUS_OK` | `00h` | Success. |
-| `TECM8_SHELL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
-| `TECM8_SHELL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
+| `SHL_STATUS_OK` | `00h` | Success. |
+| `SHL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
+| `SHL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
 
 If the VDU splash call fails, the shell service stores the returned error code
-in `TECM8_SHELL_PARAM_STATUS` and `TECM8_SHELL_PARAM_LAST_ERROR`, then returns
+in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`, then returns
 with carry set.
 
 ## Bank 1: VDU/TMS9918
@@ -168,59 +168,59 @@ move as the bank grows.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
-| `TECM8_VDU_ENTRY` | `8000h` | Bank entry marker. |
-| `TECM8_VDU_SERVICE_CALL` | `8000h` | Bank-origin dispatcher. Input `A` = VDU/TMS service ID. |
-| `TECM8_VDU_SERVICE_TABLE` | private label | Bank-local service table records. |
+| `VDU_ENTRY` | `8000h` | Bank entry marker. |
+| `VDU_CALL` | `8000h` | Bank-origin dispatcher. Input `A` = VDU/TMS service ID. |
+| `VDU_TABLE` | private label | Bank-local service table records. |
 
 Bank-local VDU/TMS service IDs:
 
 | Constant | Value | Status |
 | --- | ---: | --- |
-| `TECM8_VDU_SVC_INIT` | `01h` | Calls TMS init and returns `A=81h`, carry clear. |
-| `TECM8_VDU_SVC_CLEAR` | `02h` | Writes zero to VRAM address `0000h`. |
-| `TECM8_VDU_SVC_SET_CURSOR` | `03h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
-| `TECM8_VDU_SVC_PUT_CHAR` | `04h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
-| `TECM8_VDU_SVC_PUT_STRING` | `05h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
-| `TECM8_VDU_SVC_NEWLINE` | `06h` | Advances the cursor to the next 32-byte text row, returns `A=81h`. |
-| `TECM8_TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
-| `TECM8_TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
-| `TECM8_TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
+| `VDU_SVC_INIT` | `01h` | Calls TMS init and returns `A=81h`, carry clear. |
+| `VDU_SVC_CLEAR` | `02h` | Writes zero to VRAM address `0000h`. |
+| `VDU_SVC_SET_CURSOR` | `03h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
+| `VDU_SVC_PUT_CHAR` | `04h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
+| `VDU_SVC_PUT_STRING` | `05h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
+| `VDU_SVC_NEWLINE` | `06h` | Advances the cursor to the next 32-byte text row, returns `A=81h`. |
+| `TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
+| `TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
+| `TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
 
 TMS ports:
 
 | Constant | Value |
 | --- | ---: |
-| `TECM8_TMS_DATA_PORT` | `BEh` |
-| `TECM8_TMS_CONTROL_PORT` | `BFh` |
+| `TMS_DATA_PORT` | `BEh` |
+| `TMS_CONTROL_PORT` | `BFh` |
 
 TMS parameter block:
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |
-| `TECM8_TMS_PARAM_BASE` | `3B00h` | Base of TMS parameter block. |
-| `TECM8_TMS_PARAM_VALUE` | `3B00h` | Byte value for register or VRAM write. |
-| `TECM8_TMS_PARAM_REGISTER` | `3B01h` | TMS register number. |
-| `TECM8_TMS_PARAM_ADDR_LO` | `3B02h` | VRAM address low byte. |
-| `TECM8_TMS_PARAM_ADDR_HI` | `3B03h` | VRAM address high byte. |
-| `TECM8_TMS_PARAM_CURSOR_LO` | `3B04h` | VDU cursor low byte. |
-| `TECM8_TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
-| `TECM8_TMS_PARAM_STRING_LO` | `3B06h` | Zero-terminated RAM string pointer low byte. |
-| `TECM8_TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
-| `TECM8_VDU_TEXT_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
+| `TMS_PARAM_BASE` | `3B00h` | Base of TMS parameter block. |
+| `TMS_PARAM_VALUE` | `3B00h` | Byte value for register or VRAM write. |
+| `TMS_PARAM_REGISTER` | `3B01h` | TMS register number. |
+| `TMS_PARAM_ADDR_LO` | `3B02h` | VRAM address low byte. |
+| `TMS_PARAM_ADDR_HI` | `3B03h` | VRAM address high byte. |
+| `TMS_PARAM_CURSOR_LO` | `3B04h` | VDU cursor low byte. |
+| `TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
+| `TMS_PARAM_STRING_LO` | `3B06h` | Zero-terminated RAM string pointer low byte. |
+| `TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
+| `VDU_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
 
 Minimal VDU text-console contract:
 
-- `TECM8_VDU_SVC_INIT` prepares the TMS backend and returns `A=81h`.
-- `TECM8_VDU_SVC_CLEAR` currently clears the first VRAM byte only; full-screen clear
+- `VDU_SVC_INIT` prepares the TMS backend and returns `A=81h`.
+- `VDU_SVC_CLEAR` currently clears the first VRAM byte only; full-screen clear
   is still future work.
-- `TECM8_VDU_SVC_SET_CURSOR` takes `TECM8_TMS_PARAM_ADDR_LO/HI` as the cursor
+- `VDU_SVC_SET_CURSOR` takes `TMS_PARAM_ADDR_LO/HI` as the cursor
   address and masks the high byte to the 16K VRAM range.
-- `TECM8_VDU_SVC_PUT_CHAR` writes `TECM8_TMS_PARAM_VALUE` at the current cursor and
+- `VDU_SVC_PUT_CHAR` writes `TMS_PARAM_VALUE` at the current cursor and
   advances the cursor by one byte.
-- `TECM8_VDU_SVC_PUT_STRING` reads a zero-terminated RAM string from
-  `TECM8_TMS_PARAM_STRING_LO/HI`, writes each byte through `TECM8_VDU_SVC_PUT_CHAR`,
+- `VDU_SVC_PUT_STRING` reads a zero-terminated RAM string from
+  `TMS_PARAM_STRING_LO/HI`, writes each byte through `VDU_SVC_PUT_CHAR`,
   and leaves the cursor after the last character written.
-- `TECM8_VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
+- `VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
   start, adds one row, masks the high byte to the 16K VRAM range, and returns
   `A=81h`.
 - The low-level TMS calls remain available for backend work and diagnostics.
@@ -231,23 +231,23 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
-| `TECM8_TECFS_ENTRY` | `8000h` | Bank entry marker. |
-| `TECM8_TECFS_MOUNT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_MOUNT`. |
-| `TECM8_TECFS_SELECT_VOLUME` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_SELECT_VOLUME`. |
-| `TECM8_TECFS_READ` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_READ`. |
-| `TECM8_TECFS_WRITE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_WRITE`. |
-| `TECM8_TECFS_LOAD_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_LOAD_RANGE`. |
-| `TECM8_TECFS_SAVE_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_SAVE_RANGE`. |
-| `TECM8_TECFS_MAP_BLOCK` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_MAP_BLOCK`. |
-| `TECM8_TECFS_TRANSLATE_SECTOR` | `8000h` | Bank-origin dispatcher; use `A=TECM8_TECFS_SVC_TRANSLATE_SECTOR`. |
-| `TECM8_TECFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
-| `TECM8_TECFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
-| `TECM8_TECFS_SVC_READ` | `03h` | 512-byte sector read contract. |
-| `TECM8_TECFS_SVC_WRITE` | `04h` | 512-byte sector write contract. |
-| `TECM8_TECFS_SVC_LOAD_RANGE` | `05h` | Explicit unsupported error. |
-| `TECM8_TECFS_SVC_SAVE_RANGE` | `06h` | Explicit unsupported error. |
-| `TECM8_TECFS_SVC_MAP_BLOCK` | `07h` | Maps active volume/block index to a 32-bit sector number. |
-| `TECM8_TECFS_SVC_TRANSLATE_SECTOR` | `08h` | Adds the mounted image-base LBA to the logical sector in place. |
+| `TFS_ENTRY` | `8000h` | Bank entry marker. |
+| `TFS_ENTRY_MOUNT` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_MOUNT`. |
+| `TFS_SELECT_VOLUME` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_SELECT_VOLUME`. |
+| `TFS_READ` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_READ`. |
+| `TFS_WRITE` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_WRITE`. |
+| `TFS_LOAD_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_LOAD_RANGE`. |
+| `TFS_SAVE_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_SAVE_RANGE`. |
+| `TFS_MAP_BLOCK` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_MAP_BLOCK`. |
+| `TFS_TRANSLATE_SECTOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_TRANSLATE_SECTOR`. |
+| `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
+| `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
+| `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
+| `TFS_SVC_WRITE` | `04h` | 512-byte sector write contract. |
+| `TFS_SVC_LOAD_RANGE` | `05h` | Explicit unsupported error. |
+| `TFS_SVC_SAVE_RANGE` | `06h` | Explicit unsupported error. |
+| `TFS_SVC_MAP_BLOCK` | `07h` | Maps active volume/block index to a 32-bit sector number. |
+| `TFS_SVC_TRANSLATE_SECTOR` | `08h` | Adds the mounted image-base LBA to the logical sector in place. |
 
 Current TEC-FS geometry:
 
@@ -263,22 +263,22 @@ total selectable: 31
 In prose: the current layout exposes 30 user volumes plus one spare/work
 volume, for 31 selectable volumes total.
 
-`TECM8_TECFS_SELECT_VOLUME` reads the request-volume parameter, accepts values
+`TFS_SELECT_VOLUME` reads the request-volume parameter, accepts values
 `0..30`, stores the accepted value as the active volume, clears status and last
 error, and returns `A=82h` with carry clear. A request of `31` or above returns
 the bad-volume error with carry set and leaves the previous active volume
 unchanged.
 
 Because a 4K block is eight 512-byte sectors, the current
-`TECM8_TECFS_MAP_BLOCK` computes a logical TEC-FS volume-set sector:
+`TFS_MAP_BLOCK` computes a logical TEC-FS volume-set sector:
 
 ```text
 sector = activeVolume * 40000h + blockIndex * 8
 ```
 
-This is not yet an absolute card LBA. `TECM8_TECFS_TRANSLATE_SECTOR` performs
+This is not yet an absolute card LBA. `TFS_TRANSLATE_SECTOR` performs
 the current logical-to-card translation by adding the mounted image-base LBA to
-`TECFS_PARAM_SECTOR_0..3` in place. For now the image-base LBA is the fixed
+`TFS_PARAM_SECTOR_0..3` in place. For now the image-base LBA is the fixed
 contract value `00000002h`, immediately after the MBR at LBA 0 and the locator
 at LBA 1. A later mount implementation should replace that fixed base with the
 value read from the locator sector.
@@ -287,87 +287,87 @@ TEC-FS parameter block:
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |
-| `TECFS_PARAM_BASE` | `3B40h` | Base of TEC-FS parameter block. |
-| `TECFS_PARAM_ACTIVE_VOLUME` | `3B40h` | Last valid selected volume. |
-| `TECFS_PARAM_REQUEST_VOLUME` | `3B41h` | Requested volume for select. |
-| `TECFS_PARAM_STATUS` | `3B42h` | Last status code. |
-| `TECFS_PARAM_LAST_ERROR` | `3B43h` | Last error code. |
-| `TECFS_PARAM_VOLUME_MIB` | `3B44h` | Volume size in MiB. |
-| `TECFS_PARAM_BLOCK_BYTES_LO` | `3B45h` | Block byte count low byte. |
-| `TECFS_PARAM_BLOCK_BYTES_HI` | `3B46h` | Block byte count high byte. |
-| `TECFS_PARAM_VOLUME_BLOCKS_LO` | `3B47h` | Volume block count low byte. |
-| `TECFS_PARAM_VOLUME_BLOCKS_HI` | `3B48h` | Volume block count high byte. |
-| `TECFS_PARAM_USER_VOLUMES` | `3B49h` | User volume count. |
-| `TECFS_PARAM_SPARE_VOLUME` | `3B4Ah` | Spare/work volume index. |
-| `TECFS_PARAM_TOTAL_VOLUMES` | `3B4Bh` | Total selectable volumes. |
-| `TECFS_PARAM_BLOCK_INDEX_LO` | `3B4Ch` | Requested 4K block index low byte. |
-| `TECFS_PARAM_BLOCK_INDEX_HI` | `3B4Dh` | Requested 4K block index high byte. |
-| `TECFS_PARAM_SECTOR_0` | `3B4Eh` | Mapped 512-byte sector number byte 0. |
-| `TECFS_PARAM_SECTOR_1` | `3B4Fh` | Mapped 512-byte sector number byte 1. |
-| `TECFS_PARAM_SECTOR_2` | `3B50h` | Mapped 512-byte sector number byte 2. |
-| `TECFS_PARAM_SECTOR_3` | `3B51h` | Mapped 512-byte sector number byte 3. |
-| `TECFS_PARAM_BUFFER_LO` | `3B52h` | 512-byte sector buffer address low byte. |
-| `TECFS_PARAM_BUFFER_HI` | `3B53h` | 512-byte sector buffer address high byte. |
-| `TECFS_PARAM_DRIVER_OP` | `3B54h` | Last sector driver operation requested. |
-| `TECFS_PARAM_LOCATOR_SECTOR_0` | `3B55h` | TEC-FS locator sector byte 0. |
-| `TECFS_PARAM_LOCATOR_SECTOR_1` | `3B56h` | TEC-FS locator sector byte 1. |
-| `TECFS_PARAM_LOCATOR_SECTOR_2` | `3B57h` | TEC-FS locator sector byte 2. |
-| `TECFS_PARAM_LOCATOR_SECTOR_3` | `3B58h` | TEC-FS locator sector byte 3. |
-| `TECFS_PARAM_VOLUME_SECTORS_0` | `3B59h` | 128 MiB volume sector count byte 0. |
-| `TECFS_PARAM_VOLUME_SECTORS_1` | `3B5Ah` | 128 MiB volume sector count byte 1. |
-| `TECFS_PARAM_VOLUME_SECTORS_2` | `3B5Bh` | 128 MiB volume sector count byte 2. |
-| `TECFS_PARAM_VOLUME_SECTORS_3` | `3B5Ch` | 128 MiB volume sector count byte 3. |
+| `TFS_PARAM_BASE` | `3B40h` | Base of TEC-FS parameter block. |
+| `TFS_PARAM_ACTIVE_VOLUME` | `3B40h` | Last valid selected volume. |
+| `TFS_PARAM_REQUEST_VOLUME` | `3B41h` | Requested volume for select. |
+| `TFS_PARAM_STATUS` | `3B42h` | Last status code. |
+| `TFS_PARAM_LAST_ERROR` | `3B43h` | Last error code. |
+| `TFS_PARAM_VOLUME_MIB` | `3B44h` | Volume size in MiB. |
+| `TFS_PARAM_BLOCK_BYTES_LO` | `3B45h` | Block byte count low byte. |
+| `TFS_PARAM_BLOCK_BYTES_HI` | `3B46h` | Block byte count high byte. |
+| `TFS_PARAM_VOLUME_BLOCKS_LO` | `3B47h` | Volume block count low byte. |
+| `TFS_PARAM_VOLUME_BLOCKS_HI` | `3B48h` | Volume block count high byte. |
+| `TFS_PARAM_USER_VOLUMES` | `3B49h` | User volume count. |
+| `TFS_PARAM_SPARE_VOLUME` | `3B4Ah` | Spare/work volume index. |
+| `TFS_PARAM_TOTAL_VOLUMES` | `3B4Bh` | Total selectable volumes. |
+| `TFS_PARAM_BLOCK_INDEX_LO` | `3B4Ch` | Requested 4K block index low byte. |
+| `TFS_PARAM_BLOCK_INDEX_HI` | `3B4Dh` | Requested 4K block index high byte. |
+| `TFS_PARAM_SECTOR_0` | `3B4Eh` | Mapped 512-byte sector number byte 0. |
+| `TFS_PARAM_SECTOR_1` | `3B4Fh` | Mapped 512-byte sector number byte 1. |
+| `TFS_PARAM_SECTOR_2` | `3B50h` | Mapped 512-byte sector number byte 2. |
+| `TFS_PARAM_SECTOR_3` | `3B51h` | Mapped 512-byte sector number byte 3. |
+| `TFS_PARAM_BUFFER_LO` | `3B52h` | 512-byte sector buffer address low byte. |
+| `TFS_PARAM_BUFFER_HI` | `3B53h` | 512-byte sector buffer address high byte. |
+| `TFS_PARAM_DRIVER_OP` | `3B54h` | Last sector driver operation requested. |
+| `TFS_PARAM_LOCATOR_SECTOR_0` | `3B55h` | TEC-FS locator sector byte 0. |
+| `TFS_PARAM_LOCATOR_SECTOR_1` | `3B56h` | TEC-FS locator sector byte 1. |
+| `TFS_PARAM_LOCATOR_SECTOR_2` | `3B57h` | TEC-FS locator sector byte 2. |
+| `TFS_PARAM_LOCATOR_SECTOR_3` | `3B58h` | TEC-FS locator sector byte 3. |
+| `TFS_PARAM_VOLUME_SECTORS_0` | `3B59h` | 128 MiB volume sector count byte 0. |
+| `TFS_PARAM_VOLUME_SECTORS_1` | `3B5Ah` | 128 MiB volume sector count byte 1. |
+| `TFS_PARAM_VOLUME_SECTORS_2` | `3B5Bh` | 128 MiB volume sector count byte 2. |
+| `TFS_PARAM_VOLUME_SECTORS_3` | `3B5Ch` | 128 MiB volume sector count byte 3. |
 
 TEC-FS sector driver operation values:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECFS_DRIVER_OP_READ` | `01h` | Sector driver hook read operation. |
-| `TECFS_DRIVER_OP_WRITE` | `02h` | Sector driver hook write operation. |
+| `TFS_DRIVER_OP_READ` | `01h` | Sector driver hook read operation. |
+| `TFS_DRIVER_OP_WRITE` | `02h` | Sector driver hook write operation. |
 
 TEC-FS card locator constants:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECFS_LOCATOR_LBA_0` | `01h` | Locator absolute LBA byte 0. |
-| `TECFS_LOCATOR_LBA_1` | `00h` | Locator absolute LBA byte 1. |
-| `TECFS_LOCATOR_LBA_2` | `00h` | Locator absolute LBA byte 2. |
-| `TECFS_LOCATOR_LBA_3` | `00h` | Locator absolute LBA byte 3. |
-| `TECFS_VOLUME_SECTORS_0` | `00h` | 128 MiB volume sector count byte 0. |
-| `TECFS_VOLUME_SECTORS_1` | `00h` | 128 MiB volume sector count byte 1. |
-| `TECFS_VOLUME_SECTORS_2` | `04h` | 128 MiB volume sector count byte 2. |
-| `TECFS_VOLUME_SECTORS_3` | `00h` | 128 MiB volume sector count byte 3. |
-| `TECFS_IMAGE_BASE_LBA_0` | `02h` | Current image-base LBA byte 0. |
-| `TECFS_IMAGE_BASE_LBA_1` | `00h` | Current image-base LBA byte 1. |
-| `TECFS_IMAGE_BASE_LBA_2` | `00h` | Current image-base LBA byte 2. |
-| `TECFS_IMAGE_BASE_LBA_3` | `00h` | Current image-base LBA byte 3. |
-| `TECFS_LOCATOR_MAGIC_0` | `54h` | Locator magic byte 0, `T`. |
-| `TECFS_LOCATOR_MAGIC_1` | `46h` | Locator magic byte 1, `F`. |
-| `TECFS_LOCATOR_MAGIC_2` | `53h` | Locator magic byte 2, `S`. |
-| `TECFS_LOCATOR_MAGIC_3` | `31h` | Locator magic byte 3, `1`. |
-| `TECFS_LOCATOR_VERSION` | `01h` | Locator sector format version. |
-| `TECFS_LOCATOR_HEADER_BYTES` | `20h` | Locator sector header size. |
-| `TECFS_LOCATOR_ENTRY_BYTES` | `10h` | Bytes per fixed volume record. |
-| `TECFS_LOCATOR_OFFSET_MAGIC` | `00h` | Header magic offset. |
-| `TECFS_LOCATOR_OFFSET_VERSION` | `04h` | Header version offset. |
-| `TECFS_LOCATOR_OFFSET_ENTRY_SIZE` | `05h` | Header entry-size offset. |
-| `TECFS_LOCATOR_OFFSET_TOTAL_VOLUMES` | `06h` | Header total-volume count offset. |
-| `TECFS_LOCATOR_OFFSET_USER_VOLUMES` | `07h` | Header user-volume count offset. |
-| `TECFS_LOCATOR_OFFSET_SPARE_VOLUME` | `08h` | Header reserved work-volume index offset. |
-| `TECFS_LOCATOR_OFFSET_VOLUME_SECTORS` | `09h` | Header sectors-per-volume field offset. |
-| `TECFS_LOCATOR_OFFSET_GENERATION` | `0Dh` | Header generation field offset. |
-| `TECFS_LOCATOR_OFFSET_CHECKSUM` | `11h` | Header checksum offset. |
-| `TECFS_LOCATOR_OFFSET_ENTRIES` | `20h` | First volume record offset. |
-| `TECFS_LOCATOR_ENTRY_VOLUME` | `00h` | Volume record volume-number offset. |
-| `TECFS_LOCATOR_ENTRY_ROLE` | `01h` | Volume record role offset. |
-| `TECFS_LOCATOR_ENTRY_FLAGS` | `02h` | Volume record flags offset. |
-| `TECFS_LOCATOR_ENTRY_START_LBA` | `03h` | Volume record absolute-start-LBA offset. |
-| `TECFS_LOCATOR_ENTRY_SECTORS` | `07h` | Volume record sector-count offset. |
-| `TECFS_LOCATOR_ENTRY_GENERATION` | `0Bh` | Volume record generation offset. |
-| `TECFS_LOCATOR_ENTRY_CHECKSUM` | `0Fh` | Volume record checksum offset. |
-| `TECFS_LOCATOR_ROLE_USER` | `01h` | Ordinary user volume role. |
-| `TECFS_LOCATOR_ROLE_WORK` | `02h` | Reserved work/safety volume role. |
-| `TECFS_LOCATOR_FLAG_ACTIVE` | `01h` | Volume record is active/valid. |
+| `TFS_LOC_LBA_0` | `01h` | Locator absolute LBA byte 0. |
+| `TFS_LOC_LBA_1` | `00h` | Locator absolute LBA byte 1. |
+| `TFS_LOC_LBA_2` | `00h` | Locator absolute LBA byte 2. |
+| `TFS_LOC_LBA_3` | `00h` | Locator absolute LBA byte 3. |
+| `TFS_VOLUME_SECTORS_0` | `00h` | 128 MiB volume sector count byte 0. |
+| `TFS_VOLUME_SECTORS_1` | `00h` | 128 MiB volume sector count byte 1. |
+| `TFS_VOLUME_SECTORS_2` | `04h` | 128 MiB volume sector count byte 2. |
+| `TFS_VOLUME_SECTORS_3` | `00h` | 128 MiB volume sector count byte 3. |
+| `TFS_IMAGE_BASE_LBA_0` | `02h` | Current image-base LBA byte 0. |
+| `TFS_IMAGE_BASE_LBA_1` | `00h` | Current image-base LBA byte 1. |
+| `TFS_IMAGE_BASE_LBA_2` | `00h` | Current image-base LBA byte 2. |
+| `TFS_IMAGE_BASE_LBA_3` | `00h` | Current image-base LBA byte 3. |
+| `TFS_LOC_MAGIC_0` | `54h` | Locator magic byte 0, `T`. |
+| `TFS_LOC_MAGIC_1` | `46h` | Locator magic byte 1, `F`. |
+| `TFS_LOC_MAGIC_2` | `53h` | Locator magic byte 2, `S`. |
+| `TFS_LOC_MAGIC_3` | `31h` | Locator magic byte 3, `1`. |
+| `TFS_LOC_VERSION` | `01h` | Locator sector format version. |
+| `TFS_LOC_HEADER_BYTES` | `20h` | Locator sector header size. |
+| `TFS_LOC_ENTRY_BYTES` | `10h` | Bytes per fixed volume record. |
+| `TFS_LOC_OFFSET_MAGIC` | `00h` | Header magic offset. |
+| `TFS_LOC_OFFSET_VERSION` | `04h` | Header version offset. |
+| `TFS_LOC_OFFSET_ENTRY_SIZE` | `05h` | Header entry-size offset. |
+| `TFS_LOC_OFFSET_TOTAL_VOLUMES` | `06h` | Header total-volume count offset. |
+| `TFS_LOC_OFFSET_USER_VOLUMES` | `07h` | Header user-volume count offset. |
+| `TFS_LOC_OFFSET_SPARE_VOLUME` | `08h` | Header reserved work-volume index offset. |
+| `TFS_LOC_OFFSET_VOLUME_SECTORS` | `09h` | Header sectors-per-volume field offset. |
+| `TFS_LOC_OFFSET_GENERATION` | `0Dh` | Header generation field offset. |
+| `TFS_LOC_OFFSET_CHECKSUM` | `11h` | Header checksum offset. |
+| `TFS_LOC_OFFSET_ENTRIES` | `20h` | First volume record offset. |
+| `TFS_LOC_ENTRY_VOLUME` | `00h` | Volume record volume-number offset. |
+| `TFS_LOC_ENTRY_ROLE` | `01h` | Volume record role offset. |
+| `TFS_LOC_ENTRY_FLAGS` | `02h` | Volume record flags offset. |
+| `TFS_LOC_ENTRY_START_LBA` | `03h` | Volume record absolute-start-LBA offset. |
+| `TFS_LOC_ENTRY_SECTORS` | `07h` | Volume record sector-count offset. |
+| `TFS_LOC_ENTRY_GENERATION` | `0Bh` | Volume record generation offset. |
+| `TFS_LOC_ENTRY_CHECKSUM` | `0Fh` | Volume record checksum offset. |
+| `TFS_LOC_ROLE_USER` | `01h` | Ordinary user volume role. |
+| `TFS_LOC_ROLE_WORK` | `02h` | Reserved work/safety volume role. |
+| `TFS_LOC_FLAG_ACTIVE` | `01h` | Volume record is active/valid. |
 
 The TEC-FS locator sector is a card-level sector, not part of any single
 volume. The current contract places it at absolute LBA 1 on a TEC-formatted
@@ -378,10 +378,10 @@ checksum. Each 128 MiB TEC-FS volume occupies 262,144 512-byte sectors. Future
 mount code should read this sector, validate its magic and checksum, then use its
 volume-start table instead of parsing FAT32 directories on the TEC.
 
-The sector I/O contract uses `TECFS_PARAM_SECTOR_0..3` for the sector to pass
-to the driver hook and `TECFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers
-that start with a volume/block pair should call `TECM8_TECFS_MAP_BLOCK`, then
-`TECM8_TECFS_TRANSLATE_SECTOR`, then read or write. The current implementation
+The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the sector to pass
+to the driver hook and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers
+that start with a volume/block pair should call `TFS_MAP_BLOCK`, then
+`TFS_TRANSLATE_SECTOR`, then read or write. The current implementation
 records the requested sector driver hook operation, validates the request, and
 then calls a replaceable hook. The default hook reports that no low-level SD
 sector driver is linked behind the boundary yet.
@@ -390,13 +390,13 @@ TEC-FS status codes:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECFS_STATUS_OK` | `00h` | Success. |
-| `TECFS_ERR_BAD_VOLUME` | `0Bh` | Requested volume is out of range. |
-| `TECFS_ERR_BAD_BLOCK` | `0Ch` | Requested block index is out of range. |
-| `TECFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
-| `TECFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
-| `TECFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
-| `TECFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
+| `TFS_STATUS_OK` | `00h` | Success. |
+| `TFS_ERR_BAD_VOLUME` | `0Bh` | Requested volume is out of range. |
+| `TFS_ERR_BAD_BLOCK` | `0Ch` | Requested block index is out of range. |
+| `TFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
+| `TFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
+| `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
+| `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
 ## Bank 3: RTC Boundary
 
@@ -405,32 +405,32 @@ RTC calls still need to be moved or wrapped; UI entries fail explicitly.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
-| `TECM8_RTC_ENTRY` | `8000h` | Publishes service descriptor, returns `A=83h`, carry clear. |
-| `TECM8_RTC_TOOL_ENTRY` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_TOOL_ENTRY`. |
-| `TECM8_RTC_SETUP_UI` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_SETUP_UI`. |
-| `TECM8_RTC_PRAM_VIEWER` | `8000h` | Bank-origin dispatcher; use `A=TECM8_RTC_SVC_PRAM_VIEWER`. |
-| `TECM8_RTC_SVC_TOOL_ENTRY` | `01h` | Same descriptor path as entry. |
-| `TECM8_RTC_SVC_SETUP_UI` | `02h` | Explicit unsupported error. |
-| `TECM8_RTC_SVC_PRAM_VIEWER` | `03h` | Explicit unsupported error. |
+| `RTC_ENTRY` | `8000h` | Publishes service descriptor, returns `A=83h`, carry clear. |
+| `RTC_TOOL_ADDR` | `8000h` | Bank-origin dispatcher; use `A=RTC_SVC_TOOL_ENTRY`. |
+| `RTC_SETUP_UI` | `8000h` | Bank-origin dispatcher; use `A=RTC_SVC_SETUP_UI`. |
+| `RTC_PRAM_VIEWER` | `8000h` | Bank-origin dispatcher; use `A=RTC_SVC_PRAM_VIEWER`. |
+| `RTC_SVC_TOOL_ENTRY` | `01h` | Same descriptor path as entry. |
+| `RTC_SVC_SETUP_UI` | `02h` | Explicit unsupported error. |
+| `RTC_SVC_PRAM_VIEWER` | `03h` | Explicit unsupported error. |
 
 RTC parameter block:
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |
-| `TECM8_RTC_PARAM_BASE` | `3B60h` | Base of RTC parameter block. |
-| `TECM8_RTC_PARAM_STATUS` | `3B60h` | Last status code. |
-| `TECM8_RTC_PARAM_LAST_ERROR` | `3B61h` | Last error code. |
-| `TECM8_RTC_PARAM_BANK` | `3B62h` | Service bank marker. |
-| `TECM8_RTC_PARAM_VERSION` | `3B63h` | Service ABI version. |
-| `TECM8_RTC_PARAM_FEATURES` | `3B64h` | Feature flags. |
+| `RTC_PARAM_BASE` | `3B60h` | Base of RTC parameter block. |
+| `RTC_PARAM_STATUS` | `3B60h` | Last status code. |
+| `RTC_PARAM_LAST_ERROR` | `3B61h` | Last error code. |
+| `RTC_PARAM_BANK` | `3B62h` | Service bank marker. |
+| `RTC_PARAM_VERSION` | `3B63h` | Service ABI version. |
+| `RTC_PARAM_FEATURES` | `3B64h` | Feature flags. |
 
 RTC status and feature values:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECM8_RTC_STATUS_OK` | `00h` | Success. |
-| `TECM8_RTC_FEATURE_SERVICE` | `01h` | Basic service boundary present. |
-| `TECM8_RTC_ERR_UNSUPPORTED` | `E0h` | UI/tool slot exists but is not implemented yet. |
+| `RTC_STATUS_OK` | `00h` | Success. |
+| `RTC_FEATURE_SERVICE` | `01h` | Basic service boundary present. |
+| `RTC_ERR_UNSUPPORTED` | `E0h` | UI/tool slot exists but is not implemented yet. |
 
 ## Bank 4: GLCD Boundary
 
@@ -440,32 +440,32 @@ stubs so monitor callers can move to a banked GLCD ABI.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
-| `TECM8_GLCD_ENTRY` | `8000h` | Publishes service descriptor, returns `A=84h`, carry clear. |
-| `TECM8_GLCD_INIT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_INIT`. |
-| `TECM8_GLCD_CLEAR` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_CLEAR`. |
-| `TECM8_GLCD_PLOT` | `8000h` | Bank-origin dispatcher; use `A=TECM8_GLCD_SVC_PLOT`. |
-| `TECM8_GLCD_SVC_INIT` | `01h` | Explicit unsupported error. |
-| `TECM8_GLCD_SVC_CLEAR` | `02h` | Explicit unsupported error. |
-| `TECM8_GLCD_SVC_PLOT` | `03h` | Explicit unsupported error. |
+| `GLC_ENTRY_ADDR` | `8000h` | Publishes service descriptor, returns `A=84h`, carry clear. |
+| `GLC_INIT` | `8000h` | Bank-origin dispatcher; use `A=GLC_SVC_INIT`. |
+| `GLC_CLEAR` | `8000h` | Bank-origin dispatcher; use `A=GLC_SVC_CLEAR`. |
+| `GLC_PLOT` | `8000h` | Bank-origin dispatcher; use `A=GLC_SVC_PLOT`. |
+| `GLC_SVC_INIT` | `01h` | Explicit unsupported error. |
+| `GLC_SVC_CLEAR` | `02h` | Explicit unsupported error. |
+| `GLC_SVC_PLOT` | `03h` | Explicit unsupported error. |
 
 GLCD parameter block:
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |
-| `TECM8_GLCD_PARAM_BASE` | `3B80h` | Base of GLCD parameter block. |
-| `TECM8_GLCD_PARAM_STATUS` | `3B80h` | Last status code. |
-| `TECM8_GLCD_PARAM_LAST_ERROR` | `3B81h` | Last error code. |
-| `TECM8_GLCD_PARAM_BANK` | `3B82h` | Service bank marker. |
-| `TECM8_GLCD_PARAM_VERSION` | `3B83h` | Service ABI version. |
-| `TECM8_GLCD_PARAM_FEATURES` | `3B84h` | Feature flags. |
+| `GLC_PARAM_BASE` | `3B80h` | Base of GLCD parameter block. |
+| `GLC_PARAM_STATUS` | `3B80h` | Last status code. |
+| `GLC_PARAM_LAST_ERROR` | `3B81h` | Last error code. |
+| `GLC_PARAM_BANK` | `3B82h` | Service bank marker. |
+| `GLC_PARAM_VERSION` | `3B83h` | Service ABI version. |
+| `GLC_PARAM_FEATURES` | `3B84h` | Feature flags. |
 
 GLCD status and feature values:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `TECM8_GLCD_STATUS_OK` | `00h` | Success. |
-| `TECM8_GLCD_FEATURE_BOUNDARY` | `01h` | Basic service boundary present. |
-| `TECM8_GLCD_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
+| `GLC_STATUS_OK` | `00h` | Success. |
+| `GLC_FEATURE_BOUNDARY` | `01h` | Basic service boundary present. |
+| `GLC_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
 ## Proof Hooks
 
@@ -474,23 +474,23 @@ reused accidentally by service implementations.
 
 | Constant | Address | Purpose |
 | --- | ---: | --- |
-| `TECM8_ABI_TRACE_BASE` | `3100h` | Base of bank ABI proof trace RAM. |
-| `TECM8_ABI_TRACE_0` | `3100h` | Bank ABI proof trace byte 0. |
-| `TECM8_ABI_TRACE_1` | `3101h` | Bank ABI proof trace byte 1. |
-| `TECM8_ABI_TRACE_2` | `3102h` | Bank ABI proof trace byte 2. |
-| `TECM8_ABI_TRACE_3` | `3103h` | Bank ABI proof trace byte 3. |
-| `TECM8_ABI_TRACE_4` | `3104h` | Bank ABI proof trace byte 4. |
-| `TECM8_ABI_TRACE_5` | `3105h` | Bank ABI proof trace byte 5. |
-| `TECM8_ABI_TRACE_6` | `3106h` | Bank ABI proof trace byte 6. |
-| `TECM8_ABI_TRACE_7` | `3107h` | Bank ABI proof trace byte 7. |
-| `TECM8_ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
-| `TECM8_ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
-| `TECM8_ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
-| `TECM8_ABI_PROBE_REQUEST` | `311Ch` | RAM selector used when a proof must preserve caller `A`. |
-| `TECM8_ABI_PROBE_NESTED` | `90h` | Proof selector for nested bank-call dispatch. |
-| `TECM8_ABI_PROBE_PRESERVE` | `91h` | Proof selector for register-preservation dispatch. |
-| `TECM8_ABI_PROBE_FARJUMP` | `92h` | Proof selector for non-returning far-jump dispatch. |
-| `TECM8_ABI_PROBE_RETURNING_FARJUMP` | `93h` | Proof selector for far-jump return-suppression dispatch. |
+| `ABI_TRACE_BASE` | `3100h` | Base of bank ABI proof trace RAM. |
+| `ABI_TRACE_0` | `3100h` | Bank ABI proof trace byte 0. |
+| `ABI_TRACE_1` | `3101h` | Bank ABI proof trace byte 1. |
+| `ABI_TRACE_2` | `3102h` | Bank ABI proof trace byte 2. |
+| `ABI_TRACE_3` | `3103h` | Bank ABI proof trace byte 3. |
+| `ABI_TRACE_4` | `3104h` | Bank ABI proof trace byte 4. |
+| `ABI_TRACE_5` | `3105h` | Bank ABI proof trace byte 5. |
+| `ABI_TRACE_6` | `3106h` | Bank ABI proof trace byte 6. |
+| `ABI_TRACE_7` | `3107h` | Bank ABI proof trace byte 7. |
+| `ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
+| `ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
+| `ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
+| `ABI_PROBE_REQUEST` | `311Ch` | RAM selector used when a proof must preserve caller `A`. |
+| `ABI_PROBE_NESTED` | `90h` | Proof selector for nested bank-call dispatch. |
+| `ABI_PROBE_PRESERVE` | `91h` | Proof selector for register-preservation dispatch. |
+| `ABI_PROBE_FARJUMP` | `92h` | Proof selector for non-returning far-jump dispatch. |
+| `ABI_PROBE_RETURNING_FARJUMP` | `93h` | Proof selector for far-jump return-suppression dispatch. |
 
 The bank ABI proof deliberately does not publish fixed expansion-ROM target
 addresses. It enters banks through their bank origin or the installed service

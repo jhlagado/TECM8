@@ -15,11 +15,11 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   const runner = readRepoFile('tools/run-bank-abi-proof.ts');
   const packageJson = readRepoFile('package.json');
 
-  assert.match(proof, /callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_INIT/);
-  assert.match(proof, /callService TECM8_ABI_PROBE_NESTED/);
-  assert.match(proof, /ld \(TECM8_ABI_PROBE_REQUEST\),a[\s\S]*farCall 0x01,TECM8_VDU_ENTRY/);
-  assert.match(proof, /ld a,TECM8_ABI_PROBE_FARJUMP[\s\S]*farJump 0x03,TECM8_RTC_ENTRY/);
-  assert.match(proof, /ld a,TECM8_ABI_PROBE_RETURNING_FARJUMP[\s\S]*farJump 0x03,TECM8_RTC_ENTRY/);
+  assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_INIT/);
+  assert.match(proof, /callService ABI_PROBE_NESTED/);
+  assert.match(proof, /ld \(ABI_PROBE_REQUEST\),a[\s\S]*farCall 0x01,VDU_ENTRY/);
+  assert.match(proof, /ld a,ABI_PROBE_FARJUMP[\s\S]*farJump 0x03,RTC_ENTRY/);
+  assert.match(proof, /ld a,ABI_PROBE_RETURNING_FARJUMP[\s\S]*farJump 0x03,RTC_ENTRY/);
   assert.match(proof, /callService VDU_INIT/);
   assert.match(proof, /callService TFS_MOUNT/);
   assert.match(proof, /callService RTC_TOOL/);

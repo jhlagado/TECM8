@@ -30,52 +30,52 @@ ClearTrace:
         inc hl
         djnz ClearTrace
 
-        ld c,TECM8_BIOS_SYS_GET
+        ld c,MON_SYS_GET
         rst 10H
         ld (TMS_PROOF_TRACE_0),a
 
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_INIT
+        callBankService 0x01,VDU_CALL,VDU_SVC_INIT
         ld (TMS_PROOF_TRACE_1),a
 
-        ld c,TECM8_BIOS_SYS_GET
+        ld c,MON_SYS_GET
         rst 10H
         ld (TMS_PROOF_TRACE_2),a
 
         ld a,0x07
-        ld (TECM8_TMS_PARAM_REGISTER),a
+        ld (TMS_PARAM_REGISTER),a
         ld a,0xF4
-        ld (TECM8_TMS_PARAM_VALUE),a
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_TMS_SVC_SET_REGISTER
+        ld (TMS_PARAM_VALUE),a
+        callBankService 0x01,VDU_CALL,TMS_SVC_SET_REGISTER
 
         ld a,0x23
-        ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld (TMS_PARAM_ADDR_LO),a
         ld a,0x01
-        ld (TECM8_TMS_PARAM_ADDR_HI),a
+        ld (TMS_PARAM_ADDR_HI),a
         ld a,0x5A
-        ld (TECM8_TMS_PARAM_VALUE),a
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_TMS_SVC_WRITE_VRAM
+        ld (TMS_PARAM_VALUE),a
+        callBankService 0x01,VDU_CALL,TMS_SVC_WRITE_VRAM
 
         ld a,0x24
-        ld (TECM8_TMS_PARAM_ADDR_LO),a
+        ld (TMS_PARAM_ADDR_LO),a
         ld a,0x01
-        ld (TECM8_TMS_PARAM_ADDR_HI),a
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_SET_CURSOR
+        ld (TMS_PARAM_ADDR_HI),a
+        callBankService 0x01,VDU_CALL,VDU_SVC_SET_CURSOR
         ld (TMS_PROOF_TRACE_4),a
 
         ld a,0x42
-        ld (TECM8_TMS_PARAM_VALUE),a
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_PUT_CHAR
+        ld (TMS_PARAM_VALUE),a
+        callBankService 0x01,VDU_CALL,VDU_SVC_PUT_CHAR
         ld (TMS_PROOF_TRACE_5),a
 
         ld hl,TmsProofString
-        ld (TECM8_TMS_PARAM_STRING_LO),hl
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_PUT_STRING
+        ld (TMS_PARAM_STRING_LO),hl
+        callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING
         ld (TMS_PROOF_TRACE_6),a
 
-        callBankService 0x01,TECM8_VDU_SERVICE_CALL,TECM8_VDU_SVC_NEWLINE
+        callBankService 0x01,VDU_CALL,VDU_SVC_NEWLINE
         ld (TMS_PROOF_TRACE_7),a
 
-        ld c,TECM8_BIOS_SYS_GET
+        ld c,MON_SYS_GET
         rst 10H
         ld (TMS_PROOF_TRACE_3),a
 

@@ -227,7 +227,7 @@ async function main(): Promise<void> {
   const traceBase = symbolNumber(symbols, 'TMS_PROOF_TRACE_BASE');
   const resultAddr = symbolNumber(symbols, 'TMS_PROOF_RESULT');
   const trace = readTrace(runtime, traceBase, 8);
-  const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
+  const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
   const tmsParams = readTrace(runtime, tmsParamBase, 8);
   const result = runtime.hardware.memory[resultAddr];
   const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();

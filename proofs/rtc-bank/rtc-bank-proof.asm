@@ -18,58 +18,58 @@ RTC_PROOF_RESULT            .equ    0x3BB0
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
-        ld hl,TECM8_RTC_PARAM_BASE
+        ld hl,RTC_PARAM_BASE
         ld b,16
 ClearParams:
         ld (hl),0
         inc hl
         djnz ClearParams
 
-        farCall 0x03,TECM8_RTC_ENTRY
+        farCall 0x03,RTC_ENTRY
         jp c,FailEntry
         cp 0x83
         jp nz,FailEntry
-        ld a,(TECM8_RTC_PARAM_STATUS)
-        cp TECM8_RTC_STATUS_OK
+        ld a,(RTC_PARAM_STATUS)
+        cp RTC_STATUS_OK
         jp nz,FailEntry
-        ld a,(TECM8_RTC_PARAM_BANK)
+        ld a,(RTC_PARAM_BANK)
         cp 0x03
         jp nz,FailEntry
-        ld a,(TECM8_RTC_PARAM_VERSION)
+        ld a,(RTC_PARAM_VERSION)
         cp 0x01
         jp nz,FailEntry
-        ld a,(TECM8_RTC_PARAM_FEATURES)
-        cp TECM8_RTC_FEATURE_SERVICE
+        ld a,(RTC_PARAM_FEATURES)
+        cp RTC_FEATURE_SERVICE
         jp nz,FailEntry
 
-        ld a,TECM8_RTC_SVC_TOOL_ENTRY
-        farCall 0x03,TECM8_RTC_ENTRY
+        ld a,RTC_SVC_TOOL_ENTRY
+        farCall 0x03,RTC_ENTRY
         jr c,FailTool
         cp 0x83
         jr nz,FailTool
 
-        ld a,TECM8_RTC_SVC_SETUP_UI
-        farCall 0x03,TECM8_RTC_ENTRY
+        ld a,RTC_SVC_SETUP_UI
+        farCall 0x03,RTC_ENTRY
         jr nc,FailSetupUi
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailSetupUi
-        ld a,(TECM8_RTC_PARAM_STATUS)
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        ld a,(RTC_PARAM_STATUS)
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailSetupUi
-        ld a,(TECM8_RTC_PARAM_LAST_ERROR)
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        ld a,(RTC_PARAM_LAST_ERROR)
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailSetupUi
 
-        ld a,TECM8_RTC_SVC_PRAM_VIEWER
-        farCall 0x03,TECM8_RTC_ENTRY
+        ld a,RTC_SVC_PRAM_VIEWER
+        farCall 0x03,RTC_ENTRY
         jr nc,FailPramViewer
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailPramViewer
-        ld a,(TECM8_RTC_PARAM_STATUS)
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        ld a,(RTC_PARAM_STATUS)
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailPramViewer
-        ld a,(TECM8_RTC_PARAM_LAST_ERROR)
-        cp TECM8_RTC_ERR_UNSUPPORTED
+        ld a,(RTC_PARAM_LAST_ERROR)
+        cp RTC_ERR_UNSUPPORTED
         jr nz,FailPramViewer
 
         ld a,PROOF_PASS

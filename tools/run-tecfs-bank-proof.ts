@@ -198,8 +198,8 @@ async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
   const { runtime, platformRuntime } = loadRuntime(bytes);
   const instructions = runUntilHalt(runtime, platformRuntime);
-  const resultAddr = symbolNumber(symbols, 'TECFS_PROOF_RESULT');
-  const paramBase = symbolNumber(symbols, 'TECFS_PARAM_BASE');
+  const resultAddr = symbolNumber(symbols, 'TFS_PROOF_RESULT');
+  const paramBase = symbolNumber(symbols, 'TFS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const params = readTrace(runtime, paramBase, 29);
 

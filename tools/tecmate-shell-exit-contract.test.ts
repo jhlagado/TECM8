@@ -27,7 +27,7 @@ test('shell exit contract distinguishes proof returns from production shell poli
 
 test('shell exit contract keeps cross-bank returns on the fixed monitor ABI', () => {
   assert.match(bank0, /@Tecm8ExpansionBank0Entry:[\s\S]*callService VDU_INIT[\s\S]*ret/);
-  assert.match(bank0, /farCall TFS_MOUNT_BANK,TFS_MOUNT_ADDR/);
+  assert.match(bank0, /farCall TFS_BANK,TFS_ADDR/);
   assert.match(doc, /Far-called TecMate service \| service routines must return through the fixed monitor `BiosBankCall` mechanism/);
   assert.match(doc, /Cross-bank calls remain the\s+job of the fixed monitor bank ABI/);
 });

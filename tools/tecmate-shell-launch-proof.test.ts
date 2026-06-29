@@ -16,12 +16,12 @@ test('TecMate shell launch proof exercises the service bridge launch path', () =
   const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
   assert.match(proof, /callService SHL_ENTRY/);
-  assert.match(proof, /TECM8_SHELL_PARAM_BANK/);
-  assert.match(proof, /TECM8_SHELL_PARAM_FEATURES/);
+  assert.match(proof, /SHL_PARAM_BANK/);
+  assert.match(proof, /SHL_PARAM_FEATURES/);
   assert.match(proof, /CheckShellSplash:/);
   assert.match(proof, /\.db\s+"TecMate",0/);
   assert.match(runner, /shell launch proof result marker/);
-  assert.doesNotMatch(proof, /farCall 0x00,TECM8_SHELL_ENTRY/);
+  assert.doesNotMatch(proof, /farCall 0x00,SHL_ENTRY/);
   assert.match(runner, /service bridge shell launch return/);
   assert.match(runner, /shell splash cursor low/);
   assert.match(runner, /shell splash T/);

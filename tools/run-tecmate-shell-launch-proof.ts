@@ -200,9 +200,9 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const resultAddr = symbolNumber(symbols, 'PROOF_RESULT');
   const traceBase = symbolNumber(symbols, 'PROOF_TRACE_BASE');
-  const shellParamBase = symbolNumber(symbols, 'TECM8_SHELL_PARAM_BASE');
-  const shellSplashBuffer = symbolNumber(symbols, 'TECM8_SHELL_SPLASH_BUFFER');
-  const tmsParamBase = symbolNumber(symbols, 'TECM8_TMS_PARAM_BASE');
+  const shellParamBase = symbolNumber(symbols, 'SHL_PARAM_BASE');
+  const shellSplashBuffer = symbolNumber(symbols, 'SHL_SPLASH_BUFFER');
+  const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const trace = readTrace(runtime, traceBase, 1);
   const params = readTrace(runtime, shellParamBase, 5);

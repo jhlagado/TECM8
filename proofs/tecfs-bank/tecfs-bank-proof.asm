@@ -25,324 +25,324 @@ PROOF_FAIL_DRIVER_HOOK      .equ    0xEC
 PROOF_FAIL_LOCATOR          .equ    0xED
 PROOF_FAIL_VOLUME_SECTORS   .equ    0xEE
 PROOF_FAIL_TRANSLATE        .equ    0xEF
-TECFS_PROOF_TRACE_BASE      .equ    0x3B80
-TECFS_PROOF_RESULT          .equ    0x3BA0
+TFS_PROOF_TRACE_BASE      .equ    0x3B80
+TFS_PROOF_RESULT          .equ    0x3BA0
 
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
-        ld hl,TECFS_PARAM_BASE
+        ld hl,TFS_PARAM_BASE
         ld b,64
 ClearParams:
         ld (hl),0
         inc hl
         djnz ClearParams
 
-        ld a,TECM8_TECFS_SVC_MOUNT
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_MOUNT
+        farCall 0x02,TFS_ENTRY
         jp c,FailMount
         cp 0x82
         jp nz,FailMount
 
-        ld a,(TECFS_PARAM_BLOCK_BYTES_LO)
+        ld a,(TFS_PARAM_BLOCK_BYTES_LO)
         cp 0x00
         jp nz,FailBlockBytes
-        ld a,(TECFS_PARAM_BLOCK_BYTES_HI)
+        ld a,(TFS_PARAM_BLOCK_BYTES_HI)
         cp 0x10
         jp nz,FailBlockBytes
 
-        ld a,(TECFS_PARAM_VOLUME_BLOCKS_LO)
+        ld a,(TFS_PARAM_VOLUME_BLOCKS_LO)
         cp 0x00
         jp nz,FailVolumeBlocks
-        ld a,(TECFS_PARAM_VOLUME_BLOCKS_HI)
+        ld a,(TFS_PARAM_VOLUME_BLOCKS_HI)
         cp 0x80
         jp nz,FailVolumeBlocks
 
-        ld a,(TECFS_PARAM_LOCATOR_SECTOR_0)
-        cp TECFS_LOCATOR_LBA_0
+        ld a,(TFS_PARAM_LOCATOR_SECTOR_0)
+        cp TFS_LOC_LBA_0
         jp nz,FailLocator
-        ld a,(TECFS_PARAM_LOCATOR_SECTOR_1)
-        cp TECFS_LOCATOR_LBA_1
+        ld a,(TFS_PARAM_LOCATOR_SECTOR_1)
+        cp TFS_LOC_LBA_1
         jp nz,FailLocator
-        ld a,(TECFS_PARAM_LOCATOR_SECTOR_2)
-        cp TECFS_LOCATOR_LBA_2
+        ld a,(TFS_PARAM_LOCATOR_SECTOR_2)
+        cp TFS_LOC_LBA_2
         jp nz,FailLocator
-        ld a,(TECFS_PARAM_LOCATOR_SECTOR_3)
-        cp TECFS_LOCATOR_LBA_3
+        ld a,(TFS_PARAM_LOCATOR_SECTOR_3)
+        cp TFS_LOC_LBA_3
         jp nz,FailLocator
 
-        ld a,(TECFS_PARAM_VOLUME_SECTORS_0)
-        cp TECFS_VOLUME_SECTORS_0
+        ld a,(TFS_PARAM_VOLUME_SECTORS_0)
+        cp TFS_VOLUME_SECTORS_0
         jp nz,FailVolumeSectors
-        ld a,(TECFS_PARAM_VOLUME_SECTORS_1)
-        cp TECFS_VOLUME_SECTORS_1
+        ld a,(TFS_PARAM_VOLUME_SECTORS_1)
+        cp TFS_VOLUME_SECTORS_1
         jp nz,FailVolumeSectors
-        ld a,(TECFS_PARAM_VOLUME_SECTORS_2)
-        cp TECFS_VOLUME_SECTORS_2
+        ld a,(TFS_PARAM_VOLUME_SECTORS_2)
+        cp TFS_VOLUME_SECTORS_2
         jp nz,FailVolumeSectors
-        ld a,(TECFS_PARAM_VOLUME_SECTORS_3)
-        cp TECFS_VOLUME_SECTORS_3
+        ld a,(TFS_PARAM_VOLUME_SECTORS_3)
+        cp TFS_VOLUME_SECTORS_3
         jp nz,FailVolumeSectors
 
         ld a,0x05
-        ld (TECFS_PARAM_REQUEST_VOLUME),a
-        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_REQUEST_VOLUME),a
+        ld a,TFS_SVC_SELECT_VOLUME
+        farCall 0x02,TFS_ENTRY
         jp c,FailSelectValid
-        ld a,(TECFS_PARAM_ACTIVE_VOLUME)
+        ld a,(TFS_PARAM_ACTIVE_VOLUME)
         cp 0x05
         jp nz,FailSelectValid
-        ld a,(TECFS_PARAM_LAST_ERROR)
-        cp TECFS_STATUS_OK
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_STATUS_OK
         jp nz,FailSelectValid
 
         ld a,0x1E
-        ld (TECFS_PARAM_REQUEST_VOLUME),a
-        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_REQUEST_VOLUME),a
+        ld a,TFS_SVC_SELECT_VOLUME
+        farCall 0x02,TFS_ENTRY
         jp c,FailSelectValid
-        ld a,(TECFS_PARAM_ACTIVE_VOLUME)
+        ld a,(TFS_PARAM_ACTIVE_VOLUME)
         cp 0x1E
         jp nz,FailSelectValid
 
         ld a,0x1F
-        ld (TECFS_PARAM_REQUEST_VOLUME),a
-        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_REQUEST_VOLUME),a
+        ld a,TFS_SVC_SELECT_VOLUME
+        farCall 0x02,TFS_ENTRY
         jp nc,FailSelectInvalid
-        cp TECFS_ERR_BAD_VOLUME
+        cp TFS_ERR_BAD_VOLUME
         jp nz,FailSelectInvalid
-        ld a,(TECFS_PARAM_LAST_ERROR)
-        cp TECFS_ERR_BAD_VOLUME
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_BAD_VOLUME
         jp nz,FailSelectInvalid
-        ld a,(TECFS_PARAM_ACTIVE_VOLUME)
+        ld a,(TFS_PARAM_ACTIVE_VOLUME)
         cp 0x1E
         jp nz,FailSelectInvalid
 
         ld a,0x05
-        ld (TECFS_PARAM_REQUEST_VOLUME),a
-        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_REQUEST_VOLUME),a
+        ld a,TFS_SVC_SELECT_VOLUME
+        farCall 0x02,TFS_ENTRY
         jp c,FailSelectValid
         ld a,0x34
-        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
-        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        ld a,TECM8_TECFS_SVC_MAP_BLOCK
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
         jp c,FailMapBlock
         cp 0x82
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0xA0
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x91
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x14
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailMapBlock
 
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
         cp 0x82
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0xA2
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x91
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x14
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailTranslate
 
         ld a,0x1D
-        ld (TECFS_PARAM_REQUEST_VOLUME),a
-        ld a,TECM8_TECFS_SVC_SELECT_VOLUME
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_REQUEST_VOLUME),a
+        ld a,TFS_SVC_SELECT_VOLUME
+        farCall 0x02,TFS_ENTRY
         jp c,FailSelectValid
         ld a,0x34
-        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
-        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        ld a,TECM8_TECFS_SVC_MAP_BLOCK
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
         jp c,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0xA0
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x91
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x74
         jp nz,FailMapBlock
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailMapBlock
 
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
         cp 0x82
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0xA2
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x91
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x74
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailTranslate
 
         ld a,0xFF
-        ld (TECFS_PARAM_SECTOR_0),a
-        ld (TECFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_0),a
+        ld (TFS_PARAM_SECTOR_1),a
         xor a
-        ld (TECFS_PARAM_SECTOR_2),a
-        ld (TECFS_PARAM_SECTOR_3),a
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0x01
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x00
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x01
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailTranslate
 
         ld a,0x80
-        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        ld a,TECM8_TECFS_SVC_MAP_BLOCK
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
         jp nc,FailMapInvalid
-        cp TECFS_ERR_BAD_BLOCK
+        cp TFS_ERR_BAD_BLOCK
         jp nz,FailMapInvalid
-        ld a,(TECFS_PARAM_LAST_ERROR)
-        cp TECFS_ERR_BAD_BLOCK
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_BAD_BLOCK
         jp nz,FailMapInvalid
 
         ld a,0x34
-        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
-        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        ld a,TECM8_TECFS_SVC_MAP_BLOCK
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
         jp c,FailMapBlock
         ld hl,0x6000
-        ld (TECFS_PARAM_BUFFER_LO),hl
+        ld (TFS_PARAM_BUFFER_LO),hl
 
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
-        ld a,TECM8_TECFS_SVC_READ
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_READ
+        farCall 0x02,TFS_ENTRY
         jp nc,FailReadContract
-        cp TECFS_ERR_NO_DRIVER
+        cp TFS_ERR_NO_DRIVER
         jp nz,FailReadContract
-        ld a,(TECFS_PARAM_LAST_ERROR)
-        cp TECFS_ERR_NO_DRIVER
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NO_DRIVER
         jp nz,FailReadContract
-        ld a,(TECFS_PARAM_DRIVER_OP)
-        cp TECFS_DRIVER_OP_READ
+        ld a,(TFS_PARAM_DRIVER_OP)
+        cp TFS_DRIVER_OP_READ
         jp nz,FailDriverHook
 
-        ld a,TECM8_TECFS_SVC_WRITE
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_WRITE
+        farCall 0x02,TFS_ENTRY
         jp nc,FailWriteContract
-        cp TECFS_ERR_NO_DRIVER
+        cp TFS_ERR_NO_DRIVER
         jp nz,FailWriteContract
-        ld a,(TECFS_PARAM_LAST_ERROR)
-        cp TECFS_ERR_NO_DRIVER
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NO_DRIVER
         jp nz,FailWriteContract
-        ld a,(TECFS_PARAM_DRIVER_OP)
-        cp TECFS_DRIVER_OP_WRITE
+        ld a,(TFS_PARAM_DRIVER_OP)
+        cp TFS_DRIVER_OP_WRITE
         jp nz,FailDriverHook
 
         ld hl,0x0000
-        ld (TECFS_PARAM_BUFFER_LO),hl
-        ld a,TECM8_TECFS_SVC_READ
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_READ
+        farCall 0x02,TFS_ENTRY
         jp nc,FailBadBuffer
-        cp TECFS_ERR_BAD_BUFFER
+        cp TFS_ERR_BAD_BUFFER
         jp nz,FailBadBuffer
 
         ld hl,0x6000
-        ld (TECFS_PARAM_BUFFER_LO),hl
+        ld (TFS_PARAM_BUFFER_LO),hl
         ld a,0x7C
-        ld (TECFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_2),a
         ld a,0x02
-        ld (TECFS_PARAM_SECTOR_0),a
+        ld (TFS_PARAM_SECTOR_0),a
         xor a
-        ld (TECFS_PARAM_SECTOR_1),a
-        ld (TECFS_PARAM_SECTOR_3),a
-        ld a,TECM8_TECFS_SVC_READ
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld a,TFS_SVC_READ
+        farCall 0x02,TFS_ENTRY
         jp nc,FailBadSector
-        cp TECFS_ERR_BAD_SECTOR
+        cp TFS_ERR_BAD_SECTOR
         jp nz,FailBadSector
 
         ld a,0xA0
-        ld (TECFS_PARAM_SECTOR_0),a
+        ld (TFS_PARAM_SECTOR_0),a
         ld a,0x91
-        ld (TECFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_1),a
         ld a,0x14
-        ld (TECFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_2),a
         xor a
-        ld (TECFS_PARAM_SECTOR_3),a
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_SECTOR_3),a
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
 
         ld a,0x34
-        ld (TECFS_PARAM_BLOCK_INDEX_LO),a
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
         ld a,0x12
-        ld (TECFS_PARAM_BLOCK_INDEX_HI),a
-        ld a,TECM8_TECFS_SVC_MAP_BLOCK
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
         jp c,FailMapBlock
-        ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
         jp c,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_0)
+        ld a,(TFS_PARAM_SECTOR_0)
         cp 0xA2
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_1)
+        ld a,(TFS_PARAM_SECTOR_1)
         cp 0x91
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_2)
+        ld a,(TFS_PARAM_SECTOR_2)
         cp 0x74
         jp nz,FailTranslate
-        ld a,(TECFS_PARAM_SECTOR_3)
+        ld a,(TFS_PARAM_SECTOR_3)
         cp 0x00
         jp nz,FailTranslate
 
-        ld a,TECM8_TECFS_SVC_LOAD_RANGE
-        farCall 0x02,TECM8_TECFS_ENTRY
+        ld a,TFS_SVC_LOAD_RANGE
+        farCall 0x02,TFS_ENTRY
         jp nc,FailUnsupported
-        cp TECFS_ERR_UNSUPPORTED
+        cp TFS_ERR_UNSUPPORTED
         jp nz,FailUnsupported
 
         ld a,PROOF_PASS
-        ld (TECFS_PROOF_RESULT),a
+        ld (TFS_PROOF_RESULT),a
         halt
 
 FailMount:
@@ -393,5 +393,5 @@ FailVolumeSectors:
 FailTranslate:
         ld a,PROOF_FAIL_TRANSLATE
 Fail:
-        ld (TECFS_PROOF_RESULT),a
+        ld (TFS_PROOF_RESULT),a
         halt

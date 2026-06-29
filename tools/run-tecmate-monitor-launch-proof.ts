@@ -18,7 +18,7 @@ const STACK_RETURN = 0x7fee;
 const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
-const TECM8_DEMO_TRACE_BASE = 0x3000;
+const DBG_TRACE_BASE = 0x3000;
 const EXP_MENU_VEC_BANK = 0x3bf0;
 const EXP_MENU_VEC_ADDR = 0x3bf1;
 const EXP_MENU_VEC_FLAGS = 0x3bf3;
@@ -164,8 +164,8 @@ function writeBridgeServiceStub(runtime: Runtime, serviceId: number): void {
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 1, serviceId);
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 2, 0xd7);
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 3, 0x32);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 4, (TECM8_DEMO_TRACE_BASE + 5) & 0xff);
-  runtime.hardware.forceMemWrite?.(RETURN_STUB + 5, (TECM8_DEMO_TRACE_BASE + 5) >> 8);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 4, (DBG_TRACE_BASE + 5) & 0xff);
+  runtime.hardware.forceMemWrite?.(RETURN_STUB + 5, (DBG_TRACE_BASE + 5) >> 8);
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 6, 0x76);
 }
 
@@ -180,7 +180,7 @@ function main(): void {
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
   const { runtime, platformRuntime } = loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
-  const trace = readTrace(runtime, TECM8_DEMO_TRACE_BASE, 9);
+  const trace = readTrace(runtime, DBG_TRACE_BASE, 9);
   const menuVectorAddress =
     runtime.hardware.memory[EXP_MENU_VEC_ADDR] | (runtime.hardware.memory[EXP_MENU_VEC_ADDR + 1] << 8);
 
@@ -196,14 +196,14 @@ function main(): void {
   assertEqual(trace[8], 0x71, 'shell bootstrap marker');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'final SYS_CTRL restored');
 
-  runtime.hardware.forceMemWrite?.(TECM8_DEMO_TRACE_BASE + 5, 0x00);
+  runtime.hardware.forceMemWrite?.(DBG_TRACE_BASE + 5, 0x00);
   writeBridgeServiceStub(runtime, TFS_MOUNT);
   runtime.cpu.halted = false;
   runtime.cpu.pc = RETURN_STUB;
   runtime.cpu.sp = STACK_RETURN;
   const bridgeInstructions = runUntilHalt(runtime, platformRuntime);
   assertEqual(runtime.cpu.pc, RETURN_STUB + 7, 'bridge service halt pc');
-  assertEqual(runtime.hardware.memory[TECM8_DEMO_TRACE_BASE + 5], 0x82, 'bridge TEC-FS service marker');
+  assertEqual(runtime.hardware.memory[DBG_TRACE_BASE + 5], 0x82, 'bridge TEC-FS service marker');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'bridge SYS_CTRL restored');
 
   writeFileSync(

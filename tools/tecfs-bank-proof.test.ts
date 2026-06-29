@@ -22,8 +22,8 @@ test('TEC-FS bank proof covers runtime volume selection in sector translation', 
   const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
   const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
 
-  assert.match(proof, /ld a,0x1F[\s\S]*ld a,TECM8_TECFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp TECFS_ERR_BAD_VOLUME[\s\S]*ld a,\(TECFS_PARAM_ACTIVE_VOLUME\)[\s\S]*cp 0x1E/);
-  assert.match(proof, /ld a,0x1D[\s\S]*ld a,TECM8_TECFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*ld a,TECM8_TECFS_SVC_MAP_BLOCK[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp 0x74[\s\S]*ld a,TECM8_TECFS_SVC_TRANSLATE_SECTOR[\s\S]*farCall 0x02,TECM8_TECFS_ENTRY[\s\S]*cp 0x74/);
+  assert.match(proof, /ld a,0x1F[\s\S]*ld a,TFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp TFS_ERR_BAD_VOLUME[\s\S]*ld a,\(TFS_PARAM_ACTIVE_VOLUME\)[\s\S]*cp 0x1E/);
+  assert.match(proof, /ld a,0x1D[\s\S]*ld a,TFS_SVC_SELECT_VOLUME[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,TFS_SVC_MAP_BLOCK[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x74[\s\S]*ld a,TFS_SVC_TRANSLATE_SECTOR[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x74/);
   assert.match(runner, /active TEC-FS volume/);
   assert.match(runner, /assertEqual\(params\[0\], 0x1d, 'active TEC-FS volume'\)/);
   assert.match(runner, /assertEqual\(params\[1\], 0x1d, 'last requested TEC-FS volume'\)/);
@@ -54,19 +54,19 @@ test('TEC-FS direction documents the volume directory contract', () => {
   assert.match(direction, /ordinary file\s+open\/save code should not present it as a normal user drive/);
 
   for (const [name, value] of [
-    ['TECFS_LOCATOR_MAGIC_0', '0x54'],
-    ['TECFS_LOCATOR_MAGIC_1', '0x46'],
-    ['TECFS_LOCATOR_MAGIC_2', '0x53'],
-    ['TECFS_LOCATOR_MAGIC_3', '0x31'],
-    ['TECFS_LOCATOR_VERSION', '0x01'],
-    ['TECFS_LOCATOR_HEADER_BYTES', '0x20'],
-    ['TECFS_LOCATOR_ENTRY_BYTES', '0x10'],
-    ['TECFS_LOCATOR_OFFSET_ENTRIES', '0x20'],
-    ['TECFS_LOCATOR_ENTRY_START_LBA', '0x03'],
-    ['TECFS_LOCATOR_ENTRY_SECTORS', '0x07'],
-    ['TECFS_LOCATOR_ROLE_USER', '0x01'],
-    ['TECFS_LOCATOR_ROLE_WORK', '0x02'],
-    ['TECFS_LOCATOR_FLAG_ACTIVE', '0x01'],
+    ['TFS_LOC_MAGIC_0', '0x54'],
+    ['TFS_LOC_MAGIC_1', '0x46'],
+    ['TFS_LOC_MAGIC_2', '0x53'],
+    ['TFS_LOC_MAGIC_3', '0x31'],
+    ['TFS_LOC_VERSION', '0x01'],
+    ['TFS_LOC_HEADER_BYTES', '0x20'],
+    ['TFS_LOC_ENTRY_BYTES', '0x10'],
+    ['TFS_LOC_OFFSET_ENTRIES', '0x20'],
+    ['TFS_LOC_ENTRY_START_LBA', '0x03'],
+    ['TFS_LOC_ENTRY_SECTORS', '0x07'],
+    ['TFS_LOC_ROLE_USER', '0x01'],
+    ['TFS_LOC_ROLE_WORK', '0x02'],
+    ['TFS_LOC_FLAG_ACTIVE', '0x01'],
   ]) {
     assert.match(bankOps, new RegExp(`^${name}\\s+\\.equ\\s+${value}`, 'm'));
   }
