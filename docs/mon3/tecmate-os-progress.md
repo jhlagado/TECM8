@@ -170,4 +170,6 @@ MON3 monitor source does not yet pass strict contracts, so monitor register
 contracts are currently treated as an audit surface rather than a release gate.
 
 The current baseline is recorded in
-[Monitor Register Contract Audit](monitor-register-contract-audit.md).
+[Monitor Register Contract Audit](monitor-register-contract-audit.md). The
+rollout policy is captured in
+[Register Contract Policy](register-contract-policy.md).

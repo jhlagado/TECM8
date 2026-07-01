@@ -73,6 +73,7 @@ services, and editor workflow fit together:
 - [TECM8 ROM Artifact Plan](mon3/tecm8-rom-artifact-plan.md)
 - [TecMate OS Progress](mon3/tecmate-os-progress.md)
 - [TecMate ROM Space Map](mon3/tecmate-rom-space-map.md)
+- [Register Contract Policy](mon3/register-contract-policy.md)
 - [Monitor Register Contract Audit](mon3/monitor-register-contract-audit.md)
 - [TEC-FS Storage Direction](mon3/tec-fs-direction.md)
 - [MON3 Core And Auxiliary Services](mon3/core-and-auxiliary-services.md)
