@@ -25,6 +25,48 @@ Policy entries are AZM glob patterns. The available policy buckets are
 `strict`, `audit`, and `off`. More specific matches win; if two matches are
 equally specific, the stricter mode wins.
 
+For AZM 0.2.13, policy matching is intended to use the file that owns the
+routine, finding, diagnostic, or suppression context. It is not limited to the
+root assembly entry file. That means a monitor entry file can include legacy
+modules and TECM8 can still audit those included files one at a time:
+
+```asm
+include "rtc.asm"
+include "disassembler.asm"
+```
+
+```json
+{
+  "azm": {
+    "registerContracts": "off",
+    "registerContractsPolicy": {
+      "audit": [
+        "roms/tec1g/tecm8/monitor/rtc.asm",
+        "roms/tec1g/tecm8/monitor/disassembler.asm"
+      ],
+      "strict": [
+        "roms/tec1g/tecm8/monitor/new-code/**/*.asm"
+      ],
+      "off": [
+        "roms/tec1g/tecm8/monitor/legacy/**/*.asm"
+      ]
+    },
+    "emitRegisterReport": true
+  }
+}
+```
+
+This depends on AZM preserving include-file paths in spans. The register
+contract implementation expects that shape: diagnostics filter by finding file,
+routine boundary checks compare routine files, and suppression checks use the
+file attached to the source line.
+
+Debug80 shallow-merges `azm` options between config levels. Because
+`registerContractsPolicy` is one `azm` property, a target-level policy replaces
+the project-level policy object rather than merging individual `strict`,
+`audit`, and `off` arrays. Keep the full policy in one place unless a target is
+deliberately overriding it.
+
 ## TECM8 Policy
 
 Use strict contracts for new TECM8-owned code:
