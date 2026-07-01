@@ -275,16 +275,24 @@ session now expect:
   through `tec1g.expansionRomHex` into the TEC-1G banked window at
   `0x8000-0xBFFF`. `bank_ops.asmi` is the shared AZM interface for that tree:
   it keeps the fixed-ROM RST `10h` bank service numbers, the `farCall` and
-  `farJump` helpers, the proof trace RAM slots, and the bank-local selector
-  IDs aligned across bank sources, proofs, and ABI documentation. Banks enter
+  `farJump` helpers, the proof trace RAM slots, the bank-local selector IDs,
+  the VDU and TEC-FS parameter blocks, and the installable TEC-FS sector-driver
+  vector aligned across bank sources, proofs, and ABI documentation.
+  `tecm8-rst-services.asmi` is the companion fixed-ROM interface file used by
+  the strict ROM contract check so the banked sources can declare the current
+  `rst 10h` entry behavior without duplicating fixed-monitor code. Banks enter
   through their `0x8000` origin dispatcher; VDU/TMS9918, TEC-FS, RTC, and GLCD
   operations are selected with `A` or through the monitor service bridge.
   Internal implementation labels are private and movable. Bank 0 owns the
-  discovery install entry, expansion vectors, the first private service
+  discovery install entry, expansion vectors, the private runtime service
   registry, and the current shell-splash placeholder. Bank 1 owns the VDU and
-  TMS9918 dispatchers, bank 2 owns the TEC-FS geometry and sector-contract
-  boundary, bank 3 owns the RTC descriptor boundary, and bank 4 owns the GLCD
-  containment boundary. Banks 5-8 are still placeholder images.
+  TMS9918 dispatchers, including the text-screen clear path that fills the
+  full 32x24 name table through the TMS9918 bulk-write helper. Bank 2 owns the
+  TEC-FS geometry boundary, active-volume selection, logical-sector
+  translation, and the installable low-level sector-driver handoff used by the
+  current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
+  GLCD containment boundary, bank 5 carries the proof-only TEC-FS sector
+  driver, and banks 6-8 are still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1292,9 +1300,10 @@ switch the TEC-1G bank window through the fixed-ROM RST `10h` service
 trampolines, and inspect shared proof RAM to check ABI behavior. The current
 coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
 `farCall` restore behavior plus the one-way `farJump` handoff, the TMS9918
-runner checks the VDU and TMS9918 entry points in bank 1, the TEC-FS runner
-checks the geometry and volume-selection contract in bank 2, and the RTC
-runner checks the bank 3 descriptor and unsupported UI status path.
+runner checks the bank 1 VDU and TMS9918 entry points including text clear and
+bulk-fill behavior, the TEC-FS runner checks bank 2 volume selection, logical
+sector mapping, and installed sector-driver dispatch, and the RTC runner
+checks the bank 3 descriptor and unsupported UI status path.
 
 `tools/run-tecmate-monitor-launch-proof.ts` and
 `tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
@@ -1390,9 +1399,13 @@ current:
 - `tools/mon3-storage-split.ts`
 - `tools/mon3-glcd-split.ts`
 - `tools/audit-monitor-register-contracts.ts`
+- `tools/check-expansion-register-contracts.ts`
 
 They support the future BIOS decomposition work by measuring which MON3
-services should be kept, rewritten, relocated, or removed.
+services should be kept, rewritten, relocated, or removed. The expansion
+contract check is separate because the banked ROM sources now compile under a
+project-local `tecm8-rst-services.asmi` interface that models the live fixed
+ROM `rst 10h` entry surface.
 
 ### Tests
 
@@ -1412,6 +1425,8 @@ coverage:
   roots, and ROM artifact declarations aligned with the tracked files
 - static checks that the checked banked-service ABI document matches the live
   `.equ` constants, proof hooks, and npm proof scripts
+- strict AZM register-contract checks for the expansion-bank sources against
+  the local `tecm8-rst-services.asmi` fixed-ROM interface
 - proof wiring checks that package scripts invoke the right proof runners
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
