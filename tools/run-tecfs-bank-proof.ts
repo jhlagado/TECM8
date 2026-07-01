@@ -201,7 +201,7 @@ async function main(): Promise<void> {
   const resultAddr = symbolNumber(symbols, 'TFS_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'TFS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
-  const params = readTrace(runtime, paramBase, 29);
+  const params = readTrace(runtime, paramBase, 32);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
   assertEqual(params[0], 0x1d, 'active TEC-FS volume');
@@ -233,6 +233,9 @@ async function main(): Promise<void> {
   assertEqual(params[26], 0x00, 'TEC-FS volume sectors byte 1');
   assertEqual(params[27], 0x04, 'TEC-FS volume sectors byte 2');
   assertEqual(params[28], 0x00, 'TEC-FS volume sectors byte 3');
+  assertEqual(params[29], 0x05, 'TEC-FS driver bank');
+  assertEqual(params[30], 0x00, 'TEC-FS driver address low byte');
+  assertEqual(params[31], 0x80, 'TEC-FS driver address high byte');
 
   writeFileSync(
     LAST_RUN,

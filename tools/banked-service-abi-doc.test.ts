@@ -194,6 +194,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_PARAM_VOLUME_SECTORS_1',
     'TFS_PARAM_VOLUME_SECTORS_2',
     'TFS_PARAM_VOLUME_SECTORS_3',
+    'TFS_PARAM_DRIVER_BANK',
+    'TFS_PARAM_DRIVER_ADDR_LO',
+    'TFS_PARAM_DRIVER_ADDR_HI',
     'TFS_DRIVER_OP_READ',
     'TFS_DRIVER_OP_WRITE',
     'TFS_LOC_LBA_0',
@@ -246,7 +249,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     assertDocRow(name);
   }
   assert.match(doc, /sector I\/O contract/);
-  assert.match(doc, /sector driver hook/);
+  assert.match(doc, /installed sector-driver vector/);
+  assert.match(doc, /driver receives `A=TFS_DRIVER_OP_READ` or `A=TFS_DRIVER_OP_WRITE`/);
   assert.match(doc, /128 MiB/);
   assert.match(doc, /32768/);
   assert.match(doc, /30 user volumes/);
@@ -297,6 +301,15 @@ test('banked service ABI doc covers bank 4 GLCD boundary slots and parameters', 
   ]) {
     assertDocRow(name);
   }
+});
+
+test('banked service ABI doc covers bank 5 TEC-FS proof sector driver', () => {
+  assert.match(doc, /## Bank 5: TEC-FS Proof Sector Driver/);
+  assert.match(doc, /proof-only sector driver/);
+  assert.match(doc, /not the final SD\/SPI driver/);
+  assert.match(doc, /TFS_PARAM_DRIVER_BANK/);
+  assert.match(doc, /returns `A=85h` with carry clear/);
+  assert.match(doc, /writes\s+`A5h` into the caller's buffer for read requests/);
 });
 
 test('banked service ABI doc covers proof hooks and proof scripts', () => {

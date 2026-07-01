@@ -319,6 +319,9 @@ TEC-FS parameter block:
 | `TFS_PARAM_VOLUME_SECTORS_1` | `3B5Ah` | 128 MiB volume sector count byte 1. |
 | `TFS_PARAM_VOLUME_SECTORS_2` | `3B5Bh` | 128 MiB volume sector count byte 2. |
 | `TFS_PARAM_VOLUME_SECTORS_3` | `3B5Ch` | 128 MiB volume sector count byte 3. |
+| `TFS_PARAM_DRIVER_BANK` | `3B5Dh` | Installed sector driver physical bank, used only when the driver address is nonzero. |
+| `TFS_PARAM_DRIVER_ADDR_LO` | `3B5Eh` | Installed sector driver entry address low byte. |
+| `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
 
 TEC-FS sector driver operation values:
 
@@ -380,13 +383,15 @@ checksum. Each 128 MiB TEC-FS volume occupies 262,144 512-byte sectors. Future
 mount code should read this sector, validate its magic and checksum, then use its
 volume-start table instead of parsing FAT32 directories on the TEC.
 
-The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the sector to pass
-to the driver hook and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers
-that start with a volume/block pair should call `TFS_MAP_BLOCK`, then
-`TFS_TRANSLATE_SECTOR`, then read or write. The current implementation
-records the requested sector driver hook operation, validates the request, and
-then calls a replaceable hook. The default hook reports that no low-level SD
-sector driver is linked behind the boundary yet.
+The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
+sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
+a volume/block pair should call `TFS_MAP_BLOCK`, then `TFS_TRANSLATE_SECTOR`,
+then read or write. `TFS_READ` and `TFS_WRITE` validate the sector and buffer,
+record `TFS_PARAM_DRIVER_OP`, and then call the installed sector-driver vector
+from `TFS_PARAM_DRIVER_BANK` and `TFS_PARAM_DRIVER_ADDR_LO..HI`. If the driver
+address is zero, the service reports the no-driver status with carry set. A
+driver receives `A=TFS_DRIVER_OP_READ` or `A=TFS_DRIVER_OP_WRITE` and uses the
+TEC-FS parameter block for sector and buffer arguments.
 
 TEC-FS status codes:
 
@@ -468,6 +473,15 @@ GLCD status and feature values:
 | `GLC_STATUS_OK` | `00h` | Success. |
 | `GLC_FEATURE_BOUNDARY` | `01h` | Basic service boundary present. |
 | `GLC_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
+
+## Bank 5: TEC-FS Proof Sector Driver
+
+Physical bank 5 currently contains a proof-only sector driver used by
+`proof:tecfs-bank`. It is not the final SD/SPI driver. TEC-FS calls it through
+`TFS_PARAM_DRIVER_BANK` and `TFS_PARAM_DRIVER_ADDR_LO..HI` after validating the
+sector and buffer. The proof driver returns `A=85h` with carry clear, writes
+`A5h` into the caller's buffer for read requests, and accepts write requests
+without touching media.
 
 ## Proof Hooks
 

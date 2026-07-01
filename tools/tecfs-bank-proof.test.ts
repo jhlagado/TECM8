@@ -31,6 +31,22 @@ test('TEC-FS bank proof covers runtime volume selection in sector translation', 
   assert.match(doc, /leaves the previous active\s+volume\s+unchanged/);
 });
 
+test('TEC-FS bank proof covers installable sector driver dispatch', () => {
+  const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
+  const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
+  const bank5 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank5.asm'), 'utf8');
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
+
+  assert.match(proof, /ld a,0x05[\s\S]*ld \(TFS_PARAM_DRIVER_BANK\),a[\s\S]*ld hl,0x8000[\s\S]*ld \(TFS_PARAM_DRIVER_ADDR_LO\),hl/);
+  assert.match(proof, /ld a,TFS_SVC_READ[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x85[\s\S]*ld a,\(0x6000\)[\s\S]*cp TFS_PROOF_READ_MARKER/);
+  assert.match(proof, /ld a,TFS_SVC_WRITE[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x85/);
+  assert.match(runner, /assertEqual\(params\[29\], 0x05, 'TEC-FS driver bank'\)/);
+  assert.match(runner, /assertEqual\(params\[31\], 0x80, 'TEC-FS driver address high byte'\)/);
+  assert.match(bank5, /@Tecm8ExpansionBank5Entry:[\s\S]*cp TFS_DRIVER_OP_READ[\s\S]*jp z,tecfsProofDriverRead[\s\S]*cp TFS_DRIVER_OP_WRITE/);
+  assert.match(bank5, /tecfsProofDriverRead:[\s\S]*ld a,TFS_PROOF_READ_MARKER[\s\S]*ld \(hl\),a/);
+  assert.match(doc, /installed sector-driver vector/);
+});
+
 test('TEC-FS direction documents the volume directory contract', () => {
   const direction = readFileSync(resolve(root, 'docs/mon3/tec-fs-direction.md'), 'utf8');
   const bankOps = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');

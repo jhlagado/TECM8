@@ -100,6 +100,10 @@ TFS_TOTAL_VOLUMES           .equ    31
         ld (TFS_PARAM_VOLUME_SECTORS_2),a
         ld a,TFS_VOLUME_SECTORS_3
         ld (TFS_PARAM_VOLUME_SECTORS_3),a
+        xor a
+        ld (TFS_PARAM_DRIVER_BANK),a
+        ld (TFS_PARAM_DRIVER_ADDR_LO),a
+        ld (TFS_PARAM_DRIVER_ADDR_HI),a
         ld a,0x82
         or a
         ret
@@ -165,7 +169,7 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsTranslateSectorImpl:
         call tecfsValidateSector
-        jr c,tecfsBadSector
+        jp c,tecfsBadSector
         ld hl,(TFS_PARAM_SECTOR_0)
         ld de,TFS_IMAGE_BASE_LBA_0 + (TFS_IMAGE_BASE_LBA_1 * 256)
         add hl,de
@@ -203,6 +207,23 @@ TFS_TOTAL_VOLUMES           .equ    31
         ret
 
 @tecfsSectorDriverHook:
+        ld a,(TFS_PARAM_DRIVER_ADDR_LO)
+        ld l,a
+        ld a,(TFS_PARAM_DRIVER_ADDR_HI)
+        ld h,a
+        or l
+        jr z,tecfsNoSectorDriver
+        ld a,(TFS_PARAM_DRIVER_OP)
+        push hl
+        push de
+        push af
+        ld a,(TFS_PARAM_DRIVER_BANK)
+        ld b,a
+        ld c,MON_BANK_CALL
+        rst 10H
+        ret
+
+@tecfsNoSectorDriver:
         ld a,TFS_ERR_NO_DRIVER
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
