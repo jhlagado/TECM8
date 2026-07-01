@@ -1,0 +1,26 @@
+service rst 0x10 C 0x50 MON_SYS_GET
+in C
+out A
+clobbers zero,sign,parity,halfCarry
+preserves B,C,D,E,H,L
+end
+service rst 0x10 C 0x53 MON_BANK_CALL
+in B,HL
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
+service rst 0x10 C 0x60 VDU_INIT
+in C
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
+service rst 0x10 C 0x61 TFS_MOUNT
+in C
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
+service rst 0x10 C 0x62 RTC_TOOL
+in C
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end

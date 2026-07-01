@@ -62,6 +62,7 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
+        ; expects out A
         rst 10H
         ld (ABI_TRACE_8),a
         ld a,0xB2

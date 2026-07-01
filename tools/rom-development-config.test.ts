@@ -170,6 +170,9 @@ test('TECM8 expansion banks expose origin dispatchers and private service labels
     ['build/roms/tec1g/tecm8/expansion/bank3.d8.json', 'rtcPramViewer'],
   ]) {
     const address = symbolAddress(map, name);
+    if (address === undefined) {
+      throw new Error(`${name} should exist in ${map}`);
+    }
     assert.ok(address >= 0x8000 && address < 0xc000, `${name} should remain inside the expansion window`);
   }
 });

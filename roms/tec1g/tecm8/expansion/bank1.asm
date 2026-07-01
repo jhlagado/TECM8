@@ -7,6 +7,7 @@
 EXP_BANK          .equ    0x01
 EXP_VERSION       .equ    0x01
 
+;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @Tecm8ExpansionBank1Entry:
         push af
         ld a,(ABI_PROBE_REQUEST)
@@ -178,10 +179,12 @@ tmsWriteVramImpl:
         or a
         ret
 
+;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @BankAbiNestedCall:
         ld a,0xA1
         ld (ABI_TRACE_6),a
         ld a,ABI_PROBE_NESTED
+        ; expects out A
         farCall 0x02,TFS_ENTRY
         ld (ABI_TRACE_7),a
         ld a,0x91

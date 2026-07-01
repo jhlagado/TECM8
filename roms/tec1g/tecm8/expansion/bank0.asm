@@ -45,11 +45,13 @@ Tecm8ExpansionInstall:
         ret
 
 Tecm8BootstrapVdu:
+        ; expects out A
         callService VDU_INIT
         ld (DBG_TRACE_4),a
         ret
 
 Tecm8BootstrapTecfs:
+        ; expects out A
         callService TFS_MOUNT
         ld (DBG_TRACE_5),a
         ret
@@ -60,12 +62,14 @@ Tecm8BootstrapInput:
         ret
 
 Tecm8BootstrapShell:
+        ; expects out A
         callService RTC_TOOL
         ld (DBG_TRACE_6),a
         ld a,SHL_BOOT_READY
         ld (DBG_TRACE_8),a
         ret
 
+;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @Tecm8ServiceCall:
         push hl
         push de
@@ -142,6 +146,7 @@ Tecm8ServiceCallAbiNested:
         farCall 0x01,VDU_ENTRY
         ret
 
+;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @Tecm8ShellEntry:
         ld a,EXP_BANK
         ld (SHL_PARAM_BANK),a
@@ -153,10 +158,12 @@ Tecm8ServiceCallAbiNested:
         ld (SHL_PARAM_STATUS),a
         ld (SHL_PARAM_LAST_ERROR),a
         call Tecm8ShellCopySplash
+        xor a
         ld (TMS_PARAM_CURSOR_LO),a
         ld (TMS_PARAM_CURSOR_HI),a
         ld hl,SHL_SPLASH_BUFFER
         ld (TMS_PARAM_STRING_LO),hl
+        ; expects out A,carry
         callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING
         jp c,Tecm8ShellSplashError
         ld a,0x80
