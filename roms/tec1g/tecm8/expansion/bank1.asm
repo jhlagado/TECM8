@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x01
 EXP_VERSION       .equ    0x01
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
+;! rc-ignore-next unknown_control_flow: temporary until AZM can prove balanced tail-dispatch paths.
 @Tecm8ExpansionBank1Entry:
         push af
         ld a,(ABI_PROBE_REQUEST)
@@ -179,7 +179,6 @@ tmsWriteVramImpl:
         or a
         ret
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @BankAbiNestedCall:
         ld a,0xA1
         ld (ABI_TRACE_6),a

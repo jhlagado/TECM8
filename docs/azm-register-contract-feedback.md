@@ -78,3 +78,36 @@ end
 
 The goal is not to relax all `RST` instructions. The goal is to describe the
 actual ABI of a specific monitor service selected by `C`.
+
+## AZM 0.2.14 Test Result
+
+AZM 0.2.14 adds the built-in `MON_BANK_CALL` stack-frame model and a first-pass
+TecMate `C >= 60h` expansion-service fallback. The bank-call model removes the
+need for suppressions around simple `farCall` and `callBankService` use, but
+TECM8 still needs narrow `unknown_control_flow` suppressions in two dispatcher
+shapes:
+
+- `Tecm8ServiceCall` in bank 0 pushes a dispatcher frame, jumps to local service
+  arms, pops the frame in each arm, and then calls `farCall`.
+- `Tecm8ExpansionBank1Entry` saves `AF`, dispatches through conditional paths,
+  restores `AF`, and tail-jumps to the target implementation.
+
+Both are intentionally balanced, and the runtime proof still passes. The
+remaining issue appears to be AZM's stack analysis across local dispatcher arms
+and tail-dispatch paths, not the `RST 10h` CPU instruction itself.
+
+The `C >= 60h` fallback is useful, but it currently preserves more registers than
+TECM8's real expansion services guarantee. For now the project-local
+`tecm8-rst-services.asmi` keeps explicit broad-clobber contracts for the known
+service numbers, so callers cannot accidentally depend on `B/C/D/E/H/L`
+surviving a service whose implementation may use them.
+
+Current TECM8 verification on AZM 0.2.14:
+
+```text
+npm run rom:contracts:check
+npm run proof:bank-abi
+npm run typecheck
+```
+
+All pass with the temporary suppressions retained.

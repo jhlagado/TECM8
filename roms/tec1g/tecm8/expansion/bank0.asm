@@ -69,7 +69,7 @@ Tecm8BootstrapShell:
         ld (DBG_TRACE_8),a
         ret
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
+;! rc-ignore-next unknown_control_flow: temporary until AZM can prove balanced dispatcher paths into MON_BANK_CALL.
 @Tecm8ServiceCall:
         push hl
         push de
@@ -146,7 +146,6 @@ Tecm8ServiceCallAbiNested:
         farCall 0x01,VDU_ENTRY
         ret
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can express MON_BANK_CALL stack-frame effects.
 @Tecm8ShellEntry:
         ld a,EXP_BANK
         ld (SHL_PARAM_BANK),a
