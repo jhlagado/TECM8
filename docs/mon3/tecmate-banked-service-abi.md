@@ -179,7 +179,7 @@ Bank-local VDU/TMS service IDs:
 | Constant | Value | Status |
 | --- | ---: | --- |
 | `VDU_SVC_INIT` | `01h` | Calls TMS init and returns `A=81h`, carry clear. |
-| `VDU_SVC_CLEAR` | `02h` | Writes zero to VRAM address `0000h`. |
+| `VDU_SVC_CLEAR` | `02h` | Fills the 32x24 text name table with the blank character. |
 | `VDU_SVC_SET_CURSOR` | `03h` | Copies the address parameters into the VDU cursor, returns `A=81h`. |
 | `VDU_SVC_PUT_CHAR` | `04h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
 | `VDU_SVC_PUT_STRING` | `05h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
@@ -187,6 +187,7 @@ Bank-local VDU/TMS service IDs:
 | `TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
 | `TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
 | `TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
+| `TMS_SVC_FILL_VRAM` | `23h` | Fills a VRAM range from the parameter block. |
 
 TMS ports:
 
@@ -208,13 +209,16 @@ TMS parameter block:
 | `TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
 | `TMS_PARAM_STRING_LO` | `3B06h` | Zero-terminated RAM string pointer low byte. |
 | `TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
+| `TMS_PARAM_COUNT_LO` | `3B08h` | VRAM fill byte count low byte. |
+| `TMS_PARAM_COUNT_HI` | `3B09h` | VRAM fill byte count high byte. |
 | `VDU_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
+| `VDU_SCREEN_BYTES` | `0300h` | Current 32x24 text-console name-table byte count. |
+| `VDU_BLANK_CHAR` | `20h` | Character used by `VDU_SVC_CLEAR`. |
 
 Minimal VDU text-console contract:
 
 - `VDU_SVC_INIT` prepares the TMS backend and returns `A=81h`.
-- `VDU_SVC_CLEAR` currently clears the first VRAM byte only; full-screen clear
-  is still future work.
+- `VDU_SVC_CLEAR` fills VRAM `0000h..02FFh` with `VDU_BLANK_CHAR`.
 - `VDU_SVC_SET_CURSOR` takes `TMS_PARAM_ADDR_LO/HI` as the cursor
   address and masks the high byte to the 16K VRAM range.
 - `VDU_SVC_PUT_CHAR` writes `TMS_PARAM_VALUE` at the current cursor and
@@ -225,6 +229,8 @@ Minimal VDU text-console contract:
 - `VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
   start, adds one row, masks the high byte to the 16K VRAM range, and returns
   `A=81h`.
+- `TMS_SVC_FILL_VRAM` writes `TMS_PARAM_VALUE` to `TMS_PARAM_COUNT_LO/HI`
+  bytes starting at `TMS_PARAM_ADDR_LO/HI`.
 - The low-level TMS calls remain available for backend work and diagnostics.
 
 ## Bank 2: TEC-FS

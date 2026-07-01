@@ -111,6 +111,7 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'TMS_SVC_INIT',
     'TMS_SVC_SET_REGISTER',
     'TMS_SVC_WRITE_VRAM',
+    'TMS_SVC_FILL_VRAM',
     'TMS_DATA_PORT',
     'TMS_CONTROL_PORT',
     'TMS_PARAM_BASE',
@@ -122,7 +123,11 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'TMS_PARAM_CURSOR_HI',
     'TMS_PARAM_STRING_LO',
     'TMS_PARAM_STRING_HI',
+    'TMS_PARAM_COUNT_LO',
+    'TMS_PARAM_COUNT_HI',
     'VDU_ROW_BYTES',
+    'VDU_SCREEN_BYTES',
+    'VDU_BLANK_CHAR',
   ]) {
     assertDocRow(name);
   }
@@ -130,6 +135,8 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
   assert.match(doc, /one public dispatcher, not one fixed callable address per VDU/);
   assert.match(doc, /implementation labels are not ABI/);
   assert.match(doc, /`VDU_TABLE` \| private label/);
+  assert.match(doc, /`VDU_SVC_CLEAR` fills VRAM `0000h\.\.02FFh` with `VDU_BLANK_CHAR`/);
+  assert.match(doc, /`TMS_SVC_FILL_VRAM` writes `TMS_PARAM_VALUE` to `TMS_PARAM_COUNT_LO\/HI`/);
   assert.match(doc, /writes `TMS_PARAM_VALUE` at the current cursor/);
 });
 

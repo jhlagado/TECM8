@@ -41,7 +41,7 @@ Tecm8ExpansionBank1PreserveProbe:
         add hl,de
         jp (hl)
 tmsServiceCall:
-        cp TMS_SVC_WRITE_VRAM+1
+        cp TMS_SVC_FILL_VRAM+1
         jr nc,vduServiceUnknown
         sub TMS_SVC_INIT
         ld e,a
@@ -68,6 +68,7 @@ Tecm8TmsServiceTable:
         jp      tmsInitImpl
         jp      tmsSetRegisterImpl
         jp      tmsWriteVramImpl
+        jp      tmsFillVramImpl
 
 vduInitImpl:
         call tmsInitImpl
@@ -79,8 +80,11 @@ vduClearImpl:
         xor a
         ld (TMS_PARAM_ADDR_LO),a
         ld (TMS_PARAM_ADDR_HI),a
+        ld a,VDU_BLANK_CHAR
         ld (TMS_PARAM_VALUE),a
-        call tmsWriteVramImpl
+        ld hl,VDU_SCREEN_BYTES
+        ld (TMS_PARAM_COUNT_LO),hl
+        call tmsFillVramImpl
         ld a,0x81
         or a
         ret
@@ -174,6 +178,32 @@ tmsWriteVramImpl:
         out (TMS_CONTROL_PORT),a
         ld a,(TMS_PARAM_VALUE)
         out (TMS_DATA_PORT),a
+        ld a,0x81
+        or a
+        ret
+
+; Input: TMS_PARAM_ADDR_LO/HI = start VRAM address,
+;        TMS_PARAM_VALUE = byte value,
+;        TMS_PARAM_COUNT_LO/HI = byte count.
+tmsFillVramImpl:
+        ld hl,(TMS_PARAM_COUNT_LO)
+        ld a,h
+        or l
+        jr z,tmsFillVramDone
+        ld a,(TMS_PARAM_ADDR_LO)
+        out (TMS_CONTROL_PORT),a
+        ld a,(TMS_PARAM_ADDR_HI)
+        and 0x3F
+        or 0x40
+        out (TMS_CONTROL_PORT),a
+tmsFillVramNext:
+        ld a,(TMS_PARAM_VALUE)
+        out (TMS_DATA_PORT),a
+        dec hl
+        ld a,h
+        or l
+        jr nz,tmsFillVramNext
+tmsFillVramDone:
         ld a,0x81
         or a
         ret

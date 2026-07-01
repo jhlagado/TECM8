@@ -90,6 +90,7 @@ VDU_SVC_NEWLINE       .equ    0x06
 TMS_SVC_INIT          .equ    0x20
 TMS_SVC_SET_REGISTER  .equ    0x21
 TMS_SVC_WRITE_VRAM    .equ    0x22
+TMS_SVC_FILL_VRAM     .equ    0x23
 TMS_DATA_PORT         .equ    0xBE
 TMS_CONTROL_PORT      .equ    0xBF
 TMS_PARAM_BASE        .equ    0x3B00
@@ -101,7 +102,11 @@ TMS_PARAM_CURSOR_LO   .equ    TMS_PARAM_BASE+4
 TMS_PARAM_CURSOR_HI   .equ    TMS_PARAM_BASE+5
 TMS_PARAM_STRING_LO   .equ    TMS_PARAM_BASE+6
 TMS_PARAM_STRING_HI   .equ    TMS_PARAM_BASE+7
+TMS_PARAM_COUNT_LO    .equ    TMS_PARAM_BASE+8
+TMS_PARAM_COUNT_HI    .equ    TMS_PARAM_BASE+9
 VDU_ROW_BYTES    .equ    0x20
+VDU_SCREEN_BYTES      .equ    0x0300
+VDU_BLANK_CHAR        .equ    0x20
 
 TFS_ENTRY           .equ    0x8000
 TFS_ENTRY_MOUNT           .equ    TFS_ENTRY

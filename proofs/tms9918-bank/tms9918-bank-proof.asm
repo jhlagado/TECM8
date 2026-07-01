@@ -18,6 +18,7 @@ TMS_PROOF_TRACE_4           .equ    TMS_PROOF_TRACE_BASE+4
 TMS_PROOF_TRACE_5           .equ    TMS_PROOF_TRACE_BASE+5
 TMS_PROOF_TRACE_6           .equ    TMS_PROOF_TRACE_BASE+6
 TMS_PROOF_TRACE_7           .equ    TMS_PROOF_TRACE_BASE+7
+TMS_PROOF_TRACE_8           .equ    TMS_PROOF_TRACE_BASE+8
 TMS_PROOF_RESULT            .equ    0x3B20
 
 ;! out carry,zero
@@ -36,6 +37,9 @@ ClearTrace:
 
         callBankService 0x01,VDU_CALL,VDU_SVC_INIT
         ld (TMS_PROOF_TRACE_1),a
+
+        callBankService 0x01,VDU_CALL,VDU_SVC_CLEAR
+        ld (TMS_PROOF_TRACE_8),a
 
         ld c,MON_SYS_GET
         rst 10H
