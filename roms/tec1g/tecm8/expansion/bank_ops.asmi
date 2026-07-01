@@ -50,7 +50,7 @@ GLC_ADDR                    .equ    GLC_ENTRY_ADDR
 SHL_ENTRY                   .equ    SVC_BASE+0x20
 SHL_BANK                    .equ    0x00
 SVC_ERR_UNKNOWN             .equ    0xEE
-SVC_REG_ENTRY_SIZE          .equ    0x04
+SVC_REG_ENTRY_SIZE          .equ    0x05
 SVC_REG_END                 .equ    0x00
 
 ABI_TRACE_BASE        .equ    0x3100

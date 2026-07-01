@@ -131,20 +131,23 @@ VDU/TMS9918 text services, and TEC-FS mount/volume/sector services.
 
 ## Service Registry Direction
 
-Direct `farCall bank,target` is good enough for the first proof programs, but it
-does not scale as a public ABI. Programs should not need permanent knowledge
-that TEC-FS is in bank 2 or that a VDU function is at a particular address.
+Direct `farCall bank,target` is good enough for proof programs, but it does not
+scale as a public ABI. Programs should not need permanent knowledge that TEC-FS
+is in bank 2 or that a VDU function is at a particular address.
 
-The target model is:
+Bank 0 now owns the first table-driven service registry. The fixed monitor only
+needs the installed expansion service vector. Bank 0 maps the public service ID
+to:
 
 ```text
-service id -> bank selector bits + entry address + ABI version
+service id -> bank selector bits + entry address + target-local A selector
 ```
 
-The service registry may live in fixed ROM, bank 0, or a small manifest table
-that fixed ROM knows how to read. The early requirement is simply that every
-bank exposes enough metadata for tools and Debug80 to identify what is mapped
-at `8000h-BFFFh`.
+The registry remains a bank-0 implementation detail. Other banks expose ordinary
+bank-local dispatchers at `8000h`; the registry selects the bank and patches the
+saved `A` byte in the monitor bank-call frame before entering the target. Future
+manifest work can add ABI versions and optional-service metadata without making
+user code depend on fixed addresses.
 
 ## VDU And TMS9918 Direction
 

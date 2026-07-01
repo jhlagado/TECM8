@@ -79,70 +79,39 @@ Tecm8BootstrapShell:
         ld (ABI_TRACE_BASE+28),a
         ld a,b
         ld (ABI_TRACE_BASE+29),a
-        ld a,c
-        cp VDU_INIT
-        jp z,Tecm8ServiceCallVduInit
-        cp TFS_MOUNT
-        jp z,Tecm8ServiceCallTecfsMount
-        cp RTC_TOOL
-        jp z,Tecm8ServiceCallRtcTool
-        cp GLC_ENTRY
-        jp z,Tecm8ServiceCallGlcdEntry
-        cp SHL_ENTRY
-        jp z,Tecm8ServiceCallShellEntry
-        cp ABI_PROBE_NESTED
-        jp z,Tecm8ServiceCallAbiNested
+        ld hl,Tecm8ServiceRegistry
+Tecm8ServiceCallFind:
+        ld a,(hl)
+        or a
+        jp z,Tecm8ServiceCallUnknown
+        cp c
+        jp z,Tecm8ServiceCallFound
+        ld de,SVC_REG_ENTRY_SIZE
+        add hl,de
+        jp Tecm8ServiceCallFind
+
+Tecm8ServiceCallFound:
+        inc hl
+        ld b,(hl)
+        inc hl
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        inc hl
+        ld a,(hl)
+        ld (ix+1),a
+        ld h,d
+        ld l,e
+        ld c,MON_BANK_CALL
+        rst 10H
+        ret
+
+Tecm8ServiceCallUnknown:
         pop af
         pop de
         pop hl
         ld a,SVC_ERR_UNKNOWN
         scf
-        ret
-
-Tecm8ServiceCallVduInit:
-        pop af
-        pop de
-        pop hl
-        ld a,VDU_SVC_INIT
-        farCall VDU_BANK,VDU_ADDR
-        ret
-
-Tecm8ServiceCallTecfsMount:
-        pop af
-        pop de
-        pop hl
-        ld a,TFS_SVC_MOUNT
-        farCall TFS_BANK,TFS_ADDR
-        ret
-
-Tecm8ServiceCallRtcTool:
-        pop af
-        pop de
-        pop hl
-        ld a,RTC_SVC_TOOL_ENTRY
-        farCall RTC_BANK,RTC_ADDR
-        ret
-
-Tecm8ServiceCallGlcdEntry:
-        pop af
-        pop de
-        pop hl
-        farCall GLC_BANK,GLC_ADDR
-        ret
-
-Tecm8ServiceCallShellEntry:
-        pop af
-        pop de
-        pop hl
-        call Tecm8ShellEntry
-        ret
-
-Tecm8ServiceCallAbiNested:
-        pop af
-        pop de
-        pop hl
-        ld a,ABI_PROBE_NESTED
-        farCall 0x01,VDU_ENTRY
         ret
 
 @Tecm8ShellEntry:
@@ -194,13 +163,21 @@ Tecm8ShellSplashText:
 @Tecm8ServiceRegistry:
         .db     VDU_INIT,VDU_BANK
         .dw     VDU_ADDR
+        .db     VDU_SVC_INIT
         .db     TFS_MOUNT,TFS_BANK
         .dw     TFS_ADDR
+        .db     TFS_SVC_MOUNT
         .db     RTC_TOOL,RTC_BANK
         .dw     RTC_ADDR
+        .db     RTC_SVC_TOOL_ENTRY
         .db     GLC_ENTRY,GLC_BANK
         .dw     GLC_ADDR
+        .db     GLC_ENTRY
         .db     SHL_ENTRY,SHL_BANK
         .dw     Tecm8ShellEntry
+        .db     SHL_ENTRY
+        .db     ABI_PROBE_NESTED,VDU_BANK
+        .dw     VDU_ENTRY
+        .db     ABI_PROBE_NESTED
 @Tecm8ServiceRegistryEnd:
         .db     SVC_REG_END

@@ -33,15 +33,17 @@ test('monitor launch proof and contract cover the bootstrap phases', () => {
 
 test('bank 0 publishes a private service registry table', () => {
   assert.doesNotMatch(ops, /^TECM8_SERVICE_REGISTRY\s+\.equ\s+/m);
-  assert.match(ops, /^SVC_REG_ENTRY_SIZE\s+\.equ\s+0x04/m);
+  assert.match(ops, /^SVC_REG_ENTRY_SIZE\s+\.equ\s+0x05/m);
   assert.match(ops, /^SVC_REG_END\s+\.equ\s+0x00/m);
-  assert.match(bank0, /@Tecm8ServiceRegistry:\s*[\s\S]*\.db\s+VDU_INIT,VDU_BANK\s*[\s\S]*\.dw\s+VDU_ADDR/);
-  assert.match(bank0, /\.db\s+TFS_MOUNT,TFS_BANK\s*[\s\S]*\.dw\s+TFS_ADDR/);
-  assert.match(bank0, /\.db\s+RTC_TOOL,RTC_BANK\s*[\s\S]*\.dw\s+RTC_ADDR/);
-  assert.match(bank0, /\.db\s+GLC_ENTRY,GLC_BANK\s*[\s\S]*\.dw\s+GLC_ADDR/);
-  assert.match(bank0, /\.db\s+SHL_ENTRY,SHL_BANK\s*[\s\S]*\.dw\s+Tecm8ShellEntry/);
+  assert.match(bank0, /@Tecm8ServiceRegistry:\s*[\s\S]*\.db\s+VDU_INIT,VDU_BANK\s*[\s\S]*\.dw\s+VDU_ADDR\s*[\s\S]*\.db\s+VDU_SVC_INIT/);
+  assert.match(bank0, /\.db\s+TFS_MOUNT,TFS_BANK\s*[\s\S]*\.dw\s+TFS_ADDR\s*[\s\S]*\.db\s+TFS_SVC_MOUNT/);
+  assert.match(bank0, /\.db\s+RTC_TOOL,RTC_BANK\s*[\s\S]*\.dw\s+RTC_ADDR\s*[\s\S]*\.db\s+RTC_SVC_TOOL_ENTRY/);
+  assert.match(bank0, /\.db\s+GLC_ENTRY,GLC_BANK\s*[\s\S]*\.dw\s+GLC_ADDR\s*[\s\S]*\.db\s+GLC_ENTRY/);
+  assert.match(bank0, /\.db\s+SHL_ENTRY,SHL_BANK\s*[\s\S]*\.dw\s+Tecm8ShellEntry\s*[\s\S]*\.db\s+SHL_ENTRY/);
+  assert.match(bank0, /\.db\s+ABI_PROBE_NESTED,VDU_BANK\s*[\s\S]*\.dw\s+VDU_ENTRY\s*[\s\S]*\.db\s+ABI_PROBE_NESTED/);
   assert.match(bank0, /@Tecm8ServiceRegistryEnd:\s*[\s\S]*\.db\s+SVC_REG_END/);
-  assert.match(abiDoc, /byte 0: service ID/);
-  assert.match(abiDoc, /later table-driven dispatcher/);
+  assert.match(abiDoc, /byte 0: public service ID carried in C/);
+  assert.match(abiDoc, /byte 4: target-local service selector loaded into A/);
+  assert.match(abiDoc, /dispatcher scans this private registry table at runtime/);
   assert.match(abiDoc, /registry labels are private implementation details/);
 });

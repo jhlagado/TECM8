@@ -91,7 +91,7 @@ published as fixed callable addresses.
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
-| `SVC_REG_ENTRY_SIZE` | `04h` | Bytes per service registry entry: service ID, bank, address low, address high. |
+| `SVC_REG_ENTRY_SIZE` | `05h` | Bytes per service registry entry: service ID, bank, address low, address high, target `A`. |
 | `SVC_REG_END` | `00h` | Registry terminator service ID. |
 | `VDU_INIT` | `60h` | VDU init service ID. |
 | `VDU_BANK` | `01h` | VDU init physical bank. |
@@ -109,20 +109,22 @@ published as fixed callable addresses.
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
-The registry table is laid out as repeated four-byte records:
+The registry table is laid out as repeated five-byte records:
 
 ```text
-byte 0: service ID
+byte 0: public service ID carried in C
 byte 1: physical expansion bank
 byte 2: entry address low byte
 byte 3: entry address high byte
+byte 4: target-local service selector loaded into A
 ```
 
-The current dispatcher still uses explicit comparisons for minimum ROM risk, but
-the table is now present in bank 0 as the source-of-truth map for tools, docs,
-and a later table-driven dispatcher. Any service that targets a bank-local
-dispatcher, such as `VDU_INIT`, still needs an explicit shim or an
-extended future registry record that includes the bank-local service selector.
+The dispatcher scans this private registry table at runtime. When it finds a
+matching public service ID, it patches the saved caller `A` byte in the
+`MON_BANK_CALL` frame with byte 4, loads byte 1 into `B`, loads bytes 2 and 3
+into `HL`, and enters the fixed-ROM `MON_BANK_CALL` service. This keeps the
+public service namespace decoupled from the bank-local service selector without
+publishing fixed callable entry points.
 
 ## Bank 0: Shell Entry
 

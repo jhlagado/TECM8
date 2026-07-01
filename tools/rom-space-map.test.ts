@@ -34,6 +34,13 @@ function bankMeasurement(bank: number): { occupied: number; span: number; highWa
   };
 }
 
+function symbolAddress(d8Path: string, name: string): number {
+  const d8 = readJson(d8Path);
+  const symbol = d8.symbols.find((entry: { name: string }) => entry.name === name);
+  assert.ok(symbol, `missing symbol ${name} in ${d8Path}`);
+  return symbol.address ?? symbol.value;
+}
+
 test('TecMate ROM space map records current monitor and expansion measurements', () => {
   const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-rom-space-map.md'), 'utf8');
   const monitor = readJson('build/roms/tec1g/tecm8/monitor/monitor.d8.json');
@@ -86,4 +93,21 @@ test('TecMate ROM space map classifies fixed-ROM and expansion responsibilities'
 
   assert.match(doc, /GLCD remains a low-priority containment issue/);
   assert.doesNotMatch(doc, /next meaningful space work should measure real candidate moves.*GLCD/s);
+});
+
+test('TecMate ROM space map records current bank 0 private boundary labels', () => {
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-rom-space-map.md'), 'utf8');
+  const bank0D8 = 'build/roms/tec1g/tecm8/expansion/bank0.d8.json';
+
+  const rows = [
+    ['Bank 0 service dispatcher', 'Tecm8ServiceCall', 'Private table-driven label installed into the service vector.'],
+    ['Bank 0 service registry', 'Tecm8ServiceRegistry', 'Private service ID to bank/address/target-`A` table.'],
+    ['Bank 0 shell entry', 'Tecm8ShellEntry', 'Private descriptor and VDU splash path for `SHL_ENTRY`.'],
+    ['Bank 0 info marker', 'Tecm8ExpansionBank0Info', 'Private marker, not a fixed ABI location.'],
+  ];
+
+  for (const [label, symbol, note] of rows) {
+    const row = `| ${label} | \`${hex(symbolAddress(bank0D8, symbol))}\` | ${note} |`;
+    assert.ok(doc.includes(row), `space map should include ${row}`);
+  }
 });
