@@ -103,7 +103,9 @@ The current assembly style follows `docs/azm-style-guide.md`: callable routine
 entries and ordinary labels are PascalCase, while `.equ` constants use
 uppercase names with underscores. The TECM8 modules should not create duplicate
 `.asmi` manifests for code in this repository; AZM can read the local `;!`
-contract blocks from the included source.
+contract blocks from the included source. Public `@Label` entry points in
+`src/` and `roms/` now also carry short prose comment blocks above the `;!`
+contracts so host checks can keep exported symbols documented in place.
 
 ### `src/tecm8-equates.asm`
 
@@ -1404,6 +1406,8 @@ coverage:
 - direct GLCD tile-layer contracts
 - static checks that assembly modules expose expected entry points
 - static checks that local entry points carry `;!` contract comments
+- static checks that public `@` symbols in `src/` and `roms/` carry adjacent
+  prose comment blocks
 - static checks that `debug80.json` keeps the `tecm8` profile, ROM source
   roots, and ROM artifact declarations aligned with the tracked files
 - static checks that the checked banked-service ABI document matches the live
@@ -1415,6 +1419,10 @@ verifies the `tecm8` profile selection, target source roots, active monitor and
 expansion artifact wiring, the current local MON-3 monitor source tree, the
 absence of the old `monitor.main.asm` include path, ROM build npm scripts, and
 tracked fixed-size ROM images.
+`tools/public-symbol-comments.test.ts` is the symbol-comment coverage check. It
+walks the `src/` and `roms/` assembly trees with `rg --files` and fails when a
+public `@Symbol` label is missing the adjacent two-line prose comment block
+that now sits above the `;!` register-contract lines.
 
 `tools/bank-abi-proof.test.ts`, `tools/tms9918-bank-proof.test.ts`,
 `tools/tecfs-bank-proof.test.ts`, and `tools/rtc-bank-proof.test.ts` are the
