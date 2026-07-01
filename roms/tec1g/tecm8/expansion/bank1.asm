@@ -7,7 +7,6 @@
 EXP_BANK          .equ    0x01
 EXP_VERSION       .equ    0x01
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can prove balanced tail-dispatch paths.
 @Tecm8ExpansionBank1Entry:
         push af
         ld a,(ABI_PROBE_REQUEST)

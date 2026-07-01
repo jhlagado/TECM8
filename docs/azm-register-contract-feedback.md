@@ -46,13 +46,13 @@ Runtime behaviour is deliberate and balanced:
 6. The monitor restores the previous `SYS_CTRL` and returns to the caller.
 7. `SP` is back where it started, and target `A`/carry are returned.
 
-AZM can express the register part with `.asmi`, but it cannot currently express
-that this specific service consumes and balances the helper's stack frame. In
-strict mode that leaves `unknown_control_flow` / stack-balance findings on
-routines that use `farCall` or `callBankService`.
+Before AZM 0.2.14, AZM could express the register part with `.asmi`, but could
+not express that this specific service consumes and balances the helper's stack
+frame. In strict mode that left `unknown_control_flow` / stack-balance findings
+on routines that use `farCall` or `callBankService`.
 
-TECM8 currently uses narrow `rc-ignore-next unknown_control_flow` comments at
-those boundaries. They are not intended as the long-term ABI expression.
+TECM8 temporarily used narrow `rc-ignore-next unknown_control_flow` comments at
+those boundaries. AZM 0.2.15 removes the remaining need for those suppressions.
 
 ## Practical AZM Request
 
@@ -111,3 +111,28 @@ npm run typecheck
 ```
 
 All pass with the temporary suppressions retained.
+
+## AZM 0.2.15 Test Result
+
+AZM 0.2.15 moves the TecMate `C >= 60h` expansion-service fallback out of the
+built-in MON3 profile and lets TECM8 own that contract in
+`tecm8-rst-services.asmi`. TECM8 now declares a broad-clobber range fallback for
+`C >= 60h`, with exact entries for the current known services:
+
+```text
+service rst 0x10 C >= 0x60 TECMATE_EXPANSION_SERVICE
+in C
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
+```
+
+The AZM 0.2.15 dispatcher/tail-dispatch stack proof also removes the need for
+the two remaining `unknown_control_flow` suppressions around:
+
+- `Tecm8ServiceCall`
+- `Tecm8ExpansionBank1Entry`
+
+That leaves `MON_BANK_CALL` modelled by the MON3 profile, TECM8 expansion
+services modelled by the project `.asmi`, and the expansion ROM contract check
+clean without temporary suppressions.

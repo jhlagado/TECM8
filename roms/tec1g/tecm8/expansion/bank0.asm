@@ -69,7 +69,6 @@ Tecm8BootstrapShell:
         ld (DBG_TRACE_8),a
         ret
 
-;! rc-ignore-next unknown_control_flow: temporary until AZM can prove balanced dispatcher paths into MON_BANK_CALL.
 @Tecm8ServiceCall:
         push hl
         push de
