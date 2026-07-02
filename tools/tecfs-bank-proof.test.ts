@@ -47,6 +47,20 @@ test('TEC-FS bank proof covers installable sector driver dispatch', () => {
   assert.match(doc, /installed sector-driver vector/);
 });
 
+test('TEC-FS bank proof covers locator format and read services', () => {
+  const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
+  const bank2 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank2.asm'), 'utf8');
+
+  assert.match(proof, /ld a,TFS_SVC_FORMAT_LOCATOR[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82/);
+  assert.match(proof, /ld a,TFS_SVC_READ_LOCATOR[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82/);
+  assert.match(proof, /cp TFS_ERR_BAD_LOCATOR/);
+  assert.match(bank2, /cp TFS_SVC_FORMAT_LOCATOR[\s\S]*jp z,tecfsFormatLocatorImpl/);
+  assert.match(bank2, /cp TFS_SVC_READ_LOCATOR[\s\S]*jp z,tecfsReadLocatorImpl/);
+  assert.match(doc, /Formats a TEC-FS locator header into the caller buffer/);
+  assert.match(doc, /Validates a caller-buffer locator header and publishes its geometry/);
+});
+
 test('TEC-FS direction documents the volume directory contract', () => {
   const direction = readFileSync(resolve(root, 'docs/mon3/tec-fs-direction.md'), 'utf8');
   const bankOps = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');

@@ -171,6 +171,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SAVE_RANGE',
     'TFS_MAP_BLOCK',
     'TFS_TRANSLATE_SECTOR',
+    'TFS_FORMAT_LOCATOR',
+    'TFS_READ_LOCATOR',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -250,6 +252,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_ERR_BAD_BLOCK',
     'TFS_ERR_BAD_SECTOR',
     'TFS_ERR_BAD_BUFFER',
+    'TFS_ERR_BAD_LOCATOR',
     'TFS_ERR_NO_DRIVER',
     'TFS_ERR_UNSUPPORTED',
   ]) {
@@ -262,6 +265,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /32768/);
   assert.match(doc, /30 user volumes/);
   assert.match(doc, /TEC-FS locator sector/);
+  assert.match(doc, /`TFS_FORMAT_LOCATOR` writes the current locator header fields/);
+  assert.match(doc, /`TFS_READ_LOCATOR` validates the magic\/version/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /magic is `TFS1`/);
   assert.match(doc, /16-byte volume records/);

@@ -32,6 +32,10 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsMapBlockImpl
         cp TFS_SVC_TRANSLATE_SECTOR
         jp z,tecfsTranslateSectorImpl
+        cp TFS_SVC_FORMAT_LOCATOR
+        jp z,tecfsFormatLocatorImpl
+        cp TFS_SVC_READ_LOCATOR
+        jp z,tecfsReadLocatorImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -59,6 +63,12 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsTranslateSector:
         jp tecfsTranslateSectorImpl
+
+@tecfsFormatLocator:
+        jp tecfsFormatLocatorImpl
+
+@tecfsReadLocator:
+        jp tecfsReadLocatorImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -198,11 +208,11 @@ TFS_TOTAL_VOLUMES           .equ    31
 @tecfsSectorIoWithDriverOp:
         ld (TFS_PARAM_DRIVER_OP),a
         call tecfsValidateCardSector
-        jr c,tecfsBadSector
+        jp c,tecfsBadSector
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
-        jr z,tecfsBadBuffer
+        jp z,tecfsBadBuffer
         call tecfsSectorDriverHook
         ret
 
@@ -225,6 +235,118 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsNoSectorDriver:
         ld a,TFS_ERR_NO_DRIVER
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsFormatLocatorImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld a,TFS_LOC_MAGIC_0
+        ld (hl),a
+        inc hl
+        ld a,TFS_LOC_MAGIC_1
+        ld (hl),a
+        inc hl
+        ld a,TFS_LOC_MAGIC_2
+        ld (hl),a
+        inc hl
+        ld a,TFS_LOC_MAGIC_3
+        ld (hl),a
+        inc hl
+        ld a,TFS_LOC_VERSION
+        ld (hl),a
+        inc hl
+        ld a,TFS_LOC_ENTRY_BYTES
+        ld (hl),a
+        inc hl
+        ld a,TFS_TOTAL_VOLUMES
+        ld (hl),a
+        inc hl
+        ld a,TFS_USER_VOLUMES
+        ld (hl),a
+        inc hl
+        ld a,TFS_SPARE_VOLUME
+        ld (hl),a
+        inc hl
+        ld a,TFS_VOLUME_SECTORS_0
+        ld (hl),a
+        inc hl
+        ld a,TFS_VOLUME_SECTORS_1
+        ld (hl),a
+        inc hl
+        ld a,TFS_VOLUME_SECTORS_2
+        ld (hl),a
+        inc hl
+        ld a,TFS_VOLUME_SECTORS_3
+        ld (hl),a
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsReadLocatorImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld a,(hl)
+        cp TFS_LOC_MAGIC_0
+        jp nz,tecfsBadLocator
+        inc hl
+        ld a,(hl)
+        cp TFS_LOC_MAGIC_1
+        jp nz,tecfsBadLocator
+        inc hl
+        ld a,(hl)
+        cp TFS_LOC_MAGIC_2
+        jp nz,tecfsBadLocator
+        inc hl
+        ld a,(hl)
+        cp TFS_LOC_MAGIC_3
+        jp nz,tecfsBadLocator
+        inc hl
+        ld a,(hl)
+        cp TFS_LOC_VERSION
+        jp nz,tecfsBadLocator
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_LAST_ERROR),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_TOTAL_VOLUMES),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_USER_VOLUMES),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_SPARE_VOLUME),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_VOLUME_SECTORS_0),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_VOLUME_SECTORS_1),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_VOLUME_SECTORS_2),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_VOLUME_SECTORS_3),a
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsBadLocator:
+        ld a,TFS_ERR_BAD_LOCATOR
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf

@@ -248,6 +248,8 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_SAVE_RANGE` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_SAVE_RANGE`. |
 | `TFS_MAP_BLOCK` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_MAP_BLOCK`. |
 | `TFS_TRANSLATE_SECTOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_TRANSLATE_SECTOR`. |
+| `TFS_FORMAT_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_LOCATOR`. |
+| `TFS_READ_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_READ_LOCATOR`. |
 | `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
 | `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
@@ -256,6 +258,8 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_SVC_SAVE_RANGE` | `06h` | Explicit unsupported error. |
 | `TFS_SVC_MAP_BLOCK` | `07h` | Maps active volume/block index to a 32-bit sector number. |
 | `TFS_SVC_TRANSLATE_SECTOR` | `08h` | Adds the mounted image-base LBA to the logical sector in place. |
+| `TFS_SVC_FORMAT_LOCATOR` | `09h` | Formats a TEC-FS locator header into the caller buffer. |
+| `TFS_SVC_READ_LOCATOR` | `0Ah` | Validates a caller-buffer locator header and publishes its geometry. |
 
 Current TEC-FS geometry:
 
@@ -389,6 +393,12 @@ checksum. Each 128 MiB TEC-FS volume occupies 262,144 512-byte sectors. Future
 mount code should read this sector, validate its magic and checksum, then use its
 volume-start table instead of parsing FAT32 directories on the TEC.
 
+`TFS_FORMAT_LOCATOR` writes the current locator header fields into the buffer at
+`TFS_PARAM_BUFFER_LO..HI`. `TFS_READ_LOCATOR` validates the magic/version in
+that buffer and copies the locator geometry fields back into the TEC-FS
+parameter block. It is a format/parse boundary only; actual SD sector read/write
+still goes through `TFS_READ`, `TFS_WRITE`, and the installed sector driver.
+
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
 a volume/block pair should call `TFS_MAP_BLOCK`, then `TFS_TRANSLATE_SECTOR`,
@@ -408,6 +418,7 @@ TEC-FS status codes:
 | `TFS_ERR_BAD_BLOCK` | `0Ch` | Requested block index is out of range. |
 | `TFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
 | `TFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
+| `TFS_ERR_BAD_LOCATOR` | `0Fh` | Locator buffer has invalid magic or unsupported version. |
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 

@@ -27,6 +27,9 @@ PROOF_FAIL_VOLUME_SECTORS   .equ    0xEE
 PROOF_FAIL_TRANSLATE        .equ    0xEF
 PROOF_FAIL_DRIVER_READ      .equ    0xF0
 PROOF_FAIL_DRIVER_WRITE     .equ    0xF1
+PROOF_FAIL_FORMAT_LOCATOR   .equ    0xF2
+PROOF_FAIL_READ_LOCATOR     .equ    0xF3
+PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
 TFS_PROOF_READ_MARKER       .equ    0xA5
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
@@ -86,6 +89,66 @@ ClearParams:
         ld a,(TFS_PARAM_VOLUME_SECTORS_3)
         cp TFS_VOLUME_SECTORS_3
         jp nz,FailVolumeSectors
+
+        ld hl,0x6200
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_FORMAT_LOCATOR
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFormatLocator
+        cp 0x82
+        jp nz,FailFormatLocator
+        ld a,(0x6200)
+        cp TFS_LOC_MAGIC_0
+        jp nz,FailFormatLocator
+        ld a,(0x6201)
+        cp TFS_LOC_MAGIC_1
+        jp nz,FailFormatLocator
+        ld a,(0x6202)
+        cp TFS_LOC_MAGIC_2
+        jp nz,FailFormatLocator
+        ld a,(0x6203)
+        cp TFS_LOC_MAGIC_3
+        jp nz,FailFormatLocator
+        ld a,(0x6206)
+        cp 31
+        jp nz,FailFormatLocator
+        ld a,(0x6209)
+        cp TFS_VOLUME_SECTORS_0
+        jp nz,FailFormatLocator
+        ld a,(0x620B)
+        cp TFS_VOLUME_SECTORS_2
+        jp nz,FailFormatLocator
+
+        xor a
+        ld (TFS_PARAM_TOTAL_VOLUMES),a
+        ld (TFS_PARAM_USER_VOLUMES),a
+        ld (TFS_PARAM_SPARE_VOLUME),a
+        ld (TFS_PARAM_VOLUME_SECTORS_2),a
+        ld a,TFS_SVC_READ_LOCATOR
+        farCall 0x02,TFS_ENTRY
+        jp c,FailReadLocator
+        cp 0x82
+        jp nz,FailReadLocator
+        ld a,(TFS_PARAM_TOTAL_VOLUMES)
+        cp 31
+        jp nz,FailReadLocator
+        ld a,(TFS_PARAM_USER_VOLUMES)
+        cp 30
+        jp nz,FailReadLocator
+        ld a,(TFS_PARAM_SPARE_VOLUME)
+        cp 30
+        jp nz,FailReadLocator
+        ld a,(TFS_PARAM_VOLUME_SECTORS_2)
+        cp TFS_VOLUME_SECTORS_2
+        jp nz,FailReadLocator
+
+        xor a
+        ld (0x6200),a
+        ld a,TFS_SVC_READ_LOCATOR
+        farCall 0x02,TFS_ENTRY
+        jp nc,FailBadLocator
+        cp TFS_ERR_BAD_LOCATOR
+        jp nz,FailBadLocator
 
         ld a,0x05
         ld (TFS_PARAM_REQUEST_VOLUME),a
@@ -430,6 +493,15 @@ FailDriverRead:
         jr Fail
 FailDriverWrite:
         ld a,PROOF_FAIL_DRIVER_WRITE
+        jr Fail
+FailFormatLocator:
+        ld a,PROOF_FAIL_FORMAT_LOCATOR
+        jr Fail
+FailReadLocator:
+        ld a,PROOF_FAIL_READ_LOCATOR
+        jr Fail
+FailBadLocator:
+        ld a,PROOF_FAIL_BAD_LOCATOR
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt
