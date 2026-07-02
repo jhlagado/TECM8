@@ -117,7 +117,7 @@ All pass with the temporary suppressions retained.
 AZM 0.2.15 moves the TecMate `C >= 60h` expansion-service fallback out of the
 built-in MON3 profile and lets TECM8 own that contract in
 `tecm8-rst-services.asmi`. TECM8 now declares a broad-clobber range fallback for
-`C >= 60h`, with exact entries for the current known services:
+`C >= 60h`, with exact entries for each current registered service:
 
 ```text
 service rst 0x10 C >= 0x60 TECMATE_EXPANSION_SERVICE
@@ -136,3 +136,9 @@ the two remaining `unknown_control_flow` suppressions around:
 That leaves `MON_BANK_CALL` modelled by the MON3 profile, TECM8 expansion
 services modelled by the project `.asmi`, and the expansion ROM contract check
 clean without temporary suppressions.
+
+The exact service list is now tested by
+`tools/tecm8-rst-services-interface.test.ts`. The broad `C >= 60h` entry remains
+as the conservative fallback for genuinely unknown expansion services; registered
+bank-0 services should have explicit entries so the project can tighten them one
+by one as their ABIs settle.
