@@ -25,6 +25,7 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(proof, /callService RTC_TOOL/);
   assert.match(proof, /callService GLC_ENTRY/);
   assert.match(proof, /callService SHL_ENTRY/);
+  assert.match(proof, /callService SHL_RUN_COMMAND/);
   assert.match(runner, /loadTec1gExpansionRomImage/);
   assert.match(runner, /applyExpansionRomMemory/);
   assert.match(runner, /SYS_CTRL restored after nested farCall/);
@@ -35,6 +36,8 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(runner, /service registry dispatched VDU init/);
   assert.match(runner, /service registry dispatched GLCD boundary entry/);
   assert.match(runner, /service registry dispatched shell entry/);
+  assert.match(runner, /shell command loop classified asm action/);
+  assert.match(runner, /shell command loop rejected unknown command/);
   assert.match(runner, /farJump did not return to caller/);
   assert.match(packageJson, /"proof:bank-abi"/);
   assert.match(packageJson, /proof:bank-abi/);

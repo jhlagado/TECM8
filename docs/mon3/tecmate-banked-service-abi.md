@@ -106,6 +106,7 @@ published as fixed callable addresses.
 | `GLC_BANK` | `04h` | GLCD boundary physical bank. |
 | `GLC_ADDR` | `8000h` | GLCD boundary address. |
 | `SHL_ENTRY` | `80h` | Resident shell entry service ID. |
+| `SHL_RUN_COMMAND` | `81h` | Resident shell one-command boundary service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
@@ -134,6 +135,10 @@ short splash string through the bank-1 VDU dispatcher. MON3 and user code do not
 call that label directly; they request `SHL_ENTRY` through the
 installed service vector.
 
+The private `Tecm8ShellRunCommand` label is the current command-loop boundary.
+MON3 and user code also do not call that label directly; they request
+`SHL_RUN_COMMAND` through the installed service vector.
+
 Shell parameter block:
 
 | Constant | Address | Meaning |
@@ -144,19 +149,47 @@ Shell parameter block:
 | `SHL_PARAM_BANK` | `3BA2h` | Service bank marker. |
 | `SHL_PARAM_VERSION` | `3BA3h` | Service ABI version. |
 | `SHL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
+| `SHL_PARAM_COMMAND_ACTION` | `3BA5h` | Last command action classification. |
+| `SHL_PARAM_COMMAND_LENGTH` | `3BA6h` | Last zero-terminated command length. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
+| `SHL_COMMAND_BUFFER` | `3A80h` | Zero-terminated command line for `SHL_RUN_COMMAND`. |
+| `SHL_COMMAND_CAPACITY` | `20h` | Maximum bytes scanned from `SHL_COMMAND_BUFFER`. |
 
 Shell status and feature values:
 
 | Constant | Value | Meaning |
 | --- | ---: | --- |
 | `SHL_STATUS_OK` | `00h` | Success. |
+| `SHL_STATUS_UNKNOWN_COMMAND` | `01h` | Command did not match a known shell verb. |
 | `SHL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
 | `SHL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
+| `SHL_FEATURE_COMMAND_LOOP` | `04h` | One-command shell boundary present. |
+| `SHL_ACTION_NONE` | `00h` | No command action selected. |
+| `SHL_ACTION_EDIT` | `01h` | Command classified as editor launch. |
+| `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
+| `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
 
 If the VDU splash call fails, the shell service stores the returned error code
 in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`, then returns
 with carry set.
+
+`SHL_RUN_COMMAND` reads a zero-terminated command line from
+`SHL_COMMAND_BUFFER` and records the first command-loop result in the shell
+parameter block. This is not the full interactive shell. It is the ROM-facing
+boundary that lets the monitor or proofs enter the future shell command loop
+through the expansion service registry. The current boundary classifies the
+first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
+`SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
+in `SHL_PARAM_COMMAND_LENGTH`, and returns `A=80h` with carry clear. Unknown or
+empty commands store `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
+`SHL_PARAM_LAST_ERROR`, return `A=SVC_ERR_UNKNOWN`, and set carry. The later
+editor, assembler, and launcher services should hang from this boundary rather
+than being called directly from MON3.
+
+The command buffer capacity is `SHL_COMMAND_CAPACITY` bytes. The service scans
+at most that many bytes, so a missing terminator cannot run into the expansion
+menu/service vectors at `3BF0h..3BF7h`. Callers must treat `3A80h..3A9Fh` as
+the v1 shell command input slot.
 
 ## Bank 1: VDU/TMS9918
 

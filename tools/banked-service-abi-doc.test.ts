@@ -153,6 +153,7 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
 
 test('banked service ABI doc covers bank 0 shell entry slots and parameters', () => {
   assertDocMentions('SHL_ENTRY');
+  assertDocMentions('SHL_RUN_COMMAND');
   for (const name of [
     'SHL_PARAM_BASE',
     'SHL_PARAM_STATUS',
@@ -160,15 +161,28 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_PARAM_BANK',
     'SHL_PARAM_VERSION',
     'SHL_PARAM_FEATURES',
+    'SHL_PARAM_COMMAND_ACTION',
+    'SHL_PARAM_COMMAND_LENGTH',
     'SHL_SPLASH_BUFFER',
+    'SHL_COMMAND_BUFFER',
+    'SHL_COMMAND_CAPACITY',
     'SHL_STATUS_OK',
+    'SHL_STATUS_UNKNOWN_COMMAND',
     'SHL_FEATURE_ENTRY',
     'SHL_FEATURE_SPLASH',
+    'SHL_FEATURE_COMMAND_LOOP',
+    'SHL_ACTION_NONE',
+    'SHL_ACTION_EDIT',
+    'SHL_ACTION_ASM',
+    'SHL_ACTION_RUN',
   ]) {
     assertDocRow(name);
   }
   assert.match(doc, /private `Tecm8ShellEntry` label/);
   assert.match(doc, /do not\s+call that label directly/);
+  assert.match(doc, /private `Tecm8ShellRunCommand` label/);
+  assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
+  assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {

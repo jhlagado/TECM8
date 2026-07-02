@@ -119,7 +119,7 @@ Tecm8ServiceCallUnknown:
         ld (SHL_PARAM_BANK),a
         ld a,EXP_VERSION
         ld (SHL_PARAM_VERSION),a
-        ld a,SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH
+        ld a,SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH+SHL_FEATURE_COMMAND_LOOP
         ld (SHL_PARAM_FEATURES),a
         xor a
         ld (SHL_PARAM_STATUS),a
@@ -140,6 +140,111 @@ Tecm8ShellSplashError:
         ld (SHL_PARAM_LAST_ERROR),a
         ld (SHL_PARAM_STATUS),a
         scf
+        ret
+
+@Tecm8ShellRunCommand:
+        xor a
+        ld (SHL_PARAM_STATUS),a
+        ld (SHL_PARAM_LAST_ERROR),a
+        ld (SHL_PARAM_COMMAND_ACTION),a
+        ld (SHL_PARAM_COMMAND_LENGTH),a
+        ld hl,SHL_COMMAND_BUFFER
+        ld a,(hl)
+        or a
+        jp z,Tecm8ShellRunUnknown
+        call Tecm8ShellCommandLength
+        ld a,(SHL_PARAM_COMMAND_LENGTH)
+        cp 0x03
+        jp z,Tecm8ShellRunCheckThree
+        cp 0x04
+        jp z,Tecm8ShellRunCheckFour
+        jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunCheckThree:
+        ld a,(SHL_COMMAND_BUFFER)
+        and 0xDF
+        cp "A"
+        jp z,Tecm8ShellRunCheckAsm
+        cp "R"
+        jp z,Tecm8ShellRunCheckRun
+        jp Tecm8ShellRunUnknown
+Tecm8ShellRunCheckAsm:
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "S"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "M"
+        jp z,Tecm8ShellRunAsm
+        jp Tecm8ShellRunUnknown
+Tecm8ShellRunCheckRun:
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "U"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "N"
+        jp z,Tecm8ShellRunRun
+        jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunCheckFour:
+        ld a,(SHL_COMMAND_BUFFER)
+        and 0xDF
+        cp "E"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "D"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "I"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+3)
+        and 0xDF
+        cp "T"
+        jp z,Tecm8ShellRunEdit
+        jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunEdit:
+        ld a,SHL_ACTION_EDIT
+        jp Tecm8ShellRunOk
+Tecm8ShellRunAsm:
+        ld a,SHL_ACTION_ASM
+        jp Tecm8ShellRunOk
+Tecm8ShellRunRun:
+        ld a,SHL_ACTION_RUN
+Tecm8ShellRunOk:
+        ld (SHL_PARAM_COMMAND_ACTION),a
+        ld a,0x80
+        or a
+        ret
+Tecm8ShellRunUnknown:
+        ld a,SHL_STATUS_UNKNOWN_COMMAND
+        ld (SHL_PARAM_STATUS),a
+        ld (SHL_PARAM_LAST_ERROR),a
+        ld a,SVC_ERR_UNKNOWN
+        scf
+        ret
+
+Tecm8ShellCommandLength:
+        ld b,0x00
+        ld c,SHL_COMMAND_CAPACITY
+Tecm8ShellCommandLengthNext:
+        ld a,(hl)
+        or a
+        jp z,Tecm8ShellCommandLengthDone
+        inc b
+        inc hl
+        dec c
+        jp z,Tecm8ShellCommandLengthDone
+        ;! rc-ignore-next definite_contract_violation: AZM cannot yet prove this local bounded count loop preserves B/C/HL across the backward branch.
+        jp Tecm8ShellCommandLengthNext
+Tecm8ShellCommandLengthDone:
+        ld a,b
+        ld (SHL_PARAM_COMMAND_LENGTH),a
         ret
 
 Tecm8ShellCopySplash:
@@ -176,6 +281,9 @@ Tecm8ShellSplashText:
         .db     SHL_ENTRY,SHL_BANK
         .dw     Tecm8ShellEntry
         .db     SHL_ENTRY
+        .db     SHL_RUN_COMMAND,SHL_BANK
+        .dw     Tecm8ShellRunCommand
+        .db     SHL_RUN_COMMAND
         .db     ABI_PROBE_NESTED,VDU_BANK
         .dw     VDU_ENTRY
         .db     ABI_PROBE_NESTED

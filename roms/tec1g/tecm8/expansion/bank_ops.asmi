@@ -48,6 +48,7 @@ GLC_ENTRY                   .equ    SVC_BASE+0x03
 GLC_BANK                    .equ    0x04
 GLC_ADDR                    .equ    GLC_ENTRY_ADDR
 SHL_ENTRY                   .equ    SVC_BASE+0x20
+SHL_RUN_COMMAND             .equ    SVC_BASE+0x21
 SHL_BANK                    .equ    0x00
 SVC_ERR_UNKNOWN             .equ    0xEE
 SVC_REG_ENTRY_SIZE          .equ    0x05
@@ -74,10 +75,20 @@ SHL_PARAM_LAST_ERROR .equ   SHL_PARAM_BASE+1
 SHL_PARAM_BANK      .equ    SHL_PARAM_BASE+2
 SHL_PARAM_VERSION   .equ    SHL_PARAM_BASE+3
 SHL_PARAM_FEATURES  .equ    SHL_PARAM_BASE+4
+SHL_PARAM_COMMAND_ACTION .equ SHL_PARAM_BASE+5
+SHL_PARAM_COMMAND_LENGTH .equ SHL_PARAM_BASE+6
 SHL_SPLASH_BUFFER   .equ    0x3BB0
+SHL_COMMAND_BUFFER  .equ    0x3A80
+SHL_COMMAND_CAPACITY .equ   0x20
 SHL_STATUS_OK       .equ    0x00
+SHL_STATUS_UNKNOWN_COMMAND .equ 0x01
 SHL_FEATURE_ENTRY   .equ    0x01
 SHL_FEATURE_SPLASH  .equ    0x02
+SHL_FEATURE_COMMAND_LOOP .equ 0x04
+SHL_ACTION_NONE     .equ    0x00
+SHL_ACTION_EDIT     .equ    0x01
+SHL_ACTION_ASM      .equ    0x02
+SHL_ACTION_RUN      .equ    0x03
 
 VDU_ENTRY             .equ    0x8000
 VDU_CALL      .equ    VDU_ENTRY
