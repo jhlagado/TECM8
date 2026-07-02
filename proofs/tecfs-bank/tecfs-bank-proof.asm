@@ -25,12 +25,11 @@ PROOF_FAIL_DRIVER_HOOK      .equ    0xEC
 PROOF_FAIL_LOCATOR          .equ    0xED
 PROOF_FAIL_VOLUME_SECTORS   .equ    0xEE
 PROOF_FAIL_TRANSLATE        .equ    0xEF
-PROOF_FAIL_DRIVER_READ      .equ    0xF0
-PROOF_FAIL_DRIVER_WRITE     .equ    0xF1
+PROOF_FAIL_BRIDGE_READ      .equ    0xF0
+PROOF_FAIL_BRIDGE_WRITE     .equ    0xF1
 PROOF_FAIL_FORMAT_LOCATOR   .equ    0xF2
 PROOF_FAIL_READ_LOCATOR     .equ    0xF3
 PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
-TFS_PROOF_READ_MARKER       .equ    0xA5
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -345,32 +344,32 @@ ClearParams:
 
         ld a,0x05
         ld (TFS_PARAM_DRIVER_BANK),a
-        ld hl,0x8000
+        ld hl,TFS_SECTOR_BRIDGE
         ld (TFS_PARAM_DRIVER_ADDR_LO),hl
         xor a
         ld (0x6000),a
         ld a,TFS_SVC_READ
         farCall 0x02,TFS_ENTRY
-        jp c,FailDriverRead
+        jp c,FailBridgeRead
         cp 0x85
-        jp nz,FailDriverRead
+        jp nz,FailBridgeRead
         ld a,(0x6000)
-        cp TFS_PROOF_READ_MARKER
-        jp nz,FailDriverRead
+        cp TFS_BRIDGE_READ_MARKER
+        jp nz,FailBridgeRead
         ld a,(TFS_PARAM_STATUS)
         cp TFS_STATUS_OK
-        jp nz,FailDriverRead
+        jp nz,FailBridgeRead
 
         ld a,0x5A
         ld (0x6000),a
         ld a,TFS_SVC_WRITE
         farCall 0x02,TFS_ENTRY
-        jp c,FailDriverWrite
+        jp c,FailBridgeWrite
         cp 0x85
-        jp nz,FailDriverWrite
+        jp nz,FailBridgeWrite
         ld a,(TFS_PARAM_STATUS)
         cp TFS_STATUS_OK
-        jp nz,FailDriverWrite
+        jp nz,FailBridgeWrite
 
         ld hl,0x0000
         ld (TFS_PARAM_BUFFER_LO),hl
@@ -488,11 +487,11 @@ FailVolumeSectors:
 FailTranslate:
         ld a,PROOF_FAIL_TRANSLATE
         jr Fail
-FailDriverRead:
-        ld a,PROOF_FAIL_DRIVER_READ
+FailBridgeRead:
+        ld a,PROOF_FAIL_BRIDGE_READ
         jr Fail
-FailDriverWrite:
-        ld a,PROOF_FAIL_DRIVER_WRITE
+FailBridgeWrite:
+        ld a,PROOF_FAIL_BRIDGE_WRITE
         jr Fail
 FailFormatLocator:
         ld a,PROOF_FAIL_FORMAT_LOCATOR

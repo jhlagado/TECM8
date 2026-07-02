@@ -315,13 +315,13 @@ test('banked service ABI doc covers bank 4 GLCD boundary slots and parameters', 
   }
 });
 
-test('banked service ABI doc covers bank 5 TEC-FS proof sector driver', () => {
-  assert.match(doc, /## Bank 5: TEC-FS Proof Sector Driver/);
-  assert.match(doc, /proof-only sector driver/);
-  assert.match(doc, /not the final SD\/SPI driver/);
+test('banked service ABI doc covers bank 5 TEC-FS monitor-sector bridge', () => {
+  assert.match(doc, /## Bank 5: TEC-FS Monitor-Sector Bridge/);
+  assert.match(doc, /sector-driver bridge boundary/);
+  assert.match(doc, /bridge\s+`TFS_DRIVER_OP_READ` and `TFS_DRIVER_OP_WRITE` to the selected low-level SD/);
   assert.match(doc, /TFS_PARAM_DRIVER_BANK/);
   assert.match(doc, /returns `A=85h` with carry clear/);
-  assert.match(doc, /writes\s+`A5h` into the caller's buffer for read requests/);
+  assert.match(doc, /writes `TFS_BRIDGE_READ_MARKER` into the\s+caller buffer for read requests/);
 });
 
 test('banked service ABI doc covers proof hooks and proof scripts', () => {

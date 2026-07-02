@@ -491,14 +491,19 @@ GLCD status and feature values:
 | `GLC_FEATURE_BOUNDARY` | `01h` | Basic service boundary present. |
 | `GLC_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
-## Bank 5: TEC-FS Proof Sector Driver
+## Bank 5: TEC-FS Monitor-Sector Bridge
 
-Physical bank 5 currently contains a proof-only sector driver used by
-`proof:tecfs-bank`. It is not the final SD/SPI driver. TEC-FS calls it through
-`TFS_PARAM_DRIVER_BANK` and `TFS_PARAM_DRIVER_ADDR_LO..HI` after validating the
-sector and buffer. The proof driver returns `A=85h` with carry clear, writes
-`A5h` into the caller's buffer for read requests, and accepts write requests
-without touching media.
+Physical bank 5 is the TEC-FS sector-driver bridge boundary. TEC-FS calls it
+through `TFS_PARAM_DRIVER_BANK` and `TFS_PARAM_DRIVER_ADDR_LO..HI` after
+validating the sector and buffer. The long-term role of this bank is to bridge
+`TFS_DRIVER_OP_READ` and `TFS_DRIVER_OP_WRITE` to the selected low-level SD
+sector routines, without making bank 2 know where those routines live.
+
+The current implementation is a simulated bridge used by `proof:tecfs-bank`: it
+returns `A=85h` with carry clear, writes `TFS_BRIDGE_READ_MARKER` into the
+caller buffer for read requests, and accepts write requests without touching
+media. Replacing this simulation with the real SD bridge should not change the
+bank-2 sector I/O ABI.
 
 ## Proof Hooks
 

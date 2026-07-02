@@ -1,4 +1,4 @@
-; TECM8 expansion ROM physical bank 5.
+; TECM8 expansion ROM physical bank 5: TEC-FS monitor-sector bridge.
 
         .include "bank_ops.asmi"
 
@@ -6,27 +6,26 @@
 
 EXP_BANK          .equ    0x05
 EXP_VERSION       .equ    0x01
-TFS_PROOF_READ_MARKER .equ 0xA5
 
 @Tecm8ExpansionBank5Entry:
         cp TFS_DRIVER_OP_READ
-        jp z,tecfsProofDriverRead
+        jp z,tecfsSectorBridgeRead
         cp TFS_DRIVER_OP_WRITE
-        jp z,tecfsProofDriverWrite
+        jp z,tecfsSectorBridgeWrite
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
 
-tecfsProofDriverRead:
+tecfsSectorBridgeRead:
         ld hl,(TFS_PARAM_BUFFER_LO)
-        ld a,TFS_PROOF_READ_MARKER
+        ld a,TFS_BRIDGE_READ_MARKER
         ld (hl),a
-        jr tecfsProofDriverOk
+        jr tecfsSectorBridgeOk
 
-tecfsProofDriverWrite:
-        jr tecfsProofDriverOk
+tecfsSectorBridgeWrite:
+        jr tecfsSectorBridgeOk
 
-tecfsProofDriverOk:
+tecfsSectorBridgeOk:
         xor a
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a

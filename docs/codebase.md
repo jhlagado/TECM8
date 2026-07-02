@@ -291,8 +291,8 @@ session now expect:
   TEC-FS geometry boundary, active-volume selection, logical-sector
   translation, and the installable low-level sector-driver handoff used by the
   current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
-  GLCD containment boundary, bank 5 carries the proof-only TEC-FS sector
-  driver, and banks 6-8 are still placeholder images.
+  GLCD containment boundary, bank 5 carries the TEC-FS monitor-sector bridge
+  simulation, and banks 6-8 are still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build

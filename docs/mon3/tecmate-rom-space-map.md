@@ -65,7 +65,7 @@ Terms:
 | 2 | TEC-FS boundary and block mapper | `643` | `643` | `8283h` | `15741` |
 | 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
-| 5 | TEC-FS proof sector driver | `40` | `40` | `8028h` | `16344` |
+| 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
 | 6 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
