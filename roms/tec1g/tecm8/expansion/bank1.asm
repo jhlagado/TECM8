@@ -30,7 +30,7 @@ Tecm8ExpansionBank1PreserveProbe:
         jr nc,tmsServiceCall
         cp VDU_SVC_INIT
         jr c,vduServiceUnknown
-        cp VDU_SVC_NEWLINE+1
+        cp VDU_SVC_SCROLL_UP+1
         jr nc,vduServiceUnknown
         sub VDU_SVC_INIT
         ld e,a
@@ -41,7 +41,7 @@ Tecm8ExpansionBank1PreserveProbe:
         add hl,de
         jp (hl)
 tmsServiceCall:
-        cp TMS_SVC_FILL_VRAM+1
+        cp TMS_SVC_READ_VRAM+1
         jr nc,vduServiceUnknown
         sub TMS_SVC_INIT
         ld e,a
@@ -63,12 +63,15 @@ Tecm8VduServiceTable:
         jp      vduPutCharImpl
         jp      vduPutStringImpl
         jp      vduNewlineImpl
+        jp      vduSetRowColImpl
+        jp      vduScrollUpImpl
 
 Tecm8TmsServiceTable:
         jp      tmsInitImpl
         jp      tmsSetRegisterImpl
         jp      tmsWriteVramImpl
         jp      tmsFillVramImpl
+        jp      tmsReadVramImpl
 
 vduInitImpl:
         call tmsInitImpl
@@ -144,6 +147,59 @@ vduNewlineImpl:
         or a
         ret
 
+vduSetRowColImpl:
+        ld a,(TMS_PARAM_ROW)
+        ld l,a
+        ld h,0x00
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld a,(TMS_PARAM_COL)
+        and 0x1F
+        ld e,a
+        ld d,0x00
+        add hl,de
+        ld (TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
+        or a
+        ret
+
+vduScrollUpImpl:
+        ld hl,VDU_ROW_BYTES
+        ld de,0x0000
+        ld bc,VDU_SCROLL_BYTES
+vduScrollUpNext:
+        ld (TMS_PARAM_ADDR_LO),hl
+        call tmsReadVramImpl
+        ld a,(TMS_PARAM_VALUE)
+        ld (TMS_PARAM_VALUE),a
+        push hl
+        ld h,d
+        ld l,e
+        ld (TMS_PARAM_ADDR_LO),hl
+        call tmsWriteVramImpl
+        pop hl
+        inc hl
+        inc de
+        dec bc
+        ld a,b
+        or c
+        jr nz,vduScrollUpNext
+        ld hl,VDU_LAST_ROW_ADDR
+        ld (TMS_PARAM_ADDR_LO),hl
+        ld a,VDU_BLANK_CHAR
+        ld (TMS_PARAM_VALUE),a
+        ld hl,VDU_ROW_BYTES
+        ld (TMS_PARAM_COUNT_LO),hl
+        call tmsFillVramImpl
+        ld hl,VDU_LAST_ROW_ADDR
+        ld (TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
+        or a
+        ret
+
 tmsInitImpl:
         ld a,0x07
         ld (TMS_PARAM_REGISTER),a
@@ -178,6 +234,20 @@ tmsWriteVramImpl:
         out (TMS_CONTROL_PORT),a
         ld a,(TMS_PARAM_VALUE)
         out (TMS_DATA_PORT),a
+        ld a,0x81
+        or a
+        ret
+
+; Input: TMS_PARAM_ADDR_LO/HI = VRAM address.
+; Output: TMS_PARAM_VALUE = byte read.
+tmsReadVramImpl:
+        ld a,(TMS_PARAM_ADDR_LO)
+        out (TMS_CONTROL_PORT),a
+        ld a,(TMS_PARAM_ADDR_HI)
+        and 0x3F
+        out (TMS_CONTROL_PORT),a
+        in a,(TMS_DATA_PORT)
+        ld (TMS_PARAM_VALUE),a
         ld a,0x81
         or a
         ret

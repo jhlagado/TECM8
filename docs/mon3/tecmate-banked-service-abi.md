@@ -184,10 +184,13 @@ Bank-local VDU/TMS service IDs:
 | `VDU_SVC_PUT_CHAR` | `04h` | Writes the parameter byte at the VDU cursor, advances cursor, returns `A=81h`. |
 | `VDU_SVC_PUT_STRING` | `05h` | Writes a zero-terminated RAM string at the current cursor, returns `A=81h`. |
 | `VDU_SVC_NEWLINE` | `06h` | Advances the cursor to the next 32-byte text row, returns `A=81h`. |
+| `VDU_SVC_SET_ROWCOL` | `07h` | Sets the cursor from text row/column parameters. |
+| `VDU_SVC_SCROLL_UP` | `08h` | Scrolls the 32x24 text name table up one row. |
 | `TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
 | `TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
 | `TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
 | `TMS_SVC_FILL_VRAM` | `23h` | Fills a VRAM range from the parameter block. |
+| `TMS_SVC_READ_VRAM` | `24h` | Reads one byte from TMS VRAM into the parameter block. |
 
 TMS ports:
 
@@ -211,9 +214,14 @@ TMS parameter block:
 | `TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
 | `TMS_PARAM_COUNT_LO` | `3B08h` | VRAM fill byte count low byte. |
 | `TMS_PARAM_COUNT_HI` | `3B09h` | VRAM fill byte count high byte. |
+| `TMS_PARAM_ROW` | `3B0Ah` | Text cursor row for `VDU_SVC_SET_ROWCOL`. |
+| `TMS_PARAM_COL` | `3B0Bh` | Text cursor column for `VDU_SVC_SET_ROWCOL`. |
 | `VDU_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
 | `VDU_SCREEN_BYTES` | `0300h` | Current 32x24 text-console name-table byte count. |
 | `VDU_BLANK_CHAR` | `20h` | Character used by `VDU_SVC_CLEAR`. |
+| `VDU_ROWS` | `18h` | Current text-console row count. |
+| `VDU_SCROLL_BYTES` | `02E0h` | Bytes copied when scrolling rows 1-23 to rows 0-22. |
+| `VDU_LAST_ROW_ADDR` | `02E0h` | Start address of the final text row. |
 
 Minimal VDU text-console contract:
 
@@ -229,8 +237,14 @@ Minimal VDU text-console contract:
 - `VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
   start, adds one row, masks the high byte to the 16K VRAM range, and returns
   `A=81h`.
+- `VDU_SVC_SET_ROWCOL` computes `row * 32 + (col & 1Fh)` and stores it in the
+  cursor.
+- `VDU_SVC_SCROLL_UP` copies rows 1-23 to rows 0-22 through TMS VRAM reads and
+  writes, blanks the final row, and leaves the cursor at `VDU_LAST_ROW_ADDR`.
 - `TMS_SVC_FILL_VRAM` writes `TMS_PARAM_VALUE` to `TMS_PARAM_COUNT_LO/HI`
   bytes starting at `TMS_PARAM_ADDR_LO/HI`.
+- `TMS_SVC_READ_VRAM` reads one byte from `TMS_PARAM_ADDR_LO/HI` into
+  `TMS_PARAM_VALUE`.
 - The low-level TMS calls remain available for backend work and diagnostics.
 
 ## Bank 2: TEC-FS

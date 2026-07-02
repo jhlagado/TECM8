@@ -19,6 +19,10 @@ TMS_PROOF_TRACE_5           .equ    TMS_PROOF_TRACE_BASE+5
 TMS_PROOF_TRACE_6           .equ    TMS_PROOF_TRACE_BASE+6
 TMS_PROOF_TRACE_7           .equ    TMS_PROOF_TRACE_BASE+7
 TMS_PROOF_TRACE_8           .equ    TMS_PROOF_TRACE_BASE+8
+TMS_PROOF_TRACE_9           .equ    TMS_PROOF_TRACE_BASE+9
+TMS_PROOF_TRACE_10          .equ    TMS_PROOF_TRACE_BASE+10
+TMS_PROOF_TRACE_11          .equ    TMS_PROOF_TRACE_BASE+11
+TMS_PROOF_TRACE_12          .equ    TMS_PROOF_TRACE_BASE+12
 TMS_PROOF_RESULT            .equ    0x3B20
 
 ;! out carry,zero
@@ -40,6 +44,27 @@ ClearTrace:
 
         callBankService 0x01,VDU_CALL,VDU_SVC_CLEAR
         ld (TMS_PROOF_TRACE_8),a
+
+        ld a,0x02
+        ld (TMS_PARAM_ROW),a
+        ld a,0x03
+        ld (TMS_PARAM_COL),a
+        callBankService 0x01,VDU_CALL,VDU_SVC_SET_ROWCOL
+        ld (TMS_PROOF_TRACE_9),a
+        ld a,(TMS_PARAM_CURSOR_LO)
+        ld (TMS_PROOF_TRACE_11),a
+        ld a,(TMS_PARAM_CURSOR_HI)
+        ld (TMS_PROOF_TRACE_12),a
+
+        ld a,0x20
+        ld (TMS_PARAM_ADDR_LO),a
+        xor a
+        ld (TMS_PARAM_ADDR_HI),a
+        ld a,0x53
+        ld (TMS_PARAM_VALUE),a
+        callBankService 0x01,VDU_CALL,TMS_SVC_WRITE_VRAM
+        callBankService 0x01,VDU_CALL,VDU_SVC_SCROLL_UP
+        ld (TMS_PROOF_TRACE_10),a
 
         ld c,MON_SYS_GET
         rst 10H

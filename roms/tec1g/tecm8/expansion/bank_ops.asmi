@@ -87,10 +87,13 @@ VDU_SVC_SET_CURSOR    .equ    0x03
 VDU_SVC_PUT_CHAR      .equ    0x04
 VDU_SVC_PUT_STRING    .equ    0x05
 VDU_SVC_NEWLINE       .equ    0x06
+VDU_SVC_SET_ROWCOL    .equ    0x07
+VDU_SVC_SCROLL_UP     .equ    0x08
 TMS_SVC_INIT          .equ    0x20
 TMS_SVC_SET_REGISTER  .equ    0x21
 TMS_SVC_WRITE_VRAM    .equ    0x22
 TMS_SVC_FILL_VRAM     .equ    0x23
+TMS_SVC_READ_VRAM     .equ    0x24
 TMS_DATA_PORT         .equ    0xBE
 TMS_CONTROL_PORT      .equ    0xBF
 TMS_PARAM_BASE        .equ    0x3B00
@@ -104,9 +107,14 @@ TMS_PARAM_STRING_LO   .equ    TMS_PARAM_BASE+6
 TMS_PARAM_STRING_HI   .equ    TMS_PARAM_BASE+7
 TMS_PARAM_COUNT_LO    .equ    TMS_PARAM_BASE+8
 TMS_PARAM_COUNT_HI    .equ    TMS_PARAM_BASE+9
+TMS_PARAM_ROW         .equ    TMS_PARAM_BASE+10
+TMS_PARAM_COL         .equ    TMS_PARAM_BASE+11
 VDU_ROW_BYTES    .equ    0x20
 VDU_SCREEN_BYTES      .equ    0x0300
 VDU_BLANK_CHAR        .equ    0x20
+VDU_ROWS              .equ    0x18
+VDU_SCROLL_BYTES      .equ    0x02E0
+VDU_LAST_ROW_ADDR     .equ    0x02E0
 
 TFS_ENTRY           .equ    0x8000
 TFS_ENTRY_MOUNT           .equ    TFS_ENTRY
