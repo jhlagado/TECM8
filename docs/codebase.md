@@ -285,14 +285,17 @@ session now expect:
   operations are selected with `A` or through the monitor service bridge.
   Internal implementation labels are private and movable. Bank 0 owns the
   discovery install entry, expansion vectors, the private runtime service
-  registry, and the current shell-splash placeholder. Bank 1 owns the VDU and
-  TMS9918 dispatchers, including the text-screen clear path that fills the
-  full 32x24 name table through the TMS9918 bulk-write helper. Bank 2 owns the
-  TEC-FS geometry boundary, active-volume selection, logical-sector
-  translation, and the installable low-level sector-driver handoff used by the
-  current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
-  GLCD containment boundary, bank 5 carries the TEC-FS monitor-sector bridge
-  simulation, and banks 6-8 are still placeholder images.
+  registry, the current shell-splash placeholder, and the first
+  `SHL_RUN_COMMAND` boundary that classifies `edit`, `asm`, and `run` from the
+  shared shell command buffer. Bank 1 owns the VDU and TMS9918 dispatchers,
+  including the text-screen clear path, row/column cursor placement,
+  scroll-up behavior, and one-byte VRAM read helper used by the scrolling
+  proof. Bank 2 owns the TEC-FS geometry boundary, active-volume selection,
+  logical-sector translation, locator-header format/read services, and the
+  installable low-level sector-driver handoff used by the current proofs.
+  Bank 3 owns the RTC descriptor boundary, bank 4 owns the GLCD containment
+  boundary, bank 5 carries the TEC-FS monitor-sector bridge simulation, and
+  banks 6-8 are still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1299,10 +1302,12 @@ image layer. They load the tracked fixed monitor and 144K expansion image,
 switch the TEC-1G bank window through the fixed-ROM RST `10h` service
 trampolines, and inspect shared proof RAM to check ABI behavior. The current
 coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
-`farCall` restore behavior plus the one-way `farJump` handoff, the TMS9918
-runner checks the bank 1 VDU and TMS9918 entry points including text clear and
-bulk-fill behavior, the TEC-FS runner checks bank 2 volume selection, logical
-sector mapping, and installed sector-driver dispatch, and the RTC runner
+`farCall` restore behavior, the one-way `farJump` handoff, and the bank 0
+shell command classifier reached through `SHL_RUN_COMMAND`. The TMS9918 runner
+checks the bank 1 VDU and TMS9918 entry points including text clear,
+row/column cursor placement, scroll-up copying, and VRAM reads. The TEC-FS
+runner checks bank 2 volume selection, logical-sector mapping, locator-header
+format/read behavior, and installed sector-driver dispatch, and the RTC runner
 checks the bank 3 descriptor and unsupported UI status path.
 
 `tools/run-tecmate-monitor-launch-proof.ts` and
@@ -1427,6 +1432,8 @@ coverage:
   `.equ` constants, proof hooks, and npm proof scripts
 - strict AZM register-contract checks for the expansion-bank sources against
   the local `tecm8-rst-services.asmi` fixed-ROM interface
+- static checks that every bank-0 registered `rst 10h` service has an exact
+  contract entry in the local fixed-ROM interface file
 - proof wiring checks that package scripts invoke the right proof runners
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
@@ -1445,6 +1452,10 @@ banked-proof wiring checks. They keep the banked proof sources, runners, and
 package scripts attached to the current expansion image.
 `tools/banked-service-abi-doc.test.ts` is the documentation freshness check for
 `docs/mon3/tecmate-banked-service-abi.md`.
+`tools/tecm8-rst-services-interface.test.ts` checks that the exact
+bank-0-registered `rst 10h` service IDs in
+`roms/tec1g/tecm8/expansion/tecm8-rst-services.asmi` stay aligned with the
+live service registry.
 `tools/tecmate-monitor-launch-proof.test.ts`,
 `tools/tecmate-monitor-launch-contract.test.ts`,
 `tools/tecmate-shell-launch-proof.test.ts`, and
