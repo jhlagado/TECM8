@@ -175,6 +175,11 @@ Shell status and feature values:
 | `SHL_ACTION_EDIT` | `01h` | Command classified as editor launch. |
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
 | `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
+| `SHL_RESULT_NONE` | `00h` | No tool result has been published. |
+| `SHL_RESULT_OK` | `01h` | Tool completed successfully. |
+| `SHL_RESULT_BUILD_ERROR` | `02h` | Assembler/build tool found source errors. |
+| `SHL_RESULT_FILE_ERROR` | `03h` | Tool could not read or write a required file. |
+| `SHL_RESULT_UNSUPPORTED` | `04h` | Command is classified but the backing tool is not installed yet. |
 
 If the VDU splash call fails, the shell service stores the returned error code
 in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`, then returns
@@ -199,6 +204,14 @@ The command buffer capacity is `SHL_COMMAND_CAPACITY` bytes. The service scans
 at most that many bytes, so a missing terminator cannot run into the expansion
 menu/service vectors at `3BF0h..3BF7h`. Callers must treat `3A80h..3A9Fh` as
 the v1 shell command input slot.
+
+For the future assembler path, `SHL_PARAM_COMMAND_TARGET_LO/HI` is reserved for
+a pointer to the resolved command target or artifact descriptor, and
+`SHL_PARAM_COMMAND_RESULT_LO/HI` is reserved for tool result reporting. The low
+result byte should use `SHL_RESULT_*`; the high result byte is command-specific
+detail, such as an assembler diagnostic line or zero when no detail applies.
+The current `SHL_RUN_COMMAND` classifier deliberately clears these slots because
+the editor, assembler, and runner tools are not linked behind the shell yet.
 
 ## Bank 1: VDU/TMS9918
 

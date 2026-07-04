@@ -185,6 +185,11 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_ACTION_EDIT',
     'SHL_ACTION_ASM',
     'SHL_ACTION_RUN',
+    'SHL_RESULT_NONE',
+    'SHL_RESULT_OK',
+    'SHL_RESULT_BUILD_ERROR',
+    'SHL_RESULT_FILE_ERROR',
+    'SHL_RESULT_UNSUPPORTED',
   ]) {
     assertDocRow(name);
   }
@@ -194,6 +199,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
   assert.match(doc, /clears the target\/result slots/);
+  assert.match(doc, /low\s+result byte should use `SHL_RESULT_\*`/);
+  assert.match(doc, /assembler diagnostic line or zero when no detail applies/);
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {

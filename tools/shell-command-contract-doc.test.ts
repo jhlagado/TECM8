@@ -17,6 +17,17 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
 });
 
+test('shell command contract reserves assembler result semantics', () => {
+  assert.match(doc, /Assembler result reporting uses the shell command parameter block/);
+  assert.match(doc, /SHL_PARAM_COMMAND_ACTION\s+= SHL_ACTION_ASM/);
+  assert.match(doc, /SHL_PARAM_COMMAND_RESULT_LO = SHL_RESULT_\*/);
+  assert.match(doc, /SHL_RESULT_OK\s+assembly completed and wrote \.bin\/\.map outputs/);
+  assert.match(doc, /SHL_RESULT_BUILD_ERROR source parsed but did not assemble/);
+  assert.match(doc, /SHL_RESULT_FILE_ERROR\s+source, output, map, or project file could not be used/);
+  assert.match(doc, /SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked/);
+  assert.match(doc, /`SHL_RUN_COMMAND` only\s+classifies `asm` and clears the target\/result slots/);
+});
+
 test('shell command contract reserves game command namespace without enabling it in bank0 yet', () => {
   assert.match(doc, /## Reserved Tool Namespaces/);
   assert.match(doc, /game build/);

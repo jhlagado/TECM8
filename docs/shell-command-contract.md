@@ -208,6 +208,27 @@ map    -> derived /build/<source-stem>.map
 
 If assembly succeeds, `run` continues to use the derived project output.
 
+Assembler result reporting uses the shell command parameter block:
+
+```text
+SHL_PARAM_COMMAND_ACTION    = SHL_ACTION_ASM
+SHL_PARAM_COMMAND_TARGET_*  = pointer to resolved source/artifact descriptor
+SHL_PARAM_COMMAND_RESULT_LO = SHL_RESULT_*
+SHL_PARAM_COMMAND_RESULT_HI = command-specific detail
+```
+
+The expected v1 result meanings are:
+
+```text
+SHL_RESULT_OK          assembly completed and wrote .bin/.map outputs
+SHL_RESULT_BUILD_ERROR source parsed but did not assemble; detail may be line
+SHL_RESULT_FILE_ERROR  source, output, map, or project file could not be used
+SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
+```
+
+Until the assembler is linked behind the shell, `SHL_RUN_COMMAND` only
+classifies `asm` and clears the target/result slots.
+
 ## `run`
 
 `run` executes the derived project output by default.

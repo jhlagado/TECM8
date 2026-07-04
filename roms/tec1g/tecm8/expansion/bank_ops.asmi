@@ -96,6 +96,11 @@ SHL_ACTION_NONE     .equ    0x00
 SHL_ACTION_EDIT     .equ    0x01
 SHL_ACTION_ASM      .equ    0x02
 SHL_ACTION_RUN      .equ    0x03
+SHL_RESULT_NONE     .equ    0x00
+SHL_RESULT_OK       .equ    0x01
+SHL_RESULT_BUILD_ERROR .equ 0x02
+SHL_RESULT_FILE_ERROR .equ 0x03
+SHL_RESULT_UNSUPPORTED .equ 0x04
 
 INP_ENTRY            .equ    0x8000
 INP_SVC_READ         .equ    0x01
