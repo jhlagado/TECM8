@@ -151,6 +151,10 @@ Shell parameter block:
 | `SHL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
 | `SHL_PARAM_COMMAND_ACTION` | `3BA5h` | Last command action classification. |
 | `SHL_PARAM_COMMAND_LENGTH` | `3BA6h` | Last zero-terminated command length. |
+| `SHL_PARAM_COMMAND_TARGET_LO` | `3BA7h` | Low byte of the command target address, currently cleared. |
+| `SHL_PARAM_COMMAND_TARGET_HI` | `3BA8h` | High byte of the command target address, currently cleared. |
+| `SHL_PARAM_COMMAND_RESULT_LO` | `3BA9h` | Low byte of the command result value, currently cleared. |
+| `SHL_PARAM_COMMAND_RESULT_HI` | `3BAAh` | High byte of the command result value, currently cleared. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 | `SHL_COMMAND_BUFFER` | `3A80h` | Zero-terminated command line for `SHL_RUN_COMMAND`. |
 | `SHL_COMMAND_CAPACITY` | `20h` | Maximum bytes scanned from `SHL_COMMAND_BUFFER`. |
@@ -180,11 +184,13 @@ boundary that lets the monitor or proofs enter the future shell command loop
 through the expansion service registry. The current boundary classifies the
 first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
-in `SHL_PARAM_COMMAND_LENGTH`, and returns `A=80h` with carry clear. Unknown or
-empty commands store `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
-`SHL_PARAM_LAST_ERROR`, return `A=SVC_ERR_UNKNOWN`, and set carry. The later
-editor, assembler, and launcher services should hang from this boundary rather
-than being called directly from MON3.
+in `SHL_PARAM_COMMAND_LENGTH`, clears the target/result slots, and returns
+`A=80h` with carry clear. Unknown or empty commands store
+`SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
+`SHL_PARAM_LAST_ERROR`, leave the target/result slots clear, return
+`A=SVC_ERR_UNKNOWN`, and set carry. The later editor, assembler, and launcher
+services should hang from this boundary rather than being called directly from
+MON3.
 
 The command buffer capacity is `SHL_COMMAND_CAPACITY` bytes. The service scans
 at most that many bytes, so a missing terminator cannot run into the expansion

@@ -16,7 +16,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,ABI_TRACE_BASE
-        ld b,32
+        ld b,40
 ClearTrace:
         ld (hl),0
         inc hl
@@ -81,12 +81,28 @@ ClearTrace:
         ld (SHL_COMMAND_BUFFER+2),a
         xor a
         ld (SHL_COMMAND_BUFFER+3),a
+        ld a,0xD1
+        ld (SHL_PARAM_COMMAND_TARGET_LO),a
+        ld a,0xD2
+        ld (SHL_PARAM_COMMAND_TARGET_HI),a
+        ld a,0xD3
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,0xD4
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
         callService SHL_RUN_COMMAND
         ld (ABI_TRACE_BASE+30),a
         ld a,(SHL_PARAM_COMMAND_ACTION)
         ld (ABI_TRACE_BASE+31),a
         ld a,(SHL_PARAM_COMMAND_LENGTH)
         ld (ABI_TRACE_BASE+32),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (ABI_TRACE_BASE+35),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_HI)
+        ld (ABI_TRACE_BASE+36),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        ld (ABI_TRACE_BASE+37),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        ld (ABI_TRACE_BASE+38),a
         ld a,"g"
         ld (SHL_COMMAND_BUFFER),a
         ld a,"a"

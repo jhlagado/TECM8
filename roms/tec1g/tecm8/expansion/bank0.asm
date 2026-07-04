@@ -124,6 +124,12 @@ Tecm8ServiceCallUnknown:
         xor a
         ld (SHL_PARAM_STATUS),a
         ld (SHL_PARAM_LAST_ERROR),a
+        ld (SHL_PARAM_COMMAND_ACTION),a
+        ld (SHL_PARAM_COMMAND_LENGTH),a
+        ld (SHL_PARAM_COMMAND_TARGET_LO),a
+        ld (SHL_PARAM_COMMAND_TARGET_HI),a
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
         call Tecm8ShellCopySplash
         xor a
         ld (TMS_PARAM_CURSOR_LO),a
@@ -148,6 +154,10 @@ Tecm8ShellSplashError:
         ld (SHL_PARAM_LAST_ERROR),a
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_PARAM_COMMAND_LENGTH),a
+        ld (SHL_PARAM_COMMAND_TARGET_LO),a
+        ld (SHL_PARAM_COMMAND_TARGET_HI),a
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
         ld hl,SHL_COMMAND_BUFFER
         ld a,(hl)
         or a

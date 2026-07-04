@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `485` | `485` | `81E5h` | `15899` |
+| 0 | Shell, launcher, registry | `515` | `515` | `8203h` | `15869` |
 | 1 | VDU/TMS9918 boundary | `488` | `488` | `81E8h` | `15896` |
 | 2 | TEC-FS boundary and block mapper | `643` | `643` | `8283h` | `15741` |
 | 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `1827`
+Expansion occupied bytes: `1857`
 
-Expansion high-water span total: `1827`
+Expansion high-water span total: `1857`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -91,10 +91,10 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `805Ch` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `81C1h` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 service registry | `81DFh` | Private service ID to bank/address/target-`A` table. |
 | Bank 0 shell entry | `809Ah` | Private descriptor and VDU splash path for `SHL_ENTRY`. |
-| Bank 0 shell command boundary | `80DCh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 info marker | `81BCh` | Private marker, not a fixed ABI location. |
+| Bank 0 shell command boundary | `80EEh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
+| Bank 0 info marker | `81DAh` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |

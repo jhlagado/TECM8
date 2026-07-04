@@ -163,6 +163,10 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_PARAM_FEATURES',
     'SHL_PARAM_COMMAND_ACTION',
     'SHL_PARAM_COMMAND_LENGTH',
+    'SHL_PARAM_COMMAND_TARGET_LO',
+    'SHL_PARAM_COMMAND_TARGET_HI',
+    'SHL_PARAM_COMMAND_RESULT_LO',
+    'SHL_PARAM_COMMAND_RESULT_HI',
     'SHL_SPLASH_BUFFER',
     'SHL_COMMAND_BUFFER',
     'SHL_COMMAND_CAPACITY',
@@ -183,6 +187,7 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
+  assert.match(doc, /clears the target\/result slots/);
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {

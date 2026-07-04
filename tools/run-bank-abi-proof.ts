@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 35);
+  const trace = readTrace(runtime, traceBase, 39);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -260,6 +260,10 @@ async function main(): Promise<void> {
   assertEqual(trace[32], 0x03, 'shell command loop measured asm length');
   assertEqual(trace[33], 0xEE, 'shell command loop rejected unknown command');
   assertEqual(trace[34], 0x01, 'shell command loop reported unknown status');
+  assertEqual(trace[35], 0x00, 'shell command loop cleared target address low byte');
+  assertEqual(trace[36], 0x00, 'shell command loop cleared target address high byte');
+  assertEqual(trace[37], 0x00, 'shell command loop cleared result low byte');
+  assertEqual(trace[38], 0x00, 'shell command loop cleared result high byte');
   assertEqual(trace[26], trace[24], 'farCall preserved stack pointer low byte');
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');
