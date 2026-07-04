@@ -1477,6 +1477,13 @@ toward.
 - `docs/virtual-filesystem.md`: exact TM8 disk layout, prefix table, catalog,
   virtual directory model, and host preservation commands.
 - `docs/shell-command-contract.md`: TEC-side `edit`/`asm`/`run` behavior.
+- `docs/tecmate-self-hosted-assembler.md`: AZM-subset assembler direction and
+  source/binary/map artifact convention.
+- `docs/gamer.md`: game creation mission framed as a proving profile for the
+  general shell/editor/assembler/debugger platform.
+- `docs/gamer-vertical-slice.md`: first game runtime slice and service contract
+  tying games back to VDU, input, TEC-FS, and assembler artifacts.
+- `docs/game-register-contracts.md`: game-facing register contract conventions.
 - `docs/editor-design.md`: GLCD editor model and source records.
 - `docs/editor-command-policy.md`: current editor command surface,
   normalization rules, and measured command compaction inventory.
