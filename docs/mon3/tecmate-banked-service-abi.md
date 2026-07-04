@@ -105,6 +105,9 @@ published as fixed callable addresses.
 | `GLC_ENTRY` | `63h` | GLCD boundary service ID. |
 | `GLC_BANK` | `04h` | GLCD boundary physical bank. |
 | `GLC_ADDR` | `8000h` | GLCD boundary address. |
+| `INP_READ` | `64h` | Input snapshot service ID. |
+| `INP_BANK` | `06h` | Input service physical bank. |
+| `INP_ADDR` | `8000h` | Input service bank-origin dispatcher. |
 | `SHL_ENTRY` | `80h` | Resident shell entry service ID. |
 | `SHL_RUN_COMMAND` | `81h` | Resident shell one-command boundary service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
@@ -557,6 +560,50 @@ returns `A=85h` with carry clear, writes `TFS_BRIDGE_READ_MARKER` into the
 caller buffer for read requests, and accepts write requests without touching
 media. Replacing this simulation with the real SD bridge should not change the
 bank-2 sector I/O ABI.
+
+## Bank 6: Input Snapshot Boundary
+
+Physical bank 6 owns the first matrix-keyboard and joystick-facing service
+boundary. The current implementation is deliberately neutral: it publishes a
+valid service boundary and returns a no-input snapshot until real keyboard and
+joystick scanning code is attached.
+
+| Constant | Address | Status |
+| --- | ---: | --- |
+| `INP_ENTRY` | `8000h` | Bank-origin dispatcher; use `A=INP_SVC_READ`. |
+| `INP_SVC_READ` | `01h` | Reads the current input snapshot, returns `A=86h`, carry clear. |
+
+Input parameter block:
+
+| Constant | Address | Meaning |
+| --- | ---: | --- |
+| `INP_PARAM_BASE` | `3BC0h` | Base of input parameter block. |
+| `INP_PARAM_STATUS` | `3BC0h` | Last status code. |
+| `INP_PARAM_LAST_ERROR` | `3BC1h` | Last error code. |
+| `INP_PARAM_BANK` | `3BC2h` | Service bank marker. |
+| `INP_PARAM_VERSION` | `3BC3h` | Service ABI version. |
+| `INP_PARAM_KEYS_LO` | `3BC4h` | Low byte of the future matrix-key snapshot. |
+| `INP_PARAM_KEYS_HI` | `3BC5h` | High byte of the future matrix-key snapshot. |
+| `INP_PARAM_JOYSTICK` | `3BC6h` | Joystick bitfield. |
+| `INP_PARAM_MODIFIERS` | `3BC7h` | Future modifier/input-mode flags. |
+
+Input status and joystick values:
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `INP_STATUS_OK` | `00h` | Success. |
+| `INP_ERR_UNKNOWN` | `EEh` | Unknown bank-local input service. |
+| `INP_JOY_UP` | `01h` | Joystick up bit. |
+| `INP_JOY_DOWN` | `02h` | Joystick down bit. |
+| `INP_JOY_LEFT` | `04h` | Joystick left bit. |
+| `INP_JOY_RIGHT` | `08h` | Joystick right bit. |
+| `INP_JOY_FIRE_1` | `10h` | Primary fire bit. |
+| `INP_JOY_FIRE_2` | `20h` | Secondary fire bit. |
+
+`INP_READ` is intended to become the common low-level input snapshot used by
+the shell, editor, assembler, debugger, and game support code. It stays generic:
+game-specific controls should interpret this snapshot rather than adding a
+separate monitor-facing game input API.
 
 ## Proof Hooks
 

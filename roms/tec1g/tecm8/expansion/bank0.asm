@@ -288,6 +288,9 @@ Tecm8ShellSplashText:
         .db     GLC_ENTRY,GLC_BANK
         .dw     GLC_ADDR
         .db     GLC_ENTRY
+        .db     INP_READ,INP_BANK
+        .dw     INP_ADDR
+        .db     INP_SVC_READ
         .db     SHL_ENTRY,SHL_BANK
         .dw     Tecm8ShellEntry
         .db     SHL_ENTRY

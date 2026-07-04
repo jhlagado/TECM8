@@ -16,7 +16,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,ABI_TRACE_BASE
-        ld b,40
+        ld b,42
 ClearTrace:
         ld (hl),0
         inc hl
@@ -117,6 +117,12 @@ ClearTrace:
         ld (ABI_TRACE_BASE+33),a
         ld a,(SHL_PARAM_STATUS)
         ld (ABI_TRACE_BASE+34),a
+        callService INP_READ
+        ld (ABI_TRACE_BASE+39),a
+        ld a,(INP_PARAM_JOYSTICK)
+        ld (ABI_TRACE_BASE+40),a
+        ld a,(INP_PARAM_BANK)
+        ld (ABI_TRACE_BASE+41),a
         ld a,0xA5
         ld b,0xB6
         callService 0x7F

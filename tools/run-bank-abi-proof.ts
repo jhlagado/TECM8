@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 39);
+  const trace = readTrace(runtime, traceBase, 42);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -264,6 +264,9 @@ async function main(): Promise<void> {
   assertEqual(trace[36], 0x00, 'shell command loop cleared target address high byte');
   assertEqual(trace[37], 0x00, 'shell command loop cleared result low byte');
   assertEqual(trace[38], 0x00, 'shell command loop cleared result high byte');
+  assertEqual(trace[39], 0x86, 'service registry dispatched input read');
+  assertEqual(trace[40], 0x00, 'input read reports neutral joystick state');
+  assertEqual(trace[41], 0x06, 'input read reports bank 6');
   assertEqual(trace[26], trace[24], 'farCall preserved stack pointer low byte');
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');

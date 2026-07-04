@@ -82,6 +82,9 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
     'RTC_ADDR',
     'GLC_BANK',
     'GLC_ADDR',
+    'INP_READ',
+    'INP_BANK',
+    'INP_ADDR',
     'SHL_BANK',
   ]) {
     assertDocRow(name);
@@ -352,6 +355,36 @@ test('banked service ABI doc covers bank 5 TEC-FS monitor-sector bridge', () => 
   assert.match(doc, /TFS_PARAM_DRIVER_BANK/);
   assert.match(doc, /returns `A=85h` with carry clear/);
   assert.match(doc, /writes `TFS_BRIDGE_READ_MARKER` into the\s+caller buffer for read requests/);
+});
+
+test('banked service ABI doc covers bank 6 input snapshot boundary', () => {
+  for (const name of [
+    'INP_ENTRY',
+    'INP_SVC_READ',
+    'INP_PARAM_BASE',
+    'INP_PARAM_STATUS',
+    'INP_PARAM_LAST_ERROR',
+    'INP_PARAM_BANK',
+    'INP_PARAM_VERSION',
+    'INP_PARAM_KEYS_LO',
+    'INP_PARAM_KEYS_HI',
+    'INP_PARAM_JOYSTICK',
+    'INP_PARAM_MODIFIERS',
+    'INP_STATUS_OK',
+    'INP_ERR_UNKNOWN',
+    'INP_JOY_UP',
+    'INP_JOY_DOWN',
+    'INP_JOY_LEFT',
+    'INP_JOY_RIGHT',
+    'INP_JOY_FIRE_1',
+    'INP_JOY_FIRE_2',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(doc, /## Bank 6: Input Snapshot Boundary/);
+  assert.match(doc, /matrix-keyboard and joystick-facing service/);
+  assert.match(doc, /returns a no-input snapshot/);
+  assert.match(doc, /shell, editor, assembler, debugger, and game support code/);
 });
 
 test('banked service ABI doc covers proof hooks and proof scripts', () => {

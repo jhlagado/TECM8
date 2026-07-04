@@ -47,6 +47,9 @@ RTC_ADDR                    .equ    RTC_TOOL_ADDR
 GLC_ENTRY                   .equ    SVC_BASE+0x03
 GLC_BANK                    .equ    0x04
 GLC_ADDR                    .equ    GLC_ENTRY_ADDR
+INP_READ                    .equ    SVC_BASE+0x04
+INP_BANK                    .equ    0x06
+INP_ADDR                    .equ    INP_ENTRY
 SHL_ENTRY                   .equ    SVC_BASE+0x20
 SHL_RUN_COMMAND             .equ    SVC_BASE+0x21
 SHL_BANK                    .equ    0x00
@@ -93,6 +96,26 @@ SHL_ACTION_NONE     .equ    0x00
 SHL_ACTION_EDIT     .equ    0x01
 SHL_ACTION_ASM      .equ    0x02
 SHL_ACTION_RUN      .equ    0x03
+
+INP_ENTRY            .equ    0x8000
+INP_SVC_READ         .equ    0x01
+INP_PARAM_BASE       .equ    0x3BC0
+INP_PARAM_STATUS     .equ    INP_PARAM_BASE+0
+INP_PARAM_LAST_ERROR .equ    INP_PARAM_BASE+1
+INP_PARAM_BANK       .equ    INP_PARAM_BASE+2
+INP_PARAM_VERSION    .equ    INP_PARAM_BASE+3
+INP_PARAM_KEYS_LO    .equ    INP_PARAM_BASE+4
+INP_PARAM_KEYS_HI    .equ    INP_PARAM_BASE+5
+INP_PARAM_JOYSTICK   .equ    INP_PARAM_BASE+6
+INP_PARAM_MODIFIERS  .equ    INP_PARAM_BASE+7
+INP_STATUS_OK        .equ    0x00
+INP_ERR_UNKNOWN      .equ    0xEE
+INP_JOY_UP           .equ    0x01
+INP_JOY_DOWN         .equ    0x02
+INP_JOY_LEFT         .equ    0x04
+INP_JOY_RIGHT        .equ    0x08
+INP_JOY_FIRE_1       .equ    0x10
+INP_JOY_FIRE_2       .equ    0x20
 
 VDU_ENTRY             .equ    0x8000
 VDU_CALL      .equ    VDU_ENTRY

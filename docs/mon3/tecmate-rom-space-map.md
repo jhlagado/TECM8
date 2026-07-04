@@ -60,19 +60,19 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `515` | `515` | `8203h` | `15869` |
+| 0 | Shell, launcher, registry | `520` | `520` | `8208h` | `15864` |
 | 1 | VDU/TMS9918 boundary | `488` | `488` | `81E8h` | `15896` |
 | 2 | TEC-FS boundary and block mapper | `643` | `643` | `8283h` | `15741` |
 | 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
-| 6 | Reserved stub | `6` | `6` | `8006h` | `16378` |
+| 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
 | 7 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 | 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
 
-Expansion occupied bytes: `1857`
+Expansion occupied bytes: `1903`
 
-Expansion high-water span total: `1857`
+Expansion high-water span total: `1903`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -100,6 +100,7 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |
 | Bank 3 RTC entry | `8000h` | RTC boundary descriptor. |
 | Bank 4 GLCD entry | `8000h` | GLCD boundary descriptor. |
+| Bank 6 input snapshot dispatcher | `8000h` | Dispatches bank-local input service IDs in `A`. |
 
 ## Consequences
 

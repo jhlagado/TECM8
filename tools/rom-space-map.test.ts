@@ -58,7 +58,7 @@ test('TecMate ROM space map records current monitor and expansion measurements',
     'RTC boundary',
     'GLCD boundary',
     'TEC-FS monitor-sector bridge',
-    'Reserved stub',
+    'Input snapshot boundary',
     'Reserved stub',
     'Reserved stub',
   ];
