@@ -80,6 +80,33 @@ Roadmap consequence: editor quality work is not just cleanup. It is the first
 exercise in making a banked TECM8 tool: compact, contract-driven, and cleanly
 separated from resident shell/kernel services.
 
+## Game Creation As A Proving Profile
+
+Game creation is an important target use case for TecMate, but it should not
+replace the general shell/editor/assembler/debugger direction. It is the first
+serious application profile that proves those general services are coherent.
+
+The intended layering is:
+
+```text
+TecMate shell/editor/assembler/debugger
+  -> optional game tool profile
+  -> native Z80 game runtime
+  -> user AZM-subset behaviour routines
+  -> VDU, input, joystick, TEC-FS, and debugger services
+```
+
+Near-term agent work should therefore continue to build the general platform:
+banked service contracts, VDU/TMS9918 services, input services, TEC-FS project
+storage, shell command dispatch, assembler integration, and debugger hooks.
+When there is a choice between equally useful increments, prefer the one that
+also helps the future game profile. Do not start a full game engine until the
+shell, assembler, runner, and basic VDU/input/storage services can support it.
+
+The detailed game direction lives in [TECM8 Game Creation Mission](gamer.md),
+[Gamer Vertical Slice Specification](gamer-vertical-slice.md), and
+[Game-Facing Register Contracts](game-register-contracts.md).
+
 ## Native AZM Quality Track
 
 TECM8 should gradually adopt native AZM features where they improve code
