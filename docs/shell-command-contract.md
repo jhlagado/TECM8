@@ -105,6 +105,28 @@ They are not stored in `/tecm8.prj`. This keeps the Z80 parser and project
 state small. Future configuration screens can still change `main`, but the
 command names themselves remain part of the shell.
 
+## Reserved Tool Namespaces
+
+The shell should reserve multi-word command namespaces for larger tool profiles
+without adding them to the v1 short-command parser yet.
+
+Reserved game-development commands:
+
+```text
+game build
+game run
+game debug
+```
+
+These commands are placeholders for the later game runtime/tool profile. They
+should not replace the general `edit`, `asm`, and `run` commands. Instead, they
+should layer on the same project, assembler, runner, VDU, input, TEC-FS, and
+debugger services once those services exist.
+
+The current bank-0 `SHL_RUN_COMMAND` boundary still classifies only exact
+single-word `edit`, `asm`, and `run`. It should reject `game` until a real
+multi-word shell parser and game tool dispatcher are implemented.
+
 ## Command Resolution
 
 Shell commands are resolved in this order:

@@ -87,18 +87,16 @@ ClearTrace:
         ld (ABI_TRACE_BASE+31),a
         ld a,(SHL_PARAM_COMMAND_LENGTH)
         ld (ABI_TRACE_BASE+32),a
-        ld a,"a"
+        ld a,"g"
         ld (SHL_COMMAND_BUFFER),a
-        ld a,"p"
+        ld a,"a"
         ld (SHL_COMMAND_BUFFER+1),a
-        ld a,"p"
+        ld a,"m"
         ld (SHL_COMMAND_BUFFER+2),a
-        ld a,"l"
-        ld (SHL_COMMAND_BUFFER+3),a
         ld a,"e"
-        ld (SHL_COMMAND_BUFFER+4),a
+        ld (SHL_COMMAND_BUFFER+3),a
         xor a
-        ld (SHL_COMMAND_BUFFER+5),a
+        ld (SHL_COMMAND_BUFFER+4),a
         callService SHL_RUN_COMMAND
         ld (ABI_TRACE_BASE+33),a
         ld a,(SHL_PARAM_STATUS)
