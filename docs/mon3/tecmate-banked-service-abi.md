@@ -228,6 +228,7 @@ Bank-local VDU/TMS service IDs:
 | `VDU_SVC_NEWLINE` | `06h` | Advances the cursor to the next 32-byte text row, returns `A=81h`. |
 | `VDU_SVC_SET_ROWCOL` | `07h` | Sets the cursor from text row/column parameters. |
 | `VDU_SVC_SCROLL_UP` | `08h` | Scrolls the 32x24 text name table up one row. |
+| `VDU_SVC_STATUS_LINE` | `09h` | Clears the final text row, writes `TMS_PARAM_STRING_LO/HI`, and restores the prior cursor. |
 | `TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
 | `TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
 | `TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
@@ -283,6 +284,10 @@ Minimal VDU text-console contract:
   cursor.
 - `VDU_SVC_SCROLL_UP` copies rows 1-23 to rows 0-22 through TMS VRAM reads and
   writes, blanks the final row, and leaves the cursor at `VDU_LAST_ROW_ADDR`.
+- `VDU_SVC_STATUS_LINE` blanks the final row at `VDU_LAST_ROW_ADDR`, writes the
+  zero-terminated RAM string from `TMS_PARAM_STRING_LO/HI`, and restores the
+  cursor that was active before the call. Callers should keep status strings to
+  the 32-character text row.
 - `TMS_SVC_FILL_VRAM` writes `TMS_PARAM_VALUE` to `TMS_PARAM_COUNT_LO/HI`
   bytes starting at `TMS_PARAM_ADDR_LO/HI`.
 - `TMS_SVC_READ_VRAM` reads one byte from `TMS_PARAM_ADDR_LO/HI` into

@@ -127,6 +127,7 @@ VDU_SVC_PUT_STRING    .equ    0x05
 VDU_SVC_NEWLINE       .equ    0x06
 VDU_SVC_SET_ROWCOL    .equ    0x07
 VDU_SVC_SCROLL_UP     .equ    0x08
+VDU_SVC_STATUS_LINE   .equ    0x09
 TMS_SVC_INIT          .equ    0x20
 TMS_SVC_SET_REGISTER  .equ    0x21
 TMS_SVC_WRITE_VRAM    .equ    0x22

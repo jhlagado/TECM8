@@ -23,6 +23,9 @@ TMS_PROOF_TRACE_9           .equ    TMS_PROOF_TRACE_BASE+9
 TMS_PROOF_TRACE_10          .equ    TMS_PROOF_TRACE_BASE+10
 TMS_PROOF_TRACE_11          .equ    TMS_PROOF_TRACE_BASE+11
 TMS_PROOF_TRACE_12          .equ    TMS_PROOF_TRACE_BASE+12
+TMS_PROOF_TRACE_13          .equ    TMS_PROOF_TRACE_BASE+13
+TMS_PROOF_TRACE_14          .equ    TMS_PROOF_TRACE_BASE+14
+TMS_PROOF_TRACE_15          .equ    TMS_PROOF_TRACE_BASE+15
 TMS_PROOF_RESULT            .equ    0x3B20
 
 ;! out carry,zero
@@ -103,6 +106,14 @@ ClearTrace:
 
         callBankService 0x01,VDU_CALL,VDU_SVC_NEWLINE
         ld (TMS_PROOF_TRACE_7),a
+        ld hl,TmsStatusString
+        ld (TMS_PARAM_STRING_LO),hl
+        callBankService 0x01,VDU_CALL,VDU_SVC_STATUS_LINE
+        ld (TMS_PROOF_TRACE_13),a
+        ld a,(TMS_PARAM_CURSOR_LO)
+        ld (TMS_PROOF_TRACE_14),a
+        ld a,(TMS_PARAM_CURSOR_HI)
+        ld (TMS_PROOF_TRACE_15),a
 
         ld c,MON_SYS_GET
         rst 10H
@@ -114,3 +125,5 @@ ClearTrace:
 
 TmsProofString:
         .db     "O","K",0
+TmsStatusString:
+        .db     "R","D","Y",0

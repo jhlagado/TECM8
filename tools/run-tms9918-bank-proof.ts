@@ -226,7 +226,7 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const traceBase = symbolNumber(symbols, 'TMS_PROOF_TRACE_BASE');
   const resultAddr = symbolNumber(symbols, 'TMS_PROOF_RESULT');
-  const trace = readTrace(runtime, traceBase, 13);
+  const trace = readTrace(runtime, traceBase, 16);
   const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
   const tmsParams = readTrace(runtime, tmsParamBase, 10);
   const result = runtime.hardware.memory[resultAddr];
@@ -250,12 +250,18 @@ async function main(): Promise<void> {
   assertEqual(trace[10], 0x81, 'VDU scroll-up return value');
   assertEqual(trace[11], 0x43, 'VDU row/column cursor low byte');
   assertEqual(trace[12], 0x00, 'VDU row/column cursor high byte');
+  assertEqual(trace[13], 0x81, 'VDU status-line return value');
+  assertEqual(trace[14], 0x40, 'VDU status-line restored cursor low byte');
+  assertEqual(trace[15], 0x01, 'VDU status-line restored cursor high byte');
   assertEqual(tms9918.registers[7] ?? 0, 0xf4, 'TMS register 7');
   assertEqual(tms9918.vram[0x0000] ?? 0, 0x53, 'VDU scroll copied row 1 to row 0');
   assertEqual(tms9918.vram[0x0123] ?? 0, 0x5a, 'TMS VRAM write');
   assertEqual(tms9918.vram[0x0124] ?? 0, 0x42, 'VDU put character write');
   assertEqual(tms9918.vram[0x0125] ?? 0, 0x4f, 'VDU string first character write');
   assertEqual(tms9918.vram[0x0126] ?? 0, 0x4b, 'VDU string second character write');
+  assertEqual(tms9918.vram[0x02e0] ?? 0, 0x52, 'VDU status-line first character write');
+  assertEqual(tms9918.vram[0x02e1] ?? 0, 0x44, 'VDU status-line second character write');
+  assertEqual(tms9918.vram[0x02e2] ?? 0, 0x59, 'VDU status-line third character write');
   assertEqual(tms9918.vram[0x02ff] ?? 0, 0x20, 'VDU clear final name-table byte');
   assertEqual(tmsParams[4], 0x40, 'VDU cursor low after newline');
   assertEqual(tmsParams[5], 0x01, 'VDU cursor high after newline');

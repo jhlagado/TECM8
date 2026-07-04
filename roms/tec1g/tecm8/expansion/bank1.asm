@@ -30,7 +30,7 @@ Tecm8ExpansionBank1PreserveProbe:
         jr nc,tmsServiceCall
         cp VDU_SVC_INIT
         jr c,vduServiceUnknown
-        cp VDU_SVC_SCROLL_UP+1
+        cp VDU_SVC_STATUS_LINE+1
         jr nc,vduServiceUnknown
         sub VDU_SVC_INIT
         ld e,a
@@ -65,6 +65,7 @@ Tecm8VduServiceTable:
         jp      vduNewlineImpl
         jp      vduSetRowColImpl
         jp      vduScrollUpImpl
+        jp      vduStatusLineImpl
 
 Tecm8TmsServiceTable:
         jp      tmsInitImpl
@@ -195,6 +196,25 @@ vduScrollUpNext:
         ld (TMS_PARAM_COUNT_LO),hl
         call tmsFillVramImpl
         ld hl,VDU_LAST_ROW_ADDR
+        ld (TMS_PARAM_CURSOR_LO),hl
+        ld a,0x81
+        or a
+        ret
+
+vduStatusLineImpl:
+        ld hl,(TMS_PARAM_CURSOR_LO)
+        push hl
+        ld hl,VDU_LAST_ROW_ADDR
+        ld (TMS_PARAM_ADDR_LO),hl
+        ld a,VDU_BLANK_CHAR
+        ld (TMS_PARAM_VALUE),a
+        ld hl,VDU_ROW_BYTES
+        ld (TMS_PARAM_COUNT_LO),hl
+        call tmsFillVramImpl
+        ld hl,VDU_LAST_ROW_ADDR
+        ld (TMS_PARAM_CURSOR_LO),hl
+        call vduPutStringImpl
+        pop hl
         ld (TMS_PARAM_CURSOR_LO),hl
         ld a,0x81
         or a

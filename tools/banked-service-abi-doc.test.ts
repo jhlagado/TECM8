@@ -113,6 +113,7 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'VDU_SVC_NEWLINE',
     'VDU_SVC_SET_ROWCOL',
     'VDU_SVC_SCROLL_UP',
+    'VDU_SVC_STATUS_LINE',
     'TMS_SVC_INIT',
     'TMS_SVC_SET_REGISTER',
     'TMS_SVC_WRITE_VRAM',
@@ -149,6 +150,8 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
   assert.match(doc, /`VDU_SVC_CLEAR` fills VRAM `0000h\.\.02FFh` with `VDU_BLANK_CHAR`/);
   assert.match(doc, /`VDU_SVC_SET_ROWCOL` computes `row \* 32 \+ \(col & 1Fh\)`/);
   assert.match(doc, /`VDU_SVC_SCROLL_UP` copies rows 1-23 to rows 0-22/);
+  assert.match(doc, /`VDU_SVC_STATUS_LINE` blanks the final row/);
+  assert.match(doc, /restores the\s+cursor that was active before the call/);
   assert.match(doc, /`TMS_SVC_FILL_VRAM` writes `TMS_PARAM_VALUE` to `TMS_PARAM_COUNT_LO\/HI`/);
   assert.match(doc, /`TMS_SVC_READ_VRAM` reads one byte/);
   assert.match(doc, /writes `TMS_PARAM_VALUE` at the current cursor/);
