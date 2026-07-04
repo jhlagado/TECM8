@@ -173,6 +173,7 @@ Tecm8ShellSplashError:
         or a
         jp z,Tecm8ShellRunUnknown
         call Tecm8ShellCommandLength
+        ld b,SHL_TARGET_KIND_NONE
         ld a,(SHL_PARAM_COMMAND_LENGTH)
         cp 0x03
         jp z,Tecm8ShellRunCheckThree
@@ -235,7 +236,7 @@ Tecm8ShellRunEdit:
 Tecm8ShellRunAsm:
         ld a,SHL_ACTION_ASM
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
-        jp Tecm8ShellRunOk
+        jp Tecm8ShellRunUnsupportedTool
 Tecm8ShellRunRun:
         ld a,SHL_ACTION_RUN
         ld b,SHL_TARGET_KIND_PROJECT_OUTPUT
@@ -250,6 +251,25 @@ Tecm8ShellRunOk:
         ld (SHL_TARGET_FLAGS),a
         ld a,0x80
         or a
+        ret
+Tecm8ShellRunUnsupportedTool:
+        call Tecm8ShellPublishTarget
+        ld a,SHL_RESULT_UNSUPPORTED
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        xor a
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,0x80
+        or a
+        ret
+Tecm8ShellPublishTarget:
+        ld (SHL_PARAM_COMMAND_ACTION),a
+        ld (SHL_TARGET_ACTION),a
+        ld a,b
+        ld (SHL_TARGET_KIND),a
+        ld hl,SHL_TARGET_DESC
+        ld (SHL_PARAM_COMMAND_TARGET_LO),hl
+        ld a,SHL_TARGET_FLAG_DEFAULT
+        ld (SHL_TARGET_FLAGS),a
         ret
 Tecm8ShellRunUnknown:
         ld a,SHL_STATUS_UNKNOWN_COMMAND

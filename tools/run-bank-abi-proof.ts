@@ -262,7 +262,7 @@ async function main(): Promise<void> {
   assertEqual(trace[34], 0x01, 'shell command loop reported unknown status');
   assertEqual(trace[35], 0xAB, 'shell command loop published target descriptor low byte');
   assertEqual(trace[36], 0x3B, 'shell command loop published target descriptor high byte');
-  assertEqual(trace[37], 0x00, 'shell command loop cleared result low byte');
+  assertEqual(trace[37], 0x04, 'shell asm command published unsupported result');
   assertEqual(trace[38], 0x00, 'shell command loop cleared result high byte');
   assertEqual(trace[39], 0x86, 'service registry dispatched input read');
   assertEqual(trace[40], 0x00, 'input read reports neutral joystick state');

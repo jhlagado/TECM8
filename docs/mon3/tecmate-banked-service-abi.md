@@ -203,8 +203,9 @@ through the expansion service registry. The current boundary classifies the
 first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
-at `SHL_TARGET_DESC`, writes a default target kind, clears the result slots,
-and returns `A=80h` with carry clear. Unknown or empty commands store
+at `SHL_TARGET_DESC`, writes a default target kind, publishes
+`SHL_RESULT_UNSUPPORTED` for `asm` until the assembler is linked, and returns
+`A=80h` with carry clear. Unknown or empty commands store
 `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
 `SHL_PARAM_LAST_ERROR`, leave the target/result slots clear, return
 `A=SVC_ERR_UNKNOWN`, and set carry. The later editor, assembler, and launcher
@@ -224,7 +225,9 @@ detail, such as an assembler diagnostic line or zero when no detail applies.
 The current `SHL_RUN_COMMAND` classifier creates only a minimal target
 descriptor: `edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
 `SHL_TARGET_KIND_PROJECT_OUTPUT`; the path pointer remains zero until project
-config parsing and path resolution are linked behind the shell.
+config parsing and path resolution are linked behind the shell. `asm` also
+sets `SHL_PARAM_COMMAND_RESULT_LO` to `SHL_RESULT_UNSUPPORTED` so callers can
+distinguish a recognized assembler command from an installed assembler tool.
 
 ## Bank 1: VDU/TMS9918
 

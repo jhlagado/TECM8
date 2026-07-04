@@ -27,7 +27,7 @@ test('shell command contract reserves assembler result semantics', () => {
   assert.match(doc, /SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked/);
   assert.match(doc, /`SHL_RUN_COMMAND` only classifies `asm`, points the target slot at the minimal\s+`SHL_TARGET_DESC`/);
   assert.match(doc, /marks that descriptor as the project-main default/);
-  assert.match(doc, /clears the result slots/);
+  assert.match(doc, /publishes `SHL_RESULT_UNSUPPORTED`/);
 });
 
 test('shell command contract reserves game command namespace without enabling it in bank0 yet', () => {
