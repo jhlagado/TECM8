@@ -126,6 +126,34 @@ separate system boundary. In particular, it should align with:
 - the future VDU/TMS9918 profile direction in `docs/tecm8-bios-api.md`
 - the AZM source and contract style in `docs/azm-style-guide.md`
 
+## Runtime Contract
+
+The first game profile should be a user of TecMate services, not a parallel
+operating system. Its runtime contract should start with the services already
+being shaped for the shell, editor, assembler, and debugger:
+
+| Runtime need | TecMate service/contract | First use |
+| --- | --- | --- |
+| Status text | `VDU_SVC_STATUS_LINE` | Show build/run/debug status without taking over the editor cursor. |
+| Input snapshot | `INP_READ` | Read matrix-keyboard and joystick state through one low-level boundary. |
+| Project metadata | `TFS_FORMAT_META_RECORD` | Create a blank metadata record that game tooling patches with type, load/run, and hardware fields. |
+| Build products | assembler artifact convention | Keep `.asm`, `.bin`, and `.map` outputs inspectable by the shell/debugger. |
+
+The runtime should not define separate game-only storage, input, or status
+channels for the first slice. Game tooling can add higher-level commands such
+as `game build`, but those commands should lower to the same source, binary,
+map, metadata, VDU, input, and TEC-FS contracts used by ordinary TecMate
+projects.
+
+For the first slice, a game binary should be a `TFS_FILE_GAME` or
+`TFS_FILE_BINARY` metadata record with `TFS_META_FLAG_EXECUTABLE` set, a
+`TFS_META_OFFSET_RUN_ADDR` value when runnable, and required hardware bits such
+as `TFS_META_HW_TMS9918` and `TFS_META_HW_JOYSTICK` when the runtime needs
+them. `TFS_FORMAT_META_RECORD` supplies the blank `TFM1` record; the game build
+tool must then write `TFS_META_OFFSET_FILE_TYPE`, load/end/run fields, flags,
+and required-hardware bits itself. Assets should use `TFS_FILE_ASSET` unless a
+more specific format is later justified.
+
 ## Runtime Architecture
 
 The first runtime should have these parts:
