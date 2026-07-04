@@ -343,6 +343,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_FORMAT_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_LOCATOR`. |
 | `TFS_READ_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_READ_LOCATOR`. |
 | `TFS_FORMAT_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_META_RECORD`. |
+| `TFS_PATCH_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_PATCH_META_RECORD`. |
 | `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
 | `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
@@ -354,6 +355,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_SVC_FORMAT_LOCATOR` | `09h` | Formats a TEC-FS locator header into the caller buffer. |
 | `TFS_SVC_READ_LOCATOR` | `0Ah` | Validates a caller-buffer locator header and publishes its geometry. |
 | `TFS_SVC_FORMAT_META_RECORD` | `0Bh` | Formats a blank TEC-FS v1 metadata record into the caller buffer. |
+| `TFS_SVC_PATCH_META_RECORD` | `0Ch` | Patches mutable fields in a caller-buffer metadata record. |
 
 Current TEC-FS geometry:
 
@@ -426,6 +428,19 @@ TEC-FS parameter block:
 | `TFS_PARAM_DRIVER_BANK` | `3B5Dh` | Installed sector driver physical bank, used only when the driver address is nonzero. |
 | `TFS_PARAM_DRIVER_ADDR_LO` | `3B5Eh` | Installed sector driver entry address low byte. |
 | `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
+| `TFS_META_PATCH_BASE` | `3BD8h` | Base of metadata patch parameter block. |
+| `TFS_META_PATCH_FILE_TYPE` | `3BD8h` | Metadata file type to write. |
+| `TFS_META_PATCH_FLAGS` | `3BD9h` | Metadata flags to write. |
+| `TFS_META_PATCH_LOAD_LO` | `3BDAh` | Load address low byte. |
+| `TFS_META_PATCH_LOAD_HI` | `3BDBh` | Load address high byte. |
+| `TFS_META_PATCH_END_LO` | `3BDCh` | End address low byte. |
+| `TFS_META_PATCH_END_HI` | `3BDDh` | End address high byte. |
+| `TFS_META_PATCH_RUN_LO` | `3BDEh` | Run address low byte. |
+| `TFS_META_PATCH_RUN_HI` | `3BDFh` | Run address high byte. |
+| `TFS_META_PATCH_HW_LO` | `3BE0h` | Required hardware bitfield low byte. |
+| `TFS_META_PATCH_HW_HI` | `3BE1h` | Required hardware bitfield high byte. |
+| `TFS_META_PATCH_NAME_REF_LO` | `3BE2h` | Long-name reference low byte. |
+| `TFS_META_PATCH_NAME_REF_HI` | `3BE3h` | Long-name reference high byte. |
 
 TEC-FS sector driver operation values:
 
@@ -526,6 +541,13 @@ flags, load/end/run addresses, required hardware, and a long-name reference. The
 default formatted record is `TFS_FILE_PROJECT` with zero flags and addresses, so
 the shell/editor/assembler path has a concrete project record shape before the
 full catalogue allocator exists.
+
+`TFS_PATCH_META_RECORD` copies the metadata patch parameter block into an
+existing `TFM1` record at `TFS_PARAM_BUFFER_LO..HI`. It writes file type, flags,
+load/end/run addresses, required hardware, and name reference while preserving
+the record magic, version, and byte-count header. This gives the shell,
+assembler, and runner a small service for turning a blank metadata record into a
+source, binary, game, or asset record without duplicating field offsets.
 
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with

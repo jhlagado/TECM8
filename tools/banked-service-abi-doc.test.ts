@@ -233,6 +233,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_FORMAT_LOCATOR',
     'TFS_READ_LOCATOR',
     'TFS_FORMAT_META_RECORD',
+    'TFS_PATCH_META_RECORD',
     'TFS_SVC_MOUNT',
     'TFS_SVC_SELECT_VOLUME',
     'TFS_SVC_READ',
@@ -244,6 +245,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_FORMAT_LOCATOR',
     'TFS_SVC_READ_LOCATOR',
     'TFS_SVC_FORMAT_META_RECORD',
+    'TFS_SVC_PATCH_META_RECORD',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -277,6 +279,19 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_PARAM_DRIVER_BANK',
     'TFS_PARAM_DRIVER_ADDR_LO',
     'TFS_PARAM_DRIVER_ADDR_HI',
+    'TFS_META_PATCH_BASE',
+    'TFS_META_PATCH_FILE_TYPE',
+    'TFS_META_PATCH_FLAGS',
+    'TFS_META_PATCH_LOAD_LO',
+    'TFS_META_PATCH_LOAD_HI',
+    'TFS_META_PATCH_END_LO',
+    'TFS_META_PATCH_END_HI',
+    'TFS_META_PATCH_RUN_LO',
+    'TFS_META_PATCH_RUN_HI',
+    'TFS_META_PATCH_HW_LO',
+    'TFS_META_PATCH_HW_HI',
+    'TFS_META_PATCH_NAME_REF_LO',
+    'TFS_META_PATCH_NAME_REF_HI',
     'TFS_DRIVER_OP_READ',
     'TFS_DRIVER_OP_WRITE',
     'TFS_LOC_LBA_0',
@@ -365,6 +380,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /TEC-FS locator sector/);
   assert.match(doc, /`TFS_FORMAT_LOCATOR` writes the current locator header fields/);
   assert.match(doc, /`TFS_READ_LOCATOR` validates the magic\/version/);
+  assert.match(doc, /`TFS_PATCH_META_RECORD` copies the metadata patch parameter block/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /magic is `TFS1`/);
   assert.match(doc, /16-byte volume records/);

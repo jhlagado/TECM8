@@ -31,6 +31,7 @@ PROOF_FAIL_FORMAT_LOCATOR   .equ    0xF2
 PROOF_FAIL_READ_LOCATOR     .equ    0xF3
 PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
 PROOF_FAIL_FORMAT_META      .equ    0xF5
+PROOF_FAIL_PATCH_META       .equ    0xF6
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -150,6 +151,89 @@ ClearParams:
         ld a,(0x6247)
         or a
         jp nz,FailFormatMeta
+        ld a,TFS_FILE_GAME
+        ld (TFS_META_PATCH_FILE_TYPE),a
+        ld a,TFS_META_FLAG_EXECUTABLE
+        ld (TFS_META_PATCH_FLAGS),a
+        ld a,0x00
+        ld (TFS_META_PATCH_LOAD_LO),a
+        ld a,0x80
+        ld (TFS_META_PATCH_LOAD_HI),a
+        ld a,0xFF
+        ld (TFS_META_PATCH_END_LO),a
+        ld a,0x8F
+        ld (TFS_META_PATCH_END_HI),a
+        ld a,0x00
+        ld (TFS_META_PATCH_RUN_LO),a
+        ld a,0x80
+        ld (TFS_META_PATCH_RUN_HI),a
+        ld a,TFS_META_HW_TMS9918+TFS_META_HW_JOYSTICK
+        ld (TFS_META_PATCH_HW_LO),a
+        xor a
+        ld (TFS_META_PATCH_HW_HI),a
+        ld a,0x34
+        ld (TFS_META_PATCH_NAME_REF_LO),a
+        ld a,0x12
+        ld (TFS_META_PATCH_NAME_REF_HI),a
+        ld a,TFS_SVC_PATCH_META_RECORD
+        farCall 0x02,TFS_ENTRY
+        jp c,FailPatchMeta
+        cp 0x82
+        jp nz,FailPatchMeta
+        ld a,(0x6240)
+        cp TFS_META_MAGIC_0
+        jp nz,FailPatchMeta
+        ld a,(0x6241)
+        cp TFS_META_MAGIC_1
+        jp nz,FailPatchMeta
+        ld a,(0x6242)
+        cp TFS_META_MAGIC_2
+        jp nz,FailPatchMeta
+        ld a,(0x6243)
+        cp TFS_META_MAGIC_3
+        jp nz,FailPatchMeta
+        ld a,(0x6244)
+        cp TFS_META_VERSION
+        jp nz,FailPatchMeta
+        ld a,(0x6245)
+        cp TFS_META_RECORD_BYTES
+        jp nz,FailPatchMeta
+        ld a,(0x6246)
+        cp TFS_FILE_GAME
+        jp nz,FailPatchMeta
+        ld a,(0x6247)
+        cp TFS_META_FLAG_EXECUTABLE
+        jp nz,FailPatchMeta
+        ld a,(0x6248)
+        cp 0x00
+        jp nz,FailPatchMeta
+        ld a,(0x6249)
+        cp 0x80
+        jp nz,FailPatchMeta
+        ld a,(0x624A)
+        cp 0xFF
+        jp nz,FailPatchMeta
+        ld a,(0x624B)
+        cp 0x8F
+        jp nz,FailPatchMeta
+        ld a,(0x624C)
+        cp 0x00
+        jp nz,FailPatchMeta
+        ld a,(0x624D)
+        cp 0x80
+        jp nz,FailPatchMeta
+        ld a,(0x624E)
+        cp TFS_META_HW_TMS9918+TFS_META_HW_JOYSTICK
+        jp nz,FailPatchMeta
+        ld a,(0x624F)
+        or a
+        jp nz,FailPatchMeta
+        ld a,(0x6250)
+        cp 0x34
+        jp nz,FailPatchMeta
+        ld a,(0x6251)
+        cp 0x12
+        jp nz,FailPatchMeta
 
         ld hl,0x6200
         ld (TFS_PARAM_BUFFER_LO),hl
@@ -539,6 +623,9 @@ FailBadLocator:
         jr Fail
 FailFormatMeta:
         ld a,PROOF_FAIL_FORMAT_META
+        jr Fail
+FailPatchMeta:
+        ld a,PROOF_FAIL_PATCH_META
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt

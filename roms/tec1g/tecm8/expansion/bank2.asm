@@ -38,6 +38,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsReadLocatorImpl
         cp TFS_SVC_FORMAT_META_RECORD
         jp z,tecfsFormatMetaRecordImpl
+        cp TFS_SVC_PATCH_META_RECORD
+        jp z,tecfsPatchMetaRecordImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -74,6 +76,9 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsFormatMetaRecord:
         jp tecfsFormatMetaRecordImpl
+
+@tecfsPatchMetaRecord:
+        jp tecfsPatchMetaRecordImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -382,6 +387,56 @@ tecfsFormatMetaRecordClear:
         ld (hl),a
         inc hl
         ld a,TFS_FILE_PROJECT
+        ld (hl),a
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsPatchMetaRecordImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld de,TFS_META_OFFSET_FILE_TYPE
+        add hl,de
+        ld a,(TFS_META_PATCH_FILE_TYPE)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_FLAGS)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_LOAD_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_LOAD_HI)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_END_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_END_HI)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_RUN_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_RUN_HI)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_HW_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_HW_HI)
+        ld (hl),a
+        ld de,TFS_META_OFFSET_NAME_REF-TFS_META_OFFSET_REQUIRED_HW-1
+        add hl,de
+        ld a,(TFS_META_PATCH_NAME_REF_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_META_PATCH_NAME_REF_HI)
         ld (hl),a
         xor a
         ld (TFS_PARAM_STATUS),a
