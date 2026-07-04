@@ -280,7 +280,7 @@ Output:
   A = input bitfield
 
 Clobbers:
-  AF
+  zero, sign, parity, halfCarry
 ```
 
 ### API_MoveActorBlocked
@@ -296,7 +296,7 @@ Output:
   carry set if blocked by room collision
 
 Clobbers:
-  AF, BC, DE, HL
+  A, B, C, D, E, H, L, zero, sign, parity, halfCarry
 ```
 
 ### API_DestroyCurrentActor
@@ -309,7 +309,7 @@ Output:
   current actor marked inactive
 
 Clobbers:
-  AF
+  A, zero, sign, parity, halfCarry
 ```
 
 ### API_AddScore
@@ -322,7 +322,7 @@ Output:
   score/counter updated
 
 Clobbers:
-  AF, HL
+  A, H, L, zero, sign, parity, halfCarry
 ```
 
 ### API_PlaySound
@@ -335,7 +335,7 @@ Output:
   no-op is acceptable in the first slice
 
 Clobbers:
-  AF
+  A, zero, sign, parity, halfCarry
 ```
 
 These names are draft names. Implementation may adjust names to match TECM8

@@ -140,7 +140,7 @@ Beginner-facing game routines should be written in the self-hosted assembler
 subset where possible:
 
 ```asm
-Player_Update:
+@Player_Update:
         call API_GetInput
         ret
 ```
@@ -151,8 +151,8 @@ contract style as the rest of TecMate:
 ```asm
 ;! in IX
 ;! out
-;! clobbers AF,BC,DE,HL
-Player_Update:
+;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
+@Player_Update:
         ret
 ```
 

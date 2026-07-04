@@ -74,5 +74,7 @@ test('self-hosted assembler doc favors register-first APIs and keeps games as pr
   assert.match(doc, /Game development should not redefine TecMate/);
   assert.match(doc, /useful proving case\s+for the assembler/);
   assert.match(doc, /;! in IX/);
-  assert.match(doc, /;! clobbers AF,BC,DE,HL/);
+  assert.match(doc, /;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry/);
+  assert.match(doc, /@Player_Update:/);
+  assert.doesNotMatch(doc, /^Player_Update:\n\s+ret/m);
 });
