@@ -21,6 +21,8 @@ The current registered services are:
 - RTC tool boundary
 - GLCD boundary
 - TecMate shell entry
+- TecMate shell one-command classifier
+- input snapshot boundary
 
 The far-call and far-jump ABI has also been tightened. Banked calls preserve the
 caller register state that matters to the current convention, and the return
@@ -33,7 +35,8 @@ modules rather than isolated code blobs.
 
 ## TEC-FS Foundation
 
-Bank 2 now contains a concrete TEC-FS block mapping service. It maps:
+Bank 2 now contains concrete TEC-FS geometry, block mapping, locator, metadata,
+and sector-driver boundary services. It maps:
 
 ```text
 active volume + 4K block index -> 32-bit 512-byte sector number
@@ -50,9 +53,17 @@ The current geometry is:
 31 selectable volumes total
 ```
 
-This does not implement the full filesystem yet, but it turns the storage design
-into executable ABI. Later read, write, catalogue, load, and save services can
-build on this geometry.
+It also formats and reads the card-level TEC-FS locator sector, formats a blank
+`TFM1` metadata record, validates sector and buffer inputs, and can call an
+installed low-level sector driver through a bank/address hook. This still does
+not implement the full catalogue or allocator, but it turns the storage design
+into executable ABI. Later catalogue, load, and save services can build on this
+geometry and metadata record shape.
+
+The metadata record now has explicit slots for file type, flags, load address,
+end address, run address, required hardware, and a long-name reference. The
+default formatter creates a blank project record; build tools patch it into
+source, binary, game, BASIC, or asset records as needed.
 
 ## GLCD Boundary
 
@@ -87,6 +98,12 @@ stable service number before the shell loop is moved into ROM. The actual shell
 label is private to bank 0 and is reached through the installed expansion
 service vector, not by a fixed address.
 
+Bank 0 also exposes `SHL_RUN_COMMAND`, the first one-command shell boundary. It
+currently classifies exact `edit`, `asm`, and `run` commands, measures the
+command length, rejects unknown commands, and clears reserved target/result
+slots. Those slots now have a documented result-code convention for the future
+assembler path.
+
 The intended boot path can now become:
 
 ```text
@@ -110,8 +127,8 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-672 occupied bytes currently
-1681 bytes total high-water span across all banks
+2010 occupied bytes currently
+2010 bytes total high-water span across all banks
 ```
 
 That changes the strategy. We do not need to gut MON3 immediately just to make
@@ -129,8 +146,9 @@ The fixed ROM still matters, but its role should be small and stable:
 The larger pieces should grow in expansion ROM:
 
 - TecMate shell
-- VDU/TMS9918 services
-- TEC-FS
+- VDU/TMS9918 services, including a cursor-preserving status line
+- input snapshot service for matrix keyboard and joystick state
+- TEC-FS geometry, locator, metadata, and sector-driver boundaries
 - GLCD services
 - RTC tools
 - editor, assembler, BASIC, debugger, and game-development support
@@ -150,6 +168,7 @@ MON3 / fixed ROM:
 Expansion ROM:
   TecMate shell
   VDU/TMS9918 services
+  input snapshot services
   TEC-FS
   GLCD services
   RTC tools
@@ -159,9 +178,11 @@ Expansion ROM:
 This turns MON3 into the stable low-level system layer and lets TecMate grow into
 the actual operating environment.
 
-The next strongest technical step is TEC-FS read/write sector services, because
-storage underpins the shell, editor, assembler, project workflow, and later
-self-hosted development tools.
+The next strongest technical step is to connect the shell result convention,
+assembler artifact convention, TEC-FS metadata record, VDU status line, and
+input snapshot into a small runnable shell/tool loop. That should happen before
+starting a full game engine, because games are a proving profile for the general
+TecMate services rather than a separate platform.
 
 ## Quality Gate Position
 
