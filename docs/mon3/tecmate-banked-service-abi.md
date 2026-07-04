@@ -731,6 +731,36 @@ descriptor pointer, and returns `A=ASM_ERR_UNSUPPORTED` with carry set. This
 lets the shell and later project metadata path point at an assembler boundary
 without inventing the assembler implementation early.
 
+## Bank 8: Run Skeleton
+
+Physical bank 8 owns the first run-command service skeleton. It is not the
+program loader or debugger yet; it is the reserved banked boundary that will
+eventually launch the build artifact described by the shell target descriptor.
+
+| Constant | Address/Value | Meaning |
+| --- | ---: | --- |
+| `RUN_ENTRY` | `8000h` | Bank-origin dispatcher for run-local service IDs. |
+| `RUN_BANK` | `08h` | Physical bank holding the run skeleton. |
+| `RUN_SVC_RUN` | `01h` | Run request selector. |
+| `RUN_PARAM_BASE` | `3BF8h` | Base of run parameter block. |
+| `RUN_PARAM_STATUS` | `3BF8h` | Last run status code. |
+| `RUN_PARAM_LAST_ERROR` | `3BF9h` | Last run error code. |
+| `RUN_PARAM_BANK` | `3BFAh` | Service bank marker. |
+| `RUN_PARAM_VERSION` | `3BFBh` | Service ABI version. |
+| `RUN_PARAM_TARGET_LO` | `3BFCh` | Target descriptor pointer low byte. |
+| `RUN_PARAM_TARGET_HI` | `3BFDh` | Target descriptor pointer high byte. |
+| `RUN_PARAM_RESULT_LO` | `3BFEh` | Shell/tool result low byte. |
+| `RUN_PARAM_RESULT_HI` | `3BFFh` | Shell/tool result high byte or diagnostic detail. |
+| `RUN_STATUS_OK` | `00h` | Success. |
+| `RUN_ERR_UNKNOWN` | `EEh` | Unknown run-local service. |
+| `RUN_ERR_UNSUPPORTED` | `E0h` | Run service exists but is not implemented yet. |
+
+`RUN_SVC_RUN` is intentionally unsupported at this stage. The skeleton records
+bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
+`RUN_ERR_UNSUPPORTED`, writes `SHL_RESULT_UNSUPPORTED` to
+`RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
+descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
+
 ## Proof Hooks
 
 The current proof-only hooks are part of the development ABI and should not be

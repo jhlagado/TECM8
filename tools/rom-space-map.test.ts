@@ -60,7 +60,7 @@ test('TecMate ROM space map records current monitor and expansion measurements',
     'TEC-FS monitor-sector bridge',
     'Input snapshot boundary',
     'Assembler skeleton',
-    'Reserved stub',
+    'Run skeleton',
   ];
   let totalOccupied = 0;
   let totalSpan = 0;

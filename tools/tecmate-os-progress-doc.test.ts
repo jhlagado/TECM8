@@ -9,6 +9,7 @@ const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-os-progress.md'), 'utf
 test('TecMate OS progress note records current first-loop banked services', () => {
   assert.match(doc, /TecMate shell one-command classifier/);
   assert.match(doc, /input snapshot boundary/);
+  assert.match(doc, /run service skeleton/);
   assert.match(doc, /formats a blank\s+`TFM1` metadata record/);
   assert.match(doc, /file type, flags, load address,\s+end address, run address, required hardware/);
   assert.match(doc, /`SHL_RUN_COMMAND`/);
@@ -19,8 +20,8 @@ test('TecMate OS progress note records current first-loop banked services', () =
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /2281 occupied bytes currently/);
-  assert.match(doc, /2281 bytes total high-water span across all banks/);
+  assert.match(doc, /2320 occupied bytes currently/);
+  assert.match(doc, /2320 bytes total high-water span across all banks/);
 });
 
 test('TecMate OS progress note keeps game work behind general services', () => {

@@ -150,6 +150,22 @@ ASM_STATUS_OK        .equ    0x00
 ASM_ERR_UNKNOWN      .equ    0xEE
 ASM_ERR_UNSUPPORTED  .equ    0xE0
 
+RUN_ENTRY            .equ    0x8000
+RUN_BANK             .equ    0x08
+RUN_SVC_RUN          .equ    0x01
+RUN_PARAM_BASE       .equ    0x3BF8
+RUN_PARAM_STATUS     .equ    RUN_PARAM_BASE+0
+RUN_PARAM_LAST_ERROR .equ    RUN_PARAM_BASE+1
+RUN_PARAM_BANK       .equ    RUN_PARAM_BASE+2
+RUN_PARAM_VERSION    .equ    RUN_PARAM_BASE+3
+RUN_PARAM_TARGET_LO  .equ    RUN_PARAM_BASE+4
+RUN_PARAM_TARGET_HI  .equ    RUN_PARAM_BASE+5
+RUN_PARAM_RESULT_LO  .equ    RUN_PARAM_BASE+6
+RUN_PARAM_RESULT_HI  .equ    RUN_PARAM_BASE+7
+RUN_STATUS_OK        .equ    0x00
+RUN_ERR_UNKNOWN      .equ    0xEE
+RUN_ERR_UNSUPPORTED  .equ    0xE0
+
 VDU_ENTRY             .equ    0x8000
 VDU_CALL      .equ    VDU_ENTRY
 VDU_SVC_INIT          .equ    0x01

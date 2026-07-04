@@ -200,8 +200,10 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const resultAddr = symbolNumber(symbols, 'ASM_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'ASM_PARAM_BASE');
+  const runParamBase = symbolNumber(symbols, 'RUN_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const params = readTrace(runtime, paramBase, 8);
+  const runParams = readTrace(runtime, runParamBase, 8);
 
   assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');
   assertEqual(params[0], 0xe0, 'assembler status after unsupported assemble');
@@ -212,6 +214,14 @@ async function main(): Promise<void> {
   assertEqual(params[5], 0xcd, 'assembler target descriptor high byte');
   assertEqual(params[6], 0x04, 'assembler shell result low byte');
   assertEqual(params[7], 0x00, 'assembler shell result high byte');
+  assertEqual(runParams[0], 0xe0, 'run status after unsupported run');
+  assertEqual(runParams[1], 0xe0, 'run last error after unsupported run');
+  assertEqual(runParams[2], 0x08, 'run service bank');
+  assertEqual(runParams[3], 0x01, 'run service version');
+  assertEqual(runParams[4], 0xef, 'run target descriptor low byte');
+  assertEqual(runParams[5], 0xbe, 'run target descriptor high byte');
+  assertEqual(runParams[6], 0x04, 'run shell result low byte');
+  assertEqual(runParams[7], 0x00, 'run shell result high byte');
 
   writeFileSync(
     LAST_RUN,
@@ -221,6 +231,7 @@ async function main(): Promise<void> {
         instructions,
         resultMarker: result,
         params,
+        runParams,
         finalPc: runtime.cpu.pc & 0xffff,
         finalSysCtrl: platformRuntime.state.system?.sysCtrl,
         finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,

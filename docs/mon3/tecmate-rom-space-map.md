@@ -68,11 +68,11 @@ Terms:
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
 | 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
-| 8 | Reserved stub | `6` | `6` | `8006h` | `16378` |
+| 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2281`
+Expansion occupied bytes: `2320`
 
-Expansion high-water span total: `2281`
+Expansion high-water span total: `2320`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -102,6 +102,7 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 4 GLCD entry | `8000h` | GLCD boundary descriptor. |
 | Bank 6 input snapshot dispatcher | `8000h` | Dispatches bank-local input service IDs in `A`. |
 | Bank 7 assembler dispatcher | `8000h` | Dispatches bank-local assembler service IDs in `A`. |
+| Bank 8 run dispatcher | `8000h` | Dispatches bank-local run service IDs in `A`. |
 
 ## Consequences
 

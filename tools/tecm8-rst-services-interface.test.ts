@@ -13,6 +13,7 @@ const bank4 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank4.asm')
 const bank5 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank5.asm'), 'utf8');
 const bank6 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank6.asm'), 'utf8');
 const bank7 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank7.asm'), 'utf8');
+const bank8 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank8.asm'), 'utf8');
 const rstInterface = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/tecm8-rst-services.asmi'), 'utf8');
 
 function equateExpression(name: string): string {
@@ -139,7 +140,7 @@ test('TECM8 exact RST contracts are unique and intentionally scoped', () => {
 });
 
 test('TECM8 bank-local service selector families are unique and byte-sized', () => {
-  for (const prefix of ['VDU_SVC_', 'TMS_SVC_', 'TFS_SVC_', 'RTC_SVC_', 'GLC_SVC_', 'INP_SVC_', 'ASM_SVC_']) {
+  for (const prefix of ['VDU_SVC_', 'TMS_SVC_', 'TFS_SVC_', 'RTC_SVC_', 'GLC_SVC_', 'INP_SVC_', 'ASM_SVC_', 'RUN_SVC_']) {
     const entries = equatesWithPrefix(prefix);
     assert.ok(entries.length > 0, `${prefix} should define bank-local selectors`);
     assertUniqueSelectors(entries, prefix);
@@ -195,6 +196,9 @@ test('TECM8 bank-local dispatchers mention every selector they expose', () => {
   }
   for (const name of equatesWithPrefix('ASM_SVC_').map((entry) => entry.name)) {
     assertAdjacentDispatch(bank7, name, 'bank7');
+  }
+  for (const name of equatesWithPrefix('RUN_SVC_').map((entry) => entry.name)) {
+    assertAdjacentDispatch(bank8, name, 'bank8');
   }
   assert.match(bank5, /cp TFS_DRIVER_OP_READ\s*\n\s*jp z,tecfsSectorBridgeRead\s*\n\s*cp TFS_DRIVER_OP_WRITE\s*\n\s*jp z,tecfsSectorBridgeWrite/);
 });

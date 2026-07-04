@@ -24,6 +24,7 @@ The current registered services are:
 - TecMate shell one-command classifier
 - input snapshot boundary
 - assembler service skeleton
+- run service skeleton
 
 The far-call and far-jump ABI has also been tightened. Banked calls preserve the
 caller register state that matters to the current convention, and the return
@@ -128,8 +129,8 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2281 occupied bytes currently
-2281 bytes total high-water span across all banks
+2320 occupied bytes currently
+2320 bytes total high-water span across all banks
 ```
 
 That changes the strategy. We do not need to gut MON3 immediately just to make
@@ -151,6 +152,7 @@ The larger pieces should grow in expansion ROM:
 - input snapshot service for matrix keyboard and joystick state
 - TEC-FS geometry, locator, metadata, and sector-driver boundaries
 - assembler boundary that currently reports unsupported until real assembly is linked
+- run boundary that currently reports unsupported until a loader/debugger path is linked
 - GLCD services
 - RTC tools
 - editor, assembler, BASIC, debugger, and game-development support

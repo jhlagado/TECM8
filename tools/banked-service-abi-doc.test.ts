@@ -417,6 +417,31 @@ test('banked service ABI doc covers bank 7 assembler skeleton slots and paramete
   assert.match(doc, /preserves target\s+descriptor pointer/);
 });
 
+test('banked service ABI doc covers bank 8 run skeleton slots and parameters', () => {
+  for (const name of [
+    'RUN_ENTRY',
+    'RUN_BANK',
+    'RUN_SVC_RUN',
+    'RUN_PARAM_BASE',
+    'RUN_PARAM_STATUS',
+    'RUN_PARAM_LAST_ERROR',
+    'RUN_PARAM_BANK',
+    'RUN_PARAM_VERSION',
+    'RUN_PARAM_TARGET_LO',
+    'RUN_PARAM_TARGET_HI',
+    'RUN_PARAM_RESULT_LO',
+    'RUN_PARAM_RESULT_HI',
+    'RUN_STATUS_OK',
+    'RUN_ERR_UNKNOWN',
+    'RUN_ERR_UNSUPPORTED',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
+  assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
+  assert.match(doc, /preserves target\s+descriptor pointer/);
+});
+
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
   for (const name of [
     'RTC_ENTRY',
