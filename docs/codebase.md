@@ -285,17 +285,22 @@ session now expect:
   operations are selected with `A` or through the monitor service bridge.
   Internal implementation labels are private and movable. Bank 0 owns the
   discovery install entry, expansion vectors, the private runtime service
-  registry, the current shell-splash placeholder, and the first
+  registry, the current shell-splash placeholder, the first
   `SHL_RUN_COMMAND` boundary that classifies `edit`, `asm`, and `run` from the
-  shared shell command buffer. Bank 1 owns the VDU and TMS9918 dispatchers,
-  including the text-screen clear path, row/column cursor placement,
-  scroll-up behavior, and one-byte VRAM read helper used by the scrolling
-  proof. Bank 2 owns the TEC-FS geometry boundary, active-volume selection,
-  logical-sector translation, locator-header format/read services, and the
-  installable low-level sector-driver handoff used by the current proofs.
-  Bank 3 owns the RTC descriptor boundary, bank 4 owns the GLCD containment
-  boundary, bank 5 carries the TEC-FS monitor-sector bridge simulation, and
-  banks 6-8 are still placeholder images.
+  shared shell command buffer, and the shell result slots that now clear and
+  publish target and result pointers alongside the action and status bytes.
+  Bank 1 owns the VDU and TMS9918 dispatchers, including the text-screen clear
+  path, row/column cursor placement, scroll-up behavior, one-byte VRAM read
+  helper used by the scrolling proof, and the status-line writer that redraws
+  the last text row without disturbing the caller cursor. Bank 2 owns the
+  TEC-FS geometry boundary, active-volume selection, logical-sector
+  translation, locator-header format/read services, the blank metadata-record
+  formatter used by the game and assembler direction docs, and the installable
+  low-level sector-driver handoff used by the current proofs. Bank 3 owns the
+  RTC descriptor boundary, bank 4 owns the GLCD containment boundary, bank 5
+  carries the TEC-FS monitor-sector bridge simulation, bank 6 now exposes the
+  input snapshot boundary with neutral joystick and modifier defaults, and
+  banks 7-8 are still placeholder images.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1302,13 +1307,16 @@ image layer. They load the tracked fixed monitor and 144K expansion image,
 switch the TEC-1G bank window through the fixed-ROM RST `10h` service
 trampolines, and inspect shared proof RAM to check ABI behavior. The current
 coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
-`farCall` restore behavior, the one-way `farJump` handoff, and the bank 0
-shell command classifier reached through `SHL_RUN_COMMAND`. The TMS9918 runner
-checks the bank 1 VDU and TMS9918 entry points including text clear,
-row/column cursor placement, scroll-up copying, and VRAM reads. The TEC-FS
-runner checks bank 2 volume selection, logical-sector mapping, locator-header
-format/read behavior, and installed sector-driver dispatch, and the RTC runner
-checks the bank 3 descriptor and unsupported UI status path.
+`farCall` restore behavior, the one-way `farJump` handoff, the bank 0 shell
+command classifier reached through `SHL_RUN_COMMAND`, the shell result-pointer
+reset contract, and the bank 6 input snapshot entry published through the
+service registry. The TMS9918 runner checks the bank 1 VDU and TMS9918 entry
+points including text clear, row/column cursor placement, scroll-up copying,
+status-line rendering with cursor restore, and VRAM reads. The TEC-FS runner
+checks bank 2 volume selection, logical-sector mapping, locator-header
+format/read behavior, blank metadata-record formatting, and installed
+sector-driver dispatch, and the RTC runner checks the bank 3 descriptor and
+unsupported UI status path.
 
 `tools/run-tecmate-monitor-launch-proof.ts` and
 `tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
@@ -1434,6 +1442,8 @@ coverage:
   the local `tecm8-rst-services.asmi` fixed-ROM interface
 - static checks that every bank-0 registered `rst 10h` service has an exact
   contract entry in the local fixed-ROM interface file
+- static checks that the registered expansion selectors and the exact
+  `tecm8-rst-services.asmi` entries remain unique and intentionally scoped
 - proof wiring checks that package scripts invoke the right proof runners
 
 `tools/rom-development-config.test.ts` is the dedicated ROM-workflow check. It
