@@ -440,6 +440,8 @@ test('banked service ABI doc covers bank 8 run skeleton slots and parameters', (
   assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
   assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
+  assert.match(doc, /assembler\/run skeleton proof first calls `SHL_RUN_COMMAND`/);
+  assert.match(doc, /copies the shell-published `SHL_TARGET_DESC` pointer/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {

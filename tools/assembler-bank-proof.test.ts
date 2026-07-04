@@ -22,12 +22,16 @@ test('assembler bank proof covers unsupported skeleton service', () => {
   const bank7 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank7.asm'), 'utf8');
   const bank8 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank8.asm'), 'utf8');
 
+  assert.match(proof, /ld a,"a"[\s\S]*ld a,"s"[\s\S]*ld a,"m"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_ASM/);
+  assert.match(proof, /ld a,\(SHL_PARAM_COMMAND_TARGET_LO\)\s*\n\s*ld \(ASM_PARAM_TARGET_LO\),a[\s\S]*ld a,\(SHL_PARAM_COMMAND_TARGET_HI\)\s*\n\s*ld \(ASM_PARAM_TARGET_HI\),a/);
   assert.match(proof, /ld a,ASM_SVC_ASSEMBLE[\s\S]*farCall ASM_BANK,ASM_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp ASM_ERR_UNSUPPORTED/);
+  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
+  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
+  assert.match(proof, /ld a,"r"[\s\S]*ld a,"u"[\s\S]*ld a,"n"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_RUN/);
+  assert.match(proof, /ld a,\(SHL_PARAM_COMMAND_TARGET_LO\)\s*\n\s*ld \(RUN_PARAM_TARGET_LO\),a[\s\S]*ld a,\(SHL_PARAM_COMMAND_TARGET_HI\)\s*\n\s*ld \(RUN_PARAM_TARGET_HI\),a/);
   assert.match(proof, /ld a,RUN_SVC_RUN[\s\S]*farCall RUN_BANK,RUN_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp RUN_ERR_UNSUPPORTED/);
-  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_LO\)[\s\S]*cp 0xAB/);
-  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp 0x3B/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp 0xAB/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp 0x3B/);
+  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
+  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
   assert.match(runner, /assertEqual\(params\[0\], 0xe0, 'assembler status after unsupported assemble'\)/);
   assert.match(runner, /assertEqual\(params\[6\], 0x04, 'assembler shell result low byte'\)/);
   assert.match(runner, /assembler shell target descriptor high byte/);

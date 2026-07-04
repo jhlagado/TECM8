@@ -761,6 +761,12 @@ bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
 `RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
 descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
 
+The assembler/run skeleton proof first calls `SHL_RUN_COMMAND` for `asm` and
+`run`, copies the shell-published `SHL_TARGET_DESC` pointer into the relevant
+bank-local parameter block, and then calls bank 7 or bank 8. That keeps the
+proof tied to the real shell descriptor handoff rather than manually seeding
+the same bytes.
+
 ## Proof Hooks
 
 The current proof-only hooks are part of the development ABI and should not be

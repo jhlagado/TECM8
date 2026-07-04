@@ -15,9 +15,27 @@ ASM_PROOF_RESULT            .equ    0x3C10
         ld (ASM_PARAM_LAST_ERROR),a
         ld (ASM_PARAM_RESULT_LO),a
         ld (ASM_PARAM_RESULT_HI),a
-        ld a,0xAB
+        ld a,"a"
+        ld (SHL_COMMAND_BUFFER),a
+        ld a,"s"
+        ld (SHL_COMMAND_BUFFER+1),a
+        ld a,"m"
+        ld (SHL_COMMAND_BUFFER+2),a
+        xor a
+        ld (SHL_COMMAND_BUFFER+3),a
+        callService SHL_RUN_COMMAND
+        jp c,AssemblerProofFail
+        cp 0x80
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        cp SHL_ACTION_ASM
+        jp nz,AssemblerProofFail
+        ld a,(SHL_TARGET_KIND)
+        cp SHL_TARGET_KIND_PROJECT_MAIN
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_TARGET_LO)
         ld (ASM_PARAM_TARGET_LO),a
-        ld a,0x3B
+        ld a,(SHL_PARAM_COMMAND_TARGET_HI)
         ld (ASM_PARAM_TARGET_HI),a
 
         ld a,ASM_SVC_ASSEMBLE
@@ -44,10 +62,10 @@ ASM_PROOF_RESULT            .equ    0x3C10
         or a
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_TARGET_LO)
-        cp 0xAB
+        cp SHL_TARGET_DESC & 0xFF
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_TARGET_HI)
-        cp 0x3B
+        cp SHL_TARGET_DESC >> 8
         jp nz,AssemblerProofFail
 
         xor a
@@ -55,9 +73,27 @@ ASM_PROOF_RESULT            .equ    0x3C10
         ld (RUN_PARAM_LAST_ERROR),a
         ld (RUN_PARAM_RESULT_LO),a
         ld (RUN_PARAM_RESULT_HI),a
-        ld a,0xAB
+        ld a,"r"
+        ld (SHL_COMMAND_BUFFER),a
+        ld a,"u"
+        ld (SHL_COMMAND_BUFFER+1),a
+        ld a,"n"
+        ld (SHL_COMMAND_BUFFER+2),a
+        xor a
+        ld (SHL_COMMAND_BUFFER+3),a
+        callService SHL_RUN_COMMAND
+        jp c,AssemblerProofFail
+        cp 0x80
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        cp SHL_ACTION_RUN
+        jp nz,AssemblerProofFail
+        ld a,(SHL_TARGET_KIND)
+        cp SHL_TARGET_KIND_PROJECT_OUTPUT
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_TARGET_LO)
         ld (RUN_PARAM_TARGET_LO),a
-        ld a,0x3B
+        ld a,(SHL_PARAM_COMMAND_TARGET_HI)
         ld (RUN_PARAM_TARGET_HI),a
 
         ld a,RUN_SVC_RUN
@@ -84,10 +120,10 @@ ASM_PROOF_RESULT            .equ    0x3C10
         or a
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_LO)
-        cp 0xAB
+        cp SHL_TARGET_DESC & 0xFF
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_HI)
-        cp 0x3B
+        cp SHL_TARGET_DESC >> 8
         jp nz,AssemblerProofFail
 
         ld a,PROOF_PASS
