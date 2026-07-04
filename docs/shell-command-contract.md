@@ -41,6 +41,26 @@ paths that fail the TM8 virtual filesystem path rules.
 Unknown keys are rejected. A future format can add a new version marker rather
 than making shell v1 carry preservation logic for fields it does not use.
 
+## Project Metadata Import Path
+
+`/tecm8.prj` remains the human-readable project authority in shell v1. The
+TEC-FS metadata record is the machine-facing summary derived from it, not a
+second source of truth.
+
+The import path is:
+
+1. Read and validate `/tecm8.prj`.
+2. Resolve `main` as the project main source path.
+3. Call `TFS_FORMAT_META_RECORD` to create a blank `TFM1` record.
+4. Call `TFS_PATCH_META_RECORD` with `TFS_FILE_PROJECT`, zero flags, zero
+   load/end/run addresses, zero required hardware, and a name/path reference
+   for `/tecm8.prj` when the catalogue can supply one.
+
+The shell may cache the resulting project metadata record in RAM, but cache
+contents are disposable. On restart or remount, `/tecm8.prj` is read again and
+the metadata record is rebuilt. This keeps the v1 rules simple: text config is
+authoritative, `TFM1` records are the compact ABI used by shell tools.
+
 ## Derived Project Paths
 
 The main source file is the durable project entry point. Output and map paths

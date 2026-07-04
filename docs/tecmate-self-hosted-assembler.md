@@ -99,6 +99,13 @@ The binary metadata should use the TEC-FS metadata record fields directly:
 - `TFS_META_OFFSET_FLAGS`: `TFS_META_FLAG_EXECUTABLE` when runnable
 - `TFS_META_OFFSET_REQUIRED_HW`: TMS9918, GLCD, joystick, or other required hardware bits
 
+The assembler should not parse `/tecm8.prj` independently. The shell owns the
+project config import path: read `/tecm8.prj`, resolve `main`, format a blank
+`TFM1` record with `TFS_FORMAT_META_RECORD`, then apply project or artifact
+fields with `TFS_PATCH_META_RECORD`. The assembler receives the resolved target
+descriptor and writes source, binary, and map records through the same metadata
+vocabulary.
+
 The map artifact is deliberately simpler than host D8/D8M at first. Phase 1
 only needs enough information for `run`, simple debugger lookup, and editor
 jump-to-error:

@@ -17,6 +17,17 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
 });
 
+test('shell command contract defines project metadata import path', () => {
+  assert.match(doc, /## Project Metadata Import Path/);
+  assert.match(doc, /`\/tecm8\.prj` remains the human-readable project authority/);
+  assert.match(doc, /TEC-FS metadata record is the machine-facing summary/);
+  assert.match(doc, /Read and validate `\/tecm8\.prj`/);
+  assert.match(doc, /Resolve `main` as the project main source path/);
+  assert.match(doc, /Call `TFS_FORMAT_META_RECORD` to create a blank `TFM1` record/);
+  assert.match(doc, /Call `TFS_PATCH_META_RECORD` with `TFS_FILE_PROJECT`/);
+  assert.match(doc, /text config is\s+authoritative, `TFM1` records are the compact ABI/);
+});
+
 test('shell command contract reserves assembler result semantics', () => {
   assert.match(doc, /Assembler result reporting uses the shell command parameter block/);
   assert.match(doc, /SHL_PARAM_COMMAND_ACTION\s+= SHL_ACTION_ASM/);

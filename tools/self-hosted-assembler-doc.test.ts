@@ -83,8 +83,13 @@ test('self-hosted assembler doc defines artifact and TEC-FS metadata convention'
     'TFS_META_OFFSET_RUN_ADDR',
     'TFS_META_FLAG_EXECUTABLE',
     'TFS_META_OFFSET_REQUIRED_HW',
+    'TFS_FORMAT_META_RECORD',
+    'TFS_PATCH_META_RECORD',
   ]);
   assert.match(doc, /source stem,\s+place outputs under `\/build`, and use `\.bin` and `\.map`/);
+  assert.match(doc, /The assembler should not parse `\/tecm8\.prj` independently/);
+  assert.match(doc, /The shell owns the\s+project config import path/);
+  assert.match(doc, /assembler receives the resolved target\s+descriptor/);
   assert.match(doc, /symbol address source-line/);
   assert.match(doc, /preserve the TEC-specific load\/run metadata/);
 });
