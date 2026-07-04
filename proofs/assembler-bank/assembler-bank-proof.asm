@@ -17,7 +17,7 @@ ASM_PROOF_RESULT            .equ    0x3C10
         ld (ASM_PARAM_RESULT_HI),a
         ld a,0xAB
         ld (ASM_PARAM_TARGET_LO),a
-        ld a,0xCD
+        ld a,0x3B
         ld (ASM_PARAM_TARGET_HI),a
 
         ld a,ASM_SVC_ASSEMBLE
@@ -47,7 +47,7 @@ ASM_PROOF_RESULT            .equ    0x3C10
         cp 0xAB
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_TARGET_HI)
-        cp 0xCD
+        cp 0x3B
         jp nz,AssemblerProofFail
 
         xor a
@@ -55,9 +55,9 @@ ASM_PROOF_RESULT            .equ    0x3C10
         ld (RUN_PARAM_LAST_ERROR),a
         ld (RUN_PARAM_RESULT_LO),a
         ld (RUN_PARAM_RESULT_HI),a
-        ld a,0xEF
+        ld a,0xAB
         ld (RUN_PARAM_TARGET_LO),a
-        ld a,0xBE
+        ld a,0x3B
         ld (RUN_PARAM_TARGET_HI),a
 
         ld a,RUN_SVC_RUN
@@ -84,10 +84,10 @@ ASM_PROOF_RESULT            .equ    0x3C10
         or a
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_LO)
-        cp 0xEF
+        cp 0xAB
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_HI)
-        cp 0xBE
+        cp 0x3B
         jp nz,AssemblerProofFail
 
         ld a,PROOF_PASS

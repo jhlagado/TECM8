@@ -211,15 +211,15 @@ async function main(): Promise<void> {
   assertEqual(params[2], 0x07, 'assembler service bank');
   assertEqual(params[3], 0x01, 'assembler service version');
   assertEqual(params[4], 0xab, 'assembler target descriptor low byte');
-  assertEqual(params[5], 0xcd, 'assembler target descriptor high byte');
+  assertEqual(params[5], 0x3b, 'assembler shell target descriptor high byte');
   assertEqual(params[6], 0x04, 'assembler shell result low byte');
   assertEqual(params[7], 0x00, 'assembler shell result high byte');
   assertEqual(runParams[0], 0xe0, 'run status after unsupported run');
   assertEqual(runParams[1], 0xe0, 'run last error after unsupported run');
   assertEqual(runParams[2], 0x08, 'run service bank');
   assertEqual(runParams[3], 0x01, 'run service version');
-  assertEqual(runParams[4], 0xef, 'run target descriptor low byte');
-  assertEqual(runParams[5], 0xbe, 'run target descriptor high byte');
+  assertEqual(runParams[4], 0xab, 'run shell target descriptor low byte');
+  assertEqual(runParams[5], 0x3b, 'run shell target descriptor high byte');
   assertEqual(runParams[6], 0x04, 'run shell result low byte');
   assertEqual(runParams[7], 0x00, 'run shell result high byte');
 

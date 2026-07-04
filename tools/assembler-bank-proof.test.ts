@@ -25,13 +25,15 @@ test('assembler bank proof covers unsupported skeleton service', () => {
   assert.match(proof, /ld a,ASM_SVC_ASSEMBLE[\s\S]*farCall ASM_BANK,ASM_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp ASM_ERR_UNSUPPORTED/);
   assert.match(proof, /ld a,RUN_SVC_RUN[\s\S]*farCall RUN_BANK,RUN_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp RUN_ERR_UNSUPPORTED/);
   assert.match(proof, /ld a,\(ASM_PARAM_TARGET_LO\)[\s\S]*cp 0xAB/);
-  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp 0xCD/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp 0xEF/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp 0xBE/);
+  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp 0x3B/);
+  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp 0xAB/);
+  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp 0x3B/);
   assert.match(runner, /assertEqual\(params\[0\], 0xe0, 'assembler status after unsupported assemble'\)/);
   assert.match(runner, /assertEqual\(params\[6\], 0x04, 'assembler shell result low byte'\)/);
+  assert.match(runner, /assembler shell target descriptor high byte/);
   assert.match(runner, /assertEqual\(runParams\[0\], 0xe0, 'run status after unsupported run'\)/);
   assert.match(runner, /assertEqual\(runParams\[6\], 0x04, 'run shell result low byte'\)/);
+  assert.match(runner, /run shell target descriptor high byte/);
   assert.match(bank7, /@Tecm8ExpansionBank7Entry:[\s\S]*cp ASM_SVC_ASSEMBLE\s*\n\s*jp z,asmAssembleUnsupported/);
   assert.match(bank7, /asmAssembleUnsupported:[\s\S]*ld \(ASM_PARAM_BANK\),a[\s\S]*ld \(ASM_PARAM_STATUS\),a[\s\S]*ld \(ASM_PARAM_RESULT_LO\),a[\s\S]*scf[\s\S]*ret/);
   assert.match(bank8, /@Tecm8ExpansionBank8Entry:[\s\S]*cp RUN_SVC_RUN\s*\n\s*jp z,runUnsupported/);
