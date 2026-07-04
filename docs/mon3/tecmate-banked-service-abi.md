@@ -154,10 +154,16 @@ Shell parameter block:
 | `SHL_PARAM_FEATURES` | `3BA4h` | Feature flags. |
 | `SHL_PARAM_COMMAND_ACTION` | `3BA5h` | Last command action classification. |
 | `SHL_PARAM_COMMAND_LENGTH` | `3BA6h` | Last zero-terminated command length. |
-| `SHL_PARAM_COMMAND_TARGET_LO` | `3BA7h` | Low byte of the command target address, currently cleared. |
-| `SHL_PARAM_COMMAND_TARGET_HI` | `3BA8h` | High byte of the command target address, currently cleared. |
+| `SHL_PARAM_COMMAND_TARGET_LO` | `3BA7h` | Low byte of the command target descriptor pointer. |
+| `SHL_PARAM_COMMAND_TARGET_HI` | `3BA8h` | High byte of the command target descriptor pointer. |
 | `SHL_PARAM_COMMAND_RESULT_LO` | `3BA9h` | Low byte of the command result value, currently cleared. |
 | `SHL_PARAM_COMMAND_RESULT_HI` | `3BAAh` | High byte of the command result value, currently cleared. |
+| `SHL_TARGET_DESC` | `3BABh` | Five-byte v1 command target descriptor. |
+| `SHL_TARGET_ACTION` | `3BABh` | Descriptor action copied from `SHL_PARAM_COMMAND_ACTION`. |
+| `SHL_TARGET_KIND` | `3BACh` | Descriptor target kind. |
+| `SHL_TARGET_PATH_LO` | `3BADh` | Low byte of resolved path pointer, currently zero. |
+| `SHL_TARGET_PATH_HI` | `3BAEh` | High byte of resolved path pointer, currently zero. |
+| `SHL_TARGET_FLAGS` | `3BAFh` | Descriptor flags. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 | `SHL_COMMAND_BUFFER` | `3A80h` | Zero-terminated command line for `SHL_RUN_COMMAND`. |
 | `SHL_COMMAND_CAPACITY` | `20h` | Maximum bytes scanned from `SHL_COMMAND_BUFFER`. |
@@ -175,6 +181,10 @@ Shell status and feature values:
 | `SHL_ACTION_EDIT` | `01h` | Command classified as editor launch. |
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
 | `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
+| `SHL_TARGET_KIND_NONE` | `00h` | No target has been resolved. |
+| `SHL_TARGET_KIND_PROJECT_MAIN` | `01h` | Target is the project main source. |
+| `SHL_TARGET_KIND_PROJECT_OUTPUT` | `02h` | Target is the derived project output. |
+| `SHL_TARGET_FLAG_DEFAULT` | `01h` | Target came from the command's project default. |
 | `SHL_RESULT_NONE` | `00h` | No tool result has been published. |
 | `SHL_RESULT_OK` | `01h` | Tool completed successfully. |
 | `SHL_RESULT_BUILD_ERROR` | `02h` | Assembler/build tool found source errors. |
@@ -192,8 +202,9 @@ boundary that lets the monitor or proofs enter the future shell command loop
 through the expansion service registry. The current boundary classifies the
 first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
-in `SHL_PARAM_COMMAND_LENGTH`, clears the target/result slots, and returns
-`A=80h` with carry clear. Unknown or empty commands store
+in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
+at `SHL_TARGET_DESC`, writes a default target kind, clears the result slots,
+and returns `A=80h` with carry clear. Unknown or empty commands store
 `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
 `SHL_PARAM_LAST_ERROR`, leave the target/result slots clear, return
 `A=SVC_ERR_UNKNOWN`, and set carry. The later editor, assembler, and launcher
@@ -210,8 +221,10 @@ a pointer to the resolved command target or artifact descriptor, and
 `SHL_PARAM_COMMAND_RESULT_LO/HI` is reserved for tool result reporting. The low
 result byte should use `SHL_RESULT_*`; the high result byte is command-specific
 detail, such as an assembler diagnostic line or zero when no detail applies.
-The current `SHL_RUN_COMMAND` classifier deliberately clears these slots because
-the editor, assembler, and runner tools are not linked behind the shell yet.
+The current `SHL_RUN_COMMAND` classifier creates only a minimal target
+descriptor: `edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
+`SHL_TARGET_KIND_PROJECT_OUTPUT`; the path pointer remains zero until project
+config parsing and path resolution are linked behind the shell.
 
 ## Bank 1: VDU/TMS9918
 

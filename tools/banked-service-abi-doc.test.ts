@@ -173,6 +173,12 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_PARAM_COMMAND_TARGET_HI',
     'SHL_PARAM_COMMAND_RESULT_LO',
     'SHL_PARAM_COMMAND_RESULT_HI',
+    'SHL_TARGET_DESC',
+    'SHL_TARGET_ACTION',
+    'SHL_TARGET_KIND',
+    'SHL_TARGET_PATH_LO',
+    'SHL_TARGET_PATH_HI',
+    'SHL_TARGET_FLAGS',
     'SHL_SPLASH_BUFFER',
     'SHL_COMMAND_BUFFER',
     'SHL_COMMAND_CAPACITY',
@@ -185,6 +191,10 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_ACTION_EDIT',
     'SHL_ACTION_ASM',
     'SHL_ACTION_RUN',
+    'SHL_TARGET_KIND_NONE',
+    'SHL_TARGET_KIND_PROJECT_MAIN',
+    'SHL_TARGET_KIND_PROJECT_OUTPUT',
+    'SHL_TARGET_FLAG_DEFAULT',
     'SHL_RESULT_NONE',
     'SHL_RESULT_OK',
     'SHL_RESULT_BUILD_ERROR',
@@ -198,7 +208,9 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
-  assert.match(doc, /clears the target\/result slots/);
+  assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC`/);
+  assert.match(doc, /`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`/);
+  assert.match(doc, /`run` uses\s+`SHL_TARGET_KIND_PROJECT_OUTPUT`/);
   assert.match(doc, /low\s+result byte should use `SHL_RESULT_\*`/);
   assert.match(doc, /assembler diagnostic line or zero when no detail applies/);
 });

@@ -16,7 +16,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,ABI_TRACE_BASE
-        ld b,42
+        ld b,64
 ClearTrace:
         ld (hl),0
         inc hl
@@ -103,6 +103,52 @@ ClearTrace:
         ld (ABI_TRACE_BASE+37),a
         ld a,(SHL_PARAM_COMMAND_RESULT_HI)
         ld (ABI_TRACE_BASE+38),a
+        ld a,(SHL_TARGET_ACTION)
+        ld (ABI_TRACE_BASE+42),a
+        ld a,(SHL_TARGET_KIND)
+        ld (ABI_TRACE_BASE+43),a
+        ld a,(SHL_TARGET_FLAGS)
+        ld (ABI_TRACE_BASE+44),a
+        ld a,(SHL_TARGET_PATH_LO)
+        ld (ABI_TRACE_BASE+45),a
+        ld a,(SHL_TARGET_PATH_HI)
+        ld (ABI_TRACE_BASE+46),a
+
+        ld a,"e"
+        ld (SHL_COMMAND_BUFFER),a
+        ld a,"d"
+        ld (SHL_COMMAND_BUFFER+1),a
+        ld a,"i"
+        ld (SHL_COMMAND_BUFFER+2),a
+        ld a,"t"
+        ld (SHL_COMMAND_BUFFER+3),a
+        xor a
+        ld (SHL_COMMAND_BUFFER+4),a
+        callService SHL_RUN_COMMAND
+        ld (ABI_TRACE_BASE+47),a
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        ld (ABI_TRACE_BASE+48),a
+        ld a,(SHL_TARGET_KIND)
+        ld (ABI_TRACE_BASE+49),a
+        ld a,(SHL_TARGET_FLAGS)
+        ld (ABI_TRACE_BASE+50),a
+
+        ld a,"r"
+        ld (SHL_COMMAND_BUFFER),a
+        ld a,"u"
+        ld (SHL_COMMAND_BUFFER+1),a
+        ld a,"n"
+        ld (SHL_COMMAND_BUFFER+2),a
+        xor a
+        ld (SHL_COMMAND_BUFFER+3),a
+        callService SHL_RUN_COMMAND
+        ld (ABI_TRACE_BASE+51),a
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        ld (ABI_TRACE_BASE+52),a
+        ld a,(SHL_TARGET_KIND)
+        ld (ABI_TRACE_BASE+53),a
+        ld a,(SHL_TARGET_FLAGS)
+        ld (ABI_TRACE_BASE+54),a
         ld a,"g"
         ld (SHL_COMMAND_BUFFER),a
         ld a,"a"
@@ -117,6 +163,20 @@ ClearTrace:
         ld (ABI_TRACE_BASE+33),a
         ld a,(SHL_PARAM_STATUS)
         ld (ABI_TRACE_BASE+34),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (ABI_TRACE_BASE+55),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_HI)
+        ld (ABI_TRACE_BASE+56),a
+        ld a,(SHL_TARGET_ACTION)
+        ld (ABI_TRACE_BASE+57),a
+        ld a,(SHL_TARGET_KIND)
+        ld (ABI_TRACE_BASE+58),a
+        ld a,(SHL_TARGET_FLAGS)
+        ld (ABI_TRACE_BASE+59),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        ld (ABI_TRACE_BASE+60),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        ld (ABI_TRACE_BASE+61),a
         callService INP_READ
         ld (ABI_TRACE_BASE+39),a
         ld a,(INP_PARAM_JOYSTICK)

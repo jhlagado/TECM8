@@ -130,6 +130,11 @@ Tecm8ServiceCallUnknown:
         ld (SHL_PARAM_COMMAND_TARGET_HI),a
         ld (SHL_PARAM_COMMAND_RESULT_LO),a
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld (SHL_TARGET_ACTION),a
+        ld (SHL_TARGET_KIND),a
+        ld (SHL_TARGET_PATH_LO),a
+        ld (SHL_TARGET_PATH_HI),a
+        ld (SHL_TARGET_FLAGS),a
         call Tecm8ShellCopySplash
         xor a
         ld (TMS_PARAM_CURSOR_LO),a
@@ -158,6 +163,11 @@ Tecm8ShellSplashError:
         ld (SHL_PARAM_COMMAND_TARGET_HI),a
         ld (SHL_PARAM_COMMAND_RESULT_LO),a
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld (SHL_TARGET_ACTION),a
+        ld (SHL_TARGET_KIND),a
+        ld (SHL_TARGET_PATH_LO),a
+        ld (SHL_TARGET_PATH_HI),a
+        ld (SHL_TARGET_FLAGS),a
         ld hl,SHL_COMMAND_BUFFER
         ld a,(hl)
         or a
@@ -220,14 +230,24 @@ Tecm8ShellRunCheckFour:
 
 Tecm8ShellRunEdit:
         ld a,SHL_ACTION_EDIT
+        ld b,SHL_TARGET_KIND_PROJECT_MAIN
         jp Tecm8ShellRunOk
 Tecm8ShellRunAsm:
         ld a,SHL_ACTION_ASM
+        ld b,SHL_TARGET_KIND_PROJECT_MAIN
         jp Tecm8ShellRunOk
 Tecm8ShellRunRun:
         ld a,SHL_ACTION_RUN
+        ld b,SHL_TARGET_KIND_PROJECT_OUTPUT
 Tecm8ShellRunOk:
         ld (SHL_PARAM_COMMAND_ACTION),a
+        ld (SHL_TARGET_ACTION),a
+        ld a,b
+        ld (SHL_TARGET_KIND),a
+        ld hl,SHL_TARGET_DESC
+        ld (SHL_PARAM_COMMAND_TARGET_LO),hl
+        ld a,SHL_TARGET_FLAG_DEFAULT
+        ld (SHL_TARGET_FLAGS),a
         ld a,0x80
         or a
         ret

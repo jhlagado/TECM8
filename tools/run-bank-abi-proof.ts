@@ -227,7 +227,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 42);
+  const trace = readTrace(runtime, traceBase, 64);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -260,13 +260,33 @@ async function main(): Promise<void> {
   assertEqual(trace[32], 0x03, 'shell command loop measured asm length');
   assertEqual(trace[33], 0xEE, 'shell command loop rejected unknown command');
   assertEqual(trace[34], 0x01, 'shell command loop reported unknown status');
-  assertEqual(trace[35], 0x00, 'shell command loop cleared target address low byte');
-  assertEqual(trace[36], 0x00, 'shell command loop cleared target address high byte');
+  assertEqual(trace[35], 0xAB, 'shell command loop published target descriptor low byte');
+  assertEqual(trace[36], 0x3B, 'shell command loop published target descriptor high byte');
   assertEqual(trace[37], 0x00, 'shell command loop cleared result low byte');
   assertEqual(trace[38], 0x00, 'shell command loop cleared result high byte');
   assertEqual(trace[39], 0x86, 'service registry dispatched input read');
   assertEqual(trace[40], 0x00, 'input read reports neutral joystick state');
   assertEqual(trace[41], 0x06, 'input read reports bank 6');
+  assertEqual(trace[42], 0x02, 'shell target descriptor records asm action');
+  assertEqual(trace[43], 0x01, 'shell target descriptor records project main target');
+  assertEqual(trace[44], 0x01, 'shell target descriptor records default target flag');
+  assertEqual(trace[45], 0x00, 'shell target descriptor leaves path pointer low byte clear');
+  assertEqual(trace[46], 0x00, 'shell target descriptor leaves path pointer high byte clear');
+  assertEqual(trace[47], 0x80, 'shell command loop dispatched edit command');
+  assertEqual(trace[48], 0x01, 'shell command loop classified edit action');
+  assertEqual(trace[49], 0x01, 'shell edit descriptor records project main target');
+  assertEqual(trace[50], 0x01, 'shell edit descriptor records default target flag');
+  assertEqual(trace[51], 0x80, 'shell command loop dispatched run command');
+  assertEqual(trace[52], 0x03, 'shell command loop classified run action');
+  assertEqual(trace[53], 0x02, 'shell run descriptor records project output target');
+  assertEqual(trace[54], 0x01, 'shell run descriptor records default target flag');
+  assertEqual(trace[55], 0x00, 'unknown command cleared stale target low byte');
+  assertEqual(trace[56], 0x00, 'unknown command cleared stale target high byte');
+  assertEqual(trace[57], 0x00, 'unknown command cleared stale descriptor action');
+  assertEqual(trace[58], 0x00, 'unknown command cleared stale descriptor kind');
+  assertEqual(trace[59], 0x00, 'unknown command cleared stale descriptor flags');
+  assertEqual(trace[60], 0x00, 'unknown command cleared result low byte');
+  assertEqual(trace[61], 0x00, 'unknown command cleared result high byte');
   assertEqual(trace[26], trace[24], 'farCall preserved stack pointer low byte');
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');
