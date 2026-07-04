@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Assemble and run the TecMate shell launch proof in Debug80.
+ * Assemble and run the TecMate bank-7 assembler service skeleton proof in Debug80.
  */
 
 const { readFileSync, writeFileSync } = require('node:fs');
@@ -9,8 +9,8 @@ const { resolve } = require('node:path');
 const TECM8_ROOT = resolve(__dirname, '..');
 const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
-const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/tecmate-shell-launch/tecmate-shell-launch-proof.asm');
-const LAST_RUN = resolve(TECM8_ROOT, 'proofs/tecmate-shell-launch/tecmate-shell-launch-proof-last-run.json');
+const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-proof.asm');
+const LAST_RUN = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-proof-last-run.json');
 const MONITOR_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const EXPANSION_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
 const APP_START = 0x4000;
@@ -73,7 +73,7 @@ async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] 
       outputType: 'bin',
       sourceRoot: TECM8_ROOT,
       d8mInputs: {
-        bin: 'build/tecmate-shell-launch-proof.bin',
+        bin: 'build/assembler-bank-proof.bin',
       },
       registerCare: 'off',
     },
@@ -181,7 +181,7 @@ function runUntilHalt(runtime: Runtime, platformRuntime: PlatformRuntime): numbe
       return i + 1;
     }
   }
-  throw new Error(`TecMate shell launch proof did not halt; pc=0x${runtime.cpu.pc.toString(16)}`);
+  throw new Error(`assembler bank proof did not halt; pc=0x${runtime.cpu.pc.toString(16)}`);
 }
 
 function readTrace(runtime: Runtime, base: number, length: number): number[] {
@@ -198,34 +198,20 @@ async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
   const { runtime, platformRuntime } = loadRuntime(bytes);
   const instructions = runUntilHalt(runtime, platformRuntime);
-  const resultAddr = symbolNumber(symbols, 'PROOF_RESULT');
-  const traceBase = symbolNumber(symbols, 'PROOF_TRACE_BASE');
-  const shellParamBase = symbolNumber(symbols, 'SHL_PARAM_BASE');
-  const shellSplashBuffer = symbolNumber(symbols, 'SHL_SPLASH_BUFFER');
-  const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
+  const resultAddr = symbolNumber(symbols, 'ASM_PROOF_RESULT');
+  const paramBase = symbolNumber(symbols, 'ASM_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
-  const trace = readTrace(runtime, traceBase, 1);
-  const params = readTrace(runtime, shellParamBase, 5);
-  const splash = readTrace(runtime, shellSplashBuffer, 8);
-  const tmsParams = readTrace(runtime, tmsParamBase, 8);
+  const params = readTrace(runtime, paramBase, 8);
 
-  assertEqual(result, PROOF_PASS, 'shell launch proof result marker');
-  assertEqual(trace[0], 0x80, 'service bridge shell launch return');
-  assertEqual(params[0], 0x00, 'shell status');
-  assertEqual(params[1], 0x00, 'shell last error');
-  assertEqual(params[2], 0x00, 'shell bank marker');
-  assertEqual(params[3], 0x01, 'shell version marker');
-  assertEqual(params[4], 0x07, 'shell feature marker');
-  assertEqual(splash[0], 0x54, 'shell splash T');
-  assertEqual(splash[1], 0x65, 'shell splash e');
-  assertEqual(splash[2], 0x63, 'shell splash c');
-  assertEqual(splash[3], 0x4d, 'shell splash M');
-  assertEqual(splash[4], 0x61, 'shell splash a');
-  assertEqual(splash[5], 0x74, 'shell splash t');
-  assertEqual(splash[6], 0x65, 'shell splash e');
-  assertEqual(splash[7], 0x00, 'shell splash terminator');
-  assertEqual(tmsParams[4], 0x07, 'shell splash cursor low');
-  assertEqual(tmsParams[5], 0x00, 'shell splash cursor high');
+  assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');
+  assertEqual(params[0], 0xe0, 'assembler status after unsupported assemble');
+  assertEqual(params[1], 0xe0, 'assembler last error after unsupported assemble');
+  assertEqual(params[2], 0x07, 'assembler service bank');
+  assertEqual(params[3], 0x01, 'assembler service version');
+  assertEqual(params[4], 0xab, 'assembler target descriptor low byte');
+  assertEqual(params[5], 0xcd, 'assembler target descriptor high byte');
+  assertEqual(params[6], 0x04, 'assembler shell result low byte');
+  assertEqual(params[7], 0x00, 'assembler shell result high byte');
 
   writeFileSync(
     LAST_RUN,
@@ -234,10 +220,7 @@ async function main(): Promise<void> {
         result: 'ok',
         instructions,
         resultMarker: result,
-        trace,
         params,
-        splash,
-        tmsParams,
         finalPc: runtime.cpu.pc & 0xffff,
         finalSysCtrl: platformRuntime.state.system?.sysCtrl,
         finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
@@ -247,7 +230,7 @@ async function main(): Promise<void> {
     )}\n`,
   );
 
-  console.log(`TecMate shell launch proof passed in ${instructions} instructions`);
+  console.log(`assembler bank proof passed in ${instructions} instructions`);
 }
 
 main().catch((error: unknown) => {

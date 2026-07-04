@@ -134,6 +134,22 @@ INP_JOY_RIGHT        .equ    0x08
 INP_JOY_FIRE_1       .equ    0x10
 INP_JOY_FIRE_2       .equ    0x20
 
+ASM_ENTRY            .equ    0x8000
+ASM_BANK             .equ    0x07
+ASM_SVC_ASSEMBLE     .equ    0x01
+ASM_PARAM_BASE       .equ    0x3BE4
+ASM_PARAM_STATUS     .equ    ASM_PARAM_BASE+0
+ASM_PARAM_LAST_ERROR .equ    ASM_PARAM_BASE+1
+ASM_PARAM_BANK       .equ    ASM_PARAM_BASE+2
+ASM_PARAM_VERSION    .equ    ASM_PARAM_BASE+3
+ASM_PARAM_TARGET_LO  .equ    ASM_PARAM_BASE+4
+ASM_PARAM_TARGET_HI  .equ    ASM_PARAM_BASE+5
+ASM_PARAM_RESULT_LO  .equ    ASM_PARAM_BASE+6
+ASM_PARAM_RESULT_HI  .equ    ASM_PARAM_BASE+7
+ASM_STATUS_OK        .equ    0x00
+ASM_ERR_UNKNOWN      .equ    0xEE
+ASM_ERR_UNSUPPORTED  .equ    0xE0
+
 VDU_ENTRY             .equ    0x8000
 VDU_CALL      .equ    VDU_ENTRY
 VDU_SVC_INIT          .equ    0x01

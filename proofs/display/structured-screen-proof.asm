@@ -23,6 +23,7 @@ CursorFarRightMarker .equ     0x13F0
         LD      (MON3_VPORT),HL
 
         LD      HL,StructuredScreenLong
+        ;! rc-ignore-next definite_contract_violation: A is not live after rendering the screen model.
         CALL    DisplayRenderScreen
         JR      C,ProofFailed
 
@@ -54,6 +55,7 @@ CursorFarRightMarker .equ     0x13F0
         CALL    DisplayEraseCursorCell
         JR      C,ProofFailed
 
+        ;! rc-ignore-next definite_contract_violation: A is not live after this full flush proof call.
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 

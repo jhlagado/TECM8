@@ -699,6 +699,38 @@ the shell, editor, assembler, debugger, and game support code. It stays generic:
 game-specific controls should interpret this snapshot rather than adding a
 separate monitor-facing game input API.
 
+## Bank 7: Assembler Skeleton
+
+Physical bank 7 owns the first assembler service skeleton. It is not the
+self-hosted assembler yet; it is the reserved banked boundary that the shell can
+target once the assembler grows out of the current command classifier.
+
+| Constant | Address/Value | Meaning |
+| --- | ---: | --- |
+| `ASM_ENTRY` | `8000h` | Bank-origin dispatcher for assembler-local service IDs. |
+| `ASM_BANK` | `07h` | Physical bank holding the assembler skeleton. |
+| `ASM_SVC_ASSEMBLE` | `01h` | Assemble/build request selector. |
+| `ASM_PARAM_BASE` | `3BE4h` | Base of assembler parameter block. |
+| `ASM_PARAM_STATUS` | `3BE4h` | Last assembler status code. |
+| `ASM_PARAM_LAST_ERROR` | `3BE5h` | Last assembler error code. |
+| `ASM_PARAM_BANK` | `3BE6h` | Service bank marker. |
+| `ASM_PARAM_VERSION` | `3BE7h` | Service ABI version. |
+| `ASM_PARAM_TARGET_LO` | `3BE8h` | Target descriptor pointer low byte. |
+| `ASM_PARAM_TARGET_HI` | `3BE9h` | Target descriptor pointer high byte. |
+| `ASM_PARAM_RESULT_LO` | `3BEAh` | Shell/tool result low byte. |
+| `ASM_PARAM_RESULT_HI` | `3BEBh` | Shell/tool result high byte or diagnostic detail. |
+| `ASM_STATUS_OK` | `00h` | Success. |
+| `ASM_ERR_UNKNOWN` | `EEh` | Unknown assembler-local service. |
+| `ASM_ERR_UNSUPPORTED` | `E0h` | Assembler service exists but is not implemented yet. |
+
+`ASM_SVC_ASSEMBLE` is intentionally unsupported at this stage. The skeleton
+records bank/version, sets `ASM_PARAM_STATUS` and `ASM_PARAM_LAST_ERROR` to
+`ASM_ERR_UNSUPPORTED`, writes `SHL_RESULT_UNSUPPORTED` to
+`ASM_PARAM_RESULT_LO`, clears `ASM_PARAM_RESULT_HI`, preserves target
+descriptor pointer, and returns `A=ASM_ERR_UNSUPPORTED` with carry set. This
+lets the shell and later project metadata path point at an assembler boundary
+without inventing the assembler implementation early.
+
 ## Proof Hooks
 
 The current proof-only hooks are part of the development ABI and should not be
@@ -734,5 +766,7 @@ The active proofs are:
 npm run proof:bank-abi
 npm run proof:tms9918-bank
 npm run proof:tecfs-bank
+npm run proof:input-bank
+npm run proof:assembler-bank
 npm run proof:rtc-bank
 ```

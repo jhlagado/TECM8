@@ -573,8 +573,8 @@ ShellProjectErr:
 ; Match command literal at DE against HL. The next char must be space or NUL.
 ; Output: carry clear on match with HL after command; carry set on mismatch.
 ;! in DE,HL
-;! out DE,A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
+;! out DE,HL,A,carry,zero
+;! clobbers sign,parity,halfCarry
 @ShellMatchCommand:
         LD      A,(DE)
         OR      A

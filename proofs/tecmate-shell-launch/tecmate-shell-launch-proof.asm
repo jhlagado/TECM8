@@ -56,7 +56,7 @@ CheckShellParams:
         scf
         ret nz
         ld a,(SHL_PARAM_FEATURES)
-        cp SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH
+        cp SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH+SHL_FEATURE_COMMAND_LOOP
         scf
         ret nz
         or a

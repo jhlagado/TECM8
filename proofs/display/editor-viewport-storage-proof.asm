@@ -44,6 +44,7 @@ PROOF_FAIL       .equ     0xE0
         CALL    EditorViewportRender
         JR      C,ProofFailed
 
+        ;! rc-ignore-next definite_contract_violation: A is not live after this full flush proof call.
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 

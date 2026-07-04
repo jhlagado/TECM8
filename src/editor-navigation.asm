@@ -56,7 +56,7 @@ TECM8_EDITOR_NAV_ERR_BACKUP     .equ    0x52
         LD      A,2
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavCachePageBuffer
-        ; expects out carry
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorRenderCurrentSlot2Error
 
@@ -270,10 +270,13 @@ EditorNavRenderMixedNo:
         LD      HL,EditorStatusSavingText
         CALL    EditorNavShowStatus
         RET     C
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupCurrentPage
         JR      C,EditorSaveCurrentPageRestoreError
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupCachedPageIfDirty
         JR      C,EditorSaveCurrentPageRestoreError
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupNextPageIfDirty
         JR      C,EditorSaveCurrentPageRestoreError
         LD      A,(EditorNavDirtySectors)
@@ -282,6 +285,7 @@ EditorNavRenderMixedNo:
         LD      A,(EditorNavCurrentPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavPageBuffer
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
 
@@ -298,6 +302,7 @@ EditorSaveCurrentPageMaybeNext:
         INC     A
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavNextPageBuffer
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
         XOR     A
@@ -313,6 +318,7 @@ EditorSaveCurrentPageDone:
         LD      A,(EditorNavCachedPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavCachePageBuffer
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
         XOR     A
@@ -345,6 +351,7 @@ EditorSaveCurrentPageRestoreError:
         LD      A,(EditorNavCurrentPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavBackupPageBuffer
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorBackupCurrentPageLoadError
 
@@ -467,6 +474,7 @@ EditorBackupNextPageDone:
         LD      A,(EditorNavCurrentPage)
         LD      DE,EditorNavBackupPathBuffer
         LD      HL,EditorNavPageBuffer
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorLoadCurrentBackupPageRestoreError
         XOR     A
@@ -1220,7 +1228,7 @@ EditorNavRefreshAggregateClean:
         LD      A,(EditorNavRenderPageInput)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavPageBuffer
-        ; expects out carry
+        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorNavRenderPageRestoreError
         XOR     A

@@ -392,6 +392,31 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /default formatted record is `TFS_FILE_PROJECT`/);
 });
 
+test('banked service ABI doc covers bank 7 assembler skeleton slots and parameters', () => {
+  for (const name of [
+    'ASM_ENTRY',
+    'ASM_BANK',
+    'ASM_SVC_ASSEMBLE',
+    'ASM_PARAM_BASE',
+    'ASM_PARAM_STATUS',
+    'ASM_PARAM_LAST_ERROR',
+    'ASM_PARAM_BANK',
+    'ASM_PARAM_VERSION',
+    'ASM_PARAM_TARGET_LO',
+    'ASM_PARAM_TARGET_HI',
+    'ASM_PARAM_RESULT_LO',
+    'ASM_PARAM_RESULT_HI',
+    'ASM_STATUS_OK',
+    'ASM_ERR_UNKNOWN',
+    'ASM_ERR_UNSUPPORTED',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(doc, /Physical bank 7 owns the first assembler service skeleton/);
+  assert.match(doc, /`ASM_SVC_ASSEMBLE` is intentionally unsupported/);
+  assert.match(doc, /preserves target\s+descriptor pointer/);
+});
+
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
   for (const name of [
     'RTC_ENTRY',
