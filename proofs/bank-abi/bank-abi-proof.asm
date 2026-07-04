@@ -73,6 +73,10 @@ ClearTrace:
         ld (ABI_TRACE_BASE+22),a
         callService SHL_ENTRY
         ld (ABI_TRACE_BASE+23),a
+        ld a,(SHL_STATUS_BUFFER)
+        ld (ABI_TRACE_BASE+62),a
+        ld a,(SHL_STATUS_BUFFER+1)
+        ld (ABI_TRACE_BASE+63),a
         ld a,"a"
         ld (SHL_COMMAND_BUFFER),a
         ld a,"s"

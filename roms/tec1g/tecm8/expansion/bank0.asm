@@ -136,6 +136,9 @@ Tecm8ServiceCallUnknown:
         ld (SHL_TARGET_PATH_HI),a
         ld (SHL_TARGET_FLAGS),a
         call Tecm8ShellCopySplash
+        push de
+        call Tecm8ShellPublishReadyStatus
+        pop de
         xor a
         ld (TMS_PARAM_CURSOR_LO),a
         ld (TMS_PARAM_CURSOR_HI),a
@@ -309,8 +312,26 @@ Tecm8ShellCopySplashNext:
         jp nz,Tecm8ShellCopySplashNext
         ret
 
+Tecm8ShellPublishReadyStatus:
+        ld hl,Tecm8ShellReadyStatusText
+        ld de,SHL_STATUS_BUFFER
+Tecm8ShellCopyReadyStatusNext:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jp nz,Tecm8ShellCopyReadyStatusNext
+        ld hl,SHL_STATUS_BUFFER
+        ld (TMS_PARAM_STRING_LO),hl
+        ; expects out A,carry
+        callBankService VDU_BANK,VDU_CALL,VDU_SVC_STATUS_LINE
+        ret
+
 Tecm8ShellSplashText:
         .db     "TecMate",0
+Tecm8ShellReadyStatusText:
+        .db     "READY",0
 
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

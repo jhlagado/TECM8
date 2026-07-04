@@ -228,6 +228,9 @@ async function main(): Promise<void> {
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
   const trace = readTrace(runtime, traceBase, 64);
+  const shellStatusBuffer = symbolNumber(symbols, 'SHL_STATUS_BUFFER');
+  const shellStatusCapacity = symbolNumber(symbols, 'SHL_STATUS_CAPACITY');
+  const statusBytes = readTrace(runtime, shellStatusBuffer, shellStatusCapacity);
   const result = runtime.hardware.memory[resultAddr];
 
   assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
@@ -287,6 +290,16 @@ async function main(): Promise<void> {
   assertEqual(trace[59], 0x00, 'unknown command cleared stale descriptor flags');
   assertEqual(trace[60], 0x00, 'unknown command cleared result low byte');
   assertEqual(trace[61], 0x00, 'unknown command cleared result high byte');
+  assertEqual(trace[62], 0x52, 'shell entry published status buffer first byte');
+  assertEqual(trace[63], 0x45, 'shell entry published status buffer second byte');
+  assertEqual(statusBytes[0], 0x52, 'shell status buffer first byte');
+  assertEqual(statusBytes[1], 0x45, 'shell status buffer second byte');
+  assertEqual(statusBytes[2], 0x41, 'shell status buffer third byte');
+  assertEqual(statusBytes[3], 0x44, 'shell status buffer fourth byte');
+  assertEqual(statusBytes[4], 0x59, 'shell status buffer fifth byte');
+  assertEqual(statusBytes[5], 0x00, 'shell status buffer terminator');
+  assertEqual(statusBytes[6], 0x00, 'shell status buffer leaves first spare byte clear');
+  assertEqual(statusBytes[7], 0x00, 'shell status buffer leaves final spare byte clear');
   assertEqual(trace[26], trace[24], 'farCall preserved stack pointer low byte');
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');

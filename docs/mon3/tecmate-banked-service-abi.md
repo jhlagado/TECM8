@@ -133,10 +133,10 @@ publishing fixed callable entry points.
 ## Bank 0: Shell Entry
 
 Physical bank 0 owns the first resident TecMate shell and launcher boundary.
-The current private `Tecm8ShellEntry` label publishes a descriptor and writes a
-short splash string through the bank-1 VDU dispatcher. MON3 and user code do not
-call that label directly; they request `SHL_ENTRY` through the
-installed service vector.
+The current private `Tecm8ShellEntry` label publishes a descriptor, writes a
+short status string through the VDU status-line service, and writes a short splash
+string through the bank-1 VDU dispatcher. MON3 and user code do not call that
+label directly; they request `SHL_ENTRY` through the installed service vector.
 
 The private `Tecm8ShellRunCommand` label is the current command-loop boundary.
 MON3 and user code also do not call that label directly; they request
@@ -164,6 +164,8 @@ Shell parameter block:
 | `SHL_TARGET_PATH_LO` | `3BADh` | Low byte of resolved path pointer, currently zero. |
 | `SHL_TARGET_PATH_HI` | `3BAEh` | High byte of resolved path pointer, currently zero. |
 | `SHL_TARGET_FLAGS` | `3BAFh` | Descriptor flags. |
+| `SHL_STATUS_BUFFER` | `3B98h` | Short zero-terminated shell status-line buffer. |
+| `SHL_STATUS_CAPACITY` | `08h` | Bytes reserved for the shell status-line buffer. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 | `SHL_COMMAND_BUFFER` | `3A80h` | Zero-terminated command line for `SHL_RUN_COMMAND`. |
 | `SHL_COMMAND_CAPACITY` | `20h` | Maximum bytes scanned from `SHL_COMMAND_BUFFER`. |

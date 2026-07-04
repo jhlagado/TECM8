@@ -179,6 +179,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_TARGET_PATH_LO',
     'SHL_TARGET_PATH_HI',
     'SHL_TARGET_FLAGS',
+    'SHL_STATUS_BUFFER',
+    'SHL_STATUS_CAPACITY',
     'SHL_SPLASH_BUFFER',
     'SHL_COMMAND_BUFFER',
     'SHL_COMMAND_CAPACITY',
@@ -204,6 +206,7 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     assertDocRow(name);
   }
   assert.match(doc, /private `Tecm8ShellEntry` label/);
+  assert.match(doc, /writes a\s+short status string through the VDU status-line service/);
   assert.match(doc, /do not\s+call that label directly/);
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
