@@ -30,6 +30,7 @@ PROOF_FAIL_BRIDGE_WRITE     .equ    0xF1
 PROOF_FAIL_FORMAT_LOCATOR   .equ    0xF2
 PROOF_FAIL_READ_LOCATOR     .equ    0xF3
 PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
+PROOF_FAIL_FORMAT_META      .equ    0xF5
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -118,6 +119,40 @@ ClearParams:
         cp TFS_VOLUME_SECTORS_2
         jp nz,FailFormatLocator
 
+        ld hl,0x6240
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_FORMAT_META_RECORD
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFormatMeta
+        cp 0x82
+        jp nz,FailFormatMeta
+        ld a,(0x6240)
+        cp TFS_META_MAGIC_0
+        jp nz,FailFormatMeta
+        ld a,(0x6241)
+        cp TFS_META_MAGIC_1
+        jp nz,FailFormatMeta
+        ld a,(0x6242)
+        cp TFS_META_MAGIC_2
+        jp nz,FailFormatMeta
+        ld a,(0x6243)
+        cp TFS_META_MAGIC_3
+        jp nz,FailFormatMeta
+        ld a,(0x6244)
+        cp TFS_META_VERSION
+        jp nz,FailFormatMeta
+        ld a,(0x6245)
+        cp TFS_META_RECORD_BYTES
+        jp nz,FailFormatMeta
+        ld a,(0x6246)
+        cp TFS_FILE_PROJECT
+        jp nz,FailFormatMeta
+        ld a,(0x6247)
+        or a
+        jp nz,FailFormatMeta
+
+        ld hl,0x6200
+        ld (TFS_PARAM_BUFFER_LO),hl
         xor a
         ld (TFS_PARAM_TOTAL_VOLUMES),a
         ld (TFS_PARAM_USER_VOLUMES),a
@@ -501,6 +536,9 @@ FailReadLocator:
         jr Fail
 FailBadLocator:
         ld a,PROOF_FAIL_BAD_LOCATOR
+        jr Fail
+FailFormatMeta:
+        ld a,PROOF_FAIL_FORMAT_META
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt

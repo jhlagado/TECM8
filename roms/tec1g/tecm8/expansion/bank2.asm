@@ -36,6 +36,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsFormatLocatorImpl
         cp TFS_SVC_READ_LOCATOR
         jp z,tecfsReadLocatorImpl
+        cp TFS_SVC_FORMAT_META_RECORD
+        jp z,tecfsFormatMetaRecordImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -69,6 +71,9 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsReadLocator:
         jp tecfsReadLocatorImpl
+
+@tecfsFormatMetaRecord:
+        jp tecfsFormatMetaRecordImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -338,6 +343,46 @@ TFS_TOTAL_VOLUMES           .equ    31
         inc hl
         ld a,(hl)
         ld (TFS_PARAM_VOLUME_SECTORS_3),a
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+@tecfsFormatMetaRecordImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        push hl
+        ld b,TFS_META_RECORD_BYTES
+        xor a
+tecfsFormatMetaRecordClear:
+        ld (hl),a
+        inc hl
+        djnz tecfsFormatMetaRecordClear
+        pop hl
+        ld a,TFS_META_MAGIC_0
+        ld (hl),a
+        inc hl
+        ld a,TFS_META_MAGIC_1
+        ld (hl),a
+        inc hl
+        ld a,TFS_META_MAGIC_2
+        ld (hl),a
+        inc hl
+        ld a,TFS_META_MAGIC_3
+        ld (hl),a
+        inc hl
+        ld a,TFS_META_VERSION
+        ld (hl),a
+        inc hl
+        ld a,TFS_META_RECORD_BYTES
+        ld (hl),a
+        inc hl
+        ld a,TFS_FILE_PROJECT
+        ld (hl),a
         xor a
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a

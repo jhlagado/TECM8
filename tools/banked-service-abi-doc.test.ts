@@ -209,6 +209,18 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_TRANSLATE_SECTOR',
     'TFS_FORMAT_LOCATOR',
     'TFS_READ_LOCATOR',
+    'TFS_FORMAT_META_RECORD',
+    'TFS_SVC_MOUNT',
+    'TFS_SVC_SELECT_VOLUME',
+    'TFS_SVC_READ',
+    'TFS_SVC_WRITE',
+    'TFS_SVC_LOAD_RANGE',
+    'TFS_SVC_SAVE_RANGE',
+    'TFS_SVC_MAP_BLOCK',
+    'TFS_SVC_TRANSLATE_SECTOR',
+    'TFS_SVC_FORMAT_LOCATOR',
+    'TFS_SVC_READ_LOCATOR',
+    'TFS_SVC_FORMAT_META_RECORD',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -283,6 +295,33 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_LOC_ROLE_USER',
     'TFS_LOC_ROLE_WORK',
     'TFS_LOC_FLAG_ACTIVE',
+    'TFS_META_MAGIC_0',
+    'TFS_META_MAGIC_1',
+    'TFS_META_MAGIC_2',
+    'TFS_META_MAGIC_3',
+    'TFS_META_VERSION',
+    'TFS_META_RECORD_BYTES',
+    'TFS_META_OFFSET_MAGIC',
+    'TFS_META_OFFSET_VERSION',
+    'TFS_META_OFFSET_RECORD_BYTES',
+    'TFS_META_OFFSET_FILE_TYPE',
+    'TFS_META_OFFSET_FLAGS',
+    'TFS_META_OFFSET_LOAD_ADDR',
+    'TFS_META_OFFSET_END_ADDR',
+    'TFS_META_OFFSET_RUN_ADDR',
+    'TFS_META_OFFSET_REQUIRED_HW',
+    'TFS_META_OFFSET_NAME_REF',
+    'TFS_FILE_PROJECT',
+    'TFS_FILE_SOURCE',
+    'TFS_FILE_BINARY',
+    'TFS_FILE_GAME',
+    'TFS_FILE_BASIC',
+    'TFS_FILE_ASSET',
+    'TFS_META_FLAG_EXECUTABLE',
+    'TFS_META_FLAG_EXP_RAM',
+    'TFS_META_HW_TMS9918',
+    'TFS_META_HW_GLCD',
+    'TFS_META_HW_JOYSTICK',
     'TFS_STATUS_OK',
     'TFS_ERR_BAD_VOLUME',
     'TFS_ERR_BAD_BLOCK',
@@ -309,6 +348,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /262,144/);
   assert.match(doc, /logical-to-card translation/);
   assert.match(doc, /image-base LBA/);
+  assert.match(doc, /`TFS_FORMAT_META_RECORD` writes a blank 32-byte `TFM1` metadata record/);
+  assert.match(doc, /file type,\s+flags, load\/end\/run addresses, required hardware, and a long-name reference/);
+  assert.match(doc, /default formatted record is `TFS_FILE_PROJECT`/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {

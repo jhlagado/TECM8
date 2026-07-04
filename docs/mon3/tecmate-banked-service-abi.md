@@ -311,6 +311,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_TRANSLATE_SECTOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_TRANSLATE_SECTOR`. |
 | `TFS_FORMAT_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_LOCATOR`. |
 | `TFS_READ_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_READ_LOCATOR`. |
+| `TFS_FORMAT_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_META_RECORD`. |
 | `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
 | `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
@@ -321,6 +322,7 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_SVC_TRANSLATE_SECTOR` | `08h` | Adds the mounted image-base LBA to the logical sector in place. |
 | `TFS_SVC_FORMAT_LOCATOR` | `09h` | Formats a TEC-FS locator header into the caller buffer. |
 | `TFS_SVC_READ_LOCATOR` | `0Ah` | Validates a caller-buffer locator header and publishes its geometry. |
+| `TFS_SVC_FORMAT_META_RECORD` | `0Bh` | Formats a blank TEC-FS v1 metadata record into the caller buffer. |
 
 Current TEC-FS geometry:
 
@@ -444,6 +446,33 @@ TEC-FS card locator constants:
 | `TFS_LOC_ROLE_USER` | `01h` | Ordinary user volume role. |
 | `TFS_LOC_ROLE_WORK` | `02h` | Reserved work/safety volume role. |
 | `TFS_LOC_FLAG_ACTIVE` | `01h` | Volume record is active/valid. |
+| `TFS_META_MAGIC_0` | `54h` | Metadata record magic byte 0, `T`. |
+| `TFS_META_MAGIC_1` | `46h` | Metadata record magic byte 1, `F`. |
+| `TFS_META_MAGIC_2` | `4Dh` | Metadata record magic byte 2, `M`. |
+| `TFS_META_MAGIC_3` | `31h` | Metadata record magic byte 3, `1`. |
+| `TFS_META_VERSION` | `01h` | Metadata record format version. |
+| `TFS_META_RECORD_BYTES` | `20h` | Bytes in the v1 metadata record header. |
+| `TFS_META_OFFSET_MAGIC` | `00h` | Metadata record magic offset. |
+| `TFS_META_OFFSET_VERSION` | `04h` | Metadata record version offset. |
+| `TFS_META_OFFSET_RECORD_BYTES` | `05h` | Metadata record byte-count offset. |
+| `TFS_META_OFFSET_FILE_TYPE` | `06h` | Metadata file-type offset. |
+| `TFS_META_OFFSET_FLAGS` | `07h` | Metadata flags offset. |
+| `TFS_META_OFFSET_LOAD_ADDR` | `08h` | Metadata load-address offset. |
+| `TFS_META_OFFSET_END_ADDR` | `0Ah` | Metadata end-address offset. |
+| `TFS_META_OFFSET_RUN_ADDR` | `0Ch` | Metadata run-address offset. |
+| `TFS_META_OFFSET_REQUIRED_HW` | `0Eh` | Metadata required-hardware bitfield offset. |
+| `TFS_META_OFFSET_NAME_REF` | `10h` | Metadata long-name reference/prefix offset. |
+| `TFS_FILE_PROJECT` | `01h` | TecMate project metadata file type. |
+| `TFS_FILE_SOURCE` | `02h` | Source text file type. |
+| `TFS_FILE_BINARY` | `03h` | Binary memory-range file type. |
+| `TFS_FILE_GAME` | `04h` | Game/application package file type. |
+| `TFS_FILE_BASIC` | `05h` | BASIC program file type. |
+| `TFS_FILE_ASSET` | `06h` | Game/editor asset file type. |
+| `TFS_META_FLAG_EXECUTABLE` | `01h` | Metadata record describes an executable object. |
+| `TFS_META_FLAG_EXP_RAM` | `02h` | Metadata record expects expansion RAM. |
+| `TFS_META_HW_TMS9918` | `01h` | Required hardware bit for TMS9918-compatible video. |
+| `TFS_META_HW_GLCD` | `02h` | Required hardware bit for GLCD. |
+| `TFS_META_HW_JOYSTICK` | `04h` | Required hardware bit for joystick input. |
 
 The TEC-FS locator sector is a card-level sector, not part of any single
 volume. The current contract places it at absolute LBA 1 on a TEC-formatted
@@ -459,6 +488,13 @@ volume-start table instead of parsing FAT32 directories on the TEC.
 that buffer and copies the locator geometry fields back into the TEC-FS
 parameter block. It is a format/parse boundary only; actual SD sector read/write
 still goes through `TFS_READ`, `TFS_WRITE`, and the installed sector driver.
+
+`TFS_FORMAT_META_RECORD` writes a blank 32-byte `TFM1` metadata record at
+`TFS_PARAM_BUFFER_LO..HI`. The v1 record reserves explicit slots for file type,
+flags, load/end/run addresses, required hardware, and a long-name reference. The
+default formatted record is `TFS_FILE_PROJECT` with zero flags and addresses, so
+the shell/editor/assembler path has a concrete project record shape before the
+full catalogue allocator exists.
 
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
