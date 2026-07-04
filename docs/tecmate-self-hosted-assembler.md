@@ -65,6 +65,52 @@ Deliberately exclude from the first implementation:
 
 This gives TecMate a practical assembler before it tries to become AZM.
 
+## Artifact Convention
+
+The self-hosted assembler should use a small, predictable artifact set. It
+should not create a general host-style build directory model inside MON3.
+
+For a project with:
+
+```text
+main=/src/main.asm
+```
+
+the assembler-facing artifacts are:
+
+| Artifact | Default path | TEC-FS type | Purpose |
+| --- | --- | --- | --- |
+| Source | `/src/main.asm` | `TFS_FILE_SOURCE` | Editable AZM-subset source text. |
+| Binary | `/build/main.bin` | `TFS_FILE_BINARY` | Runnable memory image or loadable program output. |
+| Symbols/map | `/build/main.map` | `TFS_FILE_ASSET` | Symbol names, addresses, and source references for the shell/debugger. |
+| Project record | `/tecm8.prj` or project metadata record | `TFS_FILE_PROJECT` | Main source path and project defaults. |
+
+The derived artifact paths follow the shell contract: take the source stem,
+place outputs under `/build`, and use `.bin` and `.map`. A later game tool can
+add game-specific products, but it should still start from the same source,
+binary, map, and project metadata vocabulary.
+
+The binary metadata should use the TEC-FS metadata record fields directly:
+
+- `TFS_META_OFFSET_FILE_TYPE`: `TFS_FILE_BINARY`
+- `TFS_META_OFFSET_LOAD_ADDR`: first byte loaded into RAM or expansion RAM
+- `TFS_META_OFFSET_END_ADDR`: exclusive end address
+- `TFS_META_OFFSET_RUN_ADDR`: optional run address
+- `TFS_META_OFFSET_FLAGS`: `TFS_META_FLAG_EXECUTABLE` when runnable
+- `TFS_META_OFFSET_REQUIRED_HW`: TMS9918, GLCD, joystick, or other required hardware bits
+
+The map artifact is deliberately simpler than host D8/D8M at first. Phase 1
+only needs enough information for `run`, simple debugger lookup, and editor
+jump-to-error:
+
+```text
+symbol address source-line
+```
+
+That can later grow toward AZM/D8M compatibility, but the first requirement is
+that TecMate can assemble a source file, write a binary, write enough symbol
+information to inspect it, and preserve the TEC-specific load/run metadata.
+
 ## Phase 2: Project Usability
 
 Phase 2 should make the assembler useful from the shell:

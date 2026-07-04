@@ -67,6 +67,28 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /If the checker cannot prove a path,\s+it should say so clearly/);
 });
 
+test('self-hosted assembler doc defines artifact and TEC-FS metadata convention', () => {
+  assert.match(doc, /## Artifact Convention/);
+  assertMentionsAll([
+    '/src/main.asm',
+    '/build/main.bin',
+    '/build/main.map',
+    'TFS_FILE_SOURCE',
+    'TFS_FILE_BINARY',
+    'TFS_FILE_ASSET',
+    'TFS_FILE_PROJECT',
+    'TFS_META_OFFSET_FILE_TYPE',
+    'TFS_META_OFFSET_LOAD_ADDR',
+    'TFS_META_OFFSET_END_ADDR',
+    'TFS_META_OFFSET_RUN_ADDR',
+    'TFS_META_FLAG_EXECUTABLE',
+    'TFS_META_OFFSET_REQUIRED_HW',
+  ]);
+  assert.match(doc, /source stem,\s+place outputs under `\/build`, and use `\.bin` and `\.map`/);
+  assert.match(doc, /symbol address source-line/);
+  assert.match(doc, /preserve the TEC-specific load\/run metadata/);
+});
+
 test('self-hosted assembler doc favors register-first APIs and keeps games as proving case', () => {
   assert.match(doc, /## Register-First Convention/);
   assert.match(doc, /prefer register arguments over stack arguments/);
