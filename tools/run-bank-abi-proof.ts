@@ -220,6 +220,29 @@ function assertEqual(actual: number, expected: number, name: string): void {
   }
 }
 
+function assertProofPassed(
+  result: number,
+  resultAddr: number,
+  runtime: Runtime,
+  platformRuntime: PlatformRuntime,
+  trace: number[],
+): void {
+  if (result === PROOF_PASS) {
+    return;
+  }
+
+  const pc = runtime.cpu.pc & 0xffff;
+  const sp = runtime.cpu.sp & 0xffff;
+  const sysCtrl = platformRuntime.state.system?.sysCtrl ?? 0;
+  const physicalBank = platformRuntime.state.system?.memoryExpansionPhysicalBank ?? 0;
+  throw new Error(
+    `bank ABI proof result marker: got 0x${result.toString(16)}, expected 0x${PROOF_PASS.toString(16)}; ` +
+      `resultAddr=0x${resultAddr.toString(16)} pc=0x${pc.toString(16)} sp=0x${sp.toString(16)} ` +
+      `sysCtrl=0x${sysCtrl.toString(16)} physicalBank=${physicalBank} ` +
+      `trace9=0x${(trace[9] ?? 0).toString(16)} trace21=0x${(trace[21] ?? 0).toString(16)}`,
+  );
+}
+
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
   const { runtime, platformRuntime } = loadRuntime(bytes);
@@ -233,7 +256,7 @@ async function main(): Promise<void> {
   const statusBytes = readTrace(runtime, shellStatusBuffer, shellStatusCapacity);
   const result = runtime.hardware.memory[resultAddr];
 
-  assertEqual(result, PROOF_PASS, 'bank ABI proof result marker');
+  assertProofPassed(result, resultAddr, runtime, platformRuntime, trace);
   assertEqual(trace[0], INITIAL_SYS_CTRL, 'initial SYS_CTRL snapshot');
   assertEqual(trace[1], 0x81, 'farCall bank 1 return value');
   assertEqual(trace[2], INITIAL_SYS_CTRL, 'SYS_CTRL restored after first farCall');
