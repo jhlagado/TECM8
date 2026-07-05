@@ -79,7 +79,14 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(pkg.scripts.check, /npm run proof:tecmate-monitor-launch/);
   assert.match(doc, /npm run proof:tecmate-monitor-launch/);
   assert.match(runner, /symbolNumber\(MONITOR_D8_PATH, 'launchExpansion'\)/);
+  assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ExpansionInstall'\)/);
   assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry'\)/);
+  assert.match(runner, /symbolNumber\(BANK0_D8_PATH, 'Tecm8ServiceCall'\)/);
+  assert.match(runner, /assertBank0Header/);
+  assert.match(runner, /installed expansion service address/);
+  assert.match(runner, /runAlternateInstallCase/);
+  assert.match(runner, /alternate expansion menu marker/);
+  assert.match(runner, /alternate expansion service returned A/);
   assert.match(runner, /runInstalledExpansionCase/);
   assert.match(runner, /runMissingExpansionCase/);
   assert.match(runner, /expansionImage: false/);

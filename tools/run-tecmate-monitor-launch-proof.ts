@@ -3,7 +3,8 @@
  * Run the fixed-monitor expansion discovery launch path in Debug80.
  */
 
-const { readFileSync, writeFileSync } = require('node:fs');
+const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
+const { tmpdir } = require('node:os');
 const { resolve } = require('node:path');
 
 const TECM8_ROOT = resolve(__dirname, '..');
@@ -27,11 +28,20 @@ const EXP_MENU_VEC_FLAGS = 0x3bf3;
 const EXP_SVC_VEC_BANK = 0x3bf4;
 const EXP_SVC_VEC_ADDR = 0x3bf5;
 const EXP_SVC_VEC_FLAGS = 0x3bf7;
+const EXP_HEADER_MAGIC = 0x8000;
+const EXP_HEADER_VERSION = 0x8004;
+const EXP_HEADER_BANK = 0x8005;
+const EXP_HEADER_TYPE = 0x8006;
+const EXP_HEADER_FLAGS = 0x8007;
+const EXP_HEADER_INSTALL = 0x8008;
 const TFS_MOUNT = 0x61;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_VOLUME_MIB = 128;
 const INP_PARAM_BANK = 0x3bc2;
 const INP_PARAM_JOYSTICK = 0x3bc6;
+const ALT_INSTALL_ADDR = 0x8200;
+const ALT_MENU_ADDR = 0x8230;
+const ALT_SERVICE_ADDR = 0x8240;
 
 type Runtime = {
   cpu: {
@@ -117,7 +127,7 @@ function makeConfig() {
 
 function loadRuntime(
   entryAddress: number,
-  options: { expansionImage?: boolean } = {},
+  options: { expansionImage?: boolean; expansionRomPath?: string } = {},
 ): { runtime: Runtime; platformRuntime: PlatformRuntime } {
   const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
     createTec1gRuntime: Function;
@@ -151,7 +161,7 @@ function loadRuntime(
     tec1gRuntime.state.system,
   );
   if (options.expansionImage !== false) {
-    const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
+    const expansionImage = loadTec1gExpansionRomImage(options.expansionRomPath ?? EXPANSION_ROM_PATH);
     applyExpansionRomMemory(hooks.expandBanks, expansionImage);
   }
   runtime.hardware.memRead = hooks.memRead;
@@ -195,6 +205,16 @@ function writeBridgeServiceStub(runtime: Runtime, serviceId: number): void {
   runtime.hardware.forceMemWrite?.(RETURN_STUB + 8, 0x76);
 }
 
+function writeWord(image: Buffer, address: number, value: number): void {
+  const offset = address - 0x8000;
+  image[offset] = value & 0xff;
+  image[offset + 1] = value >> 8;
+}
+
+function writeBytes(image: Buffer, address: number, bytes: number[]): void {
+  image.set(bytes, address - 0x8000);
+}
+
 function assertEqual(actual: number, expected: number, name: string): void {
   if (actual !== expected) {
     throw new Error(`${name}: got 0x${actual.toString(16)}, expected 0x${expected.toString(16)}`);
@@ -212,28 +232,80 @@ function assertClearedExpansionVectors(runtime: Runtime): void {
   assertEqual(runtime.hardware.memory[EXP_SVC_VEC_FLAGS], 0x00, 'cleared expansion service flags');
 }
 
+function readWord(runtime: Runtime, address: number): number {
+  return runtime.hardware.memory[address] | (runtime.hardware.memory[address + 1] << 8);
+}
+
+function assertBank0Header(): number {
+  const expectedInstallAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionInstall');
+  const expansionImage = readFileSync(EXPANSION_ROM_PATH);
+
+  assertEqual(expansionImage[EXP_HEADER_MAGIC - 0x8000] ?? -1, 'E'.charCodeAt(0), 'bank 0 header magic E');
+  assertEqual(expansionImage[EXP_HEADER_MAGIC + 1 - 0x8000] ?? -1, 'X'.charCodeAt(0), 'bank 0 header magic X');
+  assertEqual(expansionImage[EXP_HEADER_MAGIC + 2 - 0x8000] ?? -1, 'P'.charCodeAt(0), 'bank 0 header magic P');
+  assertEqual(expansionImage[EXP_HEADER_MAGIC + 3 - 0x8000] ?? -1, 'R'.charCodeAt(0), 'bank 0 header magic R');
+  assertEqual(expansionImage[EXP_HEADER_VERSION - 0x8000] ?? -1, 0x01, 'bank 0 header version');
+  assertEqual(expansionImage[EXP_HEADER_BANK - 0x8000] ?? -1, 0x00, 'bank 0 header physical bank');
+  assertEqual(expansionImage[EXP_HEADER_TYPE - 0x8000] ?? -1, 0x01, 'bank 0 header supervisor type');
+  assertEqual(expansionImage[EXP_HEADER_FLAGS - 0x8000] ?? -1, 0x00, 'bank 0 header flags');
+  assertEqual(
+    (expansionImage[EXP_HEADER_INSTALL - 0x8000] ?? 0) |
+      ((expansionImage[EXP_HEADER_INSTALL + 1 - 0x8000] ?? 0) << 8),
+    expectedInstallAddress,
+    'bank 0 header install routine',
+  );
+
+  return expectedInstallAddress;
+}
+
+function createAlternateExpansionImage(): { path: string; dir: string } {
+  const dir = mkdtempSync(resolve(tmpdir(), 'tecm8-expansion-proof-'));
+  const path = resolve(dir, 'expansion.bin');
+  const image = Buffer.from(readFileSync(EXPANSION_ROM_PATH));
+
+  writeWord(image, EXP_HEADER_INSTALL, ALT_INSTALL_ADDR);
+  writeBytes(image, ALT_INSTALL_ADDR, [
+    0x3e, 0x00, 0x32, 0xf0, 0x3b, 0x21, ALT_MENU_ADDR & 0xff, ALT_MENU_ADDR >> 8, 0x22, 0xf1, 0x3b, 0xaf, 0x32,
+    0xf3, 0x3b, 0x3e, 0x00, 0x32, 0xf4, 0x3b, 0x21, ALT_SERVICE_ADDR & 0xff, ALT_SERVICE_ADDR >> 8, 0x22,
+    0xf5, 0x3b, 0xaf, 0x32, 0xf7, 0x3b, 0xc9,
+  ]);
+  writeBytes(image, ALT_MENU_ADDR, [0x3e, 0xa5, 0x32, 0x01, 0x30, 0xc9]);
+  writeBytes(image, ALT_SERVICE_ADDR, [0x3e, 0x5a, 0x32, 0x02, 0x30, 0x3e, 0x99, 0xb7, 0xc9]);
+
+  writeFileSync(path, image);
+  return { path, dir };
+}
+
 function runInstalledExpansionCase(launchAddress: number): {
   instructions: number;
   bridgeInstructions: number;
+  expectedInstallAddress: number;
   expectedMenuAddress: number;
   menuVectorAddress: number;
+  expectedServiceAddress: number;
+  serviceVectorAddress: number;
   trace: number[];
   finalPc: number;
   finalSp: number;
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
 } {
+  const expectedServiceAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ServiceCall');
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
+  const expectedInstallAddress = assertBank0Header();
   const { runtime, platformRuntime } = loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
   const trace = readTrace(runtime, DBG_TRACE_BASE, 9);
-  const menuVectorAddress =
-    runtime.hardware.memory[EXP_MENU_VEC_ADDR] | (runtime.hardware.memory[EXP_MENU_VEC_ADDR + 1] << 8);
+  const menuVectorAddress = readWord(runtime, EXP_MENU_VEC_ADDR);
+  const serviceVectorAddress = readWord(runtime, EXP_SVC_VEC_ADDR);
 
   assertEqual(runtime.cpu.pc, RETURN_STUB + 1, 'return stub halt pc');
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'installed expansion menu bank');
   assertEqual(menuVectorAddress, expectedMenuAddress, 'installed expansion menu address');
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_FLAGS], 0x00, 'installed expansion menu flags');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_BANK], 0x00, 'installed expansion service bank');
+  assertEqual(serviceVectorAddress, expectedServiceAddress, 'installed expansion service address');
+  assertEqual(runtime.hardware.memory[EXP_SVC_VEC_FLAGS], 0x00, 'installed expansion service flags');
   assertEqual(trace[0], 0x00, 'bank 0 entry marker');
   assertEqual(trace[4], 0x81, 'VDU service marker');
   assertEqual(trace[5], 0x82, 'TEC-FS service marker');
@@ -260,14 +332,67 @@ function runInstalledExpansionCase(launchAddress: number): {
   return {
     instructions,
     bridgeInstructions,
+    expectedInstallAddress,
     expectedMenuAddress,
     menuVectorAddress,
+    expectedServiceAddress,
+    serviceVectorAddress,
     trace,
     finalPc: runtime.cpu.pc & 0xffff,
     finalSp: runtime.cpu.sp & 0xffff,
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
   };
+}
+
+function runAlternateInstallCase(launchAddress: number): {
+  instructions: number;
+  bridgeInstructions: number;
+  menuVectorAddress: number;
+  serviceVectorAddress: number;
+  trace: number[];
+  finalSysCtrl?: number;
+} {
+  const image = createAlternateExpansionImage();
+  try {
+    const { runtime, platformRuntime } = loadRuntime(launchAddress, { expansionRomPath: image.path });
+    const instructions = runUntilHalt(runtime, platformRuntime);
+    const menuVectorAddress = readWord(runtime, EXP_MENU_VEC_ADDR);
+    const serviceVectorAddress = readWord(runtime, EXP_SVC_VEC_ADDR);
+    const trace = readTrace(runtime, DBG_TRACE_BASE, 3);
+
+    assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'alternate expansion menu bank');
+    assertEqual(menuVectorAddress, ALT_MENU_ADDR, 'alternate expansion menu address');
+    assertEqual(runtime.hardware.memory[EXP_MENU_VEC_FLAGS], 0x00, 'alternate expansion menu flags');
+    assertEqual(runtime.hardware.memory[EXP_SVC_VEC_BANK], 0x00, 'alternate expansion service bank');
+    assertEqual(serviceVectorAddress, ALT_SERVICE_ADDR, 'alternate expansion service address');
+    assertEqual(runtime.hardware.memory[EXP_SVC_VEC_FLAGS], 0x00, 'alternate expansion service flags');
+    assertEqual(trace[1], 0xa5, 'alternate expansion menu marker');
+    assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'alternate expansion SYS_CTRL restored');
+
+    runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+    runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+    writeBridgeServiceStub(runtime, TFS_MOUNT);
+    runtime.cpu.halted = false;
+    runtime.cpu.pc = RETURN_STUB;
+    runtime.cpu.sp = STACK_RETURN;
+    const bridgeInstructions = runUntilHalt(runtime, platformRuntime);
+    assertEqual(runtime.hardware.memory[DBG_TRACE_BASE + 2], 0x5a, 'alternate expansion service marker');
+    assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x99, 'alternate expansion service returned A');
+    assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'alternate expansion service returned carry clear');
+    assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'alternate bridge SYS_CTRL restored');
+
+    return {
+      instructions,
+      bridgeInstructions,
+      menuVectorAddress,
+      serviceVectorAddress,
+      trace,
+      finalSysCtrl: platformRuntime.state.system?.sysCtrl,
+    };
+  } finally {
+    rmSync(image.dir, { recursive: true, force: true });
+  }
 }
 
 function runMissingExpansionCase(launchAddress: number): {
@@ -345,6 +470,7 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
 function main(): void {
   const launchAddress = symbolNumber(MONITOR_D8_PATH, 'launchExpansion');
   const installed = runInstalledExpansionCase(launchAddress);
+  const alternate = runAlternateInstallCase(launchAddress);
   const missing = runMissingExpansionCase(launchAddress);
 
   writeFileSync(
@@ -354,6 +480,7 @@ function main(): void {
         result: 'ok',
         launchAddress,
         installed,
+        alternate,
         missing,
       },
       null,
