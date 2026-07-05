@@ -1,0 +1,69 @@
+{
+  "schema": "tecm8-rom-size-baseline-v1",
+  "monitor": {
+    "occupied": 9007,
+    "span": 16384,
+    "highWaterEnd": 65536
+  },
+  "banks": [
+    {
+      "bank": 0,
+      "role": "Shell, launcher, registry",
+      "occupied": 730,
+      "span": 730
+    },
+    {
+      "bank": 1,
+      "role": "VDU/TMS9918 boundary",
+      "occupied": 532,
+      "span": 532
+    },
+    {
+      "bank": 2,
+      "role": "TEC-FS boundary and block mapper",
+      "occupied": 799,
+      "span": 799
+    },
+    {
+      "bank": 3,
+      "role": "RTC boundary",
+      "occupied": 95,
+      "span": 95
+    },
+    {
+      "bank": 4,
+      "role": "GLCD boundary",
+      "occupied": 68,
+      "span": 68
+    },
+    {
+      "bank": 5,
+      "role": "TEC-FS monitor-sector bridge",
+      "occupied": 40,
+      "span": 40
+    },
+    {
+      "bank": 6,
+      "role": "Input snapshot boundary",
+      "occupied": 47,
+      "span": 47
+    },
+    {
+      "bank": 7,
+      "role": "Assembler skeleton",
+      "occupied": 45,
+      "span": 45
+    },
+    {
+      "bank": 8,
+      "role": "Run skeleton",
+      "occupied": 45,
+      "span": 45
+    }
+  ],
+  "expansionTotal": {
+    "occupied": 2401,
+    "span": 2401,
+    "hardSpan": 65536
+  }
+}

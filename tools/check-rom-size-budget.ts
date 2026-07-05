@@ -243,6 +243,9 @@ const report = measureRomSize();
 if (process.argv.includes('--summary')) {
   printSummary(report);
   validateBudget(report);
+} else if (process.argv.includes('--json')) {
+  console.log(JSON.stringify(report, null, 2));
+  validateBudget(report);
 } else {
   checkMonitor(report);
   checkExpansion(report);

@@ -11,6 +11,7 @@ test('ROM size budget gate is wired into package scripts', () => {
 
   assert.equal(pkg.scripts['rom:size:check'], 'npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts');
   assert.equal(pkg.scripts['rom:size:summary'], 'npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts --summary');
+  assert.equal(pkg.scripts['rom:size:delta'], 'node --experimental-strip-types tools/check-rom-size-delta.ts');
   assert.match(pkg.scripts.check, /npm run rom:size:check/);
 });
 
@@ -28,6 +29,7 @@ test('ROM size budget gate defines per-bank hard budgets and total expansion gua
   assert.match(checker, /exceeds soft budget/);
   assert.match(checker, /function printSummary/);
   assert.match(checker, /function validateBudget/);
+  assert.match(checker, /--json/);
   assert.match(checker, /# TecMate ROM Footprint/);
 });
 
@@ -45,6 +47,50 @@ test('ROM size budget checker executes against current D8 artifacts', () => {
   assert.match(output, /bank 0 Shell, launcher, registry:/);
   assert.match(output, /bank 8 Run skeleton:/);
   assert.match(output, /expansion total: occupied=/);
+});
+
+test('ROM size checker can emit machine-readable JSON for delta tooling', () => {
+  execFileSync('npm', ['run', 'rom:check'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  const output = execFileSync('node', ['--experimental-strip-types', 'tools/check-rom-size-budget.ts', '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  const report = JSON.parse(output);
+
+  assert.equal(report.monitor.span, 16384);
+  assert.equal(report.expansionTotal.hardSpan, 65536);
+  assert.equal(report.banks.length, 9);
+  assert.equal(report.banks[0].role, 'Shell, launcher, registry');
+});
+
+test('ROM size delta tool compares current footprint with the checked-in baseline', () => {
+  const baseline = JSON.parse(readFileSync(resolve(root, 'docs/metrics/rom-size-baseline.json'), 'utf8'));
+  const deltaTool = readFileSync(resolve(root, 'tools/check-rom-size-delta.ts'), 'utf8');
+
+  assert.equal(baseline.schema, 'tecm8-rom-size-baseline-v1');
+  assert.equal(baseline.monitor.span, 16384);
+  assert.equal(baseline.expansionTotal.hardSpan, 65536);
+  assert.equal(baseline.banks.length, 9);
+  assert.match(deltaTool, /docs\/metrics\/rom-size-baseline\.json/);
+  assert.match(deltaTool, /baseline role mismatch/);
+  assert.match(deltaTool, /# TecMate ROM Size Delta/);
+  assert.match(deltaTool, /Occupied Delta/);
+});
+
+test('ROM size delta command prints span and occupied deltas', () => {
+  const output = execFileSync('npm', ['run', 'rom:size:delta'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+
+  assert.match(output, /# TecMate ROM Size Delta/);
+  assert.match(output, /\| Area \| Current Span \| Span Delta \| Current Occupied \| Occupied Delta \|/);
+  assert.match(output, /\| Fixed monitor \| 16384 \| 0 \| 9007 \| 0 \|/);
+  assert.match(output, /\| Expansion total \| \d+ \| [-+0-9]+ \| \d+ \| [-+0-9]+ \|/);
+  assert.match(output, /\| Bank 0 Shell, launcher, registry \|/);
 });
 
 test('ROM size budget checker can print a compact footprint summary', () => {

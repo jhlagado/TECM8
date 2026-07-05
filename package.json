@@ -12,6 +12,7 @@
     "rom:check": "npm run rom:monitor && npm run rom:expansion",
     "rom:size:check": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts",
     "rom:size:summary": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts --summary",
+    "rom:size:delta": "node --experimental-strip-types tools/check-rom-size-delta.ts",
     "rom:milestone:status": "node --experimental-strip-types tools/rom-milestone-status.ts",
     "rom:contracts:check": "node --experimental-strip-types tools/check-expansion-register-contracts.ts",
     "z80:size": "node --experimental-strip-types tools/measure-z80-size.ts",
