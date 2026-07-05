@@ -249,9 +249,10 @@ first shell verbs: `edit`, `asm`, `run`, and `dir`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
 at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
-target kind for those target-bearing commands. `dir` is classification-only for
-now: it records `SHL_ACTION_DIR` and leaves the target pointer and flags clear.
-A blank command is a
+target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`,
+leaves the target pointer and flags clear, calls the bank-2
+`TFS_SVC_SUMMARIZE_CATALOG` service, and publishes `SHL_RESULT_OK` with the
+summary count in `SHL_PARAM_COMMAND_RESULT_HI`. A blank command is a
 successful no-op: it leaves `SHL_ACTION_NONE`, records length zero, keeps status
 OK, returns `A=80h`, and clears carry. `asm` calls the bank-7 assembler
 skeleton, `run` calls the bank-8 run skeleton, and both commands copy the

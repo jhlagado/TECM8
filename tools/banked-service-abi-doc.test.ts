@@ -254,7 +254,9 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, `run`, and `dir`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC` for commands with resolved targets/);
-  assert.match(doc, /`dir` is classification-only for\s+now/);
+  assert.match(doc, /`dir` records `SHL_ACTION_DIR`/);
+  assert.match(doc, /calls the bank-2\s+`TFS_SVC_SUMMARIZE_CATALOG` service/);
+  assert.match(doc, /summary count in `SHL_PARAM_COMMAND_RESULT_HI`/);
   assert.match(doc, /leaves the target pointer and flags clear/);
   assert.match(doc, /blank command is a\s+successful no-op/);
   assert.match(doc, /leaves `SHL_ACTION_NONE`, records length zero, keeps status\s+OK/);

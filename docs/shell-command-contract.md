@@ -119,6 +119,7 @@ The short command bindings are fixed in shell v1:
 edit -> main
 asm  -> main
 run  -> derived output
+dir  -> current volume catalogue summary
 ```
 
 They are not stored in `/tecm8.prj`. This keeps the Z80 parser and project
@@ -128,6 +129,13 @@ command names themselves remain part of the shell.
 A blank command line is a successful no-op. Pressing Enter at the prompt should
 clear stale command state and return to the prompt without reporting an unknown
 command.
+
+`dir` is the first storage-backed shell command. In the current ROM increment it
+does not walk a full directory yet. It calls the bank-2 TEC-FS
+`TFS_SVC_SUMMARIZE_CATALOG` primitive over the current catalogue buffer, leaves
+the target descriptor clear, returns `SHL_RESULT_OK` on success, and stores the
+summary count in `SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS
+handoff before the real multi-entry catalogue reader is linked in.
 
 ## Reserved Tool Namespaces
 

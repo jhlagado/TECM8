@@ -109,11 +109,12 @@ expansion service vector, not by a fixed address.
 Bank 0 also exposes `SHL_RUN_COMMAND`, the first one-command shell boundary. It
 currently classifies exact `edit`, `asm`, `run`, and `dir` commands, measures
 the command length, rejects unknown commands, and clears reserved target/result
-slots. `dir` is classification-only for now and leaves the target pointer and
-flags clear. For `asm` and `run`, it publishes the default target descriptor,
-calls the banked assembler or run skeleton, and copies the tool result back into
-the shell command result slots. Those slots now have a documented result-code
-convention for the future assembler path.
+slots. `dir` leaves the target pointer and flags clear, calls the bank-2 TEC-FS
+catalogue summarizer, and publishes `SHL_RESULT_OK` with the one-slot summary
+count as the result detail. For `asm` and `run`, it publishes the default target
+descriptor, calls the banked assembler or run skeleton, and copies the tool
+result back into the shell command result slots. Those slots now have a
+documented result-code convention for the future assembler path.
 
 The intended boot path can now become:
 
@@ -138,15 +139,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-3015 occupied bytes currently
-3015 bytes total high-water span across all banks
+3059 occupied bytes currently
+3059 bytes total high-water span across all banks
 ```
 
-The current TEC-FS summary milestone keeps the expansion footprint small:
+The current shell-to-TEC-FS `dir` milestone keeps the expansion footprint small:
 
 ```text
-bank 2 span: 913 -> 1008 bytes
-expansion total span: 2920 -> 3015 bytes
+bank 0 span: 1099 -> 1143 bytes
+expansion total span: 3015 -> 3059 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

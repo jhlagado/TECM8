@@ -160,9 +160,11 @@ Tecm8ShellClearCommandState:
         ld a,(hl)
         or a
         jp z,Tecm8ShellRunNoop
+        push hl
         push de
         call Tecm8ShellCommandLength
         pop de
+        pop hl
         ld b,SHL_TARGET_KIND_NONE
         ld a,(SHL_PARAM_COMMAND_LENGTH)
         cp 0x03
@@ -265,6 +267,21 @@ Tecm8ShellRunDir:
         ld a,SHL_ACTION_DIR
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
+        ; expects out A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG
+        jp c,Tecm8ShellPublishDirError
+        ld a,SHL_RESULT_OK
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,0x80
+        or a
+        ret
+Tecm8ShellPublishDirError:
+        ld a,SHL_RESULT_FILE_ERROR
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,(TFS_PARAM_LAST_ERROR)
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
         ld a,0x80
         or a
         ret

@@ -14,7 +14,7 @@ test('TecMate OS progress note records current first-loop banked services', () =
   assert.match(doc, /file type, flags, load address,\s+end address, run address, required hardware/);
   assert.match(doc, /`SHL_RUN_COMMAND`/);
   assert.match(doc, /classifies exact `edit`, `asm`, `run`, and `dir` commands/);
-  assert.match(doc, /`dir` is classification-only for now and leaves the target pointer and\s+flags clear/);
+  assert.match(doc, /`dir` leaves the target pointer and flags clear, calls the bank-2 TEC-FS\s+catalogue summarizer/);
   assert.match(doc, /documented result-code\s+convention/);
   assert.match(doc, /clears the TMS9918 text plane/);
   assert.match(doc, /visible `TecMate ROM Shell`\s+screen/);
@@ -27,11 +27,11 @@ test('TecMate OS progress note records current first-loop banked services', () =
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /3015 occupied bytes currently/);
-  assert.match(doc, /3015 bytes total high-water span across all banks/);
-  assert.match(doc, /current TEC-FS summary milestone keeps the expansion footprint small/);
-  assert.match(doc, /bank 2 span: 913 -> 1008 bytes/);
-  assert.match(doc, /expansion total span: 2920 -> 3015 bytes/);
+  assert.match(doc, /3059 occupied bytes currently/);
+  assert.match(doc, /3059 bytes total high-water span across all banks/);
+  assert.match(doc, /current shell-to-TEC-FS `dir` milestone keeps the expansion footprint small/);
+  assert.match(doc, /bank 0 span: 1099 -> 1143 bytes/);
+  assert.match(doc, /expansion total span: 3015 -> 3059 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

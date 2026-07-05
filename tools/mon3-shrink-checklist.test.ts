@@ -17,7 +17,7 @@ test('MON3 shrink checklist prioritizes storage replacement before GLCD work', (
   assert.match(core, /Treat GLCD as low priority unless it blocks another change/);
   assert.match(core, /GLCD banner removal is a\s+measured optional cut/);
   assert.match(core, /Do not remove the disassembler or classic monitor\s+commands until storage replacement has been measured/);
-  assert.match(space, /still under 3K/);
+  assert.match(space, /just over 3K/);
   assert.match(space, /Private labels may move/);
   assert.match(space, /GLCD remains a low-priority containment issue/);
 });

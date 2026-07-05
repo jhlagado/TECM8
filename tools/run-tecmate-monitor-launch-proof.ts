@@ -41,11 +41,26 @@ const SHL_COMMAND_BUFFER = 0x3a80;
 const SHL_PARAM_COMMAND_ACTION = 0x3ba5;
 const SHL_PARAM_COMMAND_TARGET_LO = 0x3ba7;
 const SHL_PARAM_COMMAND_TARGET_HI = 0x3ba8;
+const SHL_PARAM_COMMAND_RESULT_LO = 0x3ba9;
+const SHL_PARAM_COMMAND_RESULT_HI = 0x3baa;
 const SHL_ACTION_EDIT = 0x01;
 const SHL_ACTION_DIR = 0x04;
+const SHL_RESULT_OK = 0x01;
 const SHL_TARGET_FLAGS = 0x3baf;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
+const TFS_PARAM_BUFFER_LO = 0x3b52;
+const TFS_PARAM_BUFFER_HI = 0x3b53;
+const TFS_PARAM_SUMMARY_COUNT_LO = 0x3bd2;
+const TFS_PARAM_SUMMARY_COUNT_HI = 0x3bd3;
+const TFS_PARAM_SUMMARY_FIRST_FILE_ID = 0x3bd4;
+const TFS_PARAM_SUMMARY_FIRST_FILE_TYPE = 0x3bd5;
+const TFS_PARAM_SUMMARY_FIRST_NAME_LEN = 0x3bd6;
+const TFS_PARAM_SUMMARY_FLAGS = 0x3bd7;
+const TFS_SUMMARY_FLAG_HAS_FIRST = 0x01;
 const TFS_VOLUME_MIB = 128;
+const TFS_CATALOG_BUFFER = 0x6280;
+const TFS_ENTRY_STATUS_ACTIVE = 0x01;
+const TFS_FILE_SOURCE = 0x02;
 const INP_PARAM_BANK = 0x3bc2;
 const INP_PARAM_JOYSTICK = 0x3bc6;
 const ALT_INSTALL_ADDR = 0x8200;
@@ -231,9 +246,38 @@ function writeAsciiZ(runtime: Runtime, address: number, value: string): void {
   runtime.hardware.forceMemWrite?.(address + value.length, 0x00);
 }
 
+function seedCatalogSlot(runtime: Runtime): void {
+  for (let offset = 0; offset < 0x40; offset += 1) {
+    runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + offset, 0x00);
+  }
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x00, TFS_ENTRY_STATUS_ACTIVE);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x01, 0x21);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x02, 0x02);
+  const name = 'MAIN.ASM';
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x03, name.length);
+  for (let index = 0; index < name.length; index += 1) {
+    runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x04 + index, name.charCodeAt(index));
+  }
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x2c, 0x34);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x2d, 0x12);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x2e, 0x78);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x2f, 0x56);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x30, 0x00);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x31, 0x00);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x32, TFS_FILE_SOURCE);
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_LO, TFS_CATALOG_BUFFER & 0xff);
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_HI, TFS_CATALOG_BUFFER >> 8);
+}
+
 function assertEqual(actual: number, expected: number, name: string): void {
   if (actual !== expected) {
     throw new Error(`${name}: got 0x${actual.toString(16)}, expected 0x${expected.toString(16)}`);
+  }
+}
+
+function assertStringEqual(actual: string, expected: string, name: string): void {
+  if (actual !== expected) {
+    throw new Error(`${name}: got ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)}`);
   }
 }
 
@@ -387,9 +431,10 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell status render returned carry clear');
   assertVramText(platformRuntime, 0x02e0, 'EDIT', 'shell command visible status');
   const shellCommandStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
-  assertEqual(shellCommandStatus, 'EDIT', 'captured shell command visible status');
+  assertStringEqual(shellCommandStatus, 'EDIT', 'captured shell command visible status');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell visible status SYS_CTRL restored');
 
+  seedCatalogSlot(runtime);
   writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
   runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
   runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
@@ -402,6 +447,18 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], 0x00, 'shell dir target pointer lo remains clear');
   assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], 0x00, 'shell dir target pointer hi remains clear');
   assertEqual(runtime.hardware.memory[SHL_TARGET_FLAGS], 0x00, 'shell dir target flags remain clear');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_OK, 'shell dir result ok');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x01, 'shell dir result count');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_LO], 0x01, 'shell dir TEC-FS summary count lo');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_HI], 0x00, 'shell dir TEC-FS summary count hi');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_ID], 0x21, 'shell dir TEC-FS first file id');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_TYPE], TFS_FILE_SOURCE, 'shell dir TEC-FS first file type');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_NAME_LEN], 0x08, 'shell dir TEC-FS first name length');
+  assertEqual(
+    runtime.hardware.memory[TFS_PARAM_SUMMARY_FLAGS],
+    TFS_SUMMARY_FLAG_HAS_FIRST,
+    'shell dir TEC-FS summary has-first flag',
+  );
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x80, 'shell dir command returned A');
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell dir command returned carry clear');
 
@@ -414,7 +471,7 @@ function runInstalledExpansionCase(launchAddress: number): {
   runUntilHalt(runtime, platformRuntime);
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell dir status render returned carry clear');
   assertVramText(platformRuntime, 0x02e0, 'DIR', 'shell dir visible status');
-  assertEqual(readVramAscii(platformRuntime, 0x02e0, 8).trimEnd(), 'DIR', 'captured shell dir visible status');
+  assertStringEqual(readVramAscii(platformRuntime, 0x02e0, 8).trimEnd(), 'DIR', 'captured shell dir visible status');
 
   return {
     instructions,
