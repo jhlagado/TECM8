@@ -69,6 +69,11 @@ ASM_PROOF_RESULT            .equ    0x3C10
         ld a,(ASM_PARAM_TARGET_HI)
         cp SHL_TARGET_DESC >> 8
         jp nz,AssemblerProofFail
+        ld a,0x7F
+        farCall ASM_BANK,ASM_ENTRY
+        jp nc,AssemblerProofFail
+        cp ASM_ERR_UNKNOWN
+        jp nz,AssemblerProofFail
 
         xor a
         ld (RUN_PARAM_STATUS),a
@@ -128,6 +133,11 @@ ASM_PROOF_RESULT            .equ    0x3C10
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_HI)
         cp SHL_TARGET_DESC >> 8
+        jp nz,AssemblerProofFail
+        ld a,0x7F
+        farCall RUN_BANK,RUN_ENTRY
+        jp nc,AssemblerProofFail
+        cp RUN_ERR_UNKNOWN
         jp nz,AssemblerProofFail
 
         ld a,PROOF_PASS

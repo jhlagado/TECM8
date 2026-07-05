@@ -23,14 +23,14 @@ test('assembler bank proof covers unsupported skeleton service', () => {
   const bank8 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank8.asm'), 'utf8');
 
   assert.match(proof, /ld a,"a"[\s\S]*ld a,"s"[\s\S]*ld a,"m"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_ASM/);
-  assert.doesNotMatch(proof, /farCall ASM_BANK,ASM_ENTRY/);
+  assert.match(proof, /ld a,0x7F[\s\S]*farCall ASM_BANK,ASM_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp ASM_ERR_UNKNOWN/);
   assert.doesNotMatch(proof, /ld \(ASM_PARAM_TARGET_LO\),a/);
   assert.match(proof, /ld a,\(ASM_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
   assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
   assert.match(proof, /ld a,\(ASM_PARAM_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED/);
   assert.match(proof, /ld a,\(ASM_PARAM_RESULT_HI\)[\s\S]*or a[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_HI\)[\s\S]*or a/);
   assert.match(proof, /ld a,"r"[\s\S]*ld a,"u"[\s\S]*ld a,"n"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_RUN/);
-  assert.doesNotMatch(proof, /farCall RUN_BANK,RUN_ENTRY/);
+  assert.match(proof, /ld a,0x7F[\s\S]*farCall RUN_BANK,RUN_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp RUN_ERR_UNKNOWN/);
   assert.doesNotMatch(proof, /ld \(RUN_PARAM_TARGET_LO\),a/);
   assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
   assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
