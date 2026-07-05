@@ -50,6 +50,18 @@ test('TEC-FS bank proof covers installable sector bridge dispatch', () => {
   assert.match(doc, /Unknown bridge operation selectors return `SVC_ERR_UNKNOWN`/);
 });
 
+test('TEC-FS bank proof reads a catalog-described first file sector', () => {
+  const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
+  const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
+
+  assert.match(proof, /ld a,TFS_ENTRY_STATUS_ACTIVE[\s\S]*ld \(0x6280\+TFS_CATALOG_OFFSET_STATUS\),a[\s\S]*ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*jp c,FailFileRead/);
+  assert.match(proof, /ld a,\(TFS_PARAM_ENTRY_FIRST_BLOCK_LO\)[\s\S]*ld \(TFS_PARAM_BLOCK_INDEX_LO\),a[\s\S]*ld a,\(TFS_PARAM_ENTRY_FIRST_BLOCK_HI\)[\s\S]*ld \(TFS_PARAM_BLOCK_INDEX_HI\),a/);
+  assert.match(proof, /ld a,TFS_SVC_MAP_BLOCK[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,TFS_SVC_TRANSLATE_SECTOR[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld hl,0x6001[\s\S]*ld a,TFS_SVC_READ/);
+  assert.match(proof, /ld a,\(0x6001\)[\s\S]*cp TFS_BRIDGE_READ_MARKER/);
+  assert.match(runner, /TEC-FS file read translated sector byte 0/);
+  assert.match(runner, /TEC-FS file read copied sector marker/);
+});
+
 test('TEC-FS bank proof covers locator format and read services', () => {
   const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
   const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');

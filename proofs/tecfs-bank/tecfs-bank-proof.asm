@@ -34,6 +34,7 @@ PROOF_FAIL_FORMAT_META      .equ    0xF5
 PROOF_FAIL_PATCH_META       .equ    0xF6
 PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xF7
 PROOF_FAIL_DECODE_CATALOG   .equ    0xF8
+PROOF_FAIL_FILE_READ        .equ    0xF9
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -580,6 +581,43 @@ ClearCatalogEntry:
         ld a,(TFS_PARAM_STATUS)
         cp TFS_STATUS_OK
         jp nz,FailBridgeRead
+        ld a,TFS_ENTRY_STATUS_ACTIVE
+        ld (0x6280+TFS_CATALOG_OFFSET_STATUS),a
+        ld hl,0x6280
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_DECODE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFileRead
+        cp 0x82
+        jp nz,FailFileRead
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_LO)
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_HI)
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        ld a,TFS_SVC_MAP_BLOCK
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFileRead
+        ld a,TFS_SVC_TRANSLATE_SECTOR
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFileRead
+        ld hl,0x6001
+        ld (TFS_PARAM_BUFFER_LO),hl
+        xor a
+        ld (0x6001),a
+        ld a,TFS_SVC_READ
+        farCall 0x02,TFS_ENTRY
+        jp c,FailFileRead
+        cp 0x85
+        jp nz,FailFileRead
+        ld a,(0x6001)
+        cp TFS_BRIDGE_READ_MARKER
+        jp nz,FailFileRead
+        ld a,(TFS_PARAM_SECTOR_0)
+        ld (TFS_PROOF_TRACE_BASE+9),a
+        ld a,(TFS_PARAM_SECTOR_2)
+        ld (TFS_PROOF_TRACE_BASE+10),a
+        ld a,(0x6001)
+        ld (TFS_PROOF_TRACE_BASE+11),a
 
         ld a,0x5A
         ld (0x6000),a
@@ -772,6 +810,9 @@ FailUnknownSelector:
         jr Fail
 FailDecodeCatalog:
         ld a,PROOF_FAIL_DECODE_CATALOG
+        jr Fail
+FailFileRead:
+        ld a,PROOF_FAIL_FILE_READ
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt
