@@ -97,22 +97,59 @@ Move monitor include files from `off` to `audit`, and later from `audit` to
 GLCD implementation code should not be prioritised if they are going to be
 removed or moved behind expansion ROM service boundaries.
 
-## Current Debug80 Limitation
+## Current Project Configuration
 
-The policy is wired through Debug80's ordinary AZM launch path, but TEC-1G ROM
-artifact builds currently still force:
+`debug80.json` now records the staged policy on the `main` target. The fallback
+mode is `off`, with file-specific policy buckets used to keep the new code
+strict without making the copied monitor source block ordinary ROM work.
 
-```text
-registerContracts: off
-emitRegisterReport: false
+Current target policy:
+
+```json
+{
+  "registerContracts": "off",
+  "registerContractsPolicy": {
+    "strict": [
+      "src/*.asm",
+      "src/**/*.asm",
+      "proofs/*.asm",
+      "proofs/**/*.asm",
+      "roms/tec1g/tecm8/expansion/*.asm",
+      "roms/tec1g/tecm8/expansion/**/*.asm"
+    ],
+    "audit": [
+      "roms/tec1g/tecm8/monitor/monitor.asm",
+      "roms/tec1g/tecm8/monitor/rtc.asm",
+      "roms/tec1g/tecm8/monitor/sound.asm",
+      "roms/tec1g/tecm8/monitor/disassembler.asm"
+    ],
+    "off": [
+      "roms/tec1g/mon3/**/*.asm",
+      "roms/tec1g/tecm8/monitor/glcd_library.asm",
+      "roms/tec1g/tecm8/monitor/pata_fat32.asm"
+    ]
+  },
+  "registerContractsProfile": "mon3",
+  "registerContractsInterfaces": [
+    "roms/tec1g/tecm8/expansion/tecm8-rst-services.asmi"
+  ],
+  "emitRegisterReport": true
+}
 ```
 
-That means adding the policy to `debug80.json` will help normal project source
-builds, but it will not yet check the monitor or expansion ROM artifacts during
-Debug80's automatic ROM build.
+The policy is intentionally conservative: strict for TECM8-owned expansion
+source and proofs, audit for retained monitor files, and off for old GLCD/PATA
+implementation code that is expected to be removed or moved behind banked
+services.
 
-Until Debug80 exposes contract policy to ROM artifacts, TECM8 should use local
-audit/build scripts for ROM contract checks.
+Direct-child and recursive globs are both listed deliberately. The policy must
+match files such as `src/main.asm` and `roms/tec1g/tecm8/expansion/bank0.asm`,
+not only files in nested subdirectories.
+
+`npm run rom:contracts:check` remains the release gate for the expansion ROM.
+It assembles every expansion bank directly with strict contracts and the
+TecMate RST service interface. That keeps the banked ROM surface protected even
+if a Debug80 launch path changes how target policy is applied.
 
 ## Practical Use Now
 
@@ -122,18 +159,20 @@ The existing monitor audit remains the baseline command:
 npm run mon3:contracts:audit
 ```
 
-For the banked expansion ROM, direct AZM testing with Debug80's AZM 0.2.13 shows
-that strict policy already works on the source files. The first strict pass
-currently reports a small number of real annotation/contract issues in banks 0,
-1, and 2, and no diagnostics in banks 3 through 8.
+For the banked expansion ROM, direct AZM testing is now clean through the local
+release gate:
+
+```text
+npm run rom:contracts:check
+```
 
 That makes the sensible rollout:
 
 1. Keep expansion ROM code strict by default.
-2. Fix or annotate the current bank 0-2 diagnostics.
+2. Keep exact `.asmi` contracts for registered `RST 10h` services.
 3. Keep monitor cleanup file-scoped and incremental.
-4. Ask Debug80 to stop forcing register contracts off for TEC-1G ROM artifact
-   builds, or to add artifact-level AZM policy.
+4. Move retained monitor includes from audit toward strict only when we are
+   already editing them for TecMate.
 
 ## Debug80 Request
 

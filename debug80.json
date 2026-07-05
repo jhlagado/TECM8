@@ -28,6 +28,35 @@
       "artifactBase": "main",
       "platform": "tec1g",
       "profile": "tecm8",
+      "azm": {
+        "registerContracts": "off",
+        "registerContractsPolicy": {
+          "strict": [
+            "src/*.asm",
+            "src/**/*.asm",
+            "proofs/*.asm",
+            "proofs/**/*.asm",
+            "roms/tec1g/tecm8/expansion/*.asm",
+            "roms/tec1g/tecm8/expansion/**/*.asm"
+          ],
+          "audit": [
+            "roms/tec1g/tecm8/monitor/monitor.asm",
+            "roms/tec1g/tecm8/monitor/rtc.asm",
+            "roms/tec1g/tecm8/monitor/sound.asm",
+            "roms/tec1g/tecm8/monitor/disassembler.asm"
+          ],
+          "off": [
+            "roms/tec1g/mon3/**/*.asm",
+            "roms/tec1g/tecm8/monitor/glcd_library.asm",
+            "roms/tec1g/tecm8/monitor/pata_fat32.asm"
+          ]
+        },
+        "registerContractsProfile": "mon3",
+        "registerContractsInterfaces": [
+          "roms/tec1g/tecm8/expansion/tecm8-rst-services.asmi"
+        ],
+        "emitRegisterReport": true
+      },
       "sourceRoots": [
         "src",
         "roms/tec1g/mon3",
