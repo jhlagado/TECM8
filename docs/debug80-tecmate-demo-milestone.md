@@ -7,6 +7,23 @@ demonstrate that the banked services are doing useful work together.
 The point is not to finish the editor, assembler, TEC-FS, or game profile. The
 point is to make the new ROM architecture observable as a small runnable system.
 
+## ROM Demo Command
+
+The current proof-backed ROM demo path is:
+
+```text
+npm run demo:tecmate-rom
+```
+
+That command builds the TECM8 fixed monitor ROM, builds the banked expansion
+ROM image, runs the Debug80 monitor-launch proof, and prints the ROM size
+summary. It is the first command to run before a manual Debug80 inspection.
+
+This is not the older GLCD editor demo path. Do not load `src/main.asm`, build
+`debug80:editor-image`, or use MON3 `GO 4000h` when testing this milestone.
+Those remain useful for the previous RAM editor prototype, but this milestone
+is about the monitor-owned ROM launch path.
+
 ## Demo Shape
 
 The demo should run through Debug80 with the normal TECM8 project ROM artifacts:
@@ -55,6 +72,27 @@ The milestone is complete when:
 This should be an automated Debug80 proof first, with a short manual Debug80
 script added once the proof exists. The manual script should be used for human
 confidence, not as the only release gate.
+
+## Manual Debug80 Script
+
+1. From the TECM8 repo root, run `npm run demo:tecmate-rom`.
+2. Open Debug80 with the TECM8 profile after the command has generated the ROM
+   artifacts. The current `main` target may still compile the older
+   `src/main.asm` RAM program; for this milestone, use Debug80 only to inspect
+   the generated ROM artifacts, reset the machine, and enter the monitor
+   `Expansion` menu item.
+3. Confirm the machine is using these generated artifacts:
+   - monitor ROM: `build/roms/tec1g/tecm8/monitor/monitor.bin`
+   - expansion ROM: `build/roms/tec1g/tecm8/expansion/expansion-144k.bin`
+4. Reset the machine and let the monitor start normally. Do not start a RAM
+   program at `4000h`.
+5. Enter the monitor `Expansion` menu item. That path should discover bank 0,
+   call the installed expansion menu vector, and return through the monitor
+   bank-call path.
+6. On the TMS9918 VDU, expect the bank-0 scaffold to write the visible
+   `TecMate` splash and `READY` status text.
+7. If the manual screen differs, compare it with the automated evidence in
+   `proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json`.
 
 ## Non-Goals
 

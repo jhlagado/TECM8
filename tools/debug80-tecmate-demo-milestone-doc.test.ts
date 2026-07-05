@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const root = resolve(__dirname, '..');
 const docPath = resolve(root, 'docs/debug80-tecmate-demo-milestone.md');
 const doc = readFileSync(docPath, 'utf8');
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
 test('Debug80 TecMate demo milestone document exists and scopes the demo', () => {
   assert.equal(existsSync(docPath), true);
@@ -23,6 +24,30 @@ test('Debug80 TecMate demo milestone defines observable service flow', () => {
   assert.match(doc, /input snapshot read/);
   assert.match(doc, /TEC-FS service boundary touched/);
   assert.match(doc, /shell status\/result shown/);
+});
+
+test('Debug80 TecMate demo milestone defines the ROM demo command', () => {
+  assert.equal(
+    pkg.scripts['demo:tecmate-rom'],
+    'npm run rom:check && node --experimental-strip-types tools/run-tecmate-monitor-launch-proof.ts && node --experimental-strip-types tools/check-rom-size-budget.ts --summary',
+  );
+  assert.match(doc, /## ROM Demo Command/);
+  assert.match(doc, /npm run demo:tecmate-rom/);
+  assert.match(doc, /builds the TECM8 fixed monitor ROM/);
+  assert.match(doc, /runs the Debug80 monitor-launch proof/);
+  assert.match(doc, /prints the ROM size\s+summary/);
+  assert.match(doc, /not the older GLCD editor demo path/);
+});
+
+test('Debug80 TecMate demo milestone records the manual ROM launch script', () => {
+  assert.match(doc, /## Manual Debug80 Script/);
+  assert.match(doc, /monitor ROM: `build\/roms\/tec1g\/tecm8\/monitor\/monitor\.bin`/);
+  assert.match(doc, /expansion ROM: `build\/roms\/tec1g\/tecm8\/expansion\/expansion-144k\.bin`/);
+  assert.match(doc, /`main` target may still compile the older\s+`src\/main\.asm` RAM program/);
+  assert.match(doc, /use Debug80 only to inspect\s+the generated ROM artifacts/);
+  assert.match(doc, /Do not start a RAM\s+program at `4000h`/);
+  assert.match(doc, /Enter the monitor `Expansion` menu item/);
+  assert.match(doc, /`TecMate` splash and `READY` status text/);
 });
 
 test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
