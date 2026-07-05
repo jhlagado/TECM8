@@ -92,6 +92,211 @@ use the same principles as the rest of the system: explicit contracts, small
 stable service surfaces, banked code where size demands it, and runnable proof
 targets in Debug80 before depending on hardware validation.
 
+## Broader Runtime Framing
+
+The game system should not be designed as a game engine that later grows random
+application features. That direction would likely become messy.
+
+The better frame is:
+
+```text
+Can the same studio + runtime + AZM routine model be generalised beyond games?
+```
+
+Yes. The game studio should be the first specialised profile of a broader TECM8
+application creation model.
+
+The generalisable pattern is:
+
+```text
+visual/resource editor
++ runtime services
++ object or event hooks
++ user-written AZM/Z80 routines
++ packaged output
+```
+
+For games, the nouns are:
+
+- room
+- actor
+- sprite
+- tile
+- collision
+- update
+- touch
+- spawn
+
+For wider software, the nouns become:
+
+- screen
+- object
+- widget
+- document
+- record
+- command
+- event
+- file
+- timer
+
+The deep model stays the same. Only the profile vocabulary changes. A game
+actor is a runtime object with state and event handlers. A button, menu item,
+form field, text window, file entry, serial terminal, music pattern, or editor
+buffer can use the same underlying idea.
+
+## Frame Loop And Event Loop
+
+Games are naturally frame-loop programs:
+
+```text
+read input
+update actors
+detect collisions
+render
+play sound
+repeat
+```
+
+General applications are more naturally event-loop programs:
+
+```text
+wait for key/input/timer/file event
+dispatch event to the current screen or object
+update state
+redraw changed parts
+repeat
+```
+
+The long-term TECM8 runtime should support both modes:
+
+```text
+Runtime Kernel
+  frame/tick loop        for games, demos, animation
+  event loop             for apps, editors, and tools
+  screen manager
+  input manager
+  file services
+  text/graphics services
+  object/event dispatcher
+  AZM routine hooks
+```
+
+The first game slice does not need to implement this whole kernel. It should,
+however, avoid choices that make the runtime impossible to generalise later.
+
+## Object/Event Model Direction
+
+The broader model is an object with state and event routines.
+
+Game objects might include:
+
+- player
+- enemy
+- bullet
+- coin
+- door
+
+Application objects might include:
+
+- button
+- menu
+- text field
+- list
+- cursor
+- document
+- serial port
+- file entry
+
+Potential object events include:
+
+- init
+- draw
+- key
+- select
+- update or tick
+- open
+- close
+- save
+- load
+
+A game actor may use `INIT`, `UPDATE`, `TOUCH`, and `DESTROY`. A menu item may
+use `DRAW` and `SELECT`. A text editor buffer may use `OPEN`, `KEY`, `SAVE`,
+and `DRAW`. A serial terminal may use `KEY`, `RX_BYTE`, `DRAW`, and `TIMER`.
+
+The mechanism is the same:
+
+```z80
+SaveButton_Select:
+    CALL API_SaveCurrentDocument
+    RET
+```
+
+is conceptually the same as:
+
+```z80
+Coin_Touch:
+    CALL API_AddScore
+    CALL API_DestroyCurrentActor
+    RET
+```
+
+The object changed. The hook model did not.
+
+## Future Profiles
+
+The mature system can become an integrated Z80 application studio with several
+profiles:
+
+- game profile
+- text application profile
+- utility application profile
+- music/art profile
+- card or hypertext profile
+- development tool profile
+
+The game profile should still come first. Games force the runtime to be fast,
+small, and honest about machine limits. If TECM8 can support simple games, it
+can likely support many screen-based utilities. The reverse is not guaranteed.
+
+The broader system is strongest for software that is:
+
+- screen-based
+- event-driven
+- resource-based
+- stateful but compact
+- educational
+- interactive
+
+Good later targets include music trackers, sprite editors, tile editors, map
+editors, text adventures, calculators, serial terminals, simple card-file apps,
+HyperCard-like stacks, menu utilities, file managers, disk tools, monitors,
+debuggers, configuration tools, and teaching programs.
+
+Harder targets include full word processors, large spreadsheets, large
+databases, web-like document systems, complex compiler toolchains, multi-window
+GUIs, large file editing, rich proportional text layout, and serious networking
+applications. Those are not impossible, but the memory, display, and data
+structure constraints become the main design problem.
+
+## Non-Game Services Needed Later
+
+To generalise beyond games, TECM8 will need services that ordinary game engines
+often underemphasise:
+
+- text drawing, text boxes, scrolling regions, cursors, input fields, wrapping,
+  insert/delete helpers
+- file and document operations for open, read, write, append, save, load, list,
+  rename, and delete
+- small UI objects such as menus, buttons, lists, text fields, dialogs, status
+  bars, scrollable text areas, and file pickers
+- fixed block, line buffer, document buffer, scratch buffer, resource handle,
+  and bank/segment conventions
+- command tables for actions such as new, open, save, quit, copy, paste, find,
+  run, build, and export
+
+These are not first-slice game requirements. They are the reason to keep the
+game runtime cleanly layered rather than hard-wired to a single game shape.
+
 ## Why Not BASIC
 
 BASIC was valuable because it was immediate, small, and approachable. It is a
@@ -445,18 +650,21 @@ runnable Debug80 target.
 
 ## Long-Term Vision
 
-The mature system should feel like a retro game creation studio for a
-Z80/TMS9918-class TECM8 profile:
+The mature system should feel like a retro software creation studio for a
+Z80/TMS9918-class TECM8 profile. Games are the first and most demanding path,
+but the deeper idea is a structured Z80 application studio:
 
 - assets are built visually or through structured tools
-- game logic is written in real Z80
-- the engine provides fast common primitives
+- object and event logic is written in real Z80
+- runtime profiles provide fast common primitives
 - the debugger makes the machine visible
 - performance is part of the learning loop
-- games can be packaged, run, exported, shared, and remixed
+- games and compact applications can be packaged, run, exported, shared, and
+  remixed
 
 The philosophical centre remains:
 
 ```text
-Make real machine code approachable by giving it a game-shaped environment.
+Make real machine code approachable through structured, profile-driven creation,
+with games as the first and most demanding profile.
 ```
