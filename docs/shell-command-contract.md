@@ -136,6 +136,10 @@ Reserved game-development commands:
 game build
 game run
 game debug
+profile build
+profile run
+profile info
+profile clean
 ```
 
 These commands are placeholders for the later game runtime/tool profile. They
@@ -146,6 +150,43 @@ debugger services once those services exist.
 The current bank-0 `SHL_RUN_COMMAND` boundary still classifies only exact
 single-word `edit`, `asm`, and `run`. It should reject `game` until a real
 multi-word shell parser and game tool dispatcher are implemented.
+
+## Future Profile Command Surface
+
+Profile commands should layer on the ordinary shell workflow rather than
+becoming a separate shell. The first useful profile surface is:
+
+```text
+profile info
+profile build
+profile run
+profile clean
+game build
+game run
+game debug
+```
+
+`profile` is the generic namespace. `game` is an alias or specialised namespace
+for the first game-oriented profile once that profile exists. Both namespaces
+require a real multi-word parser and must remain disabled in the v1 one-word
+command classifier.
+
+Command responsibilities should stay narrow:
+
+- `profile info`: show resolved project, profile, package, and required-hardware
+  paths or flags.
+- `profile build`: run the profile preprocessor, assemble generated source, and
+  write binary, map, package, and size metadata.
+- `profile run`: validate the package and launch through the same runner path
+  as ordinary `run`.
+- `profile clean`: remove generated profile outputs, not user source or source
+  assets.
+- `game build`, `game run`, and `game debug`: game-profile conveniences over
+  the same generic profile services.
+
+The shell should not parse profile source itself. It should read project
+metadata, resolve paths, dispatch the appropriate tool, and report concise
+status or errors.
 
 ## Command Resolution
 

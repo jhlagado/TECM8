@@ -150,16 +150,10 @@ ClearTrace:
         ld (ABI_TRACE_BASE+53),a
         ld a,(SHL_TARGET_FLAGS)
         ld (ABI_TRACE_BASE+54),a
-        ld a,"g"
-        ld (SHL_COMMAND_BUFFER),a
-        ld a,"a"
-        ld (SHL_COMMAND_BUFFER+1),a
-        ld a,"m"
-        ld (SHL_COMMAND_BUFFER+2),a
-        ld a,"e"
-        ld (SHL_COMMAND_BUFFER+3),a
-        xor a
-        ld (SHL_COMMAND_BUFFER+4),a
+        ld hl,ProfileCommand
+        ld de,SHL_COMMAND_BUFFER
+        ld bc,8
+        ldir
         callService SHL_RUN_COMMAND
         ld (ABI_TRACE_BASE+33),a
         ld a,(SHL_PARAM_STATUS)
@@ -178,6 +172,14 @@ ClearTrace:
         ld (ABI_TRACE_BASE+60),a
         ld a,(SHL_PARAM_COMMAND_RESULT_HI)
         ld (ABI_TRACE_BASE+61),a
+        ld hl,GameCommand
+        ld de,SHL_COMMAND_BUFFER
+        ld bc,5
+        ldir
+        callService SHL_RUN_COMMAND
+        ld (ABI_TRACE_BASE+64),a
+        ld a,(SHL_PARAM_STATUS)
+        ld (ABI_TRACE_BASE+65),a
         callService INP_READ
         ld (ABI_TRACE_BASE+39),a
         ld a,(INP_PARAM_JOYSTICK)
@@ -222,3 +224,9 @@ ReturningFarJumpProbe:
 
 ResultMarker:
         .db     0
+
+ProfileCommand:
+        .db     "profile",0
+
+GameCommand:
+        .db     "game",0

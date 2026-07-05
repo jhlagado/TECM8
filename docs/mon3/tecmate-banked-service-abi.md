@@ -814,7 +814,7 @@ reused accidentally by service implementations.
 | `ABI_TRACE_7` | `3107h` | Bank ABI proof trace byte 7. |
 | `ABI_TRACE_8` | `3108h` | Bank ABI proof trace byte 8. |
 | `ABI_TRACE_9` | `3109h` | Bank ABI proof trace byte 9. |
-| `ABI_FARJUMP_LANDED` | `4200h` | RAM landing routine for the far-jump proof. |
+| `ABI_FARJUMP_LANDED` | `4300h` | RAM landing routine for the far-jump proof. |
 | `ABI_PROBE_REQUEST` | `311Ch` | RAM selector used when a proof must preserve caller `A`. |
 | `ABI_PROBE_NESTED` | `90h` | Proof selector for nested bank-call dispatch. |
 | `ABI_PROBE_PRESERVE` | `91h` | Proof selector for register-preservation dispatch. |

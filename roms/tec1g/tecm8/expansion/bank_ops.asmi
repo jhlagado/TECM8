@@ -68,7 +68,7 @@ ABI_TRACE_6           .equ    ABI_TRACE_BASE+6
 ABI_TRACE_7           .equ    ABI_TRACE_BASE+7
 ABI_TRACE_8           .equ    ABI_TRACE_BASE+8
 ABI_TRACE_9           .equ    ABI_TRACE_BASE+9
-ABI_FARJUMP_LANDED    .equ    0x4200
+ABI_FARJUMP_LANDED    .equ    0x4300
 ABI_PROBE_REQUEST     .equ    ABI_TRACE_BASE+28
 
 EXP_BANK0_INSTALL         .equ    0x800B

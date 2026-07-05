@@ -250,7 +250,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 64);
+  const trace = readTrace(runtime, traceBase, 66);
   const shellStatusBuffer = symbolNumber(symbols, 'SHL_STATUS_BUFFER');
   const shellStatusCapacity = symbolNumber(symbols, 'SHL_STATUS_CAPACITY');
   const statusBytes = readTrace(runtime, shellStatusBuffer, shellStatusCapacity);
@@ -284,8 +284,8 @@ async function main(): Promise<void> {
   assertEqual(trace[30], 0x80, 'service registry dispatched shell run command');
   assertEqual(trace[31], 0x02, 'shell command loop classified asm action');
   assertEqual(trace[32], 0x03, 'shell command loop measured asm length');
-  assertEqual(trace[33], 0xEE, 'shell command loop rejected unknown command');
-  assertEqual(trace[34], 0x01, 'shell command loop reported unknown status');
+  assertEqual(trace[33], 0xEE, 'shell command loop rejected profile namespace');
+  assertEqual(trace[34], 0x01, 'shell command loop reported profile namespace unknown');
   assertEqual(trace[35], 0xAB, 'shell command loop published target descriptor low byte');
   assertEqual(trace[36], 0x3B, 'shell command loop published target descriptor high byte');
   assertEqual(trace[37], 0x04, 'shell asm command published unsupported result');
@@ -315,6 +315,8 @@ async function main(): Promise<void> {
   assertEqual(trace[61], 0x00, 'unknown command cleared result high byte');
   assertEqual(trace[62], 0x52, 'shell entry published status buffer first byte');
   assertEqual(trace[63], 0x45, 'shell entry published status buffer second byte');
+  assertEqual(trace[64], 0xEE, 'shell command loop rejected game namespace');
+  assertEqual(trace[65], 0x01, 'shell command loop reported game namespace unknown');
   assertEqual(statusBytes[0], 0x52, 'shell status buffer first byte');
   assertEqual(statusBytes[1], 0x45, 'shell status buffer second byte');
   assertEqual(statusBytes[2], 0x41, 'shell status buffer third byte');

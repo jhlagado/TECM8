@@ -57,11 +57,35 @@ test('shell command contract reserves game command namespace without enabling it
   assert.match(doc, /game build/);
   assert.match(doc, /game run/);
   assert.match(doc, /game debug/);
+  assert.match(doc, /profile build/);
+  assert.match(doc, /profile run/);
+  assert.match(doc, /profile info/);
+  assert.match(doc, /profile clean/);
   assert.match(doc, /placeholders for the later game runtime\/tool profile/);
   assert.match(doc, /should not replace the general `edit`, `asm`, and `run` commands/);
   assert.match(doc, /`SHL_RUN_COMMAND` boundary still classifies only exact\s+single-word `edit`, `asm`, and `run`/);
   assert.match(doc, /It should reject `game` until a real\s+multi-word shell parser and game tool dispatcher are implemented/);
   assert.doesNotMatch(ops, /SHL_ACTION_GAME/);
-  assert.match(proof, /ld a,"g"[\s\S]*ld \(SHL_COMMAND_BUFFER\),a[\s\S]*ld a,"a"[\s\S]*ld \(SHL_COMMAND_BUFFER\+1\),a[\s\S]*ld a,"m"[\s\S]*ld \(SHL_COMMAND_BUFFER\+2\),a[\s\S]*ld a,"e"[\s\S]*ld \(SHL_COMMAND_BUFFER\+3\),a/);
-  assert.match(bankAbiRunner, /shell command loop rejected unknown command/);
+  assert.doesNotMatch(ops, /SHL_ACTION_PROFILE/);
+  assert.match(proof, /ld hl,ProfileCommand[\s\S]*ld de,SHL_COMMAND_BUFFER[\s\S]*ld bc,8[\s\S]*ldir/);
+  assert.match(proof, /ProfileCommand:\s*\.db\s+"profile",0/);
+  assert.match(proof, /ld hl,GameCommand[\s\S]*ld de,SHL_COMMAND_BUFFER[\s\S]*ld bc,5[\s\S]*ldir/);
+  assert.match(proof, /GameCommand:\s*\.db\s+"game",0/);
+  assert.match(bankAbiRunner, /shell command loop rejected profile namespace/);
+  assert.match(bankAbiRunner, /shell command loop rejected game namespace/);
+});
+
+test('shell command contract defines future profile command surface', () => {
+  assert.match(doc, /## Future Profile Command Surface/);
+  assert.match(doc, /Profile commands should layer on the ordinary shell workflow/);
+  assert.match(doc, /profile info/);
+  assert.match(doc, /profile build/);
+  assert.match(doc, /profile run/);
+  assert.match(doc, /profile clean/);
+  assert.match(doc, /`profile` is the generic namespace/);
+  assert.match(doc, /`game` is an alias or specialised namespace/);
+  assert.match(doc, /must remain disabled in the v1 one-word\s+command classifier/);
+  assert.match(doc, /`profile build`: run the profile preprocessor, assemble generated source/);
+  assert.match(doc, /`profile run`: validate the package and launch through the same runner path\s+as ordinary `run`/);
+  assert.match(doc, /The shell should not parse profile source itself/);
 });
