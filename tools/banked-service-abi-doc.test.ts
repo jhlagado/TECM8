@@ -212,11 +212,14 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC`/);
-  assert.match(doc, /publishes\s+`SHL_RESULT_UNSUPPORTED` for `asm` until the assembler is linked/);
+  assert.match(doc, /`asm` calls the bank-7\s+assembler skeleton/);
+  assert.match(doc, /`run` calls the bank-8 run skeleton/);
+  assert.match(doc, /copy\s+the bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
   assert.match(doc, /`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`/);
   assert.match(doc, /`run` uses\s+`SHL_TARGET_KIND_PROJECT_OUTPUT`/);
   assert.match(doc, /low\s+result byte should use `SHL_RESULT_\*`/);
   assert.match(doc, /assembler diagnostic line or zero when no detail applies/);
+  assert.match(doc, /bank-7\s+assembler skeleton and bank-8 run skeleton currently publish\s+`SHL_RESULT_UNSUPPORTED`/);
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
@@ -440,8 +443,9 @@ test('banked service ABI doc covers bank 8 run skeleton slots and parameters', (
   assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
   assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
-  assert.match(doc, /assembler\/run skeleton proof first calls `SHL_RUN_COMMAND`/);
-  assert.match(doc, /copies the shell-published `SHL_TARGET_DESC` pointer/);
+  assert.match(doc, /`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff/);
+  assert.match(doc, /copies that pointer into the\s+relevant bank-local parameter block/);
+  assert.match(doc, /copies the\s+bank-local result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {

@@ -156,8 +156,8 @@ Shell parameter block:
 | `SHL_PARAM_COMMAND_LENGTH` | `3BA6h` | Last zero-terminated command length. |
 | `SHL_PARAM_COMMAND_TARGET_LO` | `3BA7h` | Low byte of the command target descriptor pointer. |
 | `SHL_PARAM_COMMAND_TARGET_HI` | `3BA8h` | High byte of the command target descriptor pointer. |
-| `SHL_PARAM_COMMAND_RESULT_LO` | `3BA9h` | Low byte of the command result value, currently cleared. |
-| `SHL_PARAM_COMMAND_RESULT_HI` | `3BAAh` | High byte of the command result value, currently cleared. |
+| `SHL_PARAM_COMMAND_RESULT_LO` | `3BA9h` | Low byte of the latest shell/tool result value. |
+| `SHL_PARAM_COMMAND_RESULT_HI` | `3BAAh` | High byte of the latest shell/tool result value. |
 | `SHL_TARGET_DESC` | `3BABh` | Five-byte v1 command target descriptor. |
 | `SHL_TARGET_ACTION` | `3BABh` | Descriptor action copied from `SHL_PARAM_COMMAND_ACTION`. |
 | `SHL_TARGET_KIND` | `3BACh` | Descriptor target kind. |
@@ -205,9 +205,10 @@ through the expansion service registry. The current boundary classifies the
 first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
-at `SHL_TARGET_DESC`, writes a default target kind, publishes
-`SHL_RESULT_UNSUPPORTED` for `asm` until the assembler is linked, and returns
-`A=80h` with carry clear. Unknown or empty commands store
+at `SHL_TARGET_DESC`, and writes a default target kind. `asm` calls the bank-7
+assembler skeleton, `run` calls the bank-8 run skeleton, and both commands copy
+the bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI`
+before returning `A=80h` with carry clear. Unknown or empty commands store
 `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
 `SHL_PARAM_LAST_ERROR`, leave the target/result slots clear, return
 `A=SVC_ERR_UNKNOWN`, and set carry. The later editor, assembler, and launcher
@@ -227,9 +228,10 @@ detail, such as an assembler diagnostic line or zero when no detail applies.
 The current `SHL_RUN_COMMAND` classifier creates only a minimal target
 descriptor: `edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
 `SHL_TARGET_KIND_PROJECT_OUTPUT`; the path pointer remains zero until project
-config parsing and path resolution are linked behind the shell. `asm` also
-sets `SHL_PARAM_COMMAND_RESULT_LO` to `SHL_RESULT_UNSUPPORTED` so callers can
-distinguish a recognized assembler command from an installed assembler tool.
+config parsing and path resolution are linked behind the shell. The bank-7
+assembler skeleton and bank-8 run skeleton currently publish
+`SHL_RESULT_UNSUPPORTED`, so callers can distinguish recognized tool commands
+from unknown shell commands while the real tools are still absent.
 
 ## Bank 1: VDU/TMS9918
 
@@ -761,11 +763,12 @@ bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
 `RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
 descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
 
-The assembler/run skeleton proof first calls `SHL_RUN_COMMAND` for `asm` and
-`run`, copies the shell-published `SHL_TARGET_DESC` pointer into the relevant
-bank-local parameter block, and then calls bank 7 or bank 8. That keeps the
-proof tied to the real shell descriptor handoff rather than manually seeding
-the same bytes.
+`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff for `asm` and
+`run`. It publishes the shell `SHL_TARGET_DESC`, copies that pointer into the
+relevant bank-local parameter block, calls bank 7 or bank 8, and copies the
+bank-local result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI`. The
+assembler/run skeleton proof verifies that behaviour through the shell boundary
+rather than manually calling the tool banks.
 
 ## Proof Hooks
 

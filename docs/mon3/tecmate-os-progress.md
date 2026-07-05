@@ -103,8 +103,10 @@ service vector, not by a fixed address.
 Bank 0 also exposes `SHL_RUN_COMMAND`, the first one-command shell boundary. It
 currently classifies exact `edit`, `asm`, and `run` commands, measures the
 command length, rejects unknown commands, and clears reserved target/result
-slots. Those slots now have a documented result-code convention for the future
-assembler path.
+slots. For `asm` and `run`, it now publishes the default target descriptor,
+calls the banked assembler or run skeleton, and copies the tool result back into
+the shell command result slots. Those slots now have a documented result-code
+convention for the future assembler path.
 
 The intended boot path can now become:
 
@@ -129,8 +131,8 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2320 occupied bytes currently
-2320 bytes total high-water span across all banks
+2389 occupied bytes currently
+2389 bytes total high-water span across all banks
 ```
 
 That changes the strategy. We do not need to gut MON3 immediately just to make

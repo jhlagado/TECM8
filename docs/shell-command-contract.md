@@ -247,9 +247,10 @@ SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
 ```
 
 Until project parsing and the assembler are linked behind the shell,
-`SHL_RUN_COMMAND` only classifies `asm`, points the target slot at the minimal
-`SHL_TARGET_DESC`, marks that descriptor as the project-main default, and
-publishes `SHL_RESULT_UNSUPPORTED`.
+`SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal
+`SHL_TARGET_DESC`, marks that descriptor as the project-main default, calls the
+bank-7 assembler skeleton, and publishes the skeleton's
+`SHL_RESULT_UNSUPPORTED` result.
 
 ## `run`
 

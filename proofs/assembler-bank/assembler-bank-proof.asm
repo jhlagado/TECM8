@@ -34,14 +34,10 @@ ASM_PROOF_RESULT            .equ    0x3C10
         cp SHL_TARGET_KIND_PROJECT_MAIN
         jp nz,AssemblerProofFail
         ld a,(SHL_PARAM_COMMAND_TARGET_LO)
-        ld (ASM_PARAM_TARGET_LO),a
+        cp SHL_TARGET_DESC & 0xFF
+        jp nz,AssemblerProofFail
         ld a,(SHL_PARAM_COMMAND_TARGET_HI)
-        ld (ASM_PARAM_TARGET_HI),a
-
-        ld a,ASM_SVC_ASSEMBLE
-        farCall ASM_BANK,ASM_ENTRY
-        jp nc,AssemblerProofFail
-        cp ASM_ERR_UNSUPPORTED
+        cp SHL_TARGET_DESC >> 8
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_BANK)
         cp ASM_BANK
@@ -59,6 +55,12 @@ ASM_PROOF_RESULT            .equ    0x3C10
         cp SHL_RESULT_UNSUPPORTED
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_RESULT_HI)
+        or a
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_UNSUPPORTED
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
         or a
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_TARGET_LO)
@@ -92,14 +94,10 @@ ASM_PROOF_RESULT            .equ    0x3C10
         cp SHL_TARGET_KIND_PROJECT_OUTPUT
         jp nz,AssemblerProofFail
         ld a,(SHL_PARAM_COMMAND_TARGET_LO)
-        ld (RUN_PARAM_TARGET_LO),a
+        cp SHL_TARGET_DESC & 0xFF
+        jp nz,AssemblerProofFail
         ld a,(SHL_PARAM_COMMAND_TARGET_HI)
-        ld (RUN_PARAM_TARGET_HI),a
-
-        ld a,RUN_SVC_RUN
-        farCall RUN_BANK,RUN_ENTRY
-        jp nc,AssemblerProofFail
-        cp RUN_ERR_UNSUPPORTED
+        cp SHL_TARGET_DESC >> 8
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_BANK)
         cp RUN_BANK
@@ -117,6 +115,12 @@ ASM_PROOF_RESULT            .equ    0x3C10
         cp SHL_RESULT_UNSUPPORTED
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_RESULT_HI)
+        or a
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_UNSUPPORTED
+        jp nz,AssemblerProofFail
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
         or a
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_TARGET_LO)

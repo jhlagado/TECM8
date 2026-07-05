@@ -13,15 +13,15 @@ test('TecMate OS progress note records current first-loop banked services', () =
   assert.match(doc, /formats a blank\s+`TFM1` metadata record/);
   assert.match(doc, /file type, flags, load address,\s+end address, run address, required hardware/);
   assert.match(doc, /`SHL_RUN_COMMAND`/);
-  assert.match(doc, /documented result-code convention/);
+  assert.match(doc, /documented result-code\s+convention/);
   assert.match(doc, /cursor-preserving status line/);
   assert.match(doc, /input snapshot service for matrix keyboard and joystick state/);
 });
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /2320 occupied bytes currently/);
-  assert.match(doc, /2320 bytes total high-water span across all banks/);
+  assert.match(doc, /2389 occupied bytes currently/);
+  assert.match(doc, /2389 bytes total high-water span across all banks/);
 });
 
 test('TecMate OS progress note keeps game work behind general services', () => {

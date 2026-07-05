@@ -175,7 +175,9 @@ Tecm8ShellSplashError:
         ld a,(hl)
         or a
         jp z,Tecm8ShellRunUnknown
+        push de
         call Tecm8ShellCommandLength
+        pop de
         ld b,SHL_TARGET_KIND_NONE
         ld a,(SHL_PARAM_COMMAND_LENGTH)
         cp 0x03
@@ -239,10 +241,29 @@ Tecm8ShellRunEdit:
 Tecm8ShellRunAsm:
         ld a,SHL_ACTION_ASM
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
-        jp Tecm8ShellRunUnsupportedTool
+        call Tecm8ShellPublishTarget
+        ld hl,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (ASM_PARAM_TARGET_LO),hl
+        or a
+        ; expects out A,carry
+        callBankService ASM_BANK,ASM_ENTRY,ASM_SVC_ASSEMBLE
+        call Tecm8ShellPublishAsmResult
+        ld a,0x80
+        or a
+        ret
 Tecm8ShellRunRun:
         ld a,SHL_ACTION_RUN
         ld b,SHL_TARGET_KIND_PROJECT_OUTPUT
+        call Tecm8ShellPublishTarget
+        ld hl,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (RUN_PARAM_TARGET_LO),hl
+        or a
+        ; expects out A,carry
+        callBankService RUN_BANK,RUN_ENTRY,RUN_SVC_RUN
+        call Tecm8ShellPublishRunResult
+        ld a,0x80
+        or a
+        ret
 Tecm8ShellRunOk:
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
@@ -255,14 +276,17 @@ Tecm8ShellRunOk:
         ld a,0x80
         or a
         ret
-Tecm8ShellRunUnsupportedTool:
-        call Tecm8ShellPublishTarget
-        ld a,SHL_RESULT_UNSUPPORTED
+Tecm8ShellPublishAsmResult:
+        ld a,(ASM_PARAM_RESULT_LO)
         ld (SHL_PARAM_COMMAND_RESULT_LO),a
-        xor a
+        ld a,(ASM_PARAM_RESULT_HI)
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
-        ld a,0x80
-        or a
+        ret
+Tecm8ShellPublishRunResult:
+        ld a,(RUN_PARAM_RESULT_LO)
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,(RUN_PARAM_RESULT_HI)
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
         ret
 Tecm8ShellPublishTarget:
         ld (SHL_PARAM_COMMAND_ACTION),a

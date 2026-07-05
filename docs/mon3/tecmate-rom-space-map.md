@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `659` | `659` | `8293h` | `15725` |
+| 0 | Shell, launcher, registry | `728` | `728` | `82D8h` | `15656` |
 | 1 | VDU/TMS9918 boundary | `532` | `532` | `8214h` | `15852` |
 | 2 | TEC-FS boundary and block mapper | `799` | `799` | `831Fh` | `15585` |
 | 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2320`
+Expansion occupied bytes: `2389`
 
-Expansion high-water span total: `2320`
+Expansion high-water span total: `2389`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -91,10 +91,10 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `805Ch` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `826Ah` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 service registry | `82AFh` | Private service ID to bank/address/target-`A` table. |
 | Bank 0 shell entry | `809Ah` | Private descriptor and VDU splash path for `SHL_ENTRY`. |
 | Bank 0 shell command boundary | `8102h` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 info marker | `8265h` | Private marker, not a fixed ABI location. |
+| Bank 0 info marker | `82AAh` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |
@@ -108,7 +108,7 @@ registry, and marker labels are current private bank-0 layout.
 
 - The immediate pressure is still in fixed monitor ROM, not the expansion ROM.
 - Banked services are cheap at this stage; the total occupied expansion code is
-  still only a little over 1K.
+  still under 3K.
 - Bank 0 layout now needs active care because it contains both the registry and
   shell launcher boundary. Private labels may move; callers should enter through
   discovery-installed vectors and service IDs, not internal marker addresses.
