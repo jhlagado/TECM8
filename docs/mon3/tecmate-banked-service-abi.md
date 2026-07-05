@@ -228,8 +228,9 @@ detail, such as an assembler diagnostic line or zero when no detail applies.
 The current `SHL_RUN_COMMAND` classifier creates only a minimal target
 descriptor: `edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
 `SHL_TARGET_KIND_PROJECT_OUTPUT`; the path pointer remains zero until project
-config parsing and path resolution are linked behind the shell. The bank-7
-assembler skeleton and bank-8 run skeleton currently publish
+config parsing and path resolution are linked behind the shell. `edit` does not
+yet call a banked editor service, so it leaves `SHL_RESULT_NONE` in the result
+slots. The bank-7 assembler skeleton and bank-8 run skeleton currently publish
 `SHL_RESULT_UNSUPPORTED`, so callers can distinguish recognized tool commands
 from unknown shell commands while the real tools are still absent.
 

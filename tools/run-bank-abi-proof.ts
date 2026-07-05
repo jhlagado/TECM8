@@ -277,8 +277,8 @@ async function main(): Promise<void> {
   assertEqual(trace[46], 0x00, 'shell target descriptor leaves path pointer high byte clear');
   assertEqual(trace[47], 0x80, 'shell command loop dispatched edit command');
   assertEqual(trace[48], 0x01, 'shell command loop classified edit action');
-  assertEqual(trace[49], 0x01, 'shell edit descriptor records project main target');
-  assertEqual(trace[50], 0x01, 'shell edit descriptor records default target flag');
+  assertEqual(trace[49], 0x00, 'shell edit leaves result low byte at none');
+  assertEqual(trace[50], 0x00, 'shell edit leaves result high byte clear');
   assertEqual(trace[51], 0x80, 'shell command loop dispatched run command');
   assertEqual(trace[52], 0x03, 'shell command loop classified run action');
   assertEqual(trace[53], 0x02, 'shell run descriptor records project output target');

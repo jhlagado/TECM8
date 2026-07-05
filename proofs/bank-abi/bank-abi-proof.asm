@@ -132,9 +132,9 @@ ClearTrace:
         ld (ABI_TRACE_BASE+47),a
         ld a,(SHL_PARAM_COMMAND_ACTION)
         ld (ABI_TRACE_BASE+48),a
-        ld a,(SHL_TARGET_KIND)
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
         ld (ABI_TRACE_BASE+49),a
-        ld a,(SHL_TARGET_FLAGS)
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
         ld (ABI_TRACE_BASE+50),a
 
         ld a,"r"

@@ -217,6 +217,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /copy\s+the bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
   assert.match(doc, /`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`/);
   assert.match(doc, /`run` uses\s+`SHL_TARGET_KIND_PROJECT_OUTPUT`/);
+  assert.match(doc, /`edit` does not\s+yet call a banked editor service/);
+  assert.match(doc, /leaves `SHL_RESULT_NONE` in the result\s+slots/);
   assert.match(doc, /low\s+result byte should use `SHL_RESULT_\*`/);
   assert.match(doc, /assembler diagnostic line or zero when no detail applies/);
   assert.match(doc, /bank-7\s+assembler skeleton and bank-8 run skeleton currently publish\s+`SHL_RESULT_UNSUPPORTED`/);
