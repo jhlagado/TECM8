@@ -46,9 +46,6 @@ ClearTrace:
         ld (ABI_TRACE_BASE+24),a
         ld a,h
         ld (ABI_TRACE_BASE+25),a
-        ld a,0x5A
-        ld de,0xD3E4
-        ld hl,0x1234
         ld a,ABI_PROBE_PRESERVE
         ld (ABI_PROBE_REQUEST),a
         ld a,0x5A
@@ -191,6 +188,7 @@ ClearTrace:
         ld b,0xB6
         callService 0x7F
         ld (ABI_TRACE_BASE+21),a
+        jp nc,BankAbiFarJumpReturnedFail
 
         call ReturningFarJumpProbe
         ld a,0xD4
@@ -199,6 +197,7 @@ ClearTrace:
         ld a,ABI_PROBE_FARJUMP
         farJump 0x03,RTC_ENTRY
 
+BankAbiFarJumpReturnedFail:
         ld a,PROOF_FAIL_FARJUMP_RETURNED
         ld (ABI_TRACE_9),a
         ld (ResultMarker),a
