@@ -750,8 +750,9 @@ descriptor pointer, and returns `A=ASM_ERR_UNSUPPORTED` with carry set. This
 lets the shell and later project metadata path point at an assembler boundary
 without inventing the assembler implementation early.
 
-Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set and
-do not dispatch through the unsupported assemble path.
+Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set,
+preserve the assembler status fields, and do not dispatch through the
+unsupported assemble path.
 
 ## Bank 8: Run Skeleton
 
@@ -783,8 +784,8 @@ bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
 `RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
 descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
 
-Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set and do not
-dispatch through the unsupported run path.
+Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set, preserve
+the run status fields, and do not dispatch through the unsupported run path.
 
 `SHL_RUN_COMMAND` now performs the first shell-to-tool handoff for `asm` and
 `run`. It publishes the shell `SHL_TARGET_DESC`, copies that pointer into the

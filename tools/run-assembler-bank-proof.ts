@@ -206,16 +206,16 @@ async function main(): Promise<void> {
   const runParams = readTrace(runtime, runParamBase, 8);
 
   assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');
-  assertEqual(params[0], 0xe0, 'assembler status after unsupported assemble');
-  assertEqual(params[1], 0xe0, 'assembler last error after unsupported assemble');
+  assertEqual(params[0], 0x5a, 'assembler status preserved after unknown selector');
+  assertEqual(params[1], 0xa5, 'assembler last error preserved after unknown selector');
   assertEqual(params[2], 0x07, 'assembler service bank');
   assertEqual(params[3], 0x01, 'assembler service version');
   assertEqual(params[4], 0xab, 'assembler target descriptor low byte');
   assertEqual(params[5], 0x3b, 'assembler shell target descriptor high byte');
   assertEqual(params[6], 0x04, 'assembler shell result low byte');
   assertEqual(params[7], 0x00, 'assembler shell result high byte');
-  assertEqual(runParams[0], 0xe0, 'run status after unsupported run');
-  assertEqual(runParams[1], 0xe0, 'run last error after unsupported run');
+  assertEqual(runParams[0], 0x5a, 'run status preserved after unknown selector');
+  assertEqual(runParams[1], 0xa5, 'run last error preserved after unknown selector');
   assertEqual(runParams[2], 0x08, 'run service bank');
   assertEqual(runParams[3], 0x01, 'run service version');
   assertEqual(runParams[4], 0xab, 'run shell target descriptor low byte');
