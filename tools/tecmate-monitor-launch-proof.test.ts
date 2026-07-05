@@ -26,6 +26,15 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(runner, /bridge SYS_CTRL restored/);
   assert.match(runner, /bank 0 entry marker/);
   assert.match(runner, /TEC-FS service marker/);
+  assert.match(runner, /input service marker/);
+  assert.match(runner, /shell entry marker/);
+  assert.match(runner, /assertDemoVram/);
+  assert.match(runner, /demo TMS9918 device active/);
+  assert.match(runner, /demo VDU first splash character/);
+  assert.match(runner, /demo status first character/);
+  assert.match(runner, /demo input service bank side effect/);
+  assert.match(runner, /demo input neutral joystick state/);
+  assert.match(runner, /demo TEC-FS mount side effect/);
   assert.equal(
     pkg.scripts['proof:tecmate-monitor-launch'],
     'npm run rom:check && node --experimental-strip-types tools/run-tecmate-monitor-launch-proof.ts',

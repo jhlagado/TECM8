@@ -16,16 +16,17 @@ test('bank 0 entry is a named TecMate bootstrap sequence', () => {
   assert.match(bank0, /Tecm8BootstrapTecfs:[\s\S]*callService TFS_MOUNT[\s\S]*ld \(DBG_TRACE_5\),a[\s\S]*ret/);
 });
 
-test('bank 0 bootstrap has explicit input and shell placeholders', () => {
-  assert.match(ops, /^SHL_BOOT_INPUT_READY\s+\.equ\s+0x70/m);
-  assert.match(ops, /^SHL_BOOT_READY\s+\.equ\s+0x71/m);
-  assert.match(bank0, /Tecm8BootstrapInput:[\s\S]*ld a,SHL_BOOT_INPUT_READY[\s\S]*ld \(DBG_TRACE_7\),a[\s\S]*ret/);
-  assert.match(bank0, /Tecm8BootstrapShell:[\s\S]*callService RTC_TOOL[\s\S]*ld \(DBG_TRACE_6\),a[\s\S]*ld a,SHL_BOOT_READY[\s\S]*ld \(DBG_TRACE_8\),a[\s\S]*ret/);
+test('bank 0 bootstrap calls input and shell services', () => {
+  assert.match(ops, /^INP_READ\s+\.equ\s+SVC_BASE\+0x04/m);
+  assert.match(ops, /^SHL_ENTRY\s+\.equ\s+SVC_BASE\+0x20/m);
+  assert.match(bank0, /Tecm8BootstrapInput:[\s\S]*callService INP_READ[\s\S]*ld \(DBG_TRACE_7\),a[\s\S]*ret/);
+  assert.match(bank0, /Tecm8BootstrapShell:[\s\S]*callService RTC_TOOL[\s\S]*ld \(DBG_TRACE_6\),a[\s\S]*callService SHL_ENTRY[\s\S]*ld \(DBG_TRACE_8\),a[\s\S]*ret/);
 });
 
 test('monitor launch proof and contract cover the bootstrap phases', () => {
-  assert.match(runner, /input bootstrap marker/);
-  assert.match(runner, /shell bootstrap marker/);
+  assert.match(runner, /input service marker/);
+  assert.match(runner, /shell entry marker/);
+  assert.match(runner, /assertDemoVram/);
   assert.match(doc, /call Tecm8BootstrapVdu/);
   assert.match(doc, /call Tecm8BootstrapInput/);
   assert.match(doc, /call Tecm8BootstrapShell/);

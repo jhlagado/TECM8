@@ -30,6 +30,8 @@ const EXP_SVC_VEC_FLAGS = 0x3bf7;
 const TFS_MOUNT = 0x61;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_VOLUME_MIB = 128;
+const INP_PARAM_BANK = 0x3bc2;
+const INP_PARAM_JOYSTICK = 0x3bc6;
 
 type Runtime = {
   cpu: {
@@ -50,6 +52,15 @@ type Runtime = {
 type PlatformRuntime = {
   recordCycles: (cycles: number) => void;
   state: {
+    display?: {
+      tms9918?: {
+        snapshot: () => {
+          active: boolean;
+          registers: number[];
+          vram: Uint8Array;
+        };
+      };
+    };
     system?: {
       sysCtrl?: number;
       memoryExpansionPhysicalBank?: number;
@@ -99,6 +110,7 @@ function makeConfig() {
     rtcEnabled: false,
     sdEnabled: false,
     sdHighCapacity: true,
+    tms9918Active: true,
     expansionRomHex: EXPANSION_ROM_PATH,
   };
 }
@@ -226,9 +238,10 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(trace[4], 0x81, 'VDU service marker');
   assertEqual(trace[5], 0x82, 'TEC-FS service marker');
   assertEqual(trace[6], 0x83, 'RTC service marker');
-  assertEqual(trace[7], 0x70, 'input bootstrap marker');
-  assertEqual(trace[8], 0x71, 'shell bootstrap marker');
+  assertEqual(trace[7], 0x86, 'input service marker');
+  assertEqual(trace[8], 0x80, 'shell entry marker');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'final SYS_CTRL restored');
+  assertDemoVram(runtime, platformRuntime);
 
   runtime.hardware.forceMemWrite?.(TFS_PARAM_VOLUME_MIB, 0x00);
   runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
@@ -304,6 +317,29 @@ function runMissingExpansionCase(launchAddress: number): {
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
   };
+}
+
+function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): void {
+  const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();
+  if (!tms9918) {
+    throw new Error('Debug80 runtime did not expose a TMS9918 device snapshot');
+  }
+  assertEqual(tms9918.active ? 1 : 0, 1, 'demo TMS9918 device active');
+  assertEqual(tms9918.vram[0x0000] ?? 0, 'T'.charCodeAt(0), 'demo VDU first splash character');
+  assertEqual(tms9918.vram[0x0001] ?? 0, 'e'.charCodeAt(0), 'demo VDU second splash character');
+  assertEqual(tms9918.vram[0x0002] ?? 0, 'c'.charCodeAt(0), 'demo VDU third splash character');
+  assertEqual(tms9918.vram[0x0003] ?? 0, 'M'.charCodeAt(0), 'demo VDU fourth splash character');
+  assertEqual(tms9918.vram[0x0004] ?? 0, 'a'.charCodeAt(0), 'demo VDU fifth splash character');
+  assertEqual(tms9918.vram[0x0005] ?? 0, 't'.charCodeAt(0), 'demo VDU sixth splash character');
+  assertEqual(tms9918.vram[0x0006] ?? 0, 'e'.charCodeAt(0), 'demo VDU seventh splash character');
+  assertEqual(tms9918.vram[0x02e0] ?? 0, 'R'.charCodeAt(0), 'demo status first character');
+  assertEqual(tms9918.vram[0x02e1] ?? 0, 'E'.charCodeAt(0), 'demo status second character');
+  assertEqual(tms9918.vram[0x02e2] ?? 0, 'A'.charCodeAt(0), 'demo status third character');
+  assertEqual(tms9918.vram[0x02e3] ?? 0, 'D'.charCodeAt(0), 'demo status fourth character');
+  assertEqual(tms9918.vram[0x02e4] ?? 0, 'Y'.charCodeAt(0), 'demo status fifth character');
+  assertEqual(runtime.hardware.memory[INP_PARAM_BANK], 0x06, 'demo input service bank side effect');
+  assertEqual(runtime.hardware.memory[INP_PARAM_JOYSTICK], 0x00, 'demo input neutral joystick state');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], TFS_VOLUME_MIB, 'demo TEC-FS mount side effect');
 }
 
 function main(): void {

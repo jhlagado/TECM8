@@ -57,7 +57,8 @@ Tecm8BootstrapTecfs:
         ret
 
 Tecm8BootstrapInput:
-        ld a,SHL_BOOT_INPUT_READY
+        ; expects out A
+        callService INP_READ
         ld (DBG_TRACE_7),a
         ret
 
@@ -65,7 +66,8 @@ Tecm8BootstrapShell:
         ; expects out A
         callService RTC_TOOL
         ld (DBG_TRACE_6),a
-        ld a,SHL_BOOT_READY
+        ; expects out A
+        callService SHL_ENTRY
         ld (DBG_TRACE_8),a
         ret
 

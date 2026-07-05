@@ -7,8 +7,13 @@ MON3/MON3Lite menu:
 1. fixed monitor discovers the bank-0 `EXPR` header
 2. bank 0 installs the expansion menu vector into monitor RAM
 3. fixed monitor calls the installed menu vector through the bank-call path
-4. bank 0 runs its TecMate entry chain
+4. bank 0 runs its TecMate demo entry chain
 5. bank 0 returns to the caller-provided monitor return address
+
+The installed-expansion case also verifies that the entry chain is visible as a
+small runnable system: it writes `TecMate` and `READY` through the VDU/TMS9918
+service, reads the bank-6 input snapshot, and touches the bank-2 TEC-FS mount
+state.
 
 After that, the same runtime executes a RAM stub that calls `RST 10h` with
 `C=TFS_MOUNT`. That verifies the generic MON3

@@ -33,8 +33,6 @@ DBG_TRACE_6          .equ    DBG_TRACE_BASE+6
 DBG_TRACE_7          .equ    DBG_TRACE_BASE+7
 DBG_TRACE_8          .equ    DBG_TRACE_BASE+8
 DBG_TRACE_9          .equ    DBG_TRACE_BASE+9
-SHL_BOOT_INPUT_READY .equ    0x70
-SHL_BOOT_READY .equ    0x71
 VDU_INIT                    .equ    SVC_BASE+0x00
 VDU_BANK                    .equ    0x01
 VDU_ADDR                    .equ    VDU_CALL

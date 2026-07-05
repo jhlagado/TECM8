@@ -41,6 +41,20 @@ test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
   }
 });
 
+test('Debug80 TecMate demo milestone is backed by the monitor launch proof', () => {
+  const runner = readFileSync(resolve(root, 'tools/run-tecmate-monitor-launch-proof.ts'), 'utf8');
+  const bank0 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank0.asm'), 'utf8');
+
+  assert.match(bank0, /call Tecm8BootstrapVdu[\s\S]*call Tecm8BootstrapTecfs[\s\S]*call Tecm8BootstrapInput[\s\S]*call Tecm8BootstrapShell/);
+  assert.match(bank0, /Tecm8BootstrapInput:[\s\S]*callService INP_READ[\s\S]*ld \(DBG_TRACE_7\),a/);
+  assert.match(bank0, /Tecm8BootstrapShell:[\s\S]*callService RTC_TOOL[\s\S]*callService SHL_ENTRY[\s\S]*ld \(DBG_TRACE_8\),a/);
+  assert.match(runner, /assertDemoVram/);
+  assert.match(runner, /demo TMS9918 device active/);
+  assert.match(runner, /demo VDU first splash character/);
+  assert.match(runner, /demo input neutral joystick state/);
+  assert.match(runner, /demo TEC-FS mount side effect/);
+});
+
 test('Debug80 TecMate demo milestone keeps scope small', () => {
   assert.match(doc, /full TEC-FS catalogue, allocator, file load, or file save/);
   assert.match(doc, /a real assembler/);

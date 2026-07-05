@@ -94,11 +94,12 @@ Bank 0 now exposes a resident TecMate shell entry contract:
 SHL_ENTRY = 80h
 ```
 
-The current implementation is a descriptor stub, not the full interactive shell.
-That is the right level for this stage. It proves the launch path and reserves a
-stable service number before the shell loop is moved into ROM. The actual shell
-label is private to bank 0 and is reached through the installed expansion
-service vector, not by a fixed address.
+The current implementation is a descriptor and splash stub, not the full
+interactive shell. That is the right level for this stage. It proves the launch
+path, writes visible `TecMate`/`READY` text through the VDU/TMS9918 service, and
+reserves a stable service number before the shell loop is moved into ROM. The
+actual shell label is private to bank 0 and is reached through the installed
+expansion service vector, not by a fixed address.
 
 Bank 0 also exposes `SHL_RUN_COMMAND`, the first one-command shell boundary. It
 currently classifies exact `edit`, `asm`, and `run` commands, measures the
@@ -131,8 +132,16 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2399 occupied bytes currently
-2399 bytes total high-water span across all banks
+2401 occupied bytes currently
+2401 bytes total high-water span across all banks
+```
+
+This demo milestone changed the footprint by two bytes:
+
+```text
+bank 0 span: 728 -> 730 bytes
+expansion total span: 2399 -> 2401 bytes
+fixed monitor span: unchanged at 16384 bytes
 ```
 
 That changes the strategy. We do not need to gut MON3 immediately just to make
