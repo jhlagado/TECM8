@@ -33,9 +33,12 @@ test('Debug80 TecMate demo milestone defines the ROM demo command', () => {
   );
   assert.match(doc, /## ROM Demo Command/);
   assert.match(doc, /npm run demo:tecmate-rom/);
+  assert.match(doc, /npm run rom:milestone:status/);
   assert.match(doc, /builds the TECM8 fixed monitor ROM/);
   assert.match(doc, /runs the Debug80 monitor-launch proof/);
   assert.match(doc, /prints the ROM size\s+summary/);
+  assert.match(doc, /reports the current fixed-monitor\s+and expansion-bank footprint/);
+  assert.match(doc, /monitor launch,\s+the shell command loop, VDU\/TMS9918, TEC-FS, input snapshot, and bank ABI/);
   assert.match(doc, /not the older GLCD editor demo path/);
 });
 
@@ -62,9 +65,11 @@ test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
     'calls the bank 2 TEC-FS boundary',
     'final Debug80 trace or screen state proves success',
     '`npm run rom:size:summary` is recorded with before/after footprint deltas',
+    '`npm run rom:milestone:status` reports `ok` for the integrated ROM proof',
   ]) {
     assert.match(doc, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
+  assert.match(doc, /monitor launch, shell command loop, VDU\/TMS9918, TEC-FS, input\s+snapshot, and bank ABI/);
 });
 
 test('Debug80 TecMate demo milestone is backed by the monitor launch proof', () => {

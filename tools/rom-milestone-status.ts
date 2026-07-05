@@ -64,9 +64,33 @@ const proofStatuses: ProofStatus[] = [
     },
   },
   {
-    name: 'storage',
-    path: 'proofs/storage/last-run.json',
-    isValid: (data) => hasNumber(data, 'instructions') && readArray(data, 'markers').length > 0,
+    name: 'shell command loop',
+    path: 'proofs/shell-commands/last-run.json',
+    isValid: (data) =>
+      readString(data, 'result') === 'ok' &&
+      readString(data, 'resultMarker') === '0x42' &&
+      hasNumber(data, 'instructions') &&
+      hasNumber(data, 'proofCase'),
+  },
+  {
+    name: 'VDU/TMS9918',
+    path: 'proofs/tms9918-bank/tms9918-bank-proof-last-run.json',
+    isValid: (data) => isOkProof(data) && hasNumber(data, 'tmsRegister7') && readArray(data, 'trace').length > 0,
+  },
+  {
+    name: 'TEC-FS',
+    path: 'proofs/tecfs-bank/tecfs-bank-proof-last-run.json',
+    isValid: (data) => isOkProof(data) && readArray(data, 'params').length > 0 && readArray(data, 'trace').length > 0,
+  },
+  {
+    name: 'input snapshot',
+    path: 'proofs/input-bank/input-bank-proof-last-run.json',
+    isValid: (data) => isOkProof(data) && readArray(data, 'params').length >= 8,
+  },
+  {
+    name: 'bank ABI',
+    path: 'proofs/bank-abi/bank-abi-proof-last-run.json',
+    isValid: (data) => isOkProof(data) && readArray(data, 'trace').length > 0,
   },
 ];
 
@@ -139,6 +163,10 @@ function readArray(data: unknown, key: string): unknown[] {
 
 function readString(data: unknown, key: string): string | undefined {
   return isRecord(data) && typeof data[key] === 'string' ? data[key] : undefined;
+}
+
+function isOkProof(data: unknown): boolean {
+  return readString(data, 'result') === 'ok' && hasNumber(data, 'instructions') && hasNumber(data, 'resultMarker');
 }
 
 function readProofStatus(proof: ProofStatus): string {

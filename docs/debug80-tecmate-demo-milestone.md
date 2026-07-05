@@ -29,6 +29,16 @@ That command runs the same proof-backed build path and then prints the exact
 generated ROM artifacts, monitor route, expected TMS9918 text, and last-run
 trace markers to use while inspecting Debug80.
 
+For a compact integrated milestone report, use:
+
+```text
+npm run rom:milestone:status
+```
+
+That command rebuilds the ROM size gate and reports the current fixed-monitor
+and expansion-bank footprint, plus the latest proof status for monitor launch,
+the shell command loop, VDU/TMS9918, TEC-FS, input snapshot, and bank ABI.
+
 This is not the older GLCD editor demo path. Do not load `src/main.asm`, build
 `debug80:editor-image`, or use MON3 `GO 4000h` when testing this milestone.
 Those remain useful for the previous RAM editor prototype, but this milestone
@@ -78,6 +88,9 @@ The milestone is complete when:
 8. The final Debug80 trace or screen state proves success without requiring a
    human to inspect internal memory by hand.
 9. `npm run rom:size:summary` is recorded with before/after footprint deltas.
+10. `npm run rom:milestone:status` reports `ok` for the integrated ROM proof
+    surfaces: monitor launch, shell command loop, VDU/TMS9918, TEC-FS, input
+    snapshot, and bank ABI.
 
 This should be an automated Debug80 proof first, with a short manual Debug80
 script added once the proof exists. The manual script should be used for human
