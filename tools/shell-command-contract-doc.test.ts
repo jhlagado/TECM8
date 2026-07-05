@@ -42,6 +42,16 @@ test('shell command contract reserves assembler result semantics', () => {
   assert.match(doc, /publishes the skeleton's\s+`SHL_RESULT_UNSUPPORTED` result/);
 });
 
+test('shell command contract reserves run result semantics', () => {
+  assert.match(doc, /## `run`/);
+  assert.match(doc, /`run` executes the derived project output by default/);
+  assert.match(doc, /The shell runs `\/build\/<main-stem>\.bin`, derived from `main`/);
+  assert.match(doc, /`SHL_RUN_COMMAND` classifies `run`, points the target slot at the minimal\s+`SHL_TARGET_DESC`/);
+  assert.match(doc, /marks that descriptor as the derived project output default/);
+  assert.match(doc, /calls the\s+bank-8 run skeleton/);
+  assert.match(doc, /publishes the skeleton's\s+`SHL_RESULT_UNSUPPORTED` result/);
+});
+
 test('shell command contract reserves game command namespace without enabling it in bank0 yet', () => {
   assert.match(doc, /## Reserved Tool Namespaces/);
   assert.match(doc, /game build/);

@@ -273,6 +273,12 @@ run /build/test.bin
 The shell runs that one-off target and does not change project config. The
 no-argument form remains the primary workflow.
 
+Until project parsing and a real launcher/debugger are linked behind the shell,
+`SHL_RUN_COMMAND` classifies `run`, points the target slot at the minimal
+`SHL_TARGET_DESC`, marks that descriptor as the derived project output default,
+calls the bank-8 run skeleton, and publishes the skeleton's
+`SHL_RESULT_UNSUPPORTED` result.
+
 ## Errors
 
 The shell should report short, actionable errors and return to the prompt:
