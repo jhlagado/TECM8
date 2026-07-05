@@ -26,13 +26,21 @@ TMS_PROOF_TRACE_12          .equ    TMS_PROOF_TRACE_BASE+12
 TMS_PROOF_TRACE_13          .equ    TMS_PROOF_TRACE_BASE+13
 TMS_PROOF_TRACE_14          .equ    TMS_PROOF_TRACE_BASE+14
 TMS_PROOF_TRACE_15          .equ    TMS_PROOF_TRACE_BASE+15
-TMS_PROOF_RESULT            .equ    0x3B20
+TMS_PROOF_TRACE_16          .equ    TMS_PROOF_TRACE_BASE+16
+TMS_PROOF_TRACE_17          .equ    TMS_PROOF_TRACE_BASE+17
+TMS_PROOF_TRACE_18          .equ    TMS_PROOF_TRACE_BASE+18
+TMS_PROOF_TRACE_19          .equ    TMS_PROOF_TRACE_BASE+19
+TMS_PROOF_TRACE_20          .equ    TMS_PROOF_TRACE_BASE+20
+TMS_PROOF_TRACE_21          .equ    TMS_PROOF_TRACE_BASE+21
+TMS_PROOF_TRACE_22          .equ    TMS_PROOF_TRACE_BASE+22
+TMS_PROOF_TRACE_23          .equ    TMS_PROOF_TRACE_BASE+23
+TMS_PROOF_RESULT            .equ    0x3B30
 
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,TMS_PROOF_TRACE_BASE
-        ld b,16
+        ld b,24
 ClearTrace:
         ld (hl),0
         inc hl
@@ -106,6 +114,29 @@ ClearTrace:
 
         callBankService 0x01,VDU_CALL,VDU_SVC_NEWLINE
         ld (TMS_PROOF_TRACE_7),a
+
+        callBankService 0x01,VDU_CALL,0x00
+        ld (TMS_PROOF_TRACE_16),a
+        ld a,0
+        adc a,0
+        ld (TMS_PROOF_TRACE_17),a
+
+        callBankService 0x01,VDU_CALL,0x0A
+        ld (TMS_PROOF_TRACE_18),a
+        ld a,0
+        adc a,0
+        ld (TMS_PROOF_TRACE_19),a
+
+        callBankService 0x01,VDU_CALL,0x7F
+        ld (TMS_PROOF_TRACE_20),a
+        ld a,0
+        adc a,0
+        ld (TMS_PROOF_TRACE_21),a
+        ld a,(TMS_PARAM_CURSOR_LO)
+        ld (TMS_PROOF_TRACE_22),a
+        ld a,(TMS_PARAM_CURSOR_HI)
+        ld (TMS_PROOF_TRACE_23),a
+
         ld hl,TmsStatusString
         ld (TMS_PARAM_STRING_LO),hl
         callBankService 0x01,VDU_CALL,VDU_SVC_STATUS_LINE

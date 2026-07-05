@@ -327,6 +327,8 @@ Minimal VDU text-console contract:
 - `TMS_SVC_READ_VRAM` reads one byte from `TMS_PARAM_ADDR_LO/HI` into
   `TMS_PARAM_VALUE`.
 - The low-level TMS calls remain available for backend work and diagnostics.
+- Unknown VDU/TMS selectors return `SVC_ERR_UNKNOWN` with carry set and leave
+  the VDU cursor parameters unchanged.
 
 ## Bank 2: TEC-FS
 

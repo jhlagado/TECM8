@@ -39,8 +39,16 @@ test('TMS9918 bank proof covers VDU cursor and put-char behavior', () => {
   assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_SET_ROWCOL/);
   assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_SCROLL_UP/);
   assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_STATUS_LINE/);
+  assert.match(proof, /callBankService 0x01,VDU_CALL,0x00[\s\S]*ld \(TMS_PROOF_TRACE_16\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_17\),a/);
+  assert.match(proof, /callBankService 0x01,VDU_CALL,0x0A[\s\S]*ld \(TMS_PROOF_TRACE_18\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_19\),a/);
+  assert.match(proof, /callBankService 0x01,VDU_CALL,0x7F[\s\S]*ld \(TMS_PROOF_TRACE_20\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_21\),a/);
   assert.match(runner, /VDU put string return value/);
   assert.match(runner, /VDU newline return value/);
+  assert.match(runner, /VDU low unknown selector carry marker/);
+  assert.match(runner, /VDU gap unknown selector carry marker/);
+  assert.match(runner, /VDU high unknown selector carry marker/);
+  assert.match(runner, /VDU cursor low preserved after unknown selectors/);
+  assert.match(runner, /VDU cursor high preserved after unknown selectors/);
   assert.match(runner, /VDU clear return value/);
   assert.match(runner, /VDU scroll-up return value/);
   assert.match(runner, /VDU status-line return value/);

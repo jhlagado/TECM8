@@ -226,7 +226,7 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const traceBase = symbolNumber(symbols, 'TMS_PROOF_TRACE_BASE');
   const resultAddr = symbolNumber(symbols, 'TMS_PROOF_RESULT');
-  const trace = readTrace(runtime, traceBase, 16);
+  const trace = readTrace(runtime, traceBase, 24);
   const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
   const tmsParams = readTrace(runtime, tmsParamBase, 10);
   const result = runtime.hardware.memory[resultAddr];
@@ -253,6 +253,14 @@ async function main(): Promise<void> {
   assertEqual(trace[13], 0x81, 'VDU status-line return value');
   assertEqual(trace[14], 0x40, 'VDU status-line restored cursor low byte');
   assertEqual(trace[15], 0x01, 'VDU status-line restored cursor high byte');
+  assertEqual(trace[16], 0xee, 'VDU low unknown selector return value');
+  assertEqual(trace[17], 0x01, 'VDU low unknown selector carry marker');
+  assertEqual(trace[18], 0xee, 'VDU gap unknown selector return value');
+  assertEqual(trace[19], 0x01, 'VDU gap unknown selector carry marker');
+  assertEqual(trace[20], 0xee, 'VDU high unknown selector return value');
+  assertEqual(trace[21], 0x01, 'VDU high unknown selector carry marker');
+  assertEqual(trace[22], 0x40, 'VDU cursor low preserved after unknown selectors');
+  assertEqual(trace[23], 0x01, 'VDU cursor high preserved after unknown selectors');
   assertEqual(tms9918.registers[7] ?? 0, 0xf4, 'TMS register 7');
   assertEqual(tms9918.vram[0x0000] ?? 0, 0x53, 'VDU scroll copied row 1 to row 0');
   assertEqual(tms9918.vram[0x0123] ?? 0, 0x5a, 'TMS VRAM write');
