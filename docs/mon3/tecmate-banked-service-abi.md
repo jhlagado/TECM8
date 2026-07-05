@@ -668,6 +668,9 @@ caller buffer for read requests, and accepts write requests without touching
 media. Replacing this simulation with the real SD bridge should not change the
 bank-2 sector I/O ABI.
 
+Unknown bridge operation selectors return `SVC_ERR_UNKNOWN` with carry set and
+do not modify the TEC-FS status fields.
+
 ## Bank 6: Input Snapshot Boundary
 
 Physical bank 6 owns the first matrix-keyboard and joystick-facing service

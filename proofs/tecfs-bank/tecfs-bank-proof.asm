@@ -491,6 +491,22 @@ ClearParams:
         cp TFS_STATUS_OK
         jp nz,FailBridgeWrite
 
+        ld a,0x5A
+        ld (TFS_PARAM_STATUS),a
+        ld a,0xA5
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x7F
+        farCall 0x05,TFS_SECTOR_BRIDGE
+        jp nc,FailDriverHook
+        cp SVC_ERR_UNKNOWN
+        jp nz,FailDriverHook
+        ld a,(TFS_PARAM_STATUS)
+        cp 0x5A
+        jp nz,FailDriverHook
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp 0xA5
+        jp nz,FailDriverHook
+
         ld hl,0x0000
         ld (TFS_PARAM_BUFFER_LO),hl
         ld a,TFS_SVC_READ
