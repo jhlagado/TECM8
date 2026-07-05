@@ -38,6 +38,14 @@ type Runtime = {
 type PlatformRuntime = {
   recordCycles: (cycles: number) => void;
   state: {
+    display?: {
+      tms9918?: {
+        snapshot: () => {
+          active: boolean;
+          vram: Uint8Array;
+        };
+      };
+    };
     system?: {
       sysCtrl?: number;
       memoryExpansionPhysicalBank?: number;
@@ -123,6 +131,7 @@ function makeConfig() {
     rtcEnabled: false,
     sdEnabled: false,
     sdHighCapacity: true,
+    tms9918Active: true,
     expansionRomHex: EXPANSION_ROM_PATH,
   };
 }
@@ -194,6 +203,17 @@ function assertEqual(actual: number, expected: number, name: string): void {
   }
 }
 
+function assertVramText(platformRuntime: PlatformRuntime, address: number, expected: string, name: string): void {
+  const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();
+  if (!tms9918) {
+    throw new Error('Debug80 runtime did not expose a TMS9918 device snapshot');
+  }
+  assertEqual(tms9918.active ? 1 : 0, 1, `${name} TMS9918 active`);
+  for (let index = 0; index < expected.length; index += 1) {
+    assertEqual(tms9918.vram[address + index] ?? 0, expected.charCodeAt(index), `${name} VRAM character ${index}`);
+  }
+}
+
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
   const { runtime, platformRuntime } = loadRuntime(bytes);
@@ -201,11 +221,13 @@ async function main(): Promise<void> {
   const resultAddr = symbolNumber(symbols, 'PROOF_RESULT');
   const traceBase = symbolNumber(symbols, 'PROOF_TRACE_BASE');
   const shellParamBase = symbolNumber(symbols, 'SHL_PARAM_BASE');
+  const shellStatusBuffer = symbolNumber(symbols, 'SHL_STATUS_BUFFER');
   const shellSplashBuffer = symbolNumber(symbols, 'SHL_SPLASH_BUFFER');
   const tmsParamBase = symbolNumber(symbols, 'TMS_PARAM_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const trace = readTrace(runtime, traceBase, 1);
   const params = readTrace(runtime, shellParamBase, 5);
+  const status = readTrace(runtime, shellStatusBuffer, 8);
   const splash = readTrace(runtime, shellSplashBuffer, 8);
   const tmsParams = readTrace(runtime, tmsParamBase, 8);
 
@@ -216,6 +238,12 @@ async function main(): Promise<void> {
   assertEqual(params[2], 0x00, 'shell bank marker');
   assertEqual(params[3], 0x01, 'shell version marker');
   assertEqual(params[4], 0x07, 'shell feature marker');
+  assertEqual(status[0], 0x52, 'shell status R');
+  assertEqual(status[1], 0x45, 'shell status E');
+  assertEqual(status[2], 0x41, 'shell status A');
+  assertEqual(status[3], 0x44, 'shell status D');
+  assertEqual(status[4], 0x59, 'shell status Y');
+  assertEqual(status[5], 0x00, 'shell status terminator');
   assertEqual(splash[0], 0x54, 'shell splash T');
   assertEqual(splash[1], 0x65, 'shell splash e');
   assertEqual(splash[2], 0x63, 'shell splash c');
@@ -226,6 +254,10 @@ async function main(): Promise<void> {
   assertEqual(splash[7], 0x00, 'shell splash terminator');
   assertEqual(tmsParams[4], 0x07, 'shell splash cursor low');
   assertEqual(tmsParams[5], 0x00, 'shell splash cursor high');
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell launch SYS_CTRL restored');
+  assertEqual(runtime.hardware.memory[MON3_SYS_MODE], SHADOW_OFF, 'shell launch SYS_MODE shadow restored');
+  assertVramText(platformRuntime, 0x0000, 'TecMate', 'shell splash');
+  assertVramText(platformRuntime, 0x02e0, 'READY', 'shell status');
 
   writeFileSync(
     LAST_RUN,
@@ -236,6 +268,7 @@ async function main(): Promise<void> {
         resultMarker: result,
         trace,
         params,
+        status,
         splash,
         tmsParams,
         finalPc: runtime.cpu.pc & 0xffff,

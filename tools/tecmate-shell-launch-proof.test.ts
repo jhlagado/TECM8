@@ -23,8 +23,13 @@ test('TecMate shell launch proof exercises the service bridge launch path', () =
   assert.match(runner, /shell launch proof result marker/);
   assert.doesNotMatch(proof, /farCall 0x00,SHL_ENTRY/);
   assert.match(runner, /service bridge shell launch return/);
+  assert.match(runner, /shell status R/);
   assert.match(runner, /shell splash cursor low/);
   assert.match(runner, /shell splash T/);
+  assert.match(runner, /shell launch SYS_CTRL restored/);
+  assert.match(runner, /shell launch SYS_MODE shadow restored/);
+  assert.match(runner, /shell splash/);
+  assert.match(runner, /shell status/);
   assert.equal(
     pkg.scripts['proof:tecmate-shell-launch'],
     'npm run rom:check && node --experimental-strip-types tools/run-tecmate-shell-launch-proof.ts',
