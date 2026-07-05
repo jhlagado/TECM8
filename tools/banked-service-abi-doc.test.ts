@@ -235,9 +235,11 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC`/);
-  assert.match(doc, /`asm` calls the bank-7\s+assembler skeleton/);
+  assert.match(doc, /blank command is a\s+successful no-op/);
+  assert.match(doc, /leaves `SHL_ACTION_NONE`, records length zero, keeps status\s+OK/);
+  assert.match(doc, /`asm` calls the bank-7 assembler\s+skeleton/);
   assert.match(doc, /`run` calls the bank-8 run skeleton/);
-  assert.match(doc, /copy\s+the bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
+  assert.match(doc, /bank-local tool result bytes back into\s+`SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
   assert.match(doc, /`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`/);
   assert.match(doc, /`run` uses\s+`SHL_TARGET_KIND_PROJECT_OUTPUT`/);
   assert.match(doc, /`edit` does not\s+yet call a banked editor service/);

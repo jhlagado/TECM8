@@ -250,7 +250,7 @@ async function main(): Promise<void> {
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 66);
+  const trace = readTrace(runtime, traceBase, 79);
   const shellStatusBuffer = symbolNumber(symbols, 'SHL_STATUS_BUFFER');
   const shellStatusCapacity = symbolNumber(symbols, 'SHL_STATUS_CAPACITY');
   const statusBytes = readTrace(runtime, shellStatusBuffer, shellStatusCapacity);
@@ -317,6 +317,19 @@ async function main(): Promise<void> {
   assertEqual(trace[63], 0x4f, 'shell entry published status buffer second byte');
   assertEqual(trace[64], 0xEE, 'shell command loop rejected game namespace');
   assertEqual(trace[65], 0x01, 'shell command loop reported game namespace unknown');
+  assertEqual(trace[66], 0x80, 'shell command loop accepted blank command');
+  assertEqual(trace[67], 0x00, 'shell blank command leaves action none');
+  assertEqual(trace[68], 0x00, 'shell blank command measured zero length');
+  assertEqual(trace[69], 0x00, 'shell blank command reports status ok');
+  assertEqual(trace[70], 0x00, 'shell blank command cleared stale target low byte');
+  assertEqual(trace[71], 0x00, 'shell blank command cleared stale target high byte');
+  assertEqual(trace[72], 0x00, 'shell blank command cleared result low byte');
+  assertEqual(trace[73], 0x00, 'shell blank command cleared result high byte');
+  assertEqual(trace[74], 0x00, 'shell blank command cleared descriptor action');
+  assertEqual(trace[75], 0x00, 'shell blank command cleared descriptor flags');
+  assertEqual(trace[76], 0x00, 'shell blank command cleared descriptor kind');
+  assertEqual(trace[77], 0x00, 'shell blank command cleared descriptor path low byte');
+  assertEqual(trace[78], 0x00, 'shell blank command cleared descriptor path high byte');
   assertEqual(statusBytes[0], 0x50, 'shell status buffer first byte');
   assertEqual(statusBytes[1], 0x4f, 'shell status buffer second byte');
   assertEqual(statusBytes[2], 0x4c, 'shell status buffer third byte');

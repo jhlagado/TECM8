@@ -180,6 +180,50 @@ ClearTrace:
         ld (ABI_TRACE_BASE+64),a
         ld a,(SHL_PARAM_STATUS)
         ld (ABI_TRACE_BASE+65),a
+
+        ld a,0xD5
+        ld (SHL_PARAM_COMMAND_TARGET_LO),a
+        ld a,0xD6
+        ld (SHL_PARAM_COMMAND_TARGET_HI),a
+        ld a,0xD7
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,0xD8
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,0xD9
+        ld (SHL_TARGET_ACTION),a
+        ld (SHL_TARGET_KIND),a
+        ld (SHL_TARGET_PATH_LO),a
+        ld (SHL_TARGET_PATH_HI),a
+        ld (SHL_TARGET_FLAGS),a
+        xor a
+        ld (SHL_COMMAND_BUFFER),a
+        callService SHL_RUN_COMMAND
+        ld (ABI_TRACE_BASE+66),a
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        ld (ABI_TRACE_BASE+67),a
+        ld a,(SHL_PARAM_COMMAND_LENGTH)
+        ld (ABI_TRACE_BASE+68),a
+        ld a,(SHL_PARAM_STATUS)
+        ld (ABI_TRACE_BASE+69),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (ABI_TRACE_BASE+70),a
+        ld a,(SHL_PARAM_COMMAND_TARGET_HI)
+        ld (ABI_TRACE_BASE+71),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        ld (ABI_TRACE_BASE+72),a
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        ld (ABI_TRACE_BASE+73),a
+        ld a,(SHL_TARGET_ACTION)
+        ld (ABI_TRACE_BASE+74),a
+        ld a,(SHL_TARGET_FLAGS)
+        ld (ABI_TRACE_BASE+75),a
+        ld a,(SHL_TARGET_KIND)
+        ld (ABI_TRACE_BASE+76),a
+        ld a,(SHL_TARGET_PATH_LO)
+        ld (ABI_TRACE_BASE+77),a
+        ld a,(SHL_TARGET_PATH_HI)
+        ld (ABI_TRACE_BASE+78),a
+
         callService INP_READ
         ld (ABI_TRACE_BASE+39),a
         ld a,(INP_PARAM_JOYSTICK)

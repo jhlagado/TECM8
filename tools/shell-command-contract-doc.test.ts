@@ -15,6 +15,8 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /asm\s+-> main/);
   assert.match(doc, /run\s+-> derived output/);
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
+  assert.match(doc, /A blank command line is a successful no-op/);
+  assert.match(doc, /return to the prompt without reporting an unknown\s+command/);
 });
 
 test('shell command contract defines project metadata import path', () => {

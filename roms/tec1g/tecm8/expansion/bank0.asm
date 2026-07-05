@@ -168,7 +168,7 @@ Tecm8ShellSplashError:
         ld hl,SHL_COMMAND_BUFFER
         ld a,(hl)
         or a
-        jp z,Tecm8ShellRunUnknown
+        jp z,Tecm8ShellRunNoop
         push de
         call Tecm8ShellCommandLength
         pop de
@@ -267,6 +267,10 @@ Tecm8ShellRunOk:
         ld (SHL_PARAM_COMMAND_TARGET_LO),hl
         ld a,SHL_TARGET_FLAG_DEFAULT
         ld (SHL_TARGET_FLAGS),a
+        ld a,0x80
+        or a
+        ret
+Tecm8ShellRunNoop:
         ld a,0x80
         or a
         ret

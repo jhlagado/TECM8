@@ -125,6 +125,10 @@ They are not stored in `/tecm8.prj`. This keeps the Z80 parser and project
 state small. Future configuration screens can still change `main`, but the
 command names themselves remain part of the shell.
 
+A blank command line is a successful no-op. Pressing Enter at the prompt should
+clear stale command state and return to the prompt without reporting an unknown
+command.
+
 ## Reserved Tool Namespaces
 
 The shell should reserve multi-word command namespaces for larger tool profiles

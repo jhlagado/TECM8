@@ -75,9 +75,9 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /Latest TEC-FS geometry-line milestone delta/);
-  assert.match(doc, /bank 0 span: 997 -> 995 bytes/);
-  assert.match(doc, /expansion total span: 2668 -> 2666 bytes/);
+  assert.match(doc, /Latest blank-command shell milestone delta/);
+  assert.match(doc, /bank 0 span: 995 -> 999 bytes/);
+  assert.match(doc, /expansion total span: 2666 -> 2670 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

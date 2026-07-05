@@ -246,13 +246,15 @@ through the expansion service registry. The current boundary classifies the
 first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
-at `SHL_TARGET_DESC`, and writes a default target kind. `asm` calls the bank-7
-assembler skeleton, `run` calls the bank-8 run skeleton, and both commands copy
-the bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI`
-before returning `A=80h` with carry clear. Unknown or empty commands store
-`SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and
-`SHL_PARAM_LAST_ERROR`, leave the target/result slots clear, return
-`A=SVC_ERR_UNKNOWN`, and set carry. The later editor, assembler, and launcher
+at `SHL_TARGET_DESC`, and writes a default target kind. A blank command is a
+successful no-op: it leaves `SHL_ACTION_NONE`, records length zero, keeps status
+OK, returns `A=80h`, and clears carry. `asm` calls the bank-7 assembler
+skeleton, `run` calls the bank-8 run skeleton, and both commands copy the
+bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI` before
+returning `A=80h` with carry clear. Unknown non-empty commands store
+`SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`,
+leave the target/result slots clear, return `A=SVC_ERR_UNKNOWN`, and set carry.
+The later editor, assembler, and launcher
 services should hang from this boundary rather than being called directly from
 MON3.
 

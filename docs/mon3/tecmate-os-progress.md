@@ -136,15 +136,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2666 occupied bytes currently
-2666 bytes total high-water span across all banks
+2670 occupied bytes currently
+2670 bytes total high-water span across all banks
 ```
 
-This TEC-FS geometry-line milestone reduced the footprint by 2 bytes:
+This blank-command shell milestone changed the footprint by 4 bytes:
 
 ```text
-bank 0 span: 997 -> 995 bytes
-expansion total span: 2668 -> 2666 bytes
+bank 0 span: 995 -> 999 bytes
+expansion total span: 2666 -> 2670 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
