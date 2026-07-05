@@ -1487,6 +1487,9 @@ toward.
 - `docs/virtual-filesystem.md`: exact TM8 disk layout, prefix table, catalog,
   virtual directory model, and host preservation commands.
 - `docs/shell-command-contract.md`: TEC-side `edit`/`asm`/`run` behavior.
+- `docs/debug80-tecmate-demo-milestone.md`: next visible Debug80 milestone for
+  running the monitor, banked shell/demo path, VDU, input, and TEC-FS service
+  boundaries together.
 - `docs/tecmate-self-hosted-assembler.md`: AZM-subset assembler direction and
   source/binary/map artifact convention.
 - `docs/profile-preprocessor-contract.md`: the contract for optional profile

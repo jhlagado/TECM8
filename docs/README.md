@@ -50,6 +50,7 @@ Start here:
 - [Codebase Tour](codebase.md)
 - [Virtual Filesystem](virtual-filesystem.md)
 - [TEC-Side Shell Command Contract](shell-command-contract.md)
+- [Debug80 TecMate Demo Milestone](debug80-tecmate-demo-milestone.md)
 - [TecMate Self-Hosted Assembler Direction](tecmate-self-hosted-assembler.md)
 - [Profile Preprocessor Contract](profile-preprocessor-contract.md)
 - [Polling State Runtime](polling-state-runtime.md)

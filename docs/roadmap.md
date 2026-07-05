@@ -21,18 +21,22 @@ deferred follow-up in the future backlog.
 
 Next agent-owned phase:
 
-1. Continue the code-quality compactness plan with **Q5: Editor Interaction
+1. Implement and prove the **Debug80 TecMate Demo Milestone** described in
+   `docs/debug80-tecmate-demo-milestone.md`: a small runnable monitor-to-TecMate
+   path that demonstrates bank 0 shell/demo entry, VDU/TMS output, input
+   snapshot, and TEC-FS boundary state through Debug80.
+2. Continue the code-quality compactness plan with **Q5: Editor Interaction
    Decomposition**, because Q3/Q4 helper extraction has already been executed
    through the narrow TM8/storage helpers now documented in the quality plan.
-2. Execute the second-pass command/input architecture plan in
+3. Execute the second-pass command/input architecture plan in
    `docs/editor-command-policy.md`: centralize command-family policy,
    render/loop tails, prompt setup, and normal/insert routing only in measured
    slices with meaningful byte-saving thresholds. Do not continue with isolated
    tiny dispatch-table experiments unless they are part of that larger shape.
-3. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
+4. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
    compatibility wrappers, then run Q6/Q7 acceptance only if the code still
    differs from the documented bank-ready boundary.
-4. After the quality pass is complete, return to user-visible editor features:
+5. After the quality pass is complete, return to user-visible editor features:
    named block read/write, shell completion, then assembler integration.
 
 Human validation remains useful feedback, but it is not a numbered roadmap item
