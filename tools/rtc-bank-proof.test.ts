@@ -27,7 +27,7 @@ test('RTC bank proof covers unsupported UI and unknown selectors', () => {
   assert.match(proof, /xor a\s+farCall 0x03,RTC_ENTRY[\s\S]*cp 0x83/);
   assert.match(proof, /ld a,RTC_SVC_PRAM_VIEWER[\s\S]*farCall 0x03,RTC_ENTRY[\s\S]*cp RTC_ERR_UNSUPPORTED/);
   assert.match(proof, /ld a,0x5A[\s\S]*ld \(RTC_PARAM_STATUS\),a[\s\S]*ld a,0xA5[\s\S]*ld \(RTC_PARAM_LAST_ERROR\),a/);
-  assert.match(proof, /ld a,0x7F[\s\S]*farCall 0x03,RTC_ENTRY[\s\S]*cp RTC_ERR_UNKNOWN[\s\S]*ld a,\(RTC_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(RTC_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
+  assert.match(proof, /ld a,0x7F[\s\S]*farCall 0x03,RTC_ENTRY[\s\S]*jr nc,FailUnknownSelector[\s\S]*cp RTC_ERR_UNKNOWN[\s\S]*ld a,\(RTC_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(RTC_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
   assert.match(runner, /RTC status preserved after unknown selector/);
   assert.match(runner, /RTC last error preserved after unknown selector/);
   assert.match(bank3, /or a\s+jp z,rtcServiceEntryImpl\s+cp RTC_SVC_TOOL_ENTRY\s+jp z,rtcServiceEntryImpl/);
