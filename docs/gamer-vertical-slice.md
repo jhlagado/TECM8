@@ -25,8 +25,9 @@ Keep the first slice narrow.
 - Use ordinary AZM/Z80 before adding assembler ergonomics.
 - Use simple asset definitions before building visual editors.
 - Prefer a native runtime with stable contracts over ad hoc demo code.
-- Treat the game runtime as the first profile of a broader object/event runtime,
-  but do not build the broader runtime yet.
+- Treat the game runtime as the first profile of a broader polling-loop,
+  state-record, and routine-slot runtime, but do not build the broader runtime
+  yet.
 - Keep output inspectable: binary, symbols, listing, and generated maps where
   available.
 - Run under Debug80 first, then use hardware validation later.
@@ -35,10 +36,10 @@ The slice should be good enough to expose real architectural pressure, but not
 so large that it becomes a hidden full engine project.
 
 The vertical slice should remain game-specific in vocabulary. It should still
-avoid needless coupling that would make a later screen/object/event profile
-harder. For example, actor hooks can be documented as the game profile's form
-of object event hooks, without introducing general widgets, documents, commands,
-or text systems in this slice.
+avoid needless coupling that would make a later screen/card/routine-slot
+profile harder. For example, actor hooks can be documented as the game
+profile's form of state-record routine slots, without introducing general
+widgets, documents, commands, or text systems in this slice.
 
 ## Demo Game
 

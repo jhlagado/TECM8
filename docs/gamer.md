@@ -111,7 +111,8 @@ The generalisable pattern is:
 ```text
 visual/resource editor
 + runtime services
-+ object or event hooks
++ loop-driven state model
++ routine slots
 + user-written AZM/Z80 routines
 + packaged output
 ```
@@ -130,21 +131,21 @@ For games, the nouns are:
 For wider software, the nouns become:
 
 - screen
-- object
-- widget
+- card
+- control
 - document
 - record
 - command
-- event
 - file
 - timer
 
 The deep model stays the same. Only the profile vocabulary changes. A game
-actor is a runtime object with state and event handlers. A button, menu item,
-form field, text window, file entry, serial terminal, music pattern, or editor
-buffer can use the same underlying idea.
+actor is a compact state record updated by the loop. A card, menu item, form
+field, text window, file entry, serial terminal, music pattern, or editor buffer
+can use the same underlying idea: state, dirty flags, and small behaviour
+routines called from a profile runtime.
 
-## Frame Loop And Event Loop
+## Loop-Driven Programming Model
 
 Games are naturally frame-loop programs:
 
@@ -157,38 +158,50 @@ play sound
 repeat
 ```
 
-General applications are more naturally event-loop programs:
+The wider TECM8 application model should not assume a desktop-style event
+system. The TEC-1G user interface is primarily polled: matrix keyboard, keypad,
+joystick panel, timers, display work, file status, and tool state are checked by
+the running program. Interrupts may still exist underneath, but the programming
+model should be a cooperative polling loop.
+
+General interactive applications can use the same shape:
 
 ```text
-wait for key/input/timer/file event
-dispatch event to the current screen or object
+poll input and timers
 update state
-redraw changed parts
+check dirty flags
+run short routine slots
+redraw dirty regions
 repeat
 ```
 
-The long-term TECM8 runtime should support both modes:
+The long-term TECM8 runtime should support both timing styles without becoming
+a GUI framework:
 
 ```text
 Runtime Kernel
   frame/tick loop        for games, demos, animation
-  event loop             for apps, editors, and tools
+  polling state loop     for cards, tools, editors, and menus
   screen manager
   input manager
   file services
   text/graphics services
-  object/event dispatcher
+  dirty-region display scheduler
+  routine-slot dispatcher
   AZM routine hooks
 ```
 
 The first game slice does not need to implement this whole kernel. It should,
 however, avoid choices that make the runtime impossible to generalise later.
 
-## Object/Event Model Direction
+## State And Routine-Slot Direction
 
-The broader model is an object with state and event routines.
+The broader model is a state record plus named routine slots. This deliberately
+stops short of an object-oriented or event-driven framework. It is closer to a
+game loop, a HyperCard stack, or a small menu program: poll inputs, update a
+small model, and redraw only what changed.
 
-Game objects might include:
+Game state records might include:
 
 - player
 - enemy
@@ -196,9 +209,9 @@ Game objects might include:
 - coin
 - door
 
-Application objects might include:
+Application or card-style records might include:
 
-- button
+- card
 - menu
 - text field
 - list
@@ -207,7 +220,7 @@ Application objects might include:
 - serial port
 - file entry
 
-Potential object events include:
+Potential routine slots include:
 
 - init
 - draw
@@ -219,9 +232,10 @@ Potential object events include:
 - save
 - load
 
-A game actor may use `INIT`, `UPDATE`, `TOUCH`, and `DESTROY`. A menu item may
-use `DRAW` and `SELECT`. A text editor buffer may use `OPEN`, `KEY`, `SAVE`,
-and `DRAW`. A serial terminal may use `KEY`, `RX_BYTE`, `DRAW`, and `TIMER`.
+A game actor may use `INIT`, `UPDATE`, `TOUCH`, and `DESTROY`. A card control
+may use `DRAW`, `FOCUS`, and `ACTIVATE`. A text editor buffer may use `OPEN`,
+`KEY_STEP`, `SAVE`, and `DRAW_DIRTY`. A serial terminal may use `POLL_RX`,
+`KEY_STEP`, `DRAW_DIRTY`, and `TIMER_STEP`.
 
 The mechanism is the same:
 
@@ -240,7 +254,86 @@ Coin_Touch:
     RET
 ```
 
-The object changed. The hook model did not.
+The record changed. The routine-slot model did not.
+
+## Profile Preprocessor And Generated Assembly
+
+The game/card layer should be a profile preprocessor above ordinary AZM/Z80,
+not a replacement language. The general-purpose assembler must remain able to
+write monitors, ROMs, utilities, tools, demos, and any other Z80 program without
+using a profile at all.
+
+A profile adds structure for a specific kind of project:
+
+```text
+profile declarations
+  -> generated equates, tables, labels, includes, and resource blobs
+  -> concatenated ordinary AZM/Z80 source
+  -> AZM assembler
+  -> binary, map, metadata, and package output
+```
+
+For a game, a project description might name actors, rooms, sprites, maps, and
+routine slots. The preprocessor lowers that structure into ordinary assembly
+data:
+
+```text
+actor Player
+  sprite player_ship
+  update Player_Update
+  touch Player_Touch
+  state 8
+end
+```
+
+could generate:
+
+```z80
+ActorType_Player:
+    .db SPRITE_PLAYER_SHIP
+    .dw Player_Update
+    .dw Player_Touch
+    .db 8
+```
+
+The behaviour remains real Z80:
+
+```z80
+Player_Update:
+    CALL API_GetInput
+    BIT INPUT_LEFT,A
+    CALL NZ,Player_MoveLeft
+    RET
+```
+
+For a card-like profile, the nouns change but the compile path does not:
+
+```text
+card Calculator
+  field A
+  field B
+  field C readonly
+  update Calculator_Update
+end
+```
+
+could lower to field tables, state offsets, dirty-bit masks, and a call to the
+user's `Calculator_Update` routine. If `C = A + B`, the runtime does not need a
+spreadsheet engine. The card update routine can poll field dirty bits, recompute
+`C`, mark the output field dirty, and return.
+
+The first profile preprocessor should stay deliberately small:
+
+- declare actors, rooms, cards, fields, controls, resources, and routine slots
+- generate tables and constants
+- include user assembly files
+- include binary resources
+- emit metadata for TEC-FS and the shell/runner
+- keep generated assembly inspectable
+
+It should not begin as a general scripting language, expression language, or
+hidden compiler. Behaviour stays in AZM/Z80 until a later, measured need proves
+otherwise.
 
 ## Future Profiles
 
@@ -261,7 +354,7 @@ can likely support many screen-based utilities. The reverse is not guaranteed.
 The broader system is strongest for software that is:
 
 - screen-based
-- event-driven
+- loop-driven
 - resource-based
 - stateful but compact
 - educational
@@ -424,7 +517,7 @@ An actor type is a definition:
 - default collision behaviour
 - default flags and state bytes
 
-An actor instance is a live object:
+An actor instance is a live state record:
 
 - active/inactive state
 - type
@@ -655,7 +748,8 @@ Z80/TMS9918-class TECM8 profile. Games are the first and most demanding path,
 but the deeper idea is a structured Z80 application studio:
 
 - assets are built visually or through structured tools
-- object and event logic is written in real Z80
+- profile declarations lower to ordinary assembly tables and resources
+- behaviour routines are written in real Z80
 - runtime profiles provide fast common primitives
 - the debugger makes the machine visible
 - performance is part of the learning loop
