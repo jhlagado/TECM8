@@ -468,10 +468,13 @@ test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
     'RTC_PARAM_FEATURES',
     'RTC_STATUS_OK',
     'RTC_FEATURE_SERVICE',
+    'RTC_ERR_UNKNOWN',
     'RTC_ERR_UNSUPPORTED',
   ]) {
     assertDocRow(name);
   }
+  assert.match(doc, /explicit `RTC_SVC_TOOL_ENTRY` selector\s+both publish the descriptor/);
+  assert.match(doc, /Unknown RTC selectors return `RTC_ERR_UNKNOWN`/);
 });
 
 test('banked service ABI doc covers bank 4 GLCD boundary slots and parameters', () => {

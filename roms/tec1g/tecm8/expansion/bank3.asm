@@ -12,11 +12,17 @@ EXP_VERSION       .equ    0x01
         jp z,BankAbiFarJumpTarget
         cp ABI_PROBE_RETURNING_FARJUMP
         jp z,BankAbiReturningFarJumpTarget
+        or a
+        jp z,rtcServiceEntryImpl
+        cp RTC_SVC_TOOL_ENTRY
+        jp z,rtcServiceEntryImpl
         cp RTC_SVC_SETUP_UI
         jp z,rtcUnsupportedUi
         cp RTC_SVC_PRAM_VIEWER
         jp z,rtcUnsupportedUi
-        jp rtcServiceEntryImpl
+        ld a,RTC_ERR_UNKNOWN
+        scf
+        ret
 
 @rtcToolEntry:
         jp rtcServiceEntryImpl

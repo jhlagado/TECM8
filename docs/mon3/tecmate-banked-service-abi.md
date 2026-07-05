@@ -612,7 +612,12 @@ RTC status and feature values:
 | --- | ---: | --- |
 | `RTC_STATUS_OK` | `00h` | Success. |
 | `RTC_FEATURE_SERVICE` | `01h` | Basic service boundary present. |
+| `RTC_ERR_UNKNOWN` | `EEh` | Unknown bank-local RTC service. |
 | `RTC_ERR_UNSUPPORTED` | `E0h` | UI/tool slot exists but is not implemented yet. |
+
+The bare entry call with `A=00h` and the explicit `RTC_SVC_TOOL_ENTRY` selector
+both publish the descriptor. Unknown RTC selectors return `RTC_ERR_UNKNOWN` with
+carry set and do not modify the RTC status fields.
 
 ## Bank 4: GLCD Boundary
 

@@ -131,8 +131,8 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2389 occupied bytes currently
-2389 bytes total high-water span across all banks
+2399 occupied bytes currently
+2399 bytes total high-water span across all banks
 ```
 
 That changes the strategy. We do not need to gut MON3 immediately just to make

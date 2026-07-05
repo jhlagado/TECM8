@@ -184,7 +184,7 @@ test('TECM8 bank-local dispatchers mention every selector they expose', () => {
     assertAdjacentDispatch(bank2, name, 'bank2');
   }
   assert.match(bank0, /\.db\s+RTC_SVC_TOOL_ENTRY/);
-  assert.match(entryBlock(bank3, '@Tecm8ExpansionBank3Entry', '@rtcToolEntry'), /jp rtcServiceEntryImpl/);
+  assert.match(entryBlock(bank3, '@Tecm8ExpansionBank3Entry', '@rtcToolEntry'), /cp RTC_SVC_TOOL_ENTRY\s*\n\s*jp z,rtcServiceEntryImpl/);
   for (const name of equatesWithPrefix('RTC_SVC_').map((entry) => entry.name).filter((name) => name !== 'RTC_SVC_TOOL_ENTRY')) {
     assertAdjacentDispatch(bank3, name, 'bank3');
   }

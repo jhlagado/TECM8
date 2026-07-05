@@ -204,8 +204,8 @@ async function main(): Promise<void> {
   const params = readTrace(runtime, paramBase, 8);
 
   assertEqual(result, PROOF_PASS, 'RTC bank proof result marker');
-  assertEqual(params[0], 0xe0, 'RTC status after unsupported UI');
-  assertEqual(params[1], 0xe0, 'RTC last error after unsupported UI');
+  assertEqual(params[0], 0x5a, 'RTC status preserved after unknown selector');
+  assertEqual(params[1], 0xa5, 'RTC last error preserved after unknown selector');
   assertEqual(params[2], 0x03, 'RTC service bank');
   assertEqual(params[3], 0x01, 'RTC service version');
   assertEqual(params[4], 0x01, 'RTC service features');

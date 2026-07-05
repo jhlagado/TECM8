@@ -13,6 +13,7 @@ PROOF_FAIL_ENTRY            .equ    0xE0
 PROOF_FAIL_TOOL             .equ    0xE1
 PROOF_FAIL_SETUP_UI         .equ    0xE2
 PROOF_FAIL_PRAM_VIEWER      .equ    0xE3
+PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xE4
 RTC_PROOF_RESULT            .equ    0x3BB0
 
 ;! out carry,zero
@@ -25,6 +26,7 @@ ClearParams:
         inc hl
         djnz ClearParams
 
+        xor a
         farCall 0x03,RTC_ENTRY
         jp c,FailEntry
         cp 0x83
@@ -72,6 +74,22 @@ ClearParams:
         cp RTC_ERR_UNSUPPORTED
         jr nz,FailPramViewer
 
+        ld a,0x5A
+        ld (RTC_PARAM_STATUS),a
+        ld a,0xA5
+        ld (RTC_PARAM_LAST_ERROR),a
+        ld a,0x7F
+        farCall 0x03,RTC_ENTRY
+        jr nc,FailUnknownSelector
+        cp RTC_ERR_UNKNOWN
+        jr nz,FailUnknownSelector
+        ld a,(RTC_PARAM_STATUS)
+        cp 0x5A
+        jr nz,FailUnknownSelector
+        ld a,(RTC_PARAM_LAST_ERROR)
+        cp 0xA5
+        jr nz,FailUnknownSelector
+
         ld a,PROOF_PASS
         ld (RTC_PROOF_RESULT),a
         halt
@@ -87,6 +105,9 @@ FailSetupUi:
         jr Fail
 FailPramViewer:
         ld a,PROOF_FAIL_PRAM_VIEWER
+        jr Fail
+FailUnknownSelector:
+        ld a,PROOF_FAIL_UNKNOWN_SELECTOR
 Fail:
         ld (RTC_PROOF_RESULT),a
         halt

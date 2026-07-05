@@ -63,16 +63,16 @@ Terms:
 | 0 | Shell, launcher, registry | `728` | `728` | `82D8h` | `15656` |
 | 1 | VDU/TMS9918 boundary | `532` | `532` | `8214h` | `15852` |
 | 2 | TEC-FS boundary and block mapper | `799` | `799` | `831Fh` | `15585` |
-| 3 | RTC boundary | `85` | `85` | `8055h` | `16299` |
+| 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
 | 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2389`
+Expansion occupied bytes: `2399`
 
-Expansion high-water span total: `2389`
+Expansion high-water span total: `2399`
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
