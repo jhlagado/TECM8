@@ -369,6 +369,14 @@ function runInstalledExpansionCase(launchAddress: number): {
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
   shellCommandStatus?: string;
+  shellDirResult?: {
+    resultLo: number;
+    count: number;
+    firstFileId: number;
+    firstFileType: number;
+    firstNameLength: number;
+    flags: number;
+  };
 } {
   const expectedServiceAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ServiceCall');
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
@@ -472,6 +480,14 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell dir status render returned carry clear');
   assertVramText(platformRuntime, 0x02e0, 'DIR', 'shell dir visible status');
   assertStringEqual(readVramAscii(platformRuntime, 0x02e0, 8).trimEnd(), 'DIR', 'captured shell dir visible status');
+  const shellDirResult = {
+    resultLo: runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO],
+    count: runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI],
+    firstFileId: runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_ID],
+    firstFileType: runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_TYPE],
+    firstNameLength: runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_NAME_LEN],
+    flags: runtime.hardware.memory[TFS_PARAM_SUMMARY_FLAGS],
+  };
 
   return {
     instructions,
@@ -487,6 +503,7 @@ function runInstalledExpansionCase(launchAddress: number): {
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
     shellCommandStatus,
+    shellDirResult,
   };
 }
 
