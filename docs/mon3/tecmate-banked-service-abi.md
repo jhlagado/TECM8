@@ -404,6 +404,7 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_READ_LOCATOR` (`0Ah`) | Implemented locator header parser. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_FORMAT_META_RECORD` (`0Bh`) | Implemented `TFM1` metadata formatter. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_PATCH_META_RECORD` (`0Ch`) | Implemented `TFM1` metadata patcher. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_DECODE_CATALOG` (`0Dh`) | Implemented single-entry catalogue decoder. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -432,6 +433,7 @@ TEC-FS routine.
 | `TFS_SVC_READ_LOCATOR` | `0Ah` | Validates a caller-buffer locator header and publishes its geometry. |
 | `TFS_SVC_FORMAT_META_RECORD` | `0Bh` | Formats a blank TEC-FS v1 metadata record into the caller buffer. |
 | `TFS_SVC_PATCH_META_RECORD` | `0Ch` | Patches mutable fields in a caller-buffer metadata record. |
+| `TFS_SVC_DECODE_CATALOG` | `0Dh` | Decodes one active 64-byte TM8 catalogue entry from the caller buffer. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -509,6 +511,48 @@ TEC-FS parameter block:
 | `TFS_PARAM_DRIVER_BANK` | `3B5Dh` | Installed sector driver physical bank, used only when the driver address is nonzero. |
 | `TFS_PARAM_DRIVER_ADDR_LO` | `3B5Eh` | Installed sector driver entry address low byte. |
 | `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
+
+The first directory/list primitive is deliberately small. `TFS_SVC_DECODE_CATALOG`
+expects `TFS_PARAM_BUFFER_LO/HI` to point at one 64-byte TM8 v1 file catalogue
+entry already loaded in RAM. It rejects inactive entries and bad filename
+lengths with `TFS_ERR_BAD_CATALOG`. On success it returns `A=82h`, clears carry,
+and publishes the fields needed by a future `ls` display in the small catalogue
+decode result block at `TFS_ENTRY_RESULT_BASE`:
+
+| Output alias | Address | Meaning |
+| --- | ---: | --- |
+| `TFS_ENTRY_RESULT_BASE` | `3BC8h` | Base of the catalogue decode result block. |
+| `TFS_PARAM_ENTRY_FILE_ID` | `3BC8h` | File id. |
+| `TFS_PARAM_ENTRY_PREFIX_ID` | `3BC9h` | Prefix-table id. |
+| `TFS_PARAM_ENTRY_NAME_LEN` | `3BCAh` | Local filename length. |
+| `TFS_PARAM_ENTRY_FIRST_BLOCK_LO` | `3BCBh` | First 4K block low byte. |
+| `TFS_PARAM_ENTRY_FIRST_BLOCK_HI` | `3BCCh` | First 4K block high byte. |
+| `TFS_PARAM_ENTRY_SIZE_0` | `3BCDh` | File size byte 0. |
+| `TFS_PARAM_ENTRY_SIZE_1` | `3BCEh` | File size byte 1. |
+| `TFS_PARAM_ENTRY_SIZE_2` | `3BCFh` | File size byte 2. |
+| `TFS_PARAM_ENTRY_SIZE_3` | `3BD0h` | File size byte 3. |
+| `TFS_PARAM_ENTRY_FILE_TYPE` | `3BD1h` | TM8 file type byte. |
+
+This is not yet a full directory walker. Sector reads, prefix resolution,
+hidden-file filtering, and multi-entry iteration are expected to layer on this
+decoder once the sector-driver path is stable.
+
+Catalog entry constants mirror the host TM8 format:
+
+| Constant | Value | Meaning |
+| --- | ---: | --- |
+| `TFS_ENTRY_STATUS_ACTIVE` | `01h` | Active file-catalog entry status. |
+| `TFS_CATALOG_ENTRY_BYTES` | `40h` | Bytes per TM8 v1 file-catalog entry. |
+| `TFS_CATALOG_NAME_BYTES` | `28h` | Maximum local filename bytes. |
+| `TFS_CATALOG_OFFSET_STATUS` | `00h` | Entry status offset. |
+| `TFS_CATALOG_OFFSET_FILE_ID` | `01h` | File id offset. |
+| `TFS_CATALOG_OFFSET_PREFIX_ID` | `02h` | Prefix id offset. |
+| `TFS_CATALOG_OFFSET_NAME_LEN` | `03h` | Local filename length offset. |
+| `TFS_CATALOG_OFFSET_NAME` | `04h` | Local filename text offset. |
+| `TFS_CATALOG_OFFSET_FIRST_BLOCK` | `2Ch` | First 4K block offset. |
+| `TFS_CATALOG_OFFSET_FILE_SIZE` | `2Eh` | 32-bit file size offset. |
+| `TFS_CATALOG_OFFSET_FILE_TYPE` | `32h` | TM8 file type offset. |
+| `TFS_ERR_BAD_CATALOG` | `10h` | Invalid or inactive catalogue entry. |
 | `TFS_META_PATCH_BASE` | `3BD8h` | Base of metadata patch parameter block. |
 | `TFS_META_PATCH_FILE_TYPE` | `3BD8h` | Metadata file type to write. |
 | `TFS_META_PATCH_FLAGS` | `3BD9h` | Metadata flags to write. |

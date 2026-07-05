@@ -33,6 +33,7 @@ PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
 PROOF_FAIL_FORMAT_META      .equ    0xF5
 PROOF_FAIL_PATCH_META       .equ    0xF6
 PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xF7
+PROOF_FAIL_DECODE_CATALOG   .equ    0xF8
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -235,6 +236,106 @@ ClearParams:
         ld a,(0x6251)
         cp 0x12
         jp nz,FailPatchMeta
+
+        ld hl,0x6280
+        ld b,TFS_CATALOG_ENTRY_BYTES
+ClearCatalogEntry:
+        ld (hl),0
+        inc hl
+        djnz ClearCatalogEntry
+        ld a,TFS_ENTRY_STATUS_ACTIVE
+        ld (0x6280+TFS_CATALOG_OFFSET_STATUS),a
+        ld a,0x21
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_ID),a
+        ld a,0x03
+        ld (0x6280+TFS_CATALOG_OFFSET_PREFIX_ID),a
+        ld a,0x08
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME_LEN),a
+        ld a,"m"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+0),a
+        ld a,"a"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+1),a
+        ld a,"i"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+2),a
+        ld a,"n"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+3),a
+        ld a,"."
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+4),a
+        ld a,"a"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+5),a
+        ld a,"s"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+6),a
+        ld a,"m"
+        ld (0x6280+TFS_CATALOG_OFFSET_NAME+7),a
+        ld a,0x34
+        ld (0x6280+TFS_CATALOG_OFFSET_FIRST_BLOCK),a
+        ld a,0x12
+        ld (0x6280+TFS_CATALOG_OFFSET_FIRST_BLOCK+1),a
+        ld a,0x78
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_SIZE),a
+        ld a,0x56
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_SIZE+1),a
+        ld a,0x34
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_SIZE+2),a
+        ld a,0x12
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_SIZE+3),a
+        ld a,TFS_FILE_SOURCE
+        ld (0x6280+TFS_CATALOG_OFFSET_FILE_TYPE),a
+        ld hl,0x6280
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_DECODE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailDecodeCatalog
+        cp 0x82
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        cp 0x21
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_PREFIX_ID)
+        cp 0x03
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_NAME_LEN)
+        cp 0x08
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_LO)
+        cp 0x34
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_HI)
+        cp 0x12
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_SIZE_0)
+        cp 0x78
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_SIZE_3)
+        cp 0x12
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        cp TFS_FILE_SOURCE
+        jp nz,FailDecodeCatalog
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        ld (TFS_PROOF_TRACE_BASE+0),a
+        ld a,(TFS_PARAM_ENTRY_PREFIX_ID)
+        ld (TFS_PROOF_TRACE_BASE+1),a
+        ld a,(TFS_PARAM_ENTRY_NAME_LEN)
+        ld (TFS_PROOF_TRACE_BASE+2),a
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_LO)
+        ld (TFS_PROOF_TRACE_BASE+3),a
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_HI)
+        ld (TFS_PROOF_TRACE_BASE+4),a
+        ld a,(TFS_PARAM_ENTRY_SIZE_0)
+        ld (TFS_PROOF_TRACE_BASE+5),a
+        ld a,(TFS_PARAM_ENTRY_SIZE_3)
+        ld (TFS_PROOF_TRACE_BASE+6),a
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        ld (TFS_PROOF_TRACE_BASE+7),a
+        xor a
+        ld (0x6280+TFS_CATALOG_OFFSET_STATUS),a
+        ld a,TFS_SVC_DECODE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp nc,FailDecodeCatalog
+        cp TFS_ERR_BAD_CATALOG
+        jp nz,FailDecodeCatalog
+        ld (TFS_PROOF_TRACE_BASE+8),a
 
         ld hl,0x6200
         ld (TFS_PARAM_BUFFER_LO),hl
@@ -668,6 +769,9 @@ FailPatchMeta:
         jr Fail
 FailUnknownSelector:
         ld a,PROOF_FAIL_UNKNOWN_SELECTOR
+        jr Fail
+FailDecodeCatalog:
+        ld a,PROOF_FAIL_DECODE_CATALOG
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt

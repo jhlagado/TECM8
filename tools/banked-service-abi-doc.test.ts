@@ -52,6 +52,22 @@ function assertDocMentions(name: string): void {
   assert.match(doc, new RegExp(`\\\`${name}\\\``));
 }
 
+function assertNoOverlap(
+  leftName: string,
+  leftStart: number,
+  leftLength: number,
+  rightName: string,
+  rightStart: number,
+  rightLength: number,
+): void {
+  const leftEnd = leftStart + leftLength;
+  const rightEnd = rightStart + rightLength;
+  assert.ok(
+    leftEnd <= rightStart || rightEnd <= leftStart,
+    `${leftName} ${hexForDoc(leftStart)}..${hexForDoc(leftEnd - 1)} overlaps ${rightName} ${hexForDoc(rightStart)}..${hexForDoc(rightEnd - 1)}`,
+  );
+}
+
 test('banked service ABI doc covers fixed monitor bank services', () => {
   for (const name of [
     'MON_SYS_GET',
@@ -259,6 +275,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_MOUNT` \(`61h`\) \| `02h` \| `8000h` \| `TFS_SVC_MOUNT` \(`01h`\) \| Implemented geometry publish/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_RANGE` \(`05h`\) \| Reserved; returns unsupported/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_PATCH_META_RECORD` \(`0Ch`\) \| Implemented `TFM1` metadata patcher/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_DECODE_CATALOG` \(`0Dh`\) \| Implemented single-entry catalogue decoder/);
 
   for (const name of [
     'TFS_ENTRY',
@@ -286,6 +303,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_READ_LOCATOR',
     'TFS_SVC_FORMAT_META_RECORD',
     'TFS_SVC_PATCH_META_RECORD',
+    'TFS_SVC_DECODE_CATALOG',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -319,6 +337,16 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_PARAM_DRIVER_BANK',
     'TFS_PARAM_DRIVER_ADDR_LO',
     'TFS_PARAM_DRIVER_ADDR_HI',
+    'TFS_PARAM_ENTRY_FIRST_BLOCK_LO',
+    'TFS_PARAM_ENTRY_FIRST_BLOCK_HI',
+    'TFS_PARAM_ENTRY_SIZE_0',
+    'TFS_PARAM_ENTRY_SIZE_1',
+    'TFS_PARAM_ENTRY_SIZE_2',
+    'TFS_PARAM_ENTRY_SIZE_3',
+    'TFS_PARAM_ENTRY_FILE_TYPE',
+    'TFS_PARAM_ENTRY_NAME_LEN',
+    'TFS_PARAM_ENTRY_PREFIX_ID',
+    'TFS_PARAM_ENTRY_FILE_ID',
     'TFS_META_PATCH_BASE',
     'TFS_META_PATCH_FILE_TYPE',
     'TFS_META_PATCH_FLAGS',
@@ -332,6 +360,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_META_PATCH_HW_HI',
     'TFS_META_PATCH_NAME_REF_LO',
     'TFS_META_PATCH_NAME_REF_HI',
+    'TFS_ENTRY_RESULT_BASE',
     'TFS_DRIVER_OP_READ',
     'TFS_DRIVER_OP_WRITE',
     'TFS_LOC_LBA_0',
@@ -400,12 +429,24 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_META_HW_TMS9918',
     'TFS_META_HW_GLCD',
     'TFS_META_HW_JOYSTICK',
+    'TFS_ENTRY_STATUS_ACTIVE',
+    'TFS_CATALOG_ENTRY_BYTES',
+    'TFS_CATALOG_NAME_BYTES',
+    'TFS_CATALOG_OFFSET_STATUS',
+    'TFS_CATALOG_OFFSET_FILE_ID',
+    'TFS_CATALOG_OFFSET_PREFIX_ID',
+    'TFS_CATALOG_OFFSET_NAME_LEN',
+    'TFS_CATALOG_OFFSET_NAME',
+    'TFS_CATALOG_OFFSET_FIRST_BLOCK',
+    'TFS_CATALOG_OFFSET_FILE_SIZE',
+    'TFS_CATALOG_OFFSET_FILE_TYPE',
     'TFS_STATUS_OK',
     'TFS_ERR_BAD_VOLUME',
     'TFS_ERR_BAD_BLOCK',
     'TFS_ERR_BAD_SECTOR',
     'TFS_ERR_BAD_BUFFER',
     'TFS_ERR_BAD_LOCATOR',
+    'TFS_ERR_BAD_CATALOG',
     'TFS_ERR_NO_DRIVER',
     'TFS_ERR_UNSUPPORTED',
   ]) {
@@ -430,6 +471,23 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_FORMAT_META_RECORD` writes a blank 32-byte `TFM1` metadata record/);
   assert.match(doc, /file type,\s+flags, load\/end\/run addresses, required hardware, and a long-name reference/);
   assert.match(doc, /default formatted record is `TFS_FILE_PROJECT`/);
+  assert.match(doc, /`TFS_SVC_DECODE_CATALOG`\s+expects `TFS_PARAM_BUFFER_LO\/HI` to point at one 64-byte TM8 v1 file catalogue/);
+  assert.match(doc, /not yet a full directory walker/);
+});
+
+test('TEC-FS catalog decode result block does not collide with neighbouring ABI RAM', () => {
+  const tfsEntryResultBase = equateValue('TFS_ENTRY_RESULT_BASE');
+  assert.equal(tfsEntryResultBase, 0x3bc8);
+
+  for (const [name, start, length] of [
+    ['INP_PARAM_BASE', equateValue('INP_PARAM_BASE'), 8],
+    ['TFS_META_PATCH_BASE', equateValue('TFS_META_PATCH_BASE'), 12],
+    ['ASM_PARAM_BASE', equateValue('ASM_PARAM_BASE'), 8],
+    ['EXP_MENU_VEC_BANK', equateValue('EXP_MENU_VEC_BANK'), 8],
+    ['RUN_PARAM_BASE', equateValue('RUN_PARAM_BASE'), 8],
+  ] as const) {
+    assertNoOverlap('TFS_ENTRY_RESULT_BASE', tfsEntryResultBase, 10, name, start, length);
+  }
 });
 
 test('banked service ABI doc covers bank 7 assembler skeleton slots and parameters', () => {

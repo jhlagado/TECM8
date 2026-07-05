@@ -200,8 +200,10 @@ async function main(): Promise<void> {
   const instructions = runUntilHalt(runtime, platformRuntime);
   const resultAddr = symbolNumber(symbols, 'TFS_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'TFS_PARAM_BASE');
+  const traceBase = symbolNumber(symbols, 'TFS_PROOF_TRACE_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const params = readTrace(runtime, paramBase, 32);
+  const trace = readTrace(runtime, traceBase, 9);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
   assertEqual(params[0], 0x1d, 'active TEC-FS volume');
@@ -236,6 +238,15 @@ async function main(): Promise<void> {
   assertEqual(params[29], 0x05, 'TEC-FS driver bank');
   assertEqual(params[30], 0x00, 'TEC-FS driver address low byte');
   assertEqual(params[31], 0x80, 'TEC-FS driver address high byte');
+  assertEqual(trace[0], 0x21, 'TEC-FS catalog file id');
+  assertEqual(trace[1], 0x03, 'TEC-FS catalog prefix id');
+  assertEqual(trace[2], 0x08, 'TEC-FS catalog name length');
+  assertEqual(trace[3], 0x34, 'TEC-FS catalog first block low byte');
+  assertEqual(trace[4], 0x12, 'TEC-FS catalog first block high byte');
+  assertEqual(trace[5], 0x78, 'TEC-FS catalog file size low byte');
+  assertEqual(trace[6], 0x12, 'TEC-FS catalog file size high byte');
+  assertEqual(trace[7], 0x02, 'TEC-FS catalog file type');
+  assertEqual(trace[8], 0x10, 'TEC-FS catalog rejects inactive entry');
 
   writeFileSync(
     LAST_RUN,
@@ -245,6 +256,7 @@ async function main(): Promise<void> {
         instructions,
         resultMarker: result,
         params,
+        trace,
         finalPc: runtime.cpu.pc & 0xffff,
         finalSysCtrl: platformRuntime.state.system?.sysCtrl,
         finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,

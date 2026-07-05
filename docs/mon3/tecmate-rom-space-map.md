@@ -62,7 +62,7 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `999` | `999` | `83E7h` | `15385` |
 | 1 | VDU/TMS9918 boundary | `532` | `532` | `8214h` | `15852` |
-| 2 | TEC-FS boundary and block mapper | `799` | `799` | `831Fh` | `15585` |
+| 2 | TEC-FS boundary and block mapper | `913` | `913` | `8391h` | `15471` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
@@ -70,15 +70,15 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2670`
+Expansion occupied bytes: `2784`
 
-Expansion high-water span total: `2670`
+Expansion high-water span total: `2784`
 
-Latest blank-command shell milestone delta:
+Latest TEC-FS catalogue decode milestone delta:
 
 ```text
-bank 0 span: 995 -> 999 bytes
-expansion total span: 2666 -> 2670 bytes
+bank 2 span: 799 -> 913 bytes
+expansion total span: 2670 -> 2784 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
@@ -116,7 +116,7 @@ registry, and marker labels are current private bank-0 layout.
 
 - The immediate pressure is still in fixed monitor ROM, not the expansion ROM.
 - Banked services are cheap at this stage; the total occupied expansion code is
-  still under 3K.
+  still under 3K, even after adding the first TEC-FS catalogue decode primitive.
 - Bank 0 layout now needs active care because it contains both the registry and
   shell launcher boundary. Private labels may move; callers should enter through
   discovery-installed vectors and service IDs, not internal marker addresses.

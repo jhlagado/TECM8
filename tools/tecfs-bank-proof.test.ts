@@ -59,18 +59,24 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(proof, /ld a,TFS_SVC_READ_LOCATOR[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82/);
   assert.match(proof, /ld a,TFS_SVC_FORMAT_META_RECORD[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82[\s\S]*cp TFS_META_MAGIC_0[\s\S]*cp TFS_FILE_PROJECT/);
   assert.match(proof, /ld a,TFS_SVC_PATCH_META_RECORD[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82[\s\S]*cp TFS_FILE_GAME/);
+  assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_ID\)[\s\S]*cp 0x21/);
+  assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*jp nc,FailDecodeCatalog[\s\S]*cp TFS_ERR_BAD_CATALOG/);
   assert.match(proof, /cp TFS_META_HW_TMS9918\+TFS_META_HW_JOYSTICK/);
   assert.match(proof, /cp TFS_ERR_BAD_LOCATOR/);
   assert.match(bank2, /cp TFS_SVC_FORMAT_LOCATOR[\s\S]*jp z,tecfsFormatLocatorImpl/);
   assert.match(bank2, /cp TFS_SVC_READ_LOCATOR[\s\S]*jp z,tecfsReadLocatorImpl/);
   assert.match(bank2, /cp TFS_SVC_FORMAT_META_RECORD[\s\S]*jp z,tecfsFormatMetaRecordImpl/);
   assert.match(bank2, /cp TFS_SVC_PATCH_META_RECORD[\s\S]*jp z,tecfsPatchMetaRecordImpl/);
+  assert.match(bank2, /cp TFS_SVC_DECODE_CATALOG[\s\S]*jp z,tecfsDecodeCatalogImpl/);
   assert.match(bank2, /tecfsFormatMetaRecordImpl:[\s\S]*ld b,TFS_META_RECORD_BYTES[\s\S]*djnz tecfsFormatMetaRecordClear[\s\S]*ld a,TFS_FILE_PROJECT/);
   assert.match(bank2, /tecfsPatchMetaRecordImpl:[\s\S]*ld a,\(TFS_META_PATCH_FILE_TYPE\)[\s\S]*ld a,\(TFS_META_PATCH_NAME_REF_HI\)/);
+  assert.match(bank2, /tecfsDecodeCatalogImpl:[\s\S]*cp TFS_ENTRY_STATUS_ACTIVE[\s\S]*cp TFS_CATALOG_NAME_BYTES\+1/);
   assert.match(doc, /Formats a TEC-FS locator header into the caller buffer/);
   assert.match(doc, /Validates a caller-buffer locator header and publishes its geometry/);
   assert.match(doc, /Formats a blank TEC-FS v1 metadata record into the caller buffer/);
   assert.match(doc, /Patches mutable fields in a caller-buffer metadata record/);
+  assert.match(doc, /Decodes one active 64-byte TM8 catalogue entry/);
+  assert.match(doc, /not yet a full directory walker/);
 });
 
 test('TEC-FS geometry checks are wired into the repository', () => {

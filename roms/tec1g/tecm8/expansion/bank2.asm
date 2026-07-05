@@ -40,6 +40,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsFormatMetaRecordImpl
         cp TFS_SVC_PATCH_META_RECORD
         jp z,tecfsPatchMetaRecordImpl
+        cp TFS_SVC_DECODE_CATALOG
+        jp z,tecfsDecodeCatalogImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -79,6 +81,9 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsPatchMetaRecord:
         jp tecfsPatchMetaRecordImpl
+
+@tecfsDecodeCatalog:
+        jp tecfsDecodeCatalogImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -445,8 +450,68 @@ tecfsFormatMetaRecordClear:
         or a
         ret
 
+@tecfsDecodeCatalogImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jp nz,tecfsBadCatalog
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_FILE_ID),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_PREFIX_ID),a
+        inc hl
+        ld a,(hl)
+        or a
+        jp z,tecfsBadCatalog
+        cp TFS_CATALOG_NAME_BYTES+1
+        jp nc,tecfsBadCatalog
+        ld (TFS_PARAM_ENTRY_NAME_LEN),a
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld de,TFS_CATALOG_OFFSET_FIRST_BLOCK
+        add hl,de
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_FIRST_BLOCK_LO),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_FIRST_BLOCK_HI),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_SIZE_0),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_SIZE_1),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_SIZE_2),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_SIZE_3),a
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld de,TFS_CATALOG_OFFSET_FILE_TYPE
+        add hl,de
+        ld a,(hl)
+        ld (TFS_PARAM_ENTRY_FILE_TYPE),a
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
 @tecfsBadLocator:
         ld a,TFS_ERR_BAD_LOCATOR
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
+@tecfsBadCatalog:
+        ld a,TFS_ERR_BAD_CATALOG
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf

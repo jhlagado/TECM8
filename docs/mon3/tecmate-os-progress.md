@@ -56,11 +56,12 @@ The current geometry is:
 ```
 
 It also formats and reads the card-level TEC-FS locator sector, formats a blank
-`TFM1` metadata record, validates sector and buffer inputs, and can call an
-installed low-level sector driver through a bank/address hook. This still does
-not implement the full catalogue or allocator, but it turns the storage design
-into executable ABI. Later catalogue, load, and save services can build on this
-geometry and metadata record shape.
+`TFM1` metadata record, validates sector and buffer inputs, can call an
+installed low-level sector driver through a bank/address hook, and can decode
+one active 64-byte TM8 catalogue entry already loaded in RAM. This still does
+not implement the full catalogue walker or allocator, but it turns the storage
+design into executable ABI. Later catalogue, load, and save services can build
+on this geometry, metadata record shape, and single-entry decode primitive.
 
 The metadata record now has explicit slots for file type, flags, load address,
 end address, run address, required hardware, and a long-name reference. The
@@ -136,15 +137,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2670 occupied bytes currently
-2670 bytes total high-water span across all banks
+2784 occupied bytes currently
+2784 bytes total high-water span across all banks
 ```
 
-This blank-command shell milestone changed the footprint by 4 bytes:
+This TEC-FS catalogue decode milestone changed the footprint by 114 bytes:
 
 ```text
-bank 0 span: 995 -> 999 bytes
-expansion total span: 2666 -> 2670 bytes
+bank 2 span: 799 -> 913 bytes
+expansion total span: 2670 -> 2784 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
