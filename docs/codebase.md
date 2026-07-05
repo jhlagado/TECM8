@@ -285,22 +285,24 @@ session now expect:
   operations are selected with `A` or through the monitor service bridge.
   Internal implementation labels are private and movable. Bank 0 owns the
   discovery install entry, expansion vectors, the private runtime service
-  registry, the current shell-splash placeholder, the first
-  `SHL_RUN_COMMAND` boundary that classifies `edit`, `asm`, and `run` from the
-  shared shell command buffer, and the shell result slots that now clear and
-  publish target and result pointers alongside the action and status bytes.
-  Bank 1 owns the VDU and TMS9918 dispatchers, including the text-screen clear
-  path, row/column cursor placement, scroll-up behavior, one-byte VRAM read
-  helper used by the scrolling proof, and the status-line writer that redraws
-  the last text row without disturbing the caller cursor. Bank 2 owns the
-  TEC-FS geometry boundary, active-volume selection, logical-sector
-  translation, locator-header format/read services, the blank metadata-record
-  formatter used by the game and assembler direction docs, and the installable
-  low-level sector-driver handoff used by the current proofs. Bank 3 owns the
-  RTC descriptor boundary, bank 4 owns the GLCD containment boundary, bank 5
-  carries the TEC-FS monitor-sector bridge simulation, bank 6 now exposes the
-  input snapshot boundary with neutral joystick and modifier defaults, and
-  banks 7-8 are still placeholder images.
+  registry, the current shell-splash scaffold, the first `SHL_RUN_COMMAND`
+  boundary that classifies `edit`, `asm`, and `run` from the shared shell
+  command buffer, the `SHL_TARGET_DESC` descriptor block published for shell
+  actions, and the shell result slots that now clear and publish target and
+  result pointers alongside the action and status bytes. Bank 1 owns the VDU
+  and TMS9918 dispatchers, including the text-screen clear path, row/column
+  cursor placement, scroll-up behavior, status-line redraw with caller-cursor
+  restore, the bounded `VDU_SVC_PUT_STRING_N` writer, and the one-byte VRAM
+  read helper used by the scrolling proof. Bank 2 owns the TEC-FS geometry
+  boundary, active-volume selection, logical-sector translation, locator-header
+  format/read services, metadata-record format and patch services, catalog-entry
+  decode, and the installable low-level sector-driver handoff used by the
+  current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
+  GLCD containment boundary, bank 5 carries the TEC-FS monitor-sector bridge
+  simulation, bank 6 exposes the input snapshot boundary with neutral joystick
+  and modifier defaults, bank 7 publishes the assembler skeleton boundary that
+  currently returns an unsupported result through the shared shell result block,
+  and bank 8 does the same for the run skeleton boundary.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -1281,10 +1283,12 @@ The `run-*.ts` files assemble proof programs through the npm
 intentionally testing against a local AZM checkout:
 
 - `tools/run-bank-abi-proof.ts`
+- `tools/run-input-bank-proof.ts`
 - `tools/run-project-config-proof.ts`
 - `tools/run-project-config-storage-proof.ts`
 - `tools/run-rtc-bank-proof.ts`
 - `tools/run-shell-commands-proof.ts`
+- `tools/run-assembler-bank-proof.ts`
 - `tools/run-display-proof.ts`
 - `tools/run-editor-viewport-storage-proof.ts`
 - `tools/run-tecfs-bank-proof.ts`
@@ -1310,13 +1314,18 @@ coverage is split by boundary: `tools/run-bank-abi-proof.ts` checks nested
 `farCall` restore behavior, the one-way `farJump` handoff, the bank 0 shell
 command classifier reached through `SHL_RUN_COMMAND`, the shell result-pointer
 reset contract, and the bank 6 input snapshot entry published through the
-service registry. The TMS9918 runner checks the bank 1 VDU and TMS9918 entry
+service registry. `tools/run-input-bank-proof.ts` isolates that bank 6 path and
+checks the neutral key, joystick, and modifier snapshot plus the preserved
+status bytes on unknown selectors. `tools/run-assembler-bank-proof.ts` drives
+the bank 0 `asm` and `run` shell paths through banks 7 and 8, checking the
+published target descriptor and the current unsupported result contract for both
+skeleton services. The TMS9918 runner checks the bank 1 VDU and TMS9918 entry
 points including text clear, row/column cursor placement, scroll-up copying,
-status-line rendering with cursor restore, and VRAM reads. The TEC-FS runner
-checks bank 2 volume selection, logical-sector mapping, locator-header
-format/read behavior, blank metadata-record formatting, and installed
-sector-driver dispatch, and the RTC runner checks the bank 3 descriptor and
-unsupported UI status path.
+status-line rendering with cursor restore, bounded string writes, and VRAM
+reads. The TEC-FS runner checks bank 2 volume selection, logical-sector
+mapping, locator-header format/read behavior, metadata-record format and patch
+behavior, catalog-entry decode, and installed sector-driver dispatch, and the
+RTC runner checks the bank 3 descriptor and unsupported UI status path.
 
 `tools/run-tecmate-monitor-launch-proof.ts` and
 `tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
@@ -1388,7 +1397,19 @@ target, not a storage-backed proof runner.
 
 The ROM workflow is separate from the proof runners. `package.json` adds
 `rom:monitor`, `rom:expansion`, and `rom:check` so the ROM sources can be
-validated together before launching the `tecm8` Debug80 profile.
+validated together before launching the `tecm8` Debug80 profile. The current
+ROM-facing host tools also gate footprint and milestone drift:
+`tools/check-rom-size-budget.ts` measures the fixed monitor and each visible
+expansion bank against the checked per-bank soft and hard budgets,
+`tools/check-rom-size-delta.ts` compares the live build against
+`docs/metrics/rom-size-baseline.json`, `tools/print-tecmate-rom-demo-guide.ts`
+prints the proof-backed manual Debug80 checklist, and
+`tools/rom-milestone-status.ts` reports the current monitor/bank footprint plus
+the last known integrated proof status for monitor launch, shell loop, VDU,
+TEC-FS, input snapshot, and bank ABI. The npm entry points
+`demo:tecmate-rom`, `demo:tecmate-rom:manual`, `rom:size:check`,
+`rom:size:summary`, `rom:size:delta`, and `rom:milestone:status` keep those
+checks in the standard workflow.
 
 `proof:display:shell-edit-create-source` covers the missing-source launch case:
 `edit fresh` creates `/src/fresh.asm` as a blank one-block source file and opens
@@ -1457,15 +1478,19 @@ public `@Symbol` label is missing the adjacent two-line prose comment block
 that now sits above the `;!` register-contract lines.
 
 `tools/bank-abi-proof.test.ts`, `tools/tms9918-bank-proof.test.ts`,
-`tools/tecfs-bank-proof.test.ts`, and `tools/rtc-bank-proof.test.ts` are the
-banked-proof wiring checks. They keep the banked proof sources, runners, and
-package scripts attached to the current expansion image.
+`tools/tecfs-bank-proof.test.ts`, `tools/input-bank-proof.test.ts`,
+`tools/assembler-bank-proof.test.ts`, and `tools/rtc-bank-proof.test.ts` are
+the banked-proof wiring checks. They keep the banked proof sources, runners,
+and package scripts attached to the current expansion image.
 `tools/banked-service-abi-doc.test.ts` is the documentation freshness check for
 `docs/mon3/tecmate-banked-service-abi.md`.
 `tools/tecm8-rst-services-interface.test.ts` checks that the exact
 bank-0-registered `rst 10h` service IDs in
 `roms/tec1g/tecm8/expansion/tecm8-rst-services.asmi` stay aligned with the
-live service registry.
+live service registry, the bank-local selector families remain unique, and the
+bank dispatchers still mention every selector they export. The narrower
+`tools/shell-ram-window.test.ts` guards the shared shell command and line
+buffers against overlapping the editor path workspace in `src/tecm8-equates.asm`.
 `tools/tecmate-monitor-launch-proof.test.ts`,
 `tools/tecmate-monitor-launch-contract.test.ts`,
 `tools/tecmate-shell-launch-proof.test.ts`, and
@@ -1476,6 +1501,12 @@ assumptions aligned across source, proofs, npm scripts, and checked docs.
 `tools/mon3-shrink-checklist.test.ts`, and `tools/monitor-contract-audit.test.ts`
 keep the public MON3/TecMate direction notes tied to the measured ROM layout,
 the current shrink priorities, and the strict-contract audit output.
+`tools/rom-size-budget.test.ts`, `tools/debug80-tecmate-demo-milestone-doc.test.ts`,
+`tools/input-polling-abi-doc.test.ts`, `tools/profile-preprocessor-contract.test.ts`,
+`tools/profile-tecfs-packaging-doc.test.ts`, `tools/rom-ownership-policy-doc.test.ts`,
+`tools/vdu-tms-minimum-primitives-doc.test.ts`, `tools/gamer-doc.test.ts`, and
+`tools/rom-milestone-status.test.ts` keep the newer ROM milestone, footprint,
+and profile-direction docs aligned with the live code and reports.
 
 ## Documentation Map
 
@@ -1490,6 +1521,8 @@ toward.
 - `docs/debug80-tecmate-demo-milestone.md`: next visible Debug80 milestone for
   running the monitor, banked shell/demo path, VDU, input, and TEC-FS service
   boundaries together.
+- `docs/metrics/rom-size-baseline.json`: checked baseline used by the ROM
+  footprint delta report.
 - `docs/tecmate-self-hosted-assembler.md`: AZM-subset assembler direction and
   source/binary/map artifact convention.
 - `docs/profile-preprocessor-contract.md`: the contract for optional profile
@@ -1536,8 +1569,12 @@ toward.
   ROM versus expansion-ROM service split and the RST `10h` bridge plan.
 - `docs/mon3/tecmate-monitor-launch-contract.md`: checked description of the
   fixed-ROM expansion discovery path and the bank 0 install contract.
+- `docs/mon3/rom-ownership-policy.md`: current rule for keeping the TecMate
+  monitor and expansion artifacts project-owned and reproducible.
 - `docs/mon3/tecmate-os-progress.md`: current TecMate ROM-program progress note
   that ties the banked-service work to the next storage and shell steps.
+- `docs/mon3/tecmate-rom-size-budget.md`: per-bank ROM size budget and review
+  policy for the monitor and expansion image.
 - `docs/mon3/tecmate-rom-space-map.md`: measured fixed-ROM and per-bank
   high-water map derived from the current monitor and expansion builds.
 - `docs/mon3/tecm8-rom-artifact-plan.md`: the TECM8-owned fixed-ROM and
@@ -1610,7 +1647,9 @@ What exists now:
 
 What is still missing or intentionally skeletal:
 
-- `asm` and `run` resolve request blocks but do not launch real tools.
+- `asm` and `run` now route through banked shell request blocks into proof-backed
+  assembler and run skeleton services that publish target descriptors and
+  unsupported result codes without launching a real tool yet.
 - The editor has no search behavior yet.
 - The current rolling source window is fixed at four 512-byte sectors and still
   uses page-based navigation rules. Wider windows or a different RAM tradeoff
