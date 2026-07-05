@@ -420,6 +420,8 @@ test('banked service ABI doc covers bank 7 assembler skeleton slots and paramete
   assert.match(doc, /Physical bank 7 owns the first assembler service skeleton/);
   assert.match(doc, /`ASM_SVC_ASSEMBLE` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
+  assert.match(doc, /Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set/);
+  assert.match(doc, /do not dispatch through the unsupported assemble path/);
 });
 
 test('banked service ABI doc covers bank 8 run skeleton slots and parameters', () => {
@@ -445,6 +447,8 @@ test('banked service ABI doc covers bank 8 run skeleton slots and parameters', (
   assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
   assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
+  assert.match(doc, /Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set/);
+  assert.match(doc, /do not\s+dispatch through the unsupported run path/);
   assert.match(doc, /`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff/);
   assert.match(doc, /copies that pointer into the\s+relevant bank-local parameter block/);
   assert.match(doc, /copies the\s+bank-local result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
