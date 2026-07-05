@@ -206,8 +206,8 @@ async function main(): Promise<void> {
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
   assertEqual(params[0], 0x1d, 'active TEC-FS volume');
   assertEqual(params[1], 0x1d, 'last requested TEC-FS volume');
-  assertEqual(params[2], 0xe0, 'unsupported status');
-  assertEqual(params[3], 0xe0, 'last TEC-FS error');
+  assertEqual(params[2], 0x5a, 'TEC-FS status preserved after unknown selector');
+  assertEqual(params[3], 0xa5, 'TEC-FS last error preserved after unknown selector');
   assertEqual(params[4], 128, 'TEC-FS volume MiB');
   assertEqual(params[5], 0x00, 'TEC-FS block bytes low');
   assertEqual(params[6], 0x10, 'TEC-FS block bytes high');

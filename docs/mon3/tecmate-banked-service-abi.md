@@ -360,6 +360,11 @@ Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 | `TFS_SVC_FORMAT_META_RECORD` | `0Bh` | Formats a blank TEC-FS v1 metadata record into the caller buffer. |
 | `TFS_SVC_PATCH_META_RECORD` | `0Ch` | Patches mutable fields in a caller-buffer metadata record. |
 
+`TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
+return the unsupported error until the catalogue/range loader exists. The
+unknown-selector path returns `SVC_ERR_UNKNOWN` with carry set and does not
+modify the TEC-FS status fields.
+
 Current TEC-FS geometry:
 
 ```text

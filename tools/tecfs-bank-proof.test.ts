@@ -70,6 +70,23 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(doc, /Patches mutable fields in a caller-buffer metadata record/);
 });
 
+test('TEC-FS bank proof covers unsupported and unknown service selectors', () => {
+  const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
+  const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
+  const bank2 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank2.asm'), 'utf8');
+
+  assert.match(proof, /ld a,TFS_SVC_LOAD_RANGE[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp TFS_ERR_UNSUPPORTED/);
+  assert.match(proof, /ld a,TFS_SVC_SAVE_RANGE[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp TFS_ERR_UNSUPPORTED/);
+  assert.match(proof, /ld a,0x5A[\s\S]*ld \(TFS_PARAM_STATUS\),a[\s\S]*ld a,0xA5[\s\S]*ld \(TFS_PARAM_LAST_ERROR\),a/);
+  assert.match(proof, /ld a,0x7F[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp SVC_ERR_UNKNOWN[\s\S]*ld a,\(TFS_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(TFS_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
+  assert.match(runner, /TEC-FS status preserved after unknown selector/);
+  assert.match(runner, /TEC-FS last error preserved after unknown selector/);
+  assert.match(bank2, /cp TFS_SVC_LOAD_RANGE[\s\S]*jp z,tecfsUnsupported[\s\S]*cp TFS_SVC_SAVE_RANGE[\s\S]*jp z,tecfsUnsupported/);
+  assert.match(bank2, /ld a,SVC_ERR_UNKNOWN\s+scf\s+ret/);
+  assert.match(doc, /unknown-selector path returns `SVC_ERR_UNKNOWN`/);
+});
+
 test('TEC-FS direction documents the volume directory contract', () => {
   const direction = readFileSync(resolve(root, 'docs/mon3/tec-fs-direction.md'), 'utf8');
   const bankOps = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');

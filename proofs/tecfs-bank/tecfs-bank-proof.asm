@@ -32,6 +32,7 @@ PROOF_FAIL_READ_LOCATOR     .equ    0xF3
 PROOF_FAIL_BAD_LOCATOR      .equ    0xF4
 PROOF_FAIL_FORMAT_META      .equ    0xF5
 PROOF_FAIL_PATCH_META       .equ    0xF6
+PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xF7
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -554,6 +555,28 @@ ClearParams:
         cp TFS_ERR_UNSUPPORTED
         jp nz,FailUnsupported
 
+        ld a,TFS_SVC_SAVE_RANGE
+        farCall 0x02,TFS_ENTRY
+        jp nc,FailUnsupported
+        cp TFS_ERR_UNSUPPORTED
+        jp nz,FailUnsupported
+
+        ld a,0x5A
+        ld (TFS_PARAM_STATUS),a
+        ld a,0xA5
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x7F
+        farCall 0x02,TFS_ENTRY
+        jp nc,FailUnknownSelector
+        cp SVC_ERR_UNKNOWN
+        jp nz,FailUnknownSelector
+        ld a,(TFS_PARAM_STATUS)
+        cp 0x5A
+        jp nz,FailUnknownSelector
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp 0xA5
+        jp nz,FailUnknownSelector
+
         ld a,PROOF_PASS
         ld (TFS_PROOF_RESULT),a
         halt
@@ -626,6 +649,9 @@ FailFormatMeta:
         jr Fail
 FailPatchMeta:
         ld a,PROOF_FAIL_PATCH_META
+        jr Fail
+FailUnknownSelector:
+        ld a,PROOF_FAIL_UNKNOWN_SELECTOR
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt
