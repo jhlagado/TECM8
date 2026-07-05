@@ -25,6 +25,28 @@ That command uses the same measurements and budgets, but prints a small
 Markdown table showing each bank's span, soft budget, hard budget, free space,
 and status.
 
+## Required Size Review
+
+Every meaningful ROM-facing development increment must include a binary-size
+review before it is considered complete. The minimum review is:
+
+1. Run `npm run rom:size:summary`.
+2. Record the fixed monitor span.
+3. Record the expansion total high-water span against the hard budget, with
+   occupied bytes as secondary context.
+4. Compare the result with the last pushed baseline or the pre-change branch
+   result.
+5. Record any changed per-bank spans and deltas.
+6. Explain any growth that is material for the feature, especially growth of
+   roughly 512 bytes or more in one bank.
+7. Confirm that the change still fits the smallest viable Tier 1 direction, or
+   explicitly mark it as deferred/optional work.
+
+The size review belongs in the review notes, handoff, final summary, or commit
+context for the increment. If the command fails, the increment is not complete.
+If the monitor remains full, any fixed-ROM growth must be paired with an
+identified removal, relocation, or split plan.
+
 ## Current Budget Shape
 
 The fixed monitor is already full:

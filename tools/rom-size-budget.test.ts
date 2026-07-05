@@ -84,6 +84,15 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /Tier 3/);
   assert.match(doc, /npm run rom:size:check/);
   assert.match(doc, /npm run rom:size:summary/);
+  assert.match(doc, /## Required Size Review/);
+  assert.match(doc, /Every meaningful ROM-facing development increment must include a binary-size\s+review before it is considered complete/);
+  assert.match(doc, /Record the fixed monitor span/);
+  assert.match(doc, /Record the expansion total high-water span against the hard budget/);
+  assert.match(doc, /occupied bytes as secondary context/);
+  assert.match(doc, /Compare the result with the last pushed baseline or the pre-change branch\s+result/);
+  assert.match(doc, /Record any changed per-bank spans and deltas/);
+  assert.match(doc, /If the command fails, the increment is not complete/);
+  assert.match(doc, /any fixed-ROM growth must be paired with an\s+identified removal, relocation, or split plan/);
   assert.match(doc, /Every meaningful ROM-facing increment should publish the current footprint from\s+`npm run rom:size:summary` in the review notes, commit summary, or handoff\s+message/);
   assert.match(doc, /editor, TEC-FS, and assembler/);
   assert.match(doc, /prevents GLCD or optional tooling from quietly consuming/);
