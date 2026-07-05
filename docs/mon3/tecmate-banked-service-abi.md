@@ -334,6 +334,34 @@ Minimal VDU text-console contract:
 
 Physical bank 2 currently exposes TEC-FS geometry and volume selection.
 
+Compact service path:
+
+```text
+RST 10h C=TFS_MOUNT (61h)
+  -> bank 0 service registry
+  -> physical bank 2, HL=8000h, A=TFS_SVC_MOUNT
+  -> bank 2 TEC-FS dispatcher
+```
+
+Bank 2 has one public entry address. The selected operation is always the
+bank-local value in `A`, so the ABI does not depend on fixed addresses for each
+TEC-FS routine.
+
+| Public selector | Bank | Entry | Local selector | Current status |
+| --- | ---: | ---: | ---: | --- |
+| `TFS_MOUNT` (`61h`) | `02h` | `8000h` | `TFS_SVC_MOUNT` (`01h`) | Implemented geometry publish. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_SELECT_VOLUME` (`02h`) | Implemented volume selection. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_READ` (`03h`) | Implemented validation plus sector-driver handoff. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_WRITE` (`04h`) | Implemented validation plus sector-driver handoff. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_RANGE` (`05h`) | Reserved; returns unsupported. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_SAVE_RANGE` (`06h`) | Reserved; returns unsupported. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_MAP_BLOCK` (`07h`) | Implemented volume/block to logical sector. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_TRANSLATE_SECTOR` (`08h`) | Implemented logical sector to card LBA. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_FORMAT_LOCATOR` (`09h`) | Implemented locator header formatter. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_READ_LOCATOR` (`0Ah`) | Implemented locator header parser. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_FORMAT_META_RECORD` (`0Bh`) | Implemented `TFM1` metadata formatter. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_PATCH_META_RECORD` (`0Ch`) | Implemented `TFM1` metadata patcher. |
+
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `TFS_ENTRY` | `8000h` | Bank entry marker. |

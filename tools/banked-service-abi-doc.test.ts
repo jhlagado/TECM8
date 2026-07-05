@@ -43,7 +43,7 @@ function hexForDoc(value: number): string {
 
 function assertDocRow(name: string): void {
   const expected = hexForDoc(equateValue(name));
-  const row = doc.split('\n').find((line: string) => line.includes(`\`${name}\``));
+  const row = doc.split('\n').find((line: string) => new RegExp(`^\\|\\s*\\\`${name}\\\`\\s*\\|`).test(line));
   assert.ok(row, `doc should mention ${name}`);
   assert.match(row, new RegExp(`\\|\\s*\\\`${name}\\\`\\s*\\|\\s*\\\`?${expected}\\\`?\\s*\\|`, 'i'));
 }
@@ -225,6 +225,16 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
 });
 
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
+  assert.match(doc, /Compact service path:/);
+  assert.match(doc, /RST 10h C=TFS_MOUNT \(61h\)/);
+  assert.match(doc, /physical bank 2, HL=8000h, A=TFS_SVC_MOUNT/);
+  assert.match(doc, /one public entry address/);
+  assert.match(doc, /bank-local value in `A`/);
+  assert.match(doc, /does not depend on fixed addresses for each\s+TEC-FS routine/);
+  assert.match(doc, /`TFS_MOUNT` \(`61h`\) \| `02h` \| `8000h` \| `TFS_SVC_MOUNT` \(`01h`\) \| Implemented geometry publish/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_RANGE` \(`05h`\) \| Reserved; returns unsupported/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_PATCH_META_RECORD` \(`0Ch`\) \| Implemented `TFM1` metadata patcher/);
+
   for (const name of [
     'TFS_ENTRY',
     'TFS_ENTRY_MOUNT',
