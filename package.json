@@ -11,6 +11,7 @@
     "rom:expansion": "node --experimental-strip-types tools/build-expansion-rom.ts",
     "rom:check": "npm run rom:monitor && npm run rom:expansion",
     "demo:tecmate-rom": "npm run rom:check && node --experimental-strip-types tools/run-tecmate-monitor-launch-proof.ts && node --experimental-strip-types tools/check-rom-size-budget.ts --summary",
+    "demo:tecmate-rom:manual": "npm run demo:tecmate-rom && node --experimental-strip-types tools/print-tecmate-rom-demo-guide.ts",
     "rom:size:check": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts",
     "rom:size:summary": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts --summary",
     "rom:size:delta": "node --experimental-strip-types tools/check-rom-size-delta.ts",

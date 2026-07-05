@@ -19,6 +19,16 @@ That command builds the TECM8 fixed monitor ROM, builds the banked expansion
 ROM image, runs the Debug80 monitor-launch proof, and prints the ROM size
 summary. It is the first command to run before a manual Debug80 inspection.
 
+For manual Debug80 inspection, use:
+
+```text
+npm run demo:tecmate-rom:manual
+```
+
+That command runs the same proof-backed build path and then prints the exact
+generated ROM artifacts, monitor route, expected TMS9918 text, and last-run
+trace markers to use while inspecting Debug80.
+
 This is not the older GLCD editor demo path. Do not load `src/main.asm`, build
 `debug80:editor-image`, or use MON3 `GO 4000h` when testing this milestone.
 Those remain useful for the previous RAM editor prototype, but this milestone
@@ -75,7 +85,7 @@ confidence, not as the only release gate.
 
 ## Manual Debug80 Script
 
-1. From the TECM8 repo root, run `npm run demo:tecmate-rom`.
+1. From the TECM8 repo root, run `npm run demo:tecmate-rom:manual`.
 2. Open Debug80 with the TECM8 profile after the command has generated the ROM
    artifacts. The current `main` target may still compile the older
    `src/main.asm` RAM program; for this milestone, use Debug80 only to inspect
