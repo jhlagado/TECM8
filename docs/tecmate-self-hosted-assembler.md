@@ -65,6 +65,54 @@ Deliberately exclude from the first implementation:
 
 This gives TecMate a practical assembler before it tries to become AZM.
 
+## Profile-Generated Source Compatibility
+
+Profile preprocessors must generate source that the TecMate assembler can
+eventually assemble. The preprocessor can be smarter than the assembler, but
+its output should be boring.
+
+The safe generated subset is:
+
+- ordinary labels
+- generated labels with stable prefixes
+- `.equ`
+- `.org` only where the target format requires it
+- `.db`
+- `.dw`
+- simple numeric expressions already accepted by Phase 1
+- simple include order that Phase 2 can reproduce
+- comments that identify generated sections and source profile paths
+
+Generated profile output should not require these features from the first
+self-hosted assembler:
+
+- `op`
+- macros
+- layouts
+- enums
+- complex expressions
+- host-only path expansion
+- register-contract checking as a build prerequisite
+- D8/D8M generation as a build prerequisite
+
+This keeps the relationship clean:
+
+```text
+profile source
+  -> generated AZM-subset assembly
+  -> TecMate assembler or host AZM
+  -> binary, map, metadata
+```
+
+The generated entry file should include user behaviour files rather than
+inlining them. That preserves the normal edit/assemble/debug loop: users edit
+ordinary `.ASM` files, while the profile tool regenerates tables, resources,
+and metadata around them.
+
+If a profile feature cannot lower to the current assembler subset, it should be
+taken as a profile-tool limitation, not as pressure to make the first
+self-hosted assembler larger.
+
 ## Artifact Convention
 
 The self-hosted assembler should use a small, predictable artifact set. It

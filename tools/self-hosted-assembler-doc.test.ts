@@ -67,6 +67,34 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /If the checker cannot prove a path,\s+it should say so clearly/);
 });
 
+test('self-hosted assembler doc keeps profile-generated source self-hostable', () => {
+  assert.match(doc, /## Profile-Generated Source Compatibility/);
+  assert.match(doc, /Profile preprocessors must generate source that the TecMate assembler can\s+eventually assemble/);
+  assert.match(doc, /generated AZM-subset assembly/);
+  assertMentionsAll([
+    'ordinary labels',
+    'generated labels with stable prefixes',
+    '`.equ`',
+    '`.db`',
+    '`.dw`',
+    'simple numeric expressions already accepted by Phase 1',
+    'simple include order that Phase 2 can reproduce',
+  ]);
+  assert.match(doc, /Generated profile output should not require these features/);
+  assertMentionsAll([
+    '`op`',
+    'macros',
+    'layouts',
+    'enums',
+    'complex expressions',
+    'host-only path expansion',
+    'register-contract checking as a build prerequisite',
+    'D8/D8M generation as a build prerequisite',
+  ]);
+  assert.match(doc, /generated entry file should include user behaviour files rather than\s+inlining them/);
+  assert.match(doc, /taken as a profile-tool limitation, not as pressure to make the first\s+self-hosted assembler larger/);
+});
+
 test('self-hosted assembler doc defines artifact and TEC-FS metadata convention', () => {
   assert.match(doc, /## Artifact Convention/);
   assertMentionsAll([
