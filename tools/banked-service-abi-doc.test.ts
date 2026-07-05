@@ -130,6 +130,7 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
     'VDU_SVC_SET_ROWCOL',
     'VDU_SVC_SCROLL_UP',
     'VDU_SVC_STATUS_LINE',
+    'VDU_SVC_PUT_STRING_N',
     'TMS_SVC_INIT',
     'TMS_SVC_SET_REGISTER',
     'TMS_SVC_WRITE_VRAM',
@@ -164,6 +165,8 @@ test('banked service ABI doc covers bank 1 VDU/TMS slots and parameters', () => 
   assert.match(doc, /implementation labels are not ABI/);
   assert.match(doc, /`VDU_TABLE` \| private label/);
   assert.match(doc, /`VDU_SVC_CLEAR` fills VRAM `0000h\.\.02FFh` with `VDU_BLANK_CHAR`/);
+  assert.match(doc, /`VDU_SVC_PUT_STRING`[\s\S]*does not read\s+`TMS_PARAM_COUNT_LO\/HI`/);
+  assert.match(doc, /`VDU_SVC_PUT_STRING_N`[\s\S]*writes at most `TMS_PARAM_COUNT_LO\/HI` bytes/);
   assert.match(doc, /`VDU_SVC_SET_ROWCOL` computes `row \* 32 \+ \(col & 1Fh\)`/);
   assert.match(doc, /`VDU_SVC_SCROLL_UP` copies rows 1-23 to rows 0-22/);
   assert.match(doc, /`VDU_SVC_STATUS_LINE` blanks the final row/);

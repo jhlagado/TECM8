@@ -167,6 +167,7 @@ test('TECM8 bank-local dispatchers mention every selector they expose', () => {
       'VDU_SVC_SET_ROWCOL',
       'VDU_SVC_SCROLL_UP',
       'VDU_SVC_STATUS_LINE',
+      'VDU_SVC_PUT_STRING_N',
     ],
     'bank1 VDU selector',
   );
@@ -175,7 +176,7 @@ test('TECM8 bank-local dispatchers mention every selector they expose', () => {
     ['TMS_SVC_INIT', 'TMS_SVC_SET_REGISTER', 'TMS_SVC_WRITE_VRAM', 'TMS_SVC_FILL_VRAM', 'TMS_SVC_READ_VRAM'],
     'bank1 TMS selector',
   );
-  assert.match(bank1, /cp VDU_SVC_INIT[\s\S]*cp VDU_SVC_STATUS_LINE\+1[\s\S]*Tecm8VduServiceTable:/);
+  assert.match(bank1, /cp VDU_SVC_INIT[\s\S]*cp VDU_SVC_PUT_STRING_N\+1[\s\S]*Tecm8VduServiceTable:/);
   assert.match(bank1, /cp TMS_SVC_INIT[\s\S]*cp TMS_SVC_READ_VRAM\+1[\s\S]*Tecm8TmsServiceTable:/);
   assert.equal((bank1.match(/^\s*j[pr]\s+vdu[A-Z][A-Za-z0-9]+Impl/gm) ?? []).length, vduServices.length);
   assert.equal((bank1.match(/^\s*j[pr]\s+tms[A-Z][A-Za-z0-9]+Impl/gm) ?? []).length, tmsServices.length);

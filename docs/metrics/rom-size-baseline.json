@@ -1,4 +1,5 @@
 {
+  "schema": "tecm8-rom-size-baseline-v1",
   "monitor": {
     "occupied": 9007,
     "span": 16384,
@@ -18,12 +19,12 @@
     {
       "bank": 1,
       "role": "VDU/TMS9918 boundary",
-      "occupied": 532,
-      "span": 532,
+      "occupied": 568,
+      "span": 568,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33300,
-      "freeAfterHighWater": 15852
+      "highWaterEnd": 33336,
+      "freeAfterHighWater": 15816
     },
     {
       "bank": 2,
@@ -97,11 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 2784,
-    "span": 2784,
+    "occupied": 2820,
+    "span": 2820,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 144672
-  },
-  "schema": "tecm8-rom-size-baseline-v1"
+    "freeAfterHighWater": 144636
+  }
 }

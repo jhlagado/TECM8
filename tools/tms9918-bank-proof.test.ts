@@ -17,14 +17,15 @@ test('TMS9918 bank proof covers VDU cursor and put-char behavior', () => {
 
   assert.match(bank1, /@vduServiceCall:/);
   assert.match(bank1, /Tecm8VduServiceTable:/);
-  assert.match(bank1, /cp VDU_SVC_STATUS_LINE\+1/);
-  assert.match(bank1, /Tecm8VduServiceTable:[\s\S]*jp\s+vduSetCursorImpl[\s\S]*jp\s+vduPutCharImpl[\s\S]*jp\s+vduPutStringImpl[\s\S]*jp\s+vduNewlineImpl[\s\S]*jp\s+vduSetRowColImpl[\s\S]*jp\s+vduScrollUpImpl[\s\S]*jp\s+vduStatusLineImpl/);
+  assert.match(bank1, /cp VDU_SVC_PUT_STRING_N\+1/);
+  assert.match(bank1, /Tecm8VduServiceTable:[\s\S]*jp\s+vduSetCursorImpl[\s\S]*jp\s+vduPutCharImpl[\s\S]*jp\s+vduPutStringImpl[\s\S]*jp\s+vduNewlineImpl[\s\S]*jp\s+vduSetRowColImpl[\s\S]*jp\s+vduScrollUpImpl[\s\S]*jp\s+vduStatusLineImpl[\s\S]*jp\s+vduPutStringNImpl/);
   assert.match(bank1, /cp TMS_SVC_READ_VRAM\+1/);
   assert.match(bank1, /Tecm8TmsServiceTable:[\s\S]*jp\s+tmsInitImpl[\s\S]*jp\s+tmsSetRegisterImpl[\s\S]*jp\s+tmsWriteVramImpl[\s\S]*jp\s+tmsFillVramImpl[\s\S]*jp\s+tmsReadVramImpl/);
   assert.match(bank1, /vduClearImpl:[\s\S]*ld a,VDU_BLANK_CHAR[\s\S]*ld hl,VDU_SCREEN_BYTES[\s\S]*call tmsFillVramImpl/);
   assert.match(bank1, /vduSetCursorImpl:[\s\S]*ld hl,\(TMS_PARAM_ADDR_LO\)[\s\S]*ld \(TMS_PARAM_CURSOR_LO\),hl[\s\S]*ld a,0x81[\s\S]*ret/);
   assert.match(bank1, /vduPutCharImpl:[\s\S]*TMS_PARAM_CURSOR_LO[\s\S]*call tmsWriteVram[\s\S]*inc hl[\s\S]*ld a,0x81[\s\S]*ret/);
-  assert.match(bank1, /vduPutStringImpl:[\s\S]*ld hl,\(TMS_PARAM_STRING_LO\)[\s\S]*call vduPutChar[\s\S]*jr vduPutStringNext[\s\S]*ld a,0x81[\s\S]*ret/);
+  assert.match(bank1, /vduPutStringImpl:[\s\S]*vduPutStringUnboundedNext:[\s\S]*call vduPutChar[\s\S]*jr vduPutStringUnboundedNext[\s\S]*vduPutStringDone:[\s\S]*ld a,0x81[\s\S]*ret/);
+  assert.match(bank1, /vduPutStringNImpl:[\s\S]*ld de,\(TMS_PARAM_COUNT_LO\)[\s\S]*vduPutStringBoundedNext:[\s\S]*dec de[\s\S]*jr nz,vduPutStringBoundedNext/);
   assert.match(bank1, /vduNewlineImpl:[\s\S]*and 0xE0[\s\S]*ld de,VDU_ROW_BYTES[\s\S]*add hl,de[\s\S]*ld a,0x81[\s\S]*ret/);
   assert.match(bank1, /vduSetRowColImpl:[\s\S]*ld a,\(TMS_PARAM_ROW\)[\s\S]*add hl,hl[\s\S]*ld a,\(TMS_PARAM_COL\)/);
   assert.match(bank1, /vduScrollUpImpl:[\s\S]*ld bc,VDU_SCROLL_BYTES[\s\S]*call tmsReadVramImpl[\s\S]*call tmsWriteVramImpl/);
@@ -40,9 +41,13 @@ test('TMS9918 bank proof covers VDU cursor and put-char behavior', () => {
   assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_SCROLL_UP/);
   assert.match(proof, /callBankService 0x01,VDU_CALL,VDU_SVC_STATUS_LINE/);
   assert.match(proof, /callBankService 0x01,VDU_CALL,0x00[\s\S]*ld \(TMS_PROOF_TRACE_16\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_17\),a/);
-  assert.match(proof, /callBankService 0x01,VDU_CALL,0x0A[\s\S]*ld \(TMS_PROOF_TRACE_18\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_19\),a/);
+  assert.match(proof, /callBankService 0x01,VDU_CALL,0x0B[\s\S]*ld \(TMS_PROOF_TRACE_18\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_19\),a/);
   assert.match(proof, /callBankService 0x01,VDU_CALL,0x7F[\s\S]*ld \(TMS_PROOF_TRACE_20\),a[\s\S]*adc a,0[\s\S]*ld \(TMS_PROOF_TRACE_21\),a/);
   assert.match(runner, /VDU put string return value/);
+  assert.match(runner, /VDU counted string return value/);
+  assert.match(runner, /VDU counted string zero terminator return value/);
+  assert.match(runner, /VDU counted string stops at count/);
+  assert.match(runner, /VDU counted string stops at zero before count/);
   assert.match(runner, /VDU newline return value/);
   assert.match(runner, /VDU low unknown selector carry marker/);
   assert.match(runner, /VDU gap unknown selector carry marker/);

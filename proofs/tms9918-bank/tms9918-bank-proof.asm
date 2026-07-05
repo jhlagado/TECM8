@@ -34,13 +34,15 @@ TMS_PROOF_TRACE_20          .equ    TMS_PROOF_TRACE_BASE+20
 TMS_PROOF_TRACE_21          .equ    TMS_PROOF_TRACE_BASE+21
 TMS_PROOF_TRACE_22          .equ    TMS_PROOF_TRACE_BASE+22
 TMS_PROOF_TRACE_23          .equ    TMS_PROOF_TRACE_BASE+23
+TMS_PROOF_TRACE_24          .equ    TMS_PROOF_TRACE_BASE+24
+TMS_PROOF_TRACE_25          .equ    TMS_PROOF_TRACE_BASE+25
 TMS_PROOF_RESULT            .equ    0x3B30
 
 ;! out carry,zero
 ;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 @Start:
         ld hl,TMS_PROOF_TRACE_BASE
-        ld b,24
+        ld b,26
 ClearTrace:
         ld (hl),0
         inc hl
@@ -109,8 +111,34 @@ ClearTrace:
 
         ld hl,TmsProofString
         ld (TMS_PARAM_STRING_LO),hl
+        ld hl,0x0001
+        ld (TMS_PARAM_COUNT_LO),hl
         callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING
         ld (TMS_PROOF_TRACE_6),a
+
+        ld a,0x30
+        ld (TMS_PARAM_ADDR_LO),a
+        ld a,0x01
+        ld (TMS_PARAM_ADDR_HI),a
+        callBankService 0x01,VDU_CALL,VDU_SVC_SET_CURSOR
+        ld hl,TmsProofCountedString
+        ld (TMS_PARAM_STRING_LO),hl
+        ld hl,0x0003
+        ld (TMS_PARAM_COUNT_LO),hl
+        callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING_N
+        ld (TMS_PROOF_TRACE_24),a
+
+        ld a,0x40
+        ld (TMS_PARAM_ADDR_LO),a
+        ld a,0x01
+        ld (TMS_PARAM_ADDR_HI),a
+        callBankService 0x01,VDU_CALL,VDU_SVC_SET_CURSOR
+        ld hl,TmsProofBoundedZeroString
+        ld (TMS_PARAM_STRING_LO),hl
+        ld hl,0x0005
+        ld (TMS_PARAM_COUNT_LO),hl
+        callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING_N
+        ld (TMS_PROOF_TRACE_25),a
 
         callBankService 0x01,VDU_CALL,VDU_SVC_NEWLINE
         ld (TMS_PROOF_TRACE_7),a
@@ -121,7 +149,7 @@ ClearTrace:
         adc a,0
         ld (TMS_PROOF_TRACE_17),a
 
-        callBankService 0x01,VDU_CALL,0x0A
+        callBankService 0x01,VDU_CALL,0x0B
         ld (TMS_PROOF_TRACE_18),a
         ld a,0
         adc a,0
@@ -156,5 +184,9 @@ ClearTrace:
 
 TmsProofString:
         .db     "O","K",0
+TmsProofCountedString:
+        .db     "A","B","C","D","E","F"
+TmsProofBoundedZeroString:
+        .db     "X","Y",0,"Z","Z"
 TmsStatusString:
         .db     "R","D","Y",0

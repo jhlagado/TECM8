@@ -17,7 +17,7 @@ test('VDU/TMS minimum primitives doc matches current bank 1 service families', (
   const ops = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');
   const bank1 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank1.asm'), 'utf8');
 
-  assert.match(doc, /VDU text services from `VDU_SVC_INIT` through `VDU_SVC_STATUS_LINE`/);
+  assert.match(doc, /VDU text services from `VDU_SVC_INIT` through `VDU_SVC_PUT_STRING_N`/);
   assert.match(doc, /raw TMS services from `TMS_SVC_INIT` through `TMS_SVC_READ_VRAM`/);
   assert.match(doc, /`VDU_INIT` as the public service\s+ID/);
   assert.match(doc, /routes that request to `VDU_ADDR`/);
@@ -25,6 +25,7 @@ test('VDU/TMS minimum primitives doc matches current bank 1 service families', (
   assert.match(doc, /bank-local selector\s+`VDU_SVC_INIT` in `A`/);
   assert.match(ops, /VDU_INIT\s+\.equ\s+SVC_BASE\+0x00/);
   assert.match(ops, /VDU_SVC_STATUS_LINE\s+\.equ\s+0x09/);
+  assert.match(ops, /VDU_SVC_PUT_STRING_N\s+\.equ\s+0x0A/);
   assert.match(ops, /TMS_SVC_READ_VRAM\s+\.equ\s+0x24/);
   assert.match(bank1, /@vduServiceCall:/);
   assert.match(bank1, /Tecm8VduServiceTable:/);
@@ -58,6 +59,7 @@ test('VDU/TMS minimum primitives doc reserves a small text and raw VRAM surface'
     'set cursor by row and column',
     'put one character',
     'put a zero-terminated string',
+    'put a bounded string',
     'advance to the next line',
     'scroll the visible text area up',
     'write a short status line',
@@ -69,6 +71,8 @@ test('VDU/TMS minimum primitives doc reserves a small text and raw VRAM surface'
   ]) {
     assert.match(doc, new RegExp(phrase));
   }
+  assert.match(doc, /does not read\s+`TMS_PARAM_COUNT_LO\/HI`/);
+  assert.match(doc, /stops at\s+the first zero byte or after the requested\s+number of bytes/);
 });
 
 test('VDU/TMS minimum primitives doc keeps GLCD out of the first VDU contract', () => {

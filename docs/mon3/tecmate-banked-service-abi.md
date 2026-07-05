@@ -306,6 +306,7 @@ Bank-local VDU/TMS service IDs:
 | `VDU_SVC_SET_ROWCOL` | `07h` | Sets the cursor from text row/column parameters. |
 | `VDU_SVC_SCROLL_UP` | `08h` | Scrolls the 32x24 text name table up one row. |
 | `VDU_SVC_STATUS_LINE` | `09h` | Clears the final text row, writes `TMS_PARAM_STRING_LO/HI`, and restores the prior cursor. |
+| `VDU_SVC_PUT_STRING_N` | `0Ah` | Writes a bounded RAM string at the current cursor, returns `A=81h`. |
 | `TMS_SVC_INIT` | `20h` | Sets TMS register 7 to `F1h`, returns `A=81h`. |
 | `TMS_SVC_SET_REGISTER` | `21h` | Writes TMS register from the parameter block. |
 | `TMS_SVC_WRITE_VRAM` | `22h` | Writes one byte to TMS VRAM from the parameter block. |
@@ -330,10 +331,10 @@ TMS parameter block:
 | `TMS_PARAM_ADDR_HI` | `3B03h` | VRAM address high byte. |
 | `TMS_PARAM_CURSOR_LO` | `3B04h` | VDU cursor low byte. |
 | `TMS_PARAM_CURSOR_HI` | `3B05h` | VDU cursor high byte. |
-| `TMS_PARAM_STRING_LO` | `3B06h` | Zero-terminated RAM string pointer low byte. |
-| `TMS_PARAM_STRING_HI` | `3B07h` | Zero-terminated RAM string pointer high byte. |
-| `TMS_PARAM_COUNT_LO` | `3B08h` | VRAM fill byte count low byte. |
-| `TMS_PARAM_COUNT_HI` | `3B09h` | VRAM fill byte count high byte. |
+| `TMS_PARAM_STRING_LO` | `3B06h` | RAM string pointer low byte. |
+| `TMS_PARAM_STRING_HI` | `3B07h` | RAM string pointer high byte. |
+| `TMS_PARAM_COUNT_LO` | `3B08h` | VRAM fill byte count or bounded string count low byte. |
+| `TMS_PARAM_COUNT_HI` | `3B09h` | VRAM fill byte count or bounded string count high byte. |
 | `TMS_PARAM_ROW` | `3B0Ah` | Text cursor row for `VDU_SVC_SET_ROWCOL`. |
 | `TMS_PARAM_COL` | `3B0Bh` | Text cursor column for `VDU_SVC_SET_ROWCOL`. |
 | `VDU_ROW_BYTES` | `20h` | Current text-console row width in bytes. |
@@ -353,7 +354,11 @@ Minimal VDU text-console contract:
   advances the cursor by one byte.
 - `VDU_SVC_PUT_STRING` reads a zero-terminated RAM string from
   `TMS_PARAM_STRING_LO/HI`, writes each byte through `VDU_SVC_PUT_CHAR`,
-  and leaves the cursor after the last character written.
+  leaves the cursor after the last character written, and does not read
+  `TMS_PARAM_COUNT_LO/HI`.
+- `VDU_SVC_PUT_STRING_N` reads a RAM string from `TMS_PARAM_STRING_LO/HI`,
+  writes at most `TMS_PARAM_COUNT_LO/HI` bytes, stops early at a zero byte, and
+  leaves the cursor after the last character written.
 - `VDU_SVC_NEWLINE` rounds the current cursor down to the current 32-byte row
   start, adds one row, masks the high byte to the 16K VRAM range, and returns
   `A=81h`.

@@ -13,7 +13,7 @@ touch TMS9918 VRAM through a stable banked boundary.
 
 The bank 1 dispatcher already separates two families:
 
-- VDU text services from `VDU_SVC_INIT` through `VDU_SVC_STATUS_LINE`
+- VDU text services from `VDU_SVC_INIT` through `VDU_SVC_PUT_STRING_N`
 - raw TMS services from `TMS_SVC_INIT` through `TMS_SVC_READ_VRAM`
 
 The public service registry currently exposes `VDU_INIT` as the public service
@@ -30,8 +30,8 @@ The current parameter block is `TMS_PARAM_BASE` and includes:
 | `TMS_PARAM_REGISTER` | TMS register number |
 | `TMS_PARAM_ADDR_LO` / `TMS_PARAM_ADDR_HI` | VRAM address or cursor input |
 | `TMS_PARAM_CURSOR_LO` / `TMS_PARAM_CURSOR_HI` | current text cursor address |
-| `TMS_PARAM_STRING_LO` / `TMS_PARAM_STRING_HI` | zero-terminated string pointer |
-| `TMS_PARAM_COUNT_LO` / `TMS_PARAM_COUNT_HI` | byte count for fills |
+| `TMS_PARAM_STRING_LO` / `TMS_PARAM_STRING_HI` | string pointer |
+| `TMS_PARAM_COUNT_LO` / `TMS_PARAM_COUNT_HI` | byte count for fills, and max length for bounded string output |
 | `TMS_PARAM_ROW` / `TMS_PARAM_COL` | text row and column for cursor positioning |
 
 ## Minimum Text Services
@@ -44,6 +44,7 @@ The minimum text layer should remain small:
 - set cursor by row and column
 - put one character
 - put a zero-terminated string
+- put a bounded string
 - advance to the next line
 - scroll the visible text area up
 - write a short status line
@@ -52,6 +53,12 @@ These services are enough for a shell, simple editor status, proof output, error
 messages, and beginner-facing profile programs. More elaborate drawing should
 be built above this layer or emitted by a profile preprocessor as ordinary
 assembly that calls these services.
+
+`VDU_SVC_PUT_STRING` keeps the legacy zero-terminated behavior and does not read
+`TMS_PARAM_COUNT_LO/HI`, so stale fill counts cannot truncate old callers.
+`VDU_SVC_PUT_STRING_N` is the bounded variant. It uses `TMS_PARAM_COUNT_LO/HI`
+as a maximum byte count and stops at the first zero byte or after the requested
+number of bytes, whichever comes first.
 
 ## Minimum Raw TMS Services
 

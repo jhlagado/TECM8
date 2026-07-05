@@ -30,7 +30,7 @@ Tecm8ExpansionBank1PreserveProbe:
         jr nc,tmsServiceCall
         cp VDU_SVC_INIT
         jr c,vduServiceUnknown
-        cp VDU_SVC_STATUS_LINE+1
+        cp VDU_SVC_PUT_STRING_N+1
         jr nc,vduServiceUnknown
         sub VDU_SVC_INIT
         ld e,a
@@ -66,6 +66,7 @@ Tecm8VduServiceTable:
         jp      vduSetRowColImpl
         jp      vduScrollUpImpl
         jp      vduStatusLineImpl
+        jp      vduPutStringNImpl
 
 Tecm8TmsServiceTable:
         jp      tmsInitImpl
@@ -119,7 +120,7 @@ vduPutCharImpl:
 
 vduPutStringImpl:
         ld hl,(TMS_PARAM_STRING_LO)
-vduPutStringNext:
+vduPutStringUnboundedNext:
         ld a,(hl)
         or a
         jr z,vduPutStringDone
@@ -128,11 +129,34 @@ vduPutStringNext:
         call vduPutCharImpl
         pop hl
         inc hl
-        jr vduPutStringNext
+        jr vduPutStringUnboundedNext
 vduPutStringDone:
         ld a,0x81
         or a
         ret
+
+vduPutStringNImpl:
+        ld hl,(TMS_PARAM_STRING_LO)
+        ld de,(TMS_PARAM_COUNT_LO)
+        ld a,d
+        or e
+        jr z,vduPutStringDone
+vduPutStringBoundedNext:
+        ld a,(hl)
+        or a
+        jr z,vduPutStringDone
+        ld (TMS_PARAM_VALUE),a
+        push hl
+        push de
+        call vduPutCharImpl
+        pop de
+        pop hl
+        inc hl
+        dec de
+        ld a,d
+        or e
+        jr nz,vduPutStringBoundedNext
+        jr vduPutStringDone
 
 vduNewlineImpl:
         ld hl,(TMS_PARAM_CURSOR_LO)

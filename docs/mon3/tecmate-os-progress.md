@@ -137,15 +137,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2784 occupied bytes currently
-2784 bytes total high-water span across all banks
+2820 occupied bytes currently
+2820 bytes total high-water span across all banks
 ```
 
-This TEC-FS catalogue decode milestone changed the footprint by 114 bytes:
+This VDU counted-string hardening milestone changed the footprint by 36 bytes:
 
 ```text
-bank 2 span: 799 -> 913 bytes
-expansion total span: 2670 -> 2784 bytes
+bank 1 span: 532 -> 568 bytes
+expansion total span: 2784 -> 2820 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

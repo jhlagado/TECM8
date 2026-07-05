@@ -61,7 +61,7 @@ Terms:
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `999` | `999` | `83E7h` | `15385` |
-| 1 | VDU/TMS9918 boundary | `532` | `532` | `8214h` | `15852` |
+| 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
 | 2 | TEC-FS boundary and block mapper | `913` | `913` | `8391h` | `15471` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
@@ -70,15 +70,15 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2784`
+Expansion occupied bytes: `2820`
 
-Expansion high-water span total: `2784`
+Expansion high-water span total: `2820`
 
-Latest TEC-FS catalogue decode milestone delta:
+Latest VDU counted-string hardening delta:
 
 ```text
-bank 2 span: 799 -> 913 bytes
-expansion total span: 2670 -> 2784 bytes
+bank 1 span: 532 -> 568 bytes
+expansion total span: 2784 -> 2820 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
