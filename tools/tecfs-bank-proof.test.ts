@@ -73,6 +73,18 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(doc, /Patches mutable fields in a caller-buffer metadata record/);
 });
 
+test('TEC-FS geometry checks are wired into the repository', () => {
+  const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+  const geometryTest = readFileSync(resolve(root, 'tools/tecfs-geometry.test.ts'), 'utf8');
+
+  assert.match(pkg.scripts.test, /tools\/\*\.test\.ts/);
+  assert.match(geometryTest, /TFS_VOLUME_MIB/);
+  assert.match(geometryTest, /TFS_BLOCK_BYTES/);
+  assert.match(geometryTest, /TFS_VOLUME_SECTORS/);
+  assert.match(geometryTest, /volumeSectors \* 512/);
+  assert.match(geometryTest, /userVolumes \+ 1/);
+});
+
 test('TEC-FS bank proof covers unsupported and unknown service selectors', () => {
   const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
   const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
