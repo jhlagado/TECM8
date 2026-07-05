@@ -20,4 +20,9 @@ test('roadmap links game direction documents from the proving-profile section', 
   assert.match(roadmap, /\[TECM8 Game Creation Mission\]\(gamer\.md\)/);
   assert.match(roadmap, /\[Gamer Vertical Slice Specification\]\(gamer-vertical-slice\.md\)/);
   assert.match(roadmap, /\[Game-Facing Register Contracts\]\(game-register-contracts\.md\)/);
+  assert.match(roadmap, /\[Profile Preprocessor Contract\]\(profile-preprocessor-contract\.md\)/);
+  assert.match(roadmap, /\[Polling State Runtime\]\(polling-state-runtime\.md\)/);
+  assert.match(roadmap, /\[Profile TEC-FS Packaging\]\(profile-tecfs-packaging\.md\)/);
+  assert.match(roadmap, /\[Input Polling ABI\]\(input-polling-abi\.md\)/);
+  assert.match(roadmap, /\[VDU\/TMS Minimum Primitives\]\(vdu-tms-minimum-primitives\.md\)/);
 });

@@ -1489,6 +1489,17 @@ toward.
 - `docs/shell-command-contract.md`: TEC-side `edit`/`asm`/`run` behavior.
 - `docs/tecmate-self-hosted-assembler.md`: AZM-subset assembler direction and
   source/binary/map artifact convention.
+- `docs/profile-preprocessor-contract.md`: the contract for optional profile
+  preprocessors that emit ordinary inspectable assembly rather than replacing
+  the general assembler.
+- `docs/polling-state-runtime.md`: compact loop-based state model for
+  profile-generated interactive programs.
+- `docs/profile-tecfs-packaging.md`: source, resource, generated artifact, and
+  runtime package roles when profile projects are stored in TEC-FS.
+- `docs/input-polling-abi.md`: cooperative input polling ABI for matrix
+  keyboard, keypad, and optional joystick/game panel snapshots.
+- `docs/vdu-tms-minimum-primitives.md`: minimum bank-1 VDU/TMS9918 service
+  surface for shell, editor, profile, and game-style programs.
 - `docs/gamer.md`: game creation mission framed as a proving profile for the
   general shell/editor/assembler/debugger platform.
 - `docs/gamer-vertical-slice.md`: first game runtime slice and service contract

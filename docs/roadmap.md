@@ -106,6 +106,12 @@ shell, assembler, runner, and basic VDU/input/storage services can support it.
 The detailed game direction lives in [TECM8 Game Creation Mission](gamer.md),
 [Gamer Vertical Slice Specification](gamer-vertical-slice.md), and
 [Game-Facing Register Contracts](game-register-contracts.md).
+The shared profile/runtime foundations now also live in
+[Profile Preprocessor Contract](profile-preprocessor-contract.md),
+[Polling State Runtime](polling-state-runtime.md),
+[Profile TEC-FS Packaging](profile-tecfs-packaging.md),
+[Input Polling ABI](input-polling-abi.md), and
+[VDU/TMS Minimum Primitives](vdu-tms-minimum-primitives.md).
 
 ## Native AZM Quality Track
 
