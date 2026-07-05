@@ -244,6 +244,14 @@ function assertVramText(platformRuntime: PlatformRuntime, address: number, expec
   }
 }
 
+function readVramAscii(platformRuntime: PlatformRuntime, address: number, length: number): string {
+  const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();
+  if (!tms9918) {
+    throw new Error('Debug80 runtime did not expose a TMS9918 device snapshot');
+  }
+  return Buffer.from(tms9918.vram.subarray(address, address + length)).toString('ascii');
+}
+
 function assertClearedExpansionVectors(runtime: Runtime): void {
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'cleared expansion menu bank');
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_ADDR], 0x00, 'cleared expansion menu address lo');
@@ -312,6 +320,7 @@ function runInstalledExpansionCase(launchAddress: number): {
   finalSp: number;
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
+  shellCommandStatus?: string;
 } {
   const expectedServiceAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ServiceCall');
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
@@ -373,6 +382,8 @@ function runInstalledExpansionCase(launchAddress: number): {
   runUntilHalt(runtime, platformRuntime);
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell status render returned carry clear');
   assertVramText(platformRuntime, 0x02e0, 'EDIT', 'shell command visible status');
+  const shellCommandStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertEqual(shellCommandStatus, 'EDIT', 'captured shell command visible status');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell visible status SYS_CTRL restored');
 
   return {
@@ -388,6 +399,7 @@ function runInstalledExpansionCase(launchAddress: number): {
     finalSp: runtime.cpu.sp & 0xffff,
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
+    shellCommandStatus,
   };
 }
 

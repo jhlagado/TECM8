@@ -20,6 +20,7 @@ type LastRun = {
     finalPhysicalBank?: number;
     expectedMenuAddress?: number;
     expectedServiceAddress?: number;
+    shellCommandStatus?: string;
   };
 };
 
@@ -41,6 +42,9 @@ function readLastRun(): LastRun {
   }
   if (!data.installed || !Array.isArray(data.installed.trace)) {
     throw new Error(`monitor launch proof output is missing installed trace data: ${proofPath}`);
+  }
+  if (data.installed.shellCommandStatus !== 'EDIT') {
+    throw new Error(`monitor launch proof output is missing exact shell command status EDIT: ${proofPath}`);
   }
 
   const expectedTrace = [0x00, undefined, undefined, undefined, 0x81, 0x82, 0x83, 0x86, 0x80];
@@ -80,6 +84,7 @@ function main(): void {
   console.log('3. Enter the monitor `Expansion` menu item.');
   console.log('4. Expect bank 0 to install the expansion vectors, then launch the TecMate shell scaffold.');
   console.log('5. On the TMS9918 VDU, expect `TecMate ROM Shell`, `TFS:30+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`.');
+  console.log('6. The proof also runs `edit` through the shell command service and renders status `EDIT` on the VDU status line.');
   console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
@@ -88,11 +93,12 @@ function main(): void {
   console.log(`- installed trace: ${(installed.trace ?? []).map((value) => hex(value)).join(' ')}`);
   console.log(`- instructions to launch: ${installed.instructions ?? 'unknown'}`);
   console.log(`- bridge instructions: ${installed.bridgeInstructions ?? 'unknown'}`);
+  console.log(`- shell command status: ${installed.shellCommandStatus}`);
   console.log(`- final SYS_CTRL: ${hex(installed.finalSysCtrl)}`);
   console.log(`- final physical bank: ${installed.finalPhysicalBank ?? 'unknown'}`);
   console.log('');
   console.log('Observable success means the fixed monitor, expansion discovery, bank 0 shell scaffold, VDU/TMS9918,');
-  console.log('input snapshot service, and TEC-FS service boundary all ran through the ROM path.');
+  console.log('input snapshot service, TEC-FS service boundary, and shell command status path all ran through the ROM path.');
 }
 
 main();

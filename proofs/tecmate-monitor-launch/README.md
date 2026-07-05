@@ -21,6 +21,11 @@ After that, the same runtime executes a RAM stub that calls `RST 10h` with
 service bridge calls the installed service vector and restores `SYS_CTRL` on
 return.
 
+The installed runtime then writes `edit` into the shell command buffer, calls
+`SHL_RUN_COMMAND`, calls `SHL_RENDER_STATUS`, and verifies the TMS9918 status
+line contains exactly `EDIT`. The last-run JSON records this as
+`installed.shellCommandStatus`, which is used by the manual ROM demo guide.
+
 The runner uses the monitor D8 map to locate `launchExpansion` and the bank-0
 D8 map to locate the installed menu provider, so the proof fails if discovery,
 installation, vector launch, or bridge dispatch stops reaching the bank-0
