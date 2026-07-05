@@ -85,6 +85,7 @@ services, and editor workflow fit together:
 - [TecMate OS Progress](mon3/tecmate-os-progress.md)
 - [TecMate ROM Space Map](mon3/tecmate-rom-space-map.md)
 - [TecMate ROM Size Budget](mon3/tecmate-rom-size-budget.md)
+- [TecMate ROM Ownership Policy](mon3/rom-ownership-policy.md)
 - [Register Contract Policy](mon3/register-contract-policy.md)
 - [Monitor Register Contract Audit](mon3/monitor-register-contract-audit.md)
 - [TEC-FS Storage Direction](mon3/tec-fs-direction.md)
