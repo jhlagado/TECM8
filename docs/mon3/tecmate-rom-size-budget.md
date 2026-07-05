@@ -81,6 +81,7 @@ Tier 2 is useful once Tier 1 is real:
 - assembler diagnostics and symbol/map output
 - debugger integration
 - game-oriented helper libraries built on the same VDU/input/TEC-FS services
+- profile preprocessors and profile runtimes that lower to ordinary assembly
 
 Tier 3 is deferred unless it becomes essential:
 
@@ -89,6 +90,36 @@ Tier 3 is deferred unless it becomes essential:
 - GLCD feature work beyond a compatibility boundary
 - high-level game framework features
 - optional hardware-specific tooling
+
+## Profile And Runtime Budget Policy
+
+Profile work must not hide ROM growth behind attractive tooling. The profile
+preprocessor is primarily a build-time or tool-bank concern; generated programs
+and runtime helpers still consume real ROM, RAM, or TEC-FS space.
+
+The first rule is that profile support remains subordinate to Tier 1 until the
+shell, editor, assembler, runner, VDU/input services, and TEC-FS project path
+are usable. A game profile is a proving case for those services, not a reason
+to fill the expansion image with a general engine before the smaller system
+works.
+
+Any profile/runtime increment should publish:
+
+- generated structure bytes
+- user behaviour code bytes where known
+- resource bytes
+- runtime helper bytes
+- package/metadata overhead
+- final binary or bank span
+
+Profile code belongs in tool/profile banks unless it is a tiny ABI hook needed
+by the resident shell or runner. Bank 0 may know how to dispatch `profile` or
+`game` commands later, but it should not carry the profile preprocessor, game
+runtime, resource packer, or debugger UI.
+
+Generated assembly should be measured like hand-written assembly. If a profile
+feature saves typing but emits a large table, that table still counts against
+the smallest viable system.
 
 ## Policies
 

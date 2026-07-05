@@ -89,3 +89,20 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /prevents GLCD or optional tooling from quietly consuming/);
   assert.match(doc, /Bank 0 must not become a junk drawer/);
 });
+
+test('ROM size budget policy constrains profile and runtime growth', () => {
+  const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-rom-size-budget.md'), 'utf8');
+
+  assert.match(doc, /## Profile And Runtime Budget Policy/);
+  assert.match(doc, /profile support remains subordinate to Tier 1/);
+  assert.match(doc, /A game profile is a proving case/);
+  assert.match(doc, /generated structure bytes/);
+  assert.match(doc, /user behaviour code bytes where known/);
+  assert.match(doc, /resource bytes/);
+  assert.match(doc, /runtime helper bytes/);
+  assert.match(doc, /package\/metadata overhead/);
+  assert.match(doc, /final binary or bank span/);
+  assert.match(doc, /Bank 0 may know how to dispatch `profile` or\s+`game` commands later/);
+  assert.match(doc, /should not carry the profile preprocessor, game\s+runtime, resource packer, or debugger UI/);
+  assert.match(doc, /Generated assembly should be measured like hand-written assembly/);
+});
