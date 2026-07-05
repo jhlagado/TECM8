@@ -415,6 +415,7 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_FORMAT_META_RECORD` (`0Bh`) | Implemented `TFM1` metadata formatter. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_PATCH_META_RECORD` (`0Ch`) | Implemented `TFM1` metadata patcher. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_DECODE_CATALOG` (`0Dh`) | Implemented single-entry catalogue decoder. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_SUMMARIZE_CATALOG` (`0Eh`) | Implemented one-slot catalogue summary. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -431,6 +432,7 @@ TEC-FS routine.
 | `TFS_READ_LOCATOR` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_READ_LOCATOR`. |
 | `TFS_FORMAT_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_META_RECORD`. |
 | `TFS_PATCH_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_PATCH_META_RECORD`. |
+| `TFS_SUMMARIZE_CATALOG` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_SUMMARIZE_CATALOG`. |
 | `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
 | `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
@@ -444,6 +446,7 @@ TEC-FS routine.
 | `TFS_SVC_FORMAT_META_RECORD` | `0Bh` | Formats a blank TEC-FS v1 metadata record into the caller buffer. |
 | `TFS_SVC_PATCH_META_RECORD` | `0Ch` | Patches mutable fields in a caller-buffer metadata record. |
 | `TFS_SVC_DECODE_CATALOG` | `0Dh` | Decodes one active 64-byte TM8 catalogue entry from the caller buffer. |
+| `TFS_SVC_SUMMARIZE_CATALOG` | `0Eh` | Summarizes one catalogue slot for the shell `dir` path. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -543,9 +546,25 @@ decode result block at `TFS_ENTRY_RESULT_BASE`:
 | `TFS_PARAM_ENTRY_SIZE_3` | `3BD0h` | File size byte 3. |
 | `TFS_PARAM_ENTRY_FILE_TYPE` | `3BD1h` | TM8 file type byte. |
 
+`TFS_SVC_SUMMARIZE_CATALOG` is the next small step toward `dir`. It uses the
+same caller buffer. If the slot is inactive, it returns `A=82h` with carry clear
+and publishes a count of zero. If the slot is active, it reuses the decoder and
+publishes a one-entry summary:
+
+| Output alias | Address | Meaning |
+| --- | ---: | --- |
+| `TFS_SUMMARY_RESULT_BASE` | `3BD2h` | Base of the catalogue summary result block. |
+| `TFS_PARAM_SUMMARY_COUNT_LO` | `3BD2h` | Summary count low byte, currently `00h` or `01h`. |
+| `TFS_PARAM_SUMMARY_COUNT_HI` | `3BD3h` | Summary count high byte, currently `00h`. |
+| `TFS_PARAM_SUMMARY_FIRST_FILE_ID` | `3BD4h` | First active file id, if present. |
+| `TFS_PARAM_SUMMARY_FIRST_FILE_TYPE` | `3BD5h` | First active file type, if present. |
+| `TFS_PARAM_SUMMARY_FIRST_NAME_LEN` | `3BD6h` | First active local filename length, if present. |
+| `TFS_PARAM_SUMMARY_FLAGS` | `3BD7h` | Summary flags. Bit 0 means a first entry is present. |
+| `TFS_SUMMARY_FLAG_HAS_FIRST` | `01h` | Summary flag for a present first active entry. |
+
 This is not yet a full directory walker. Sector reads, prefix resolution,
 hidden-file filtering, and multi-entry iteration are expected to layer on this
-decoder once the sector-driver path is stable.
+summary/decoder pair once the sector-driver path is stable.
 
 Catalog entry constants mirror the host TM8 format:
 

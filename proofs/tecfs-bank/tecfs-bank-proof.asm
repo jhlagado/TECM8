@@ -35,6 +35,7 @@ PROOF_FAIL_PATCH_META       .equ    0xF6
 PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xF7
 PROOF_FAIL_DECODE_CATALOG   .equ    0xF8
 PROOF_FAIL_FILE_READ        .equ    0xF9
+PROOF_FAIL_SUMMARY          .equ    0xFA
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -313,6 +314,29 @@ ClearCatalogEntry:
         ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
         cp TFS_FILE_SOURCE
         jp nz,FailDecodeCatalog
+        ld a,TFS_SVC_SUMMARIZE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailSummary
+        cp 0x82
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
+        cp 0x01
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_COUNT_HI)
+        or a
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FIRST_FILE_ID)
+        cp 0x21
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FIRST_FILE_TYPE)
+        cp TFS_FILE_SOURCE
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FIRST_NAME_LEN)
+        cp 0x08
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FLAGS)
+        cp TFS_SUMMARY_FLAG_HAS_FIRST
+        jp nz,FailSummary
         ld a,(TFS_PARAM_ENTRY_FILE_ID)
         ld (TFS_PROOF_TRACE_BASE+0),a
         ld a,(TFS_PARAM_ENTRY_PREFIX_ID)
@@ -331,6 +355,17 @@ ClearCatalogEntry:
         ld (TFS_PROOF_TRACE_BASE+7),a
         xor a
         ld (0x6280+TFS_CATALOG_OFFSET_STATUS),a
+        ld a,TFS_SVC_SUMMARIZE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailSummary
+        cp 0x82
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
+        or a
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FLAGS)
+        or a
+        jp nz,FailSummary
         ld a,TFS_SVC_DECODE_CATALOG
         farCall 0x02,TFS_ENTRY
         jp nc,FailDecodeCatalog
@@ -813,6 +848,9 @@ FailDecodeCatalog:
         jr Fail
 FailFileRead:
         ld a,PROOF_FAIL_FILE_READ
+        jr Fail
+FailSummary:
+        ld a,PROOF_FAIL_SUMMARY
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt

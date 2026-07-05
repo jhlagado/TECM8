@@ -42,6 +42,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsPatchMetaRecordImpl
         cp TFS_SVC_DECODE_CATALOG
         jp z,tecfsDecodeCatalogImpl
+        cp TFS_SVC_SUMMARIZE_CATALOG
+        jp z,tecfsSummarizeCatalogImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -84,6 +86,9 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsDecodeCatalog:
         jp tecfsDecodeCatalogImpl
+
+@tecfsSummarizeCatalog:
+        jp tecfsSummarizeCatalogImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -501,6 +506,51 @@ tecfsFormatMetaRecordClear:
         ld (TFS_PARAM_LAST_ERROR),a
         ld a,0x82
         or a
+        ret
+
+@tecfsSummarizeCatalogImpl:
+        call tecfsClearSummary
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jr z,tecfsSummarizeActive
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+tecfsSummarizeActive:
+        call tecfsDecodeCatalogImpl
+        ret c
+        ld a,0x01
+        ld (TFS_PARAM_SUMMARY_COUNT_LO),a
+        xor a
+        ld (TFS_PARAM_SUMMARY_COUNT_HI),a
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        ld (TFS_PARAM_SUMMARY_FIRST_FILE_ID),a
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        ld (TFS_PARAM_SUMMARY_FIRST_FILE_TYPE),a
+        ld a,(TFS_PARAM_ENTRY_NAME_LEN)
+        ld (TFS_PARAM_SUMMARY_FIRST_NAME_LEN),a
+        ld a,TFS_SUMMARY_FLAG_HAS_FIRST
+        ld (TFS_PARAM_SUMMARY_FLAGS),a
+        ld a,0x82
+        or a
+        ret
+
+tecfsClearSummary:
+        xor a
+        ld (TFS_PARAM_SUMMARY_COUNT_LO),a
+        ld (TFS_PARAM_SUMMARY_COUNT_HI),a
+        ld (TFS_PARAM_SUMMARY_FIRST_FILE_ID),a
+        ld (TFS_PARAM_SUMMARY_FIRST_FILE_TYPE),a
+        ld (TFS_PARAM_SUMMARY_FIRST_NAME_LEN),a
+        ld (TFS_PARAM_SUMMARY_FLAGS),a
         ret
 
 @tecfsBadLocator:

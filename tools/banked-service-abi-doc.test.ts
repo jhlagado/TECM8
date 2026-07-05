@@ -281,6 +281,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_RANGE` \(`05h`\) \| Reserved; returns unsupported/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_PATCH_META_RECORD` \(`0Ch`\) \| Implemented `TFM1` metadata patcher/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_DECODE_CATALOG` \(`0Dh`\) \| Implemented single-entry catalogue decoder/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_SUMMARIZE_CATALOG` \(`0Eh`\) \| Implemented one-slot catalogue summary/);
 
   for (const name of [
     'TFS_ENTRY',
@@ -296,6 +297,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_READ_LOCATOR',
     'TFS_FORMAT_META_RECORD',
     'TFS_PATCH_META_RECORD',
+    'TFS_SUMMARIZE_CATALOG',
     'TFS_SVC_MOUNT',
     'TFS_SVC_SELECT_VOLUME',
     'TFS_SVC_READ',
@@ -309,6 +311,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_FORMAT_META_RECORD',
     'TFS_SVC_PATCH_META_RECORD',
     'TFS_SVC_DECODE_CATALOG',
+    'TFS_SVC_SUMMARIZE_CATALOG',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -352,6 +355,14 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_PARAM_ENTRY_NAME_LEN',
     'TFS_PARAM_ENTRY_PREFIX_ID',
     'TFS_PARAM_ENTRY_FILE_ID',
+    'TFS_SUMMARY_RESULT_BASE',
+    'TFS_PARAM_SUMMARY_COUNT_LO',
+    'TFS_PARAM_SUMMARY_COUNT_HI',
+    'TFS_PARAM_SUMMARY_FIRST_FILE_ID',
+    'TFS_PARAM_SUMMARY_FIRST_FILE_TYPE',
+    'TFS_PARAM_SUMMARY_FIRST_NAME_LEN',
+    'TFS_PARAM_SUMMARY_FLAGS',
+    'TFS_SUMMARY_FLAG_HAS_FIRST',
     'TFS_META_PATCH_BASE',
     'TFS_META_PATCH_FILE_TYPE',
     'TFS_META_PATCH_FLAGS',
@@ -477,12 +488,20 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /file type,\s+flags, load\/end\/run addresses, required hardware, and a long-name reference/);
   assert.match(doc, /default formatted record is `TFS_FILE_PROJECT`/);
   assert.match(doc, /`TFS_SVC_DECODE_CATALOG`\s+expects `TFS_PARAM_BUFFER_LO\/HI` to point at one 64-byte TM8 v1 file catalogue/);
+  assert.match(doc, /`TFS_SVC_SUMMARIZE_CATALOG` is the next small step toward `dir`/);
+  assert.match(doc, /publishes a count of zero/);
+  assert.match(doc, /publishes a one-entry summary/);
+  assert.match(doc, /`TFS_SUMMARY_RESULT_BASE`/);
+  assert.match(doc, /`TFS_SUMMARY_FLAG_HAS_FIRST`/);
   assert.match(doc, /not yet a full directory walker/);
 });
 
-test('TEC-FS catalog decode result block does not collide with neighbouring ABI RAM', () => {
+test('TEC-FS catalog result blocks do not collide with neighbouring ABI RAM', () => {
   const tfsEntryResultBase = equateValue('TFS_ENTRY_RESULT_BASE');
+  const tfsSummaryResultBase = equateValue('TFS_SUMMARY_RESULT_BASE');
   assert.equal(tfsEntryResultBase, 0x3bc8);
+  assert.equal(tfsSummaryResultBase, 0x3bd2);
+  assertNoOverlap('TFS_ENTRY_RESULT_BASE', tfsEntryResultBase, 10, 'TFS_SUMMARY_RESULT_BASE', tfsSummaryResultBase, 6);
 
   for (const [name, start, length] of [
     ['INP_PARAM_BASE', equateValue('INP_PARAM_BASE'), 8],
@@ -492,6 +511,7 @@ test('TEC-FS catalog decode result block does not collide with neighbouring ABI 
     ['RUN_PARAM_BASE', equateValue('RUN_PARAM_BASE'), 8],
   ] as const) {
     assertNoOverlap('TFS_ENTRY_RESULT_BASE', tfsEntryResultBase, 10, name, start, length);
+    assertNoOverlap('TFS_SUMMARY_RESULT_BASE', tfsSummaryResultBase, 6, name, start, length);
   }
 });
 

@@ -62,7 +62,7 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `1099` | `1099` | `844Bh` | `15285` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `913` | `913` | `8391h` | `15471` |
+| 2 | TEC-FS boundary and block mapper | `1008` | `1008` | `83F0h` | `15376` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
@@ -70,15 +70,15 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2920`
+Expansion occupied bytes: `3015`
 
-Expansion high-water span total: `2920`
+Expansion high-water span total: `3015`
 
-Latest shell `dir` command delta:
+Latest TEC-FS summary service delta:
 
 ```text
-bank 0 span: 1044 -> 1099 bytes
-expansion total span: 2865 -> 2920 bytes
+bank 2 span: 913 -> 1008 bytes
+expansion total span: 2920 -> 3015 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
