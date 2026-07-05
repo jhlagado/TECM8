@@ -53,6 +53,22 @@ INP_PROOF_RESULT            .equ    0x3BD0
         or a
         jp nz,InputProofFail
 
+        ld a,0x5A
+        ld (INP_PARAM_STATUS),a
+        ld a,0xA5
+        ld (INP_PARAM_LAST_ERROR),a
+        ld a,0x7F
+        farCall 0x06,INP_ENTRY
+        jp nc,InputProofFail
+        cp INP_ERR_UNKNOWN
+        jp nz,InputProofFail
+        ld a,(INP_PARAM_STATUS)
+        cp 0x5A
+        jp nz,InputProofFail
+        ld a,(INP_PARAM_LAST_ERROR)
+        cp 0xA5
+        jp nz,InputProofFail
+
         ld a,PROOF_PASS
         ld (INP_PROOF_RESULT),a
         halt

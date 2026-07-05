@@ -204,8 +204,8 @@ async function main(): Promise<void> {
   const params = readTrace(runtime, paramBase, 8);
 
   assertEqual(result, PROOF_PASS, 'input bank proof result marker');
-  assertEqual(params[0], 0x00, 'input status');
-  assertEqual(params[1], 0x00, 'input last error');
+  assertEqual(params[0], 0x5a, 'input status preserved after unknown selector');
+  assertEqual(params[1], 0xa5, 'input last error preserved after unknown selector');
   assertEqual(params[2], 0x06, 'input service bank');
   assertEqual(params[3], 0x01, 'input service version');
   assertEqual(params[4], 0x00, 'input key bitfield low byte');

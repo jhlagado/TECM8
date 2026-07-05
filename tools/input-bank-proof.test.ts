@@ -25,7 +25,12 @@ test('input bank proof covers neutral snapshot fields', () => {
   assert.match(proof, /ld a,\(INP_PARAM_BANK\)[\s\S]*cp 0x06/);
   assert.match(proof, /ld a,\(INP_PARAM_KEYS_LO\)[\s\S]*or a[\s\S]*jp nz,InputProofFail/);
   assert.match(proof, /ld a,\(INP_PARAM_JOYSTICK\)[\s\S]*or a[\s\S]*jp nz,InputProofFail/);
+  assert.match(proof, /ld a,0x5A[\s\S]*ld \(INP_PARAM_STATUS\),a[\s\S]*ld a,0xA5[\s\S]*ld \(INP_PARAM_LAST_ERROR\),a/);
+  assert.match(proof, /ld a,0x7F[\s\S]*farCall 0x06,INP_ENTRY[\s\S]*cp INP_ERR_UNKNOWN[\s\S]*ld a,\(INP_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(INP_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
+  assert.match(runner, /input status preserved after unknown selector/);
+  assert.match(runner, /input last error preserved after unknown selector/);
   assert.match(runner, /assertEqual\(params\[6\], 0x00, 'input joystick bitfield'\)/);
   assert.match(runner, /assertEqual\(params\[7\], 0x00, 'input modifiers bitfield'\)/);
+  assert.match(bank6, /ld a,INP_ERR_UNKNOWN\s+scf\s+ret/);
   assert.match(bank6, /Tecm8InputRead:[\s\S]*ld \(INP_PARAM_KEYS_LO\),a[\s\S]*ld \(INP_PARAM_JOYSTICK\),a/);
 });

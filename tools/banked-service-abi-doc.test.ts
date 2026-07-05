@@ -530,6 +530,7 @@ test('banked service ABI doc covers bank 6 input snapshot boundary', () => {
   assert.match(doc, /## Bank 6: Input Snapshot Boundary/);
   assert.match(doc, /matrix-keyboard and joystick-facing service/);
   assert.match(doc, /returns a no-input snapshot/);
+  assert.match(doc, /unknown-selector path returns `INP_ERR_UNKNOWN`/);
   assert.match(doc, /shell, editor, assembler, debugger, and game support code/);
 });
 

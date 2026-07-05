@@ -702,6 +702,9 @@ Input status and joystick values:
 | `INP_JOY_FIRE_1` | `10h` | Primary fire bit. |
 | `INP_JOY_FIRE_2` | `20h` | Secondary fire bit. |
 
+The unknown-selector path returns `INP_ERR_UNKNOWN` with carry set and does not
+modify the input status fields.
+
 `INP_READ` is intended to become the common low-level input snapshot used by
 the shell, editor, assembler, debugger, and game support code. It stays generic:
 game-specific controls should interpret this snapshot rather than adding a
