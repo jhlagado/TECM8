@@ -84,5 +84,8 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /Tier 3/);
   assert.match(doc, /npm run rom:size:check/);
   assert.match(doc, /npm run rom:size:summary/);
+  assert.match(doc, /Every meaningful ROM-facing increment should publish the current footprint from\s+`npm run rom:size:summary` in the review notes, commit summary, or handoff\s+message/);
+  assert.match(doc, /editor, TEC-FS, and assembler/);
+  assert.match(doc, /prevents GLCD or optional tooling from quietly consuming/);
   assert.match(doc, /Bank 0 must not become a junk drawer/);
 });

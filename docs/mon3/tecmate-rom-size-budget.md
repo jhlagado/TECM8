@@ -104,6 +104,12 @@ shape is good; a large body of unproven code is not.
 Any feature that grows a bank by roughly 512 bytes or more should include a size
 note in the commit message, documentation, or review summary.
 
+Every meaningful ROM-facing increment should publish the current footprint from
+`npm run rom:size:summary` in the review notes, commit summary, or handoff
+message. This keeps growth visible while the editor, TEC-FS, and assembler are
+still being shaped, and prevents GLCD or optional tooling from quietly consuming
+space needed by Tier 1 work.
+
 If a bank crosses its soft budget, review whether the feature is Tier 1. If it
 is not Tier 1, move it later or move it out.
 
