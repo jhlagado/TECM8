@@ -74,14 +74,6 @@ CheckShellSplashNext:
         inc de
         or a
         jr nz,CheckShellSplashNext
-        ld a,(TMS_PARAM_CURSOR_LO)
-        cp 0x07
-        scf
-        ret nz
-        ld a,(TMS_PARAM_CURSOR_HI)
-        cp 0x00
-        scf
-        ret nz
         or a
         ret
 

@@ -100,8 +100,8 @@ confidence, not as the only release gate.
    call the installed expansion menu vector, and return through the monitor
    bank-call path.
 6. On the TMS9918 VDU, expect the bank-0 scaffold to write the visible
-   `TecMate` splash and `POLL` status text after the first input/update/render
-   loop slice.
+   `TecMate ROM Shell` title, `VDU:TMS TEC-FS:ROM` mode line, `>` prompt, and
+   `POLL` status text after the first input/update/render loop slice.
 7. If the manual screen differs, compare it with the automated evidence in
    `proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json`.
 

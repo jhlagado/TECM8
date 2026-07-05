@@ -181,6 +181,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_TARGET_FLAGS',
     'SHL_STATUS_BUFFER',
     'SHL_STATUS_CAPACITY',
+    'SHL_LINE_BUFFER',
+    'SHL_LINE_CAPACITY',
     'SHL_SPLASH_BUFFER',
     'SHL_LOOP_TICK',
     'SHL_LOOP_DIRTY',
@@ -214,7 +216,13 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     assertDocRow(name);
   }
   assert.match(doc, /private `Tecm8ShellEntry` label/);
-  assert.match(doc, /writes a\s+short status string through the VDU status-line service/);
+  assert.match(doc, /clears the\s+VDU text plane/);
+  assert.match(doc, /writes a small shell home screen through the bank-1 VDU\s+dispatcher/);
+  assert.match(doc, /TecMate ROM Shell/);
+  assert.match(doc, /VDU:TMS TEC-FS:ROM/);
+  assert.match(doc, /copies each home-screen line into `SHL_LINE_BUFFER` in RAM/);
+  assert.match(doc, /must not pass private bank-local string\s+addresses to another bank/);
+  assert.match(doc, /writes a short status string through the VDU status-line service/);
   assert.match(doc, /do not\s+call that label directly/);
   assert.match(doc, /runs one minimal polling-loop step/);
   assert.match(doc, /calls `INP_READ`, increments `SHL_LOOP_TICK`/);

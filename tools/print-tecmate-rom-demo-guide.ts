@@ -79,7 +79,7 @@ function main(): void {
   console.log('2. Reset the TEC-1G runtime and let the MON3-compatible monitor start.');
   console.log('3. Enter the monitor `Expansion` menu item.');
   console.log('4. Expect bank 0 to install the expansion vectors, then launch the TecMate shell scaffold.');
-  console.log('5. On the TMS9918 VDU, expect `TecMate` at the top-left and `POLL` on the status line.');
+  console.log('5. On the TMS9918 VDU, expect `TecMate ROM Shell`, `VDU:TMS TEC-FS:ROM`, `>`, and `POLL`.');
   console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);

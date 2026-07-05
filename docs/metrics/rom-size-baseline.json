@@ -1,5 +1,4 @@
 {
-  "schema": "tecm8-rom-size-baseline-v1",
   "monitor": {
     "occupied": 9007,
     "span": 16384,
@@ -9,61 +8,100 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 788,
-      "span": 788
+      "occupied": 906,
+      "span": 906,
+      "softSpan": 2048,
+      "hardSpan": 4096,
+      "highWaterEnd": 33674,
+      "freeAfterHighWater": 15478
     },
     {
       "bank": 1,
       "role": "VDU/TMS9918 boundary",
       "occupied": 532,
-      "span": 532
+      "span": 532,
+      "softSpan": 4096,
+      "hardSpan": 8192,
+      "highWaterEnd": 33300,
+      "freeAfterHighWater": 15852
     },
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
       "occupied": 799,
-      "span": 799
+      "span": 799,
+      "softSpan": 4096,
+      "hardSpan": 8192,
+      "highWaterEnd": 33567,
+      "freeAfterHighWater": 15585
     },
     {
       "bank": 3,
       "role": "RTC boundary",
       "occupied": 95,
-      "span": 95
+      "span": 95,
+      "softSpan": 1024,
+      "hardSpan": 2048,
+      "highWaterEnd": 32863,
+      "freeAfterHighWater": 16289
     },
     {
       "bank": 4,
       "role": "GLCD boundary",
       "occupied": 68,
-      "span": 68
+      "span": 68,
+      "softSpan": 1024,
+      "hardSpan": 2048,
+      "highWaterEnd": 32836,
+      "freeAfterHighWater": 16316
     },
     {
       "bank": 5,
       "role": "TEC-FS monitor-sector bridge",
       "occupied": 40,
-      "span": 40
+      "span": 40,
+      "softSpan": 1024,
+      "hardSpan": 2048,
+      "highWaterEnd": 32808,
+      "freeAfterHighWater": 16344
     },
     {
       "bank": 6,
       "role": "Input snapshot boundary",
       "occupied": 47,
-      "span": 47
+      "span": 47,
+      "softSpan": 1024,
+      "hardSpan": 2048,
+      "highWaterEnd": 32815,
+      "freeAfterHighWater": 16337
     },
     {
       "bank": 7,
       "role": "Assembler skeleton",
       "occupied": 45,
-      "span": 45
+      "span": 45,
+      "softSpan": 8192,
+      "hardSpan": 12288,
+      "highWaterEnd": 32813,
+      "freeAfterHighWater": 16339
     },
     {
       "bank": 8,
       "role": "Run skeleton",
       "occupied": 45,
-      "span": 45
+      "span": 45,
+      "softSpan": 4096,
+      "hardSpan": 8192,
+      "highWaterEnd": 32813,
+      "freeAfterHighWater": 16339
     }
   ],
   "expansionTotal": {
-    "occupied": 2459,
-    "span": 2459,
-    "hardSpan": 65536
-  }
+    "occupied": 2577,
+    "span": 2577,
+    "softSpan": 32768,
+    "hardSpan": 65536,
+    "freeAfterHighWater": 144879
+  },
+  "schema": "tecm8-rom-size-baseline-v1"
 }

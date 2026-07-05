@@ -133,10 +133,25 @@ publishing fixed callable entry points.
 ## Bank 0: Shell Entry
 
 Physical bank 0 owns the first resident TecMate shell and launcher boundary.
-The current private `Tecm8ShellEntry` label publishes a descriptor, writes a
-short status string through the VDU status-line service, and writes a short splash
-string through the bank-1 VDU dispatcher. MON3 and user code do not call that
+The current private `Tecm8ShellEntry` label publishes a descriptor, clears the
+VDU text plane, writes a small shell home screen through the bank-1 VDU
+dispatcher, writes a short status string through the VDU status-line service,
+and runs one minimal polling-loop step. MON3 and user code do not call that
 label directly; they request `SHL_ENTRY` through the installed service vector.
+
+The first visible home screen is deliberately small:
+
+```text
+TecMate ROM Shell
+VDU:TMS TEC-FS:ROM
+
+>
+```
+
+The strings live in bank 0 source, but the VDU renderer runs in bank 1. Bank 0
+therefore copies each home-screen line into `SHL_LINE_BUFFER` in RAM before
+calling the VDU bank. Banked services must not pass private bank-local string
+addresses to another bank unless that bank is deliberately selected.
 
 The private `Tecm8ShellRunCommand` label is the current command-loop boundary.
 MON3 and user code also do not call that label directly; they request
@@ -166,6 +181,8 @@ Shell parameter block:
 | `SHL_TARGET_FLAGS` | `3BAFh` | Descriptor flags. |
 | `SHL_STATUS_BUFFER` | `3B98h` | Short zero-terminated shell status-line buffer. |
 | `SHL_STATUS_CAPACITY` | `08h` | Bytes reserved for the shell status-line buffer. |
+| `SHL_LINE_BUFFER` | `3AA0h` | RAM transfer buffer for home-screen lines rendered by the VDU bank. |
+| `SHL_LINE_CAPACITY` | `20h` | Bytes reserved for the home-screen line transfer buffer. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
 | `SHL_LOOP_TICK` | `3BB8h` | First polling-loop tick counter. |
 | `SHL_LOOP_DIRTY` | `3BB9h` | Coarse dirty mask set by the shell loop step. |

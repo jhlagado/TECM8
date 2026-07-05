@@ -259,11 +259,11 @@ async function main(): Promise<void> {
   assertEqual(loop[3], 0x00, 'shell loop keys high');
   assertEqual(loop[4], 0x00, 'shell loop joystick');
   assertEqual(loop[5], 0x00, 'shell loop modifiers');
-  assertEqual(tmsParams[4], 0x07, 'shell splash cursor low');
-  assertEqual(tmsParams[5], 0x00, 'shell splash cursor high');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell launch SYS_CTRL restored');
   assertEqual(runtime.hardware.memory[MON3_SYS_MODE], SHADOW_OFF, 'shell launch SYS_MODE shadow restored');
-  assertVramText(platformRuntime, 0x0000, 'TecMate', 'shell splash');
+  assertVramText(platformRuntime, 0x0000, 'TecMate ROM Shell', 'shell title');
+  assertVramText(platformRuntime, 0x0020, 'VDU:TMS TEC-FS:ROM', 'shell mode line');
+  assertVramText(platformRuntime, 0x0060, '> ', 'shell prompt');
   assertVramText(platformRuntime, 0x02e0, 'POLL', 'shell status');
 
   writeFileSync(

@@ -457,6 +457,11 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
   assertEqual(tms9918.vram[0x0004] ?? 0, 'a'.charCodeAt(0), 'demo VDU fifth splash character');
   assertEqual(tms9918.vram[0x0005] ?? 0, 't'.charCodeAt(0), 'demo VDU sixth splash character');
   assertEqual(tms9918.vram[0x0006] ?? 0, 'e'.charCodeAt(0), 'demo VDU seventh splash character');
+  assertEqual(tms9918.vram[0x0007] ?? 0, ' '.charCodeAt(0), 'demo VDU title separator');
+  assertEqual(tms9918.vram[0x0008] ?? 0, 'R'.charCodeAt(0), 'demo VDU title ROM character');
+  assertEqual(tms9918.vram[0x0020] ?? 0, 'V'.charCodeAt(0), 'demo mode line first character');
+  assertEqual(tms9918.vram[0x0024] ?? 0, 'T'.charCodeAt(0), 'demo mode line TMS marker');
+  assertEqual(tms9918.vram[0x0060] ?? 0, '>'.charCodeAt(0), 'demo prompt marker');
   assertEqual(tms9918.vram[0x02e0] ?? 0, 'P'.charCodeAt(0), 'demo status first character');
   assertEqual(tms9918.vram[0x02e1] ?? 0, 'O'.charCodeAt(0), 'demo status second character');
   assertEqual(tms9918.vram[0x02e2] ?? 0, 'L'.charCodeAt(0), 'demo status third character');

@@ -74,8 +74,9 @@ menu vector currently points at the TecMate bootstrap scaffold:
 For now this is still a demo scaffold, not the final shell. It deliberately
 proves a small runnable system: the bootstrap initializes the VDU, touches the
 TEC-FS boundary, reads the input snapshot boundary, and then enters the shell
-entry service so `TecMate` and `POLL` are visible through the TMS9918 VDU path
-after the first input/update/render loop slice.
+entry service so the `TecMate ROM Shell` home screen and `POLL` status are
+visible through the TMS9918 VDU path after the first input/update/render loop
+slice.
 The important shape is already in place:
 
 | Item | Current value | Purpose |
@@ -135,8 +136,9 @@ Installed expansion case:
 3. the monitor calls the installed menu vector through the bank-call path
 4. bank 0 runs the TecMate bootstrap/service chain
 5. the test-only return path reaches the proof halt stub
-6. Debug80's TMS9918 VRAM contains the visible `TecMate` splash and `POLL`
-   status text from the first loop slice
+6. Debug80's TMS9918 VRAM contains the visible `TecMate ROM Shell` title,
+   `VDU:TMS TEC-FS:ROM` mode line, `>` prompt, and `POLL` status text from the
+   first loop slice
 7. the input parameter block reports the bank-6 neutral snapshot
 8. the TEC-FS parameter block reports the current mount geometry
 9. a RAM `RST 10h C=TFS_MOUNT` call reaches the installed service dispatcher

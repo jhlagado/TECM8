@@ -138,16 +138,7 @@ Tecm8ServiceCallUnknown:
         ld (SHL_TARGET_PATH_HI),a
         ld (SHL_TARGET_FLAGS),a
         call Tecm8ShellCopySplash
-        push de
-        call Tecm8ShellPublishReadyStatus
-        pop de
-        xor a
-        ld (TMS_PARAM_CURSOR_LO),a
-        ld (TMS_PARAM_CURSOR_HI),a
-        ld hl,SHL_SPLASH_BUFFER
-        ld (TMS_PARAM_STRING_LO),hl
-        ; expects out A,carry
-        callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING
+        call Tecm8ShellRenderHome
         jp c,Tecm8ShellSplashError
         call Tecm8ShellLoopStep
         ld a,0x80
@@ -339,6 +330,65 @@ Tecm8ShellCopySplashNext:
         jp nz,Tecm8ShellCopySplashNext
         ret
 
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Tecm8ShellRenderHome:
+        ; expects out A,carry
+        callBankService VDU_BANK,VDU_CALL,VDU_SVC_CLEAR
+        ret c
+        ld a,0x00
+        ld hl,Tecm8ShellTitleText
+        call Tecm8ShellWriteHomeLine
+        ret c
+        ld a,0x01
+        ld hl,Tecm8ShellModeText
+        call Tecm8ShellWriteHomeLine
+        ret c
+        ld a,0x03
+        ld hl,Tecm8ShellPromptText
+        ;! rc-ignore-next definite_contract_violation: HL is the input string pointer for this final home-line call and is not live after the following carry check.
+        call Tecm8ShellWriteHomeLine
+        ret c
+        jp Tecm8ShellPublishReadyStatus
+
+;! in A,HL
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Tecm8ShellWriteHomeLine:
+        ld (TMS_PARAM_ROW),a
+        xor a
+        ld (TMS_PARAM_COL),a
+        ;! rc-ignore-next definite_contract_violation: DE/flags are scratch while copying the bank-local string into the cross-bank RAM line buffer.
+        call Tecm8ShellCopyLineToBuffer
+        ld hl,SHL_LINE_BUFFER
+        ld (TMS_PARAM_STRING_LO),hl
+        ; expects out A,carry
+        ;! rc-ignore-next definite_contract_violation: callBankService reloads its own B/C/HL frame; the VDU_SET_ROWCOL service does not consume caller DE/HL.
+        callBankService VDU_BANK,VDU_CALL,VDU_SVC_SET_ROWCOL
+        ret c
+        ; expects out A,carry
+        callBankService VDU_BANK,VDU_CALL,VDU_SVC_PUT_STRING
+        ret
+
+;! in HL
+;! out A,zero
+;! clobbers sign,parity,halfCarry,A,B,D,E,H,L
+Tecm8ShellCopyLineToBuffer:
+        ld de,SHL_LINE_BUFFER
+        ld b,SHL_LINE_CAPACITY-1
+Tecm8ShellCopyLineNext:
+        ld a,(hl)
+        ld (de),a
+        or a
+        ret z
+        inc hl
+        inc de
+        dec b
+        jp nz,Tecm8ShellCopyLineNext
+        xor a
+        ld (de),a
+        ret
+
 Tecm8ShellPublishReadyStatus:
         ld hl,Tecm8ShellReadyStatusText
         jp Tecm8ShellPublishStatusFromHl
@@ -382,6 +432,12 @@ Tecm8ShellLoopStep:
 
 Tecm8ShellSplashText:
         .db     "TecMate",0
+Tecm8ShellTitleText:
+        .db     "TecMate ROM Shell",0
+Tecm8ShellModeText:
+        .db     "VDU:TMS TEC-FS:ROM",0
+Tecm8ShellPromptText:
+        .db     "> ",0
 Tecm8ShellReadyStatusText:
         .db     "READY",0
 Tecm8ShellPollStatusText:

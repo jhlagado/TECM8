@@ -14,16 +14,19 @@ test('TecMate OS progress note records current first-loop banked services', () =
   assert.match(doc, /file type, flags, load address,\s+end address, run address, required hardware/);
   assert.match(doc, /`SHL_RUN_COMMAND`/);
   assert.match(doc, /documented result-code\s+convention/);
+  assert.match(doc, /clears the TMS9918 text plane/);
+  assert.match(doc, /visible `TecMate ROM Shell`\s+screen/);
+  assert.match(doc, /shows the prompt marker/);
   assert.match(doc, /cursor-preserving status line/);
   assert.match(doc, /input snapshot service for matrix keyboard and joystick state/);
 });
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /2459 occupied bytes currently/);
-  assert.match(doc, /2459 bytes total high-water span across all banks/);
-  assert.match(doc, /bank 0 span: 730 -> 788 bytes/);
-  assert.match(doc, /expansion total span: 2401 -> 2459 bytes/);
+  assert.match(doc, /2577 occupied bytes currently/);
+  assert.match(doc, /2577 bytes total high-water span across all banks/);
+  assert.match(doc, /bank 0 span: 788 -> 906 bytes/);
+  assert.match(doc, /expansion total span: 2459 -> 2577 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

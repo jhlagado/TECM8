@@ -75,8 +75,8 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /bank 0 span: 730 -> 788 bytes/);
-  assert.match(doc, /expansion total span: 2401 -> 2459 bytes/);
+  assert.match(doc, /bank 0 span: 788 -> 906 bytes/);
+  assert.match(doc, /expansion total span: 2459 -> 2577 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 
@@ -105,7 +105,7 @@ test('TecMate ROM space map records current bank 0 private boundary labels', () 
   const rows = [
     ['Bank 0 service dispatcher', 'Tecm8ServiceCall', 'Private table-driven label installed into the service vector.'],
     ['Bank 0 service registry', 'Tecm8ServiceRegistry', 'Private service ID to bank/address/target-`A` table.'],
-    ['Bank 0 shell entry', 'Tecm8ShellEntry', 'Private descriptor and VDU splash path for `SHL_ENTRY`.'],
+    ['Bank 0 shell entry', 'Tecm8ShellEntry', 'Private descriptor and VDU home-screen path for `SHL_ENTRY`.'],
     ['Bank 0 info marker', 'Tecm8ExpansionBank0Info', 'Private marker, not a fixed ABI location.'],
   ];
 

@@ -47,7 +47,7 @@ test('Debug80 TecMate demo milestone records the manual ROM launch script', () =
   assert.match(doc, /use Debug80 only to inspect\s+the generated ROM artifacts/);
   assert.match(doc, /Do not start a RAM\s+program at `4000h`/);
   assert.match(doc, /Enter the monitor `Expansion` menu item/);
-  assert.match(doc, /`TecMate` splash and `POLL` status text/);
+  assert.match(doc, /`TecMate ROM Shell` title, `VDU:TMS TEC-FS:ROM` mode line, `>` prompt, and\s+`POLL` status text/);
   assert.match(doc, /first input\/update\/render\s+loop slice/);
 });
 
@@ -76,7 +76,8 @@ test('Debug80 TecMate demo milestone is backed by the monitor launch proof', () 
   assert.match(bank0, /Tecm8BootstrapShell:[\s\S]*callService RTC_TOOL[\s\S]*callService SHL_ENTRY[\s\S]*ld \(DBG_TRACE_8\),a/);
   assert.match(runner, /assertDemoVram/);
   assert.match(runner, /demo TMS9918 device active/);
-  assert.match(runner, /demo VDU first splash character/);
+  assert.match(runner, /demo mode line first character/);
+  assert.match(runner, /demo prompt marker/);
   assert.match(runner, /demo input neutral joystick state/);
   assert.match(runner, /demo TEC-FS mount side effect/);
 });

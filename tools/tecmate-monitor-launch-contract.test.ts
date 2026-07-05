@@ -97,7 +97,9 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(runner, /shell entry marker/);
   assert.match(runner, /assertDemoVram/);
   assert.match(runner, /demo TMS9918 device active/);
-  assert.match(runner, /demo VDU first splash character/);
+  assert.match(runner, /demo VDU title separator/);
+  assert.match(runner, /demo mode line first character/);
+  assert.match(runner, /demo prompt marker/);
   assert.match(runner, /demo status first character/);
   assert.match(runner, /demo input service bank side effect/);
   assert.match(runner, /demo TEC-FS mount side effect/);
@@ -106,7 +108,8 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(runner, /missing expansion TEC-FS mount side effect remains clear/);
   assert.match(runner, /missing expansion returned carry set/);
   assert.match(doc, /Installed expansion case:/);
-  assert.match(doc, /TMS9918 VRAM contains the visible `TecMate` splash and `POLL`/);
+  assert.match(doc, /TMS9918 VRAM contains the visible `TecMate ROM Shell` title/);
+  assert.match(doc, /`VDU:TMS TEC-FS:ROM` mode line, `>` prompt, and `POLL` status text/);
   assert.match(doc, /first loop slice/);
   assert.match(doc, /input parameter block reports the bank-6 neutral snapshot/);
   assert.match(doc, /TEC-FS parameter block reports the current mount geometry/);
