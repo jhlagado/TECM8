@@ -32,6 +32,7 @@ test('TecMate shell launch proof exercises the service bridge launch path', () =
   assert.match(runner, /shell launch SYS_MODE shadow restored/);
   assert.match(runner, /shell title/);
   assert.match(runner, /shell mode line/);
+  assert.match(runner, /shell input echo/);
   assert.match(runner, /shell prompt/);
   assert.match(runner, /shell status/);
   assert.equal(

@@ -44,6 +44,8 @@ test('input polling ABI matches the current bank 6 proof boundary', () => {
   assert.match(doc, /bank 6/);
   assert.match(doc, /`A = 86h`, carry\s+clear/);
   assert.match(doc, /neutral key and joystick\s+fields/);
+  assert.match(doc, /`KEY:0000 JOY:00` on the TMS9918 screen/);
+  assert.match(doc, /visible debug\/status echo of\s+the parameter block/);
   assert.match(ops, /INP_READ\s+\.equ\s+SVC_BASE\+0x04/);
   assert.match(ops, /INP_SVC_READ\s+\.equ\s+0x01/);
   assert.match(ops, /INP_PARAM_JOYSTICK/);

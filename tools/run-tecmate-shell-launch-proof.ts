@@ -263,6 +263,7 @@ async function main(): Promise<void> {
   assertEqual(runtime.hardware.memory[MON3_SYS_MODE], SHADOW_OFF, 'shell launch SYS_MODE shadow restored');
   assertVramText(platformRuntime, 0x0000, 'TecMate ROM Shell', 'shell title');
   assertVramText(platformRuntime, 0x0020, 'VDU:TMS TEC-FS:ROM', 'shell mode line');
+  assertVramText(platformRuntime, 0x0040, 'KEY:0000 JOY:00', 'shell input echo');
   assertVramText(platformRuntime, 0x0060, '> ', 'shell prompt');
   assertVramText(platformRuntime, 0x02e0, 'POLL', 'shell status');
 

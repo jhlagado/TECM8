@@ -461,6 +461,9 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
   assertEqual(tms9918.vram[0x0008] ?? 0, 'R'.charCodeAt(0), 'demo VDU title ROM character');
   assertEqual(tms9918.vram[0x0020] ?? 0, 'V'.charCodeAt(0), 'demo mode line first character');
   assertEqual(tms9918.vram[0x0024] ?? 0, 'T'.charCodeAt(0), 'demo mode line TMS marker');
+  assertEqual(tms9918.vram[0x0040] ?? 0, 'K'.charCodeAt(0), 'demo input echo first character');
+  assertEqual(tms9918.vram[0x0044] ?? 0, '0'.charCodeAt(0), 'demo input echo keys first digit');
+  assertEqual(tms9918.vram[0x004d] ?? 0, '0'.charCodeAt(0), 'demo input echo joystick first digit');
   assertEqual(tms9918.vram[0x0060] ?? 0, '>'.charCodeAt(0), 'demo prompt marker');
   assertEqual(tms9918.vram[0x02e0] ?? 0, 'P'.charCodeAt(0), 'demo status first character');
   assertEqual(tms9918.vram[0x02e1] ?? 0, 'O'.charCodeAt(0), 'demo status second character');

@@ -68,6 +68,10 @@ The contract direction is:
 The optional joystick panel must report a neutral bitfield when it is absent.
 That lets software poll the same snapshot on machines with and without the panel.
 
+The current ROM shell scaffold displays the first neutral snapshot as
+`KEY:0000 JOY:00` on the TMS9918 screen. That is a visible debug/status echo of
+the parameter block, not a separate input API.
+
 ## Loop Model
 
 A program should normally do this:

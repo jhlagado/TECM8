@@ -144,6 +144,7 @@ The first visible home screen is deliberately small:
 ```text
 TecMate ROM Shell
 VDU:TMS TEC-FS:ROM
+KEY:0000 JOY:00
 
 >
 ```
@@ -152,6 +153,10 @@ The strings live in bank 0 source, but the VDU renderer runs in bank 1. Bank 0
 therefore copies each home-screen line into `SHL_LINE_BUFFER` in RAM before
 calling the VDU bank. Banked services must not pass private bank-local string
 addresses to another bank unless that bank is deliberately selected.
+
+The `KEY:0000 JOY:00` line is generated from the current bank-6 input snapshot
+copied into the shell loop state. It is an echo/status aid, not a command-line
+editor yet.
 
 The private `Tecm8ShellRunCommand` label is the current command-loop boundary.
 MON3 and user code also do not call that label directly; they request

@@ -80,6 +80,28 @@ test('ROM size delta tool compares current footprint with the checked-in baselin
   assert.match(deltaTool, /Occupied Delta/);
 });
 
+test('ROM size baseline matches the generated footprint report exactly', () => {
+  execFileSync('npm', ['run', 'rom:check'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  const baseline = JSON.parse(readFileSync(resolve(root, 'docs/metrics/rom-size-baseline.json'), 'utf8'));
+  const output = execFileSync('node', ['--experimental-strip-types', 'tools/check-rom-size-budget.ts', '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  const report = JSON.parse(output);
+
+  assert.deepEqual(
+    {
+      monitor: baseline.monitor,
+      banks: baseline.banks,
+      expansionTotal: baseline.expansionTotal,
+    },
+    report,
+  );
+});
+
 test('ROM size delta command prints span and occupied deltas', () => {
   const output = execFileSync('npm', ['run', 'rom:size:delta'], {
     cwd: root,

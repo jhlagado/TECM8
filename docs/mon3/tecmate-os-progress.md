@@ -97,9 +97,10 @@ SHL_ENTRY = 80h
 The current implementation is a descriptor and home-screen stub, not the full
 interactive shell. That is the right level for this stage. It proves the launch
 path, clears the TMS9918 text plane, writes a visible `TecMate ROM Shell`
-screen, shows the prompt marker, writes `POLL` through the VDU/TMS9918 status
-line after the first input/update/render loop slice, and reserves a stable
-service number before the shell loop is moved into ROM. The
+screen, shows the current input snapshot as `KEY:0000 JOY:00`, shows the prompt
+marker, writes `POLL` through the VDU/TMS9918 status line after the first
+input/update/render loop slice, and reserves a stable service number before the
+shell loop is moved into ROM. The
 actual shell label is private to bank 0 and is reached through the installed
 expansion service vector, not by a fixed address.
 
@@ -134,15 +135,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2577 occupied bytes currently
-2577 bytes total high-water span across all banks
+2668 occupied bytes currently
+2668 bytes total high-water span across all banks
 ```
 
-This shell home-screen milestone changed the footprint by 118 bytes:
+This input echo milestone changed the footprint by 90 bytes:
 
 ```text
-bank 0 span: 788 -> 906 bytes
-expansion total span: 2459 -> 2577 bytes
+bank 0 span: 906 -> 997 bytes
+expansion total span: 2577 -> 2668 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

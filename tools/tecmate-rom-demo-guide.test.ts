@@ -25,7 +25,7 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
   assert.match(guide, /build\/roms\/tec1g\/tecm8\/monitor\/monitor\.bin/);
   assert.match(guide, /build\/roms\/tec1g\/tecm8\/expansion\/expansion-144k\.bin/);
   assert.match(guide, /monitor `Expansion` menu item/);
-  assert.match(guide, /expect `TecMate ROM Shell`, `VDU:TMS TEC-FS:ROM`, `>`, and `POLL`/);
+  assert.match(guide, /expect `TecMate ROM Shell`, `VDU:TMS TEC-FS:ROM`, `KEY:0000 JOY:00`, `>`, and `POLL`/);
   assert.match(guide, /fixed monitor, expansion discovery, bank 0 shell scaffold, VDU\/TMS9918/);
   assert.match(guide, /input snapshot service, and TEC-FS service boundary/);
   assert.match(guide, /Do not use `GO 4000h`, `debug80:editor-image`, or the old RAM editor path/);

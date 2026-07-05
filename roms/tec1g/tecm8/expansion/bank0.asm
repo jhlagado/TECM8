@@ -427,7 +427,49 @@ Tecm8ShellLoopStep:
         ld (SHL_LOOP_JOYSTICK),a
         ld a,(INP_PARAM_MODIFIERS)
         ld (SHL_LOOP_MODIFIERS),a
+        call Tecm8ShellRenderInputEcho
+        ret c
         call Tecm8ShellPublishPollStatus
+        ret
+
+;! out A,carry,zero
+;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Tecm8ShellRenderInputEcho:
+        ld hl,Tecm8ShellInputEchoText
+        call Tecm8ShellCopyLineToBuffer
+        ld a,(SHL_LOOP_KEYS_HI)
+        ld de,SHL_LINE_BUFFER+4
+        call Tecm8ShellHexByte
+        ld a,(SHL_LOOP_KEYS_LO)
+        ld de,SHL_LINE_BUFFER+6
+        call Tecm8ShellHexByte
+        ld a,(SHL_LOOP_JOYSTICK)
+        ld de,SHL_LINE_BUFFER+13
+        call Tecm8ShellHexByte
+        ld a,0x02
+        ld hl,SHL_LINE_BUFFER
+        jp Tecm8ShellWriteHomeLine
+
+Tecm8ShellHexByte:
+        push af
+        srl a
+        srl a
+        srl a
+        srl a
+        call Tecm8ShellHexNibble
+        ld (de),a
+        inc de
+        pop af
+        call Tecm8ShellHexNibble
+        ld (de),a
+        ret
+
+Tecm8ShellHexNibble:
+        and 0x0F
+        add a,"0"
+        cp "9"+1
+        ret c
+        add a,0x07
         ret
 
 Tecm8ShellSplashText:
@@ -436,6 +478,8 @@ Tecm8ShellTitleText:
         .db     "TecMate ROM Shell",0
 Tecm8ShellModeText:
         .db     "VDU:TMS TEC-FS:ROM",0
+Tecm8ShellInputEchoText:
+        .db     "KEY:0000 JOY:00",0
 Tecm8ShellPromptText:
         .db     "> ",0
 Tecm8ShellReadyStatusText:
