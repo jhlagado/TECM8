@@ -15,6 +15,16 @@ That command rebuilds the monitor and expansion ROMs, then checks the generated
 D8 segment spans against explicit budgets. Soft budgets produce warnings. Hard
 budgets fail the command.
 
+For a compact report without reading the full build log:
+
+```text
+npm run rom:size:summary
+```
+
+That command uses the same measurements and budgets, but prints a small
+Markdown table showing each bank's span, soft budget, hard budget, free space,
+and status.
+
 ## Current Budget Shape
 
 The fixed monitor is already full:

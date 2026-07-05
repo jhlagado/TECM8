@@ -11,6 +11,7 @@
     "rom:expansion": "node --experimental-strip-types tools/build-expansion-rom.ts",
     "rom:check": "npm run rom:monitor && npm run rom:expansion",
     "rom:size:check": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts",
+    "rom:size:summary": "npm run rom:check && node --experimental-strip-types tools/check-rom-size-budget.ts --summary",
     "rom:contracts:check": "node --experimental-strip-types tools/check-expansion-register-contracts.ts",
     "z80:size": "node --experimental-strip-types tools/measure-z80-size.ts",
     "proof:storage:image": "node --experimental-strip-types tools/create-storage-proof-image.ts",

@@ -25,6 +25,35 @@ type D8File = {
   segments: D8Segment[];
 };
 
+type Measurement = {
+  occupied: number;
+  span: number;
+  highWaterEnd: number;
+};
+
+type BankReport = {
+  bank: number;
+  role: string;
+  occupied: number;
+  span: number;
+  softSpan: number;
+  hardSpan: number;
+  highWaterEnd: number;
+  freeAfterHighWater: number;
+};
+
+type RomSizeReport = {
+  monitor: Measurement;
+  banks: BankReport[];
+  expansionTotal: {
+    occupied: number;
+    span: number;
+    softSpan: number;
+    hardSpan: number;
+    freeAfterHighWater: number;
+  };
+};
+
 const expansionBudgets: Budget[] = [
   { role: 'Shell, launcher, registry', softSpan: 0x0800, hardSpan: 0x1000 },
   { role: 'VDU/TMS9918 boundary', softSpan: 0x1000, hardSpan: 0x2000 },
@@ -48,7 +77,7 @@ function hex(value: number): string {
   return `${value.toString(16).toUpperCase().padStart(4, '0')}h`;
 }
 
-function spanForSegments(segments: D8Segment[]): { occupied: number; span: number; highWaterEnd: number } {
+function spanForSegments(segments: D8Segment[]): Measurement {
   if (segments.length === 0) {
     return { occupied: 0, span: 0, highWaterEnd: 0 };
   }
@@ -82,9 +111,46 @@ function warn(message: string): void {
   console.warn(message);
 }
 
-function checkMonitor(): void {
+function measureRomSize(): RomSizeReport {
   const d8 = readJson('build/roms/tec1g/tecm8/monitor/monitor.d8.json');
-  const measurement = spanForSegments(d8.segments);
+  const monitor = spanForSegments(d8.segments);
+  const banks: BankReport[] = [];
+  let totalSpan = 0;
+  let totalOccupied = 0;
+
+  for (const [bank, budget] of expansionBudgets.entries()) {
+    const bankD8 = readJson(`build/roms/tec1g/tecm8/expansion/bank${bank}.d8.json`);
+    const measurement = spanForSegments(expansionWindowSegments(bankD8.segments));
+    totalSpan += measurement.span;
+    totalOccupied += measurement.occupied;
+
+    banks.push({
+      bank,
+      role: budget.role,
+      occupied: measurement.occupied,
+      span: measurement.span,
+      softSpan: budget.softSpan,
+      hardSpan: budget.hardSpan,
+      highWaterEnd: measurement.highWaterEnd,
+      freeAfterHighWater: bankBytes - measurement.span,
+    });
+  }
+
+  return {
+    monitor,
+    banks,
+    expansionTotal: {
+      occupied: totalOccupied,
+      span: totalSpan,
+      softSpan: totalExpansionSoftSpan,
+      hardSpan: totalExpansionHardSpan,
+      freeAfterHighWater: bankBytes * expansionBudgets.length - totalSpan,
+    },
+  };
+}
+
+function checkMonitor(report: RomSizeReport): void {
+  const measurement = report.monitor;
 
   if (measurement.span !== monitorBytes) {
     fail(`monitor span changed: got ${measurement.span}, expected exactly ${monitorBytes}`);
@@ -95,44 +161,89 @@ function checkMonitor(): void {
   );
 }
 
-function checkExpansion(): void {
-  let totalSpan = 0;
-  let totalOccupied = 0;
-
-  for (const [bank, budget] of expansionBudgets.entries()) {
-    const d8 = readJson(`build/roms/tec1g/tecm8/expansion/bank${bank}.d8.json`);
-    const measurement = spanForSegments(expansionWindowSegments(d8.segments));
-    totalSpan += measurement.span;
-    totalOccupied += measurement.occupied;
-
-    if (measurement.span > bankBytes) {
-      fail(`bank ${bank} ${budget.role} exceeds 16K window: span=${measurement.span}`);
+function checkExpansion(report: RomSizeReport): void {
+  for (const bank of report.banks) {
+    if (bank.span > bankBytes) {
+      fail(`bank ${bank.bank} ${bank.role} exceeds 16K window: span=${bank.span}`);
     }
-    if (measurement.span > budget.hardSpan) {
-      fail(
-        `bank ${bank} ${budget.role} exceeds hard budget: span=${measurement.span}, hard=${budget.hardSpan}`,
-      );
-    } else if (measurement.span > budget.softSpan) {
-      warn(
-        `bank ${bank} ${budget.role} exceeds soft budget: span=${measurement.span}, soft=${budget.softSpan}`,
-      );
+    if (bank.span > bank.hardSpan) {
+      fail(`bank ${bank.bank} ${bank.role} exceeds hard budget: span=${bank.span}, hard=${bank.hardSpan}`);
+    } else if (bank.span > bank.softSpan) {
+      warn(`bank ${bank.bank} ${bank.role} exceeds soft budget: span=${bank.span}, soft=${bank.softSpan}`);
     }
 
     console.log(
-      `bank ${bank} ${budget.role}: occupied=${measurement.occupied} span=${measurement.span} hard=${budget.hardSpan} free=${bankBytes - measurement.span}`,
+      `bank ${bank.bank} ${bank.role}: occupied=${bank.occupied} span=${bank.span} hard=${bank.hardSpan} free=${bank.freeAfterHighWater}`,
     );
   }
 
-  if (totalSpan > totalExpansionHardSpan) {
-    fail(`expansion total exceeds hard budget: span=${totalSpan}, hard=${totalExpansionHardSpan}`);
-  } else if (totalSpan > totalExpansionSoftSpan) {
-    warn(`expansion total exceeds soft budget: span=${totalSpan}, soft=${totalExpansionSoftSpan}`);
+  if (report.expansionTotal.span > totalExpansionHardSpan) {
+    fail(`expansion total exceeds hard budget: span=${report.expansionTotal.span}, hard=${totalExpansionHardSpan}`);
+  } else if (report.expansionTotal.span > totalExpansionSoftSpan) {
+    warn(`expansion total exceeds soft budget: span=${report.expansionTotal.span}, soft=${totalExpansionSoftSpan}`);
   }
 
   console.log(
-    `expansion total: occupied=${totalOccupied} span=${totalSpan} hard=${totalExpansionHardSpan} free=${bankBytes * expansionBudgets.length - totalSpan}`,
+    `expansion total: occupied=${report.expansionTotal.occupied} span=${report.expansionTotal.span} hard=${totalExpansionHardSpan} free=${report.expansionTotal.freeAfterHighWater}`,
   );
 }
 
-checkMonitor();
-checkExpansion();
+function validateBudget(report: RomSizeReport): void {
+  if (report.monitor.span !== monitorBytes) {
+    fail(`monitor span changed: got ${report.monitor.span}, expected exactly ${monitorBytes}`);
+  }
+
+  for (const bank of report.banks) {
+    if (bank.span > bankBytes) {
+      fail(`bank ${bank.bank} ${bank.role} exceeds 16K window: span=${bank.span}`);
+    }
+    if (bank.span > bank.hardSpan) {
+      fail(`bank ${bank.bank} ${bank.role} exceeds hard budget: span=${bank.span}, hard=${bank.hardSpan}`);
+    } else if (bank.span > bank.softSpan) {
+      warn(`bank ${bank.bank} ${bank.role} exceeds soft budget: span=${bank.span}, soft=${bank.softSpan}`);
+    }
+  }
+
+  if (report.expansionTotal.span > totalExpansionHardSpan) {
+    fail(`expansion total exceeds hard budget: span=${report.expansionTotal.span}, hard=${totalExpansionHardSpan}`);
+  } else if (report.expansionTotal.span > totalExpansionSoftSpan) {
+    warn(`expansion total exceeds soft budget: span=${report.expansionTotal.span}, soft=${totalExpansionSoftSpan}`);
+  }
+}
+
+function statusFor(span: number, softSpan: number, hardSpan: number): string {
+  if (span > hardSpan) {
+    return 'hard fail';
+  }
+  if (span > softSpan) {
+    return 'soft warn';
+  }
+  return 'ok';
+}
+
+function printSummary(report: RomSizeReport): void {
+  console.log('# TecMate ROM Footprint');
+  console.log('');
+  console.log(`Fixed monitor span: ${report.monitor.span}/${monitorBytes} bytes, high ${hex(report.monitor.highWaterEnd)}.`);
+  console.log(
+    `Expansion total span: ${report.expansionTotal.span}/${report.expansionTotal.hardSpan} bytes hard budget, occupied ${report.expansionTotal.occupied} bytes.`,
+  );
+  console.log('');
+  console.log('| Bank | Role | Span | Soft | Hard | Free | Status |');
+  console.log('| ---: | --- | ---: | ---: | ---: | ---: | --- |');
+  for (const bank of report.banks) {
+    console.log(
+      `| ${bank.bank} | ${bank.role} | ${bank.span} | ${bank.softSpan} | ${bank.hardSpan} | ${bank.freeAfterHighWater} | ${statusFor(bank.span, bank.softSpan, bank.hardSpan)} |`,
+    );
+  }
+}
+
+const report = measureRomSize();
+
+if (process.argv.includes('--summary')) {
+  printSummary(report);
+  validateBudget(report);
+} else {
+  checkMonitor(report);
+  checkExpansion(report);
+}
