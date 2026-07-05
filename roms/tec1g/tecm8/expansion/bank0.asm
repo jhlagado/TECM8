@@ -123,20 +123,7 @@ Tecm8ServiceCallUnknown:
         ld (SHL_PARAM_VERSION),a
         ld a,SHL_FEATURE_ENTRY+SHL_FEATURE_SPLASH+SHL_FEATURE_COMMAND_LOOP
         ld (SHL_PARAM_FEATURES),a
-        xor a
-        ld (SHL_PARAM_STATUS),a
-        ld (SHL_PARAM_LAST_ERROR),a
-        ld (SHL_PARAM_COMMAND_ACTION),a
-        ld (SHL_PARAM_COMMAND_LENGTH),a
-        ld (SHL_PARAM_COMMAND_TARGET_LO),a
-        ld (SHL_PARAM_COMMAND_TARGET_HI),a
-        ld (SHL_PARAM_COMMAND_RESULT_LO),a
-        ld (SHL_PARAM_COMMAND_RESULT_HI),a
-        ld (SHL_TARGET_ACTION),a
-        ld (SHL_TARGET_KIND),a
-        ld (SHL_TARGET_PATH_LO),a
-        ld (SHL_TARGET_PATH_HI),a
-        ld (SHL_TARGET_FLAGS),a
+        call Tecm8ShellClearCommandState
         call Tecm8ShellCopySplash
         call Tecm8ShellRenderHome
         jp c,Tecm8ShellSplashError
@@ -150,7 +137,7 @@ Tecm8ShellSplashError:
         scf
         ret
 
-@Tecm8ShellRunCommand:
+Tecm8ShellClearCommandState:
         xor a
         ld (SHL_PARAM_STATUS),a
         ld (SHL_PARAM_LAST_ERROR),a
@@ -165,6 +152,10 @@ Tecm8ShellSplashError:
         ld (SHL_TARGET_PATH_LO),a
         ld (SHL_TARGET_PATH_HI),a
         ld (SHL_TARGET_FLAGS),a
+        ret
+
+@Tecm8ShellRunCommand:
+        call Tecm8ShellClearCommandState
         ld hl,SHL_COMMAND_BUFFER
         ld a,(hl)
         or a

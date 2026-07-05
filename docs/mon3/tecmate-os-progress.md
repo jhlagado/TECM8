@@ -137,15 +137,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2820 occupied bytes currently
-2820 bytes total high-water span across all banks
+2787 occupied bytes currently
+2787 bytes total high-water span across all banks
 ```
 
-This VDU counted-string hardening milestone changed the footprint by 36 bytes:
+This shell ABI cleanup milestone reduced the footprint by 33 bytes:
 
 ```text
-bank 1 span: 532 -> 568 bytes
-expansion total span: 2784 -> 2820 bytes
+bank 0 span: 999 -> 966 bytes
+expansion total span: 2820 -> 2787 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
