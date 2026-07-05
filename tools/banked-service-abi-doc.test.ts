@@ -252,8 +252,10 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /without becoming a game runtime or full shell loop/);
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
-  assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);
-  assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC`/);
+  assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, `run`, and `dir`/);
+  assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC` for commands with resolved targets/);
+  assert.match(doc, /`dir` is classification-only for\s+now/);
+  assert.match(doc, /leaves the target pointer and flags clear/);
   assert.match(doc, /blank command is a\s+successful no-op/);
   assert.match(doc, /leaves `SHL_ACTION_NONE`, records length zero, keeps status\s+OK/);
   assert.match(doc, /`asm` calls the bank-7 assembler\s+skeleton/);

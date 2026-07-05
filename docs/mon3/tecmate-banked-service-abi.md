@@ -218,6 +218,7 @@ Shell status and feature values:
 | `SHL_ACTION_EDIT` | `01h` | Command classified as editor launch. |
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
 | `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
+| `SHL_ACTION_DIR` | `04h` | Command classified as TEC-FS directory/catalogue listing. |
 | `SHL_TARGET_KIND_NONE` | `00h` | No target has been resolved. |
 | `SHL_TARGET_KIND_PROJECT_MAIN` | `01h` | Target is the project main source. |
 | `SHL_TARGET_KIND_PROJECT_OUTPUT` | `02h` | Target is the derived project output. |
@@ -244,10 +245,13 @@ poll/update/render model without becoming a game runtime or full shell loop.
 parameter block. This is not the full interactive shell. It is the ROM-facing
 boundary that lets the monitor or proofs enter the future shell command loop
 through the expansion service registry. The current boundary classifies the
-first shell verbs: `edit`, `asm`, and `run`. It stores the corresponding
+first shell verbs: `edit`, `asm`, `run`, and `dir`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
-at `SHL_TARGET_DESC`, and writes a default target kind. A blank command is a
+at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
+target kind for those target-bearing commands. `dir` is classification-only for
+now: it records `SHL_ACTION_DIR` and leaves the target pointer and flags clear.
+A blank command is a
 successful no-op: it leaves `SHL_ACTION_NONE`, records length zero, keeps status
 OK, returns `A=80h`, and clears carry. `asm` calls the bank-7 assembler
 skeleton, `run` calls the bank-8 run skeleton, and both commands copy the
@@ -255,7 +259,7 @@ bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI` before
 returning `A=80h` with carry clear. Unknown non-empty commands store
 `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`,
 leave the target/result slots clear, return `A=SVC_ERR_UNKNOWN`, and set carry.
-The later editor, assembler, and launcher
+The later directory, editor, assembler, and launcher
 services should hang from this boundary rather than being called directly from
 MON3.
 

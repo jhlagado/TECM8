@@ -65,7 +65,7 @@ test('shell command contract reserves game command namespace without enabling it
   assert.match(doc, /profile clean/);
   assert.match(doc, /placeholders for the later game runtime\/tool profile/);
   assert.match(doc, /should not replace the general `edit`, `asm`, and `run` commands/);
-  assert.match(doc, /`SHL_RUN_COMMAND` boundary still classifies only exact\s+single-word `edit`, `asm`, and `run`/);
+  assert.match(doc, /`SHL_RUN_COMMAND` boundary still classifies only exact\s+single-word `edit`, `asm`, `run`, and `dir`/);
   assert.match(doc, /It should reject `game` until a real\s+multi-word shell parser and game tool dispatcher are implemented/);
   assert.doesNotMatch(ops, /SHL_ACTION_GAME/);
   assert.doesNotMatch(ops, /SHL_ACTION_PROFILE/);

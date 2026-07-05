@@ -176,6 +176,8 @@ Tecm8ShellRunCheckThree:
         and 0xDF
         cp "A"
         jp z,Tecm8ShellRunCheckAsm
+        cp "D"
+        jp z,Tecm8ShellRunCheckDir
         cp "R"
         jp z,Tecm8ShellRunCheckRun
         jp Tecm8ShellRunUnknown
@@ -188,6 +190,16 @@ Tecm8ShellRunCheckAsm:
         and 0xDF
         cp "M"
         jp z,Tecm8ShellRunAsm
+        jp Tecm8ShellRunUnknown
+Tecm8ShellRunCheckDir:
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "I"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "R"
+        jp z,Tecm8ShellRunDir
         jp Tecm8ShellRunUnknown
 Tecm8ShellRunCheckRun:
         ld a,(SHL_COMMAND_BUFFER+1)
@@ -249,6 +261,13 @@ Tecm8ShellRunRun:
         ld a,0x80
         or a
         ret
+Tecm8ShellRunDir:
+        ld a,SHL_ACTION_DIR
+        ld (SHL_PARAM_COMMAND_ACTION),a
+        ld (SHL_TARGET_ACTION),a
+        ld a,0x80
+        or a
+        ret
 Tecm8ShellRunOk:
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
@@ -306,6 +325,8 @@ Tecm8ShellRunUnknown:
         jp z,Tecm8ShellPublishAsmStatus
         cp SHL_ACTION_RUN
         jp z,Tecm8ShellPublishRunStatus
+        cp SHL_ACTION_DIR
+        jp z,Tecm8ShellPublishDirStatus
         jp Tecm8ShellPublishReadyStatus
 
 Tecm8ShellPublishCommandErrorStatus:
@@ -319,6 +340,9 @@ Tecm8ShellPublishAsmStatus:
         jp Tecm8ShellPublishStatusFromHl
 Tecm8ShellPublishRunStatus:
         ld hl,Tecm8ShellRunStatusText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishDirStatus:
+        ld hl,Tecm8ShellDirStatusText
         jp Tecm8ShellPublishStatusFromHl
 
 Tecm8ShellCommandLength:
@@ -513,6 +537,8 @@ Tecm8ShellAsmStatusText:
         .db     "ASM",0
 Tecm8ShellRunStatusText:
         .db     "RUN",0
+Tecm8ShellDirStatusText:
+        .db     "DIR",0
 Tecm8ShellCommandErrorStatusText:
         .db     "ERRCMD",0
 

@@ -152,7 +152,7 @@ should layer on the same project, assembler, runner, VDU, input, TEC-FS, and
 debugger services once those services exist.
 
 The current bank-0 `SHL_RUN_COMMAND` boundary still classifies only exact
-single-word `edit`, `asm`, and `run`. It should reject `game` until a real
+single-word `edit`, `asm`, `run`, and `dir`. It should reject `game` until a real
 multi-word shell parser and game tool dispatcher are implemented.
 
 ## Future Profile Command Surface

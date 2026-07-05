@@ -107,9 +107,10 @@ actual shell label is private to bank 0 and is reached through the installed
 expansion service vector, not by a fixed address.
 
 Bank 0 also exposes `SHL_RUN_COMMAND`, the first one-command shell boundary. It
-currently classifies exact `edit`, `asm`, and `run` commands, measures the
-command length, rejects unknown commands, and clears reserved target/result
-slots. For `asm` and `run`, it now publishes the default target descriptor,
+currently classifies exact `edit`, `asm`, `run`, and `dir` commands, measures
+the command length, rejects unknown commands, and clears reserved target/result
+slots. `dir` is classification-only for now and leaves the target pointer and
+flags clear. For `asm` and `run`, it publishes the default target descriptor,
 calls the banked assembler or run skeleton, and copies the tool result back into
 the shell command result slots. Those slots now have a documented result-code
 convention for the future assembler path.
@@ -137,15 +138,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2787 occupied bytes currently
-2787 bytes total high-water span across all banks
+2920 occupied bytes currently
+2920 bytes total high-water span across all banks
 ```
 
-This shell ABI cleanup milestone reduced the footprint by 33 bytes:
+The current shell command/status milestone keeps the expansion footprint small:
 
 ```text
-bank 0 span: 999 -> 966 bytes
-expansion total span: 2820 -> 2787 bytes
+bank 0 span: 1044 -> 1099 bytes
+expansion total span: 2865 -> 2920 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
