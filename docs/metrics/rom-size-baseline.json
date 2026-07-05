@@ -8,12 +8,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 997,
-      "span": 997,
+      "occupied": 995,
+      "span": 995,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 33765,
-      "freeAfterHighWater": 15387
+      "highWaterEnd": 33763,
+      "freeAfterHighWater": 15389
     },
     {
       "bank": 1,
@@ -97,11 +97,11 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 2668,
-    "span": 2668,
+    "occupied": 2666,
+    "span": 2666,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 144788
+    "freeAfterHighWater": 144790
   },
   "schema": "tecm8-rom-size-baseline-v1"
 }

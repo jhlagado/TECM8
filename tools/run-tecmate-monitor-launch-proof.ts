@@ -221,6 +221,17 @@ function assertEqual(actual: number, expected: number, name: string): void {
   }
 }
 
+function assertVramText(platformRuntime: PlatformRuntime, address: number, expected: string, name: string): void {
+  const tms9918 = platformRuntime.state.display?.tms9918?.snapshot();
+  if (!tms9918) {
+    throw new Error('Debug80 runtime did not expose a TMS9918 device snapshot');
+  }
+  assertEqual(tms9918.active ? 1 : 0, 1, `${name} TMS9918 active`);
+  for (let index = 0; index < expected.length; index += 1) {
+    assertEqual(tms9918.vram[address + index] ?? 0, expected.charCodeAt(index), `${name} VRAM character ${index}`);
+  }
+}
+
 function assertClearedExpansionVectors(runtime: Runtime): void {
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_BANK], 0x00, 'cleared expansion menu bank');
   assertEqual(runtime.hardware.memory[EXP_MENU_VEC_ADDR], 0x00, 'cleared expansion menu address lo');
@@ -450,25 +461,11 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
     throw new Error('Debug80 runtime did not expose a TMS9918 device snapshot');
   }
   assertEqual(tms9918.active ? 1 : 0, 1, 'demo TMS9918 device active');
-  assertEqual(tms9918.vram[0x0000] ?? 0, 'T'.charCodeAt(0), 'demo VDU first splash character');
-  assertEqual(tms9918.vram[0x0001] ?? 0, 'e'.charCodeAt(0), 'demo VDU second splash character');
-  assertEqual(tms9918.vram[0x0002] ?? 0, 'c'.charCodeAt(0), 'demo VDU third splash character');
-  assertEqual(tms9918.vram[0x0003] ?? 0, 'M'.charCodeAt(0), 'demo VDU fourth splash character');
-  assertEqual(tms9918.vram[0x0004] ?? 0, 'a'.charCodeAt(0), 'demo VDU fifth splash character');
-  assertEqual(tms9918.vram[0x0005] ?? 0, 't'.charCodeAt(0), 'demo VDU sixth splash character');
-  assertEqual(tms9918.vram[0x0006] ?? 0, 'e'.charCodeAt(0), 'demo VDU seventh splash character');
-  assertEqual(tms9918.vram[0x0007] ?? 0, ' '.charCodeAt(0), 'demo VDU title separator');
-  assertEqual(tms9918.vram[0x0008] ?? 0, 'R'.charCodeAt(0), 'demo VDU title ROM character');
-  assertEqual(tms9918.vram[0x0020] ?? 0, 'V'.charCodeAt(0), 'demo mode line first character');
-  assertEqual(tms9918.vram[0x0024] ?? 0, 'T'.charCodeAt(0), 'demo mode line TMS marker');
-  assertEqual(tms9918.vram[0x0040] ?? 0, 'K'.charCodeAt(0), 'demo input echo first character');
-  assertEqual(tms9918.vram[0x0044] ?? 0, '0'.charCodeAt(0), 'demo input echo keys first digit');
-  assertEqual(tms9918.vram[0x004d] ?? 0, '0'.charCodeAt(0), 'demo input echo joystick first digit');
-  assertEqual(tms9918.vram[0x0060] ?? 0, '>'.charCodeAt(0), 'demo prompt marker');
-  assertEqual(tms9918.vram[0x02e0] ?? 0, 'P'.charCodeAt(0), 'demo status first character');
-  assertEqual(tms9918.vram[0x02e1] ?? 0, 'O'.charCodeAt(0), 'demo status second character');
-  assertEqual(tms9918.vram[0x02e2] ?? 0, 'L'.charCodeAt(0), 'demo status third character');
-  assertEqual(tms9918.vram[0x02e3] ?? 0, 'L'.charCodeAt(0), 'demo status fourth character');
+  assertVramText(platformRuntime, 0x0000, 'TecMate ROM Shell', 'demo shell title');
+  assertVramText(platformRuntime, 0x0020, 'TFS:30+1 128M 4K', 'demo TEC-FS geometry line');
+  assertVramText(platformRuntime, 0x0040, 'KEY:0000 JOY:00', 'demo input echo');
+  assertVramText(platformRuntime, 0x0060, '> ', 'demo prompt');
+  assertVramText(platformRuntime, 0x02e0, 'POLL', 'demo status');
   assertEqual(runtime.hardware.memory[INP_PARAM_BANK], 0x06, 'demo input service bank side effect');
   assertEqual(runtime.hardware.memory[INP_PARAM_JOYSTICK], 0x00, 'demo input neutral joystick state');
   assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], TFS_VOLUME_MIB, 'demo TEC-FS mount side effect');

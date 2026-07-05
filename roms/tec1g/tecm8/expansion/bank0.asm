@@ -477,7 +477,7 @@ Tecm8ShellSplashText:
 Tecm8ShellTitleText:
         .db     "TecMate ROM Shell",0
 Tecm8ShellModeText:
-        .db     "VDU:TMS TEC-FS:ROM",0
+        .db     "TFS:30+1 128M 4K",0
 Tecm8ShellInputEchoText:
         .db     "KEY:0000 JOY:00",0
 Tecm8ShellPromptText:

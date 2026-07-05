@@ -36,8 +36,8 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(runner, /shell entry marker/);
   assert.match(runner, /assertDemoVram/);
   assert.match(runner, /demo TMS9918 device active/);
-  assert.match(runner, /demo VDU first splash character/);
-  assert.match(runner, /demo status first character/);
+  assert.match(runner, /demo shell title/);
+  assert.match(runner, /demo status/);
   assert.match(runner, /demo input service bank side effect/);
   assert.match(runner, /demo input neutral joystick state/);
   assert.match(runner, /demo TEC-FS mount side effect/);

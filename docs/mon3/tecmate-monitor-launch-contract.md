@@ -137,7 +137,7 @@ Installed expansion case:
 4. bank 0 runs the TecMate bootstrap/service chain
 5. the test-only return path reaches the proof halt stub
 6. Debug80's TMS9918 VRAM contains the visible `TecMate ROM Shell` title,
-   `VDU:TMS TEC-FS:ROM` mode line, `KEY:0000 JOY:00` input echo, `>` prompt,
+   `TFS:30+1 128M 4K` TEC-FS geometry line, `KEY:0000 JOY:00` input echo, `>` prompt,
    and `POLL` status text from the first loop slice
 7. the input parameter block reports the bank-6 neutral snapshot
 8. the TEC-FS parameter block reports the current mount geometry

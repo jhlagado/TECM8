@@ -143,7 +143,7 @@ The first visible home screen is deliberately small:
 
 ```text
 TecMate ROM Shell
-VDU:TMS TEC-FS:ROM
+TFS:30+1 128M 4K
 KEY:0000 JOY:00
 
 >
@@ -153,6 +153,10 @@ The strings live in bank 0 source, but the VDU renderer runs in bank 1. Bank 0
 therefore copies each home-screen line into `SHL_LINE_BUFFER` in RAM before
 calling the VDU bank. Banked services must not pass private bank-local string
 addresses to another bank unless that bank is deliberately selected.
+
+The `TFS:30+1 128M 4K` line is the current TEC-FS mount geometry: 30 user
+volumes plus one spare/work volume, 128 MiB per volume, and 4K allocation
+blocks.
 
 The `KEY:0000 JOY:00` line is generated from the current bank-6 input snapshot
 copied into the shell loop state. It is an echo/status aid, not a command-line

@@ -219,7 +219,7 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /clears the\s+VDU text plane/);
   assert.match(doc, /writes a small shell home screen through the bank-1 VDU\s+dispatcher/);
   assert.match(doc, /TecMate ROM Shell/);
-  assert.match(doc, /VDU:TMS TEC-FS:ROM/);
+  assert.match(doc, /TFS:30\+1 128M 4K/);
   assert.match(doc, /KEY:0000 JOY:00/);
   assert.match(doc, /copies each home-screen line into `SHL_LINE_BUFFER` in RAM/);
   assert.match(doc, /must not pass private bank-local string\s+addresses to another bank/);

@@ -16,6 +16,7 @@ test('TecMate OS progress note records current first-loop banked services', () =
   assert.match(doc, /documented result-code\s+convention/);
   assert.match(doc, /clears the TMS9918 text plane/);
   assert.match(doc, /visible `TecMate ROM Shell`\s+screen/);
+  assert.match(doc, /current TEC-FS geometry as `TFS:30\+1 128M 4K`/);
   assert.match(doc, /current input snapshot as `KEY:0000 JOY:00`/);
   assert.match(doc, /shows the prompt\s+marker/);
   assert.match(doc, /cursor-preserving status line/);
@@ -24,10 +25,11 @@ test('TecMate OS progress note records current first-loop banked services', () =
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /2668 occupied bytes currently/);
-  assert.match(doc, /2668 bytes total high-water span across all banks/);
-  assert.match(doc, /bank 0 span: 906 -> 997 bytes/);
-  assert.match(doc, /expansion total span: 2577 -> 2668 bytes/);
+  assert.match(doc, /2666 occupied bytes currently/);
+  assert.match(doc, /2666 bytes total high-water span across all banks/);
+  assert.match(doc, /TEC-FS geometry-line milestone reduced the footprint by 2 bytes/);
+  assert.match(doc, /bank 0 span: 997 -> 995 bytes/);
+  assert.match(doc, /expansion total span: 2668 -> 2666 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 
