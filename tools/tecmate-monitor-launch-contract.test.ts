@@ -106,7 +106,8 @@ test('TecMate monitor launch contract is tied to the proof runner', () => {
   assert.match(runner, /missing expansion TEC-FS mount side effect remains clear/);
   assert.match(runner, /missing expansion returned carry set/);
   assert.match(doc, /Installed expansion case:/);
-  assert.match(doc, /TMS9918 VRAM contains the visible `TecMate` splash and `READY`/);
+  assert.match(doc, /TMS9918 VRAM contains the visible `TecMate` splash and `POLL`/);
+  assert.match(doc, /first loop slice/);
   assert.match(doc, /input parameter block reports the bank-6 neutral snapshot/);
   assert.match(doc, /TEC-FS parameter block reports the current mount geometry/);
   assert.match(doc, /Missing expansion case:/);

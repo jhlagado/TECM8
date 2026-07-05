@@ -457,11 +457,10 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
   assertEqual(tms9918.vram[0x0004] ?? 0, 'a'.charCodeAt(0), 'demo VDU fifth splash character');
   assertEqual(tms9918.vram[0x0005] ?? 0, 't'.charCodeAt(0), 'demo VDU sixth splash character');
   assertEqual(tms9918.vram[0x0006] ?? 0, 'e'.charCodeAt(0), 'demo VDU seventh splash character');
-  assertEqual(tms9918.vram[0x02e0] ?? 0, 'R'.charCodeAt(0), 'demo status first character');
-  assertEqual(tms9918.vram[0x02e1] ?? 0, 'E'.charCodeAt(0), 'demo status second character');
-  assertEqual(tms9918.vram[0x02e2] ?? 0, 'A'.charCodeAt(0), 'demo status third character');
-  assertEqual(tms9918.vram[0x02e3] ?? 0, 'D'.charCodeAt(0), 'demo status fourth character');
-  assertEqual(tms9918.vram[0x02e4] ?? 0, 'Y'.charCodeAt(0), 'demo status fifth character');
+  assertEqual(tms9918.vram[0x02e0] ?? 0, 'P'.charCodeAt(0), 'demo status first character');
+  assertEqual(tms9918.vram[0x02e1] ?? 0, 'O'.charCodeAt(0), 'demo status second character');
+  assertEqual(tms9918.vram[0x02e2] ?? 0, 'L'.charCodeAt(0), 'demo status third character');
+  assertEqual(tms9918.vram[0x02e3] ?? 0, 'L'.charCodeAt(0), 'demo status fourth character');
   assertEqual(runtime.hardware.memory[INP_PARAM_BANK], 0x06, 'demo input service bank side effect');
   assertEqual(runtime.hardware.memory[INP_PARAM_JOYSTICK], 0x00, 'demo input neutral joystick state');
   assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], TFS_VOLUME_MIB, 'demo TEC-FS mount side effect');

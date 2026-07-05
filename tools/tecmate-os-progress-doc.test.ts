@@ -20,10 +20,10 @@ test('TecMate OS progress note records current first-loop banked services', () =
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /2401 occupied bytes currently/);
-  assert.match(doc, /2401 bytes total high-water span across all banks/);
-  assert.match(doc, /bank 0 span: 728 -> 730 bytes/);
-  assert.match(doc, /expansion total span: 2399 -> 2401 bytes/);
+  assert.match(doc, /2459 occupied bytes currently/);
+  assert.match(doc, /2459 bytes total high-water span across all banks/);
+  assert.match(doc, /bank 0 span: 730 -> 788 bytes/);
+  assert.match(doc, /expansion total span: 2401 -> 2459 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

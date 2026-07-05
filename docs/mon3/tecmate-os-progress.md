@@ -96,8 +96,9 @@ SHL_ENTRY = 80h
 
 The current implementation is a descriptor and splash stub, not the full
 interactive shell. That is the right level for this stage. It proves the launch
-path, writes visible `TecMate`/`READY` text through the VDU/TMS9918 service, and
-reserves a stable service number before the shell loop is moved into ROM. The
+path, writes visible `TecMate`/`POLL` text through the VDU/TMS9918 service after
+the first input/update/render loop slice, and reserves a stable service number
+before the shell loop is moved into ROM. The
 actual shell label is private to bank 0 and is reached through the installed
 expansion service vector, not by a fixed address.
 
@@ -132,15 +133,15 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-2401 occupied bytes currently
-2401 bytes total high-water span across all banks
+2459 occupied bytes currently
+2459 bytes total high-water span across all banks
 ```
 
-This demo milestone changed the footprint by two bytes:
+This polling-loop milestone changed the footprint by 58 bytes:
 
 ```text
-bank 0 span: 728 -> 730 bytes
-expansion total span: 2399 -> 2401 bytes
+bank 0 span: 730 -> 788 bytes
+expansion total span: 2401 -> 2459 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

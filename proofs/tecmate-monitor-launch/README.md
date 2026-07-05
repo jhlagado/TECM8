@@ -11,9 +11,9 @@ MON3/MON3Lite menu:
 5. bank 0 returns to the caller-provided monitor return address
 
 The installed-expansion case also verifies that the entry chain is visible as a
-small runnable system: it writes `TecMate` and `READY` through the VDU/TMS9918
-service, reads the bank-6 input snapshot, and touches the bank-2 TEC-FS mount
-state.
+small runnable system: it writes `TecMate` and `POLL` through the VDU/TMS9918
+service after the first input/update/render loop slice, reads the bank-6 input
+snapshot, and touches the bank-2 TEC-FS mount state.
 
 After that, the same runtime executes a RAM stub that calls `RST 10h` with
 `C=TFS_MOUNT`. That verifies the generic MON3

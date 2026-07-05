@@ -182,6 +182,12 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_STATUS_BUFFER',
     'SHL_STATUS_CAPACITY',
     'SHL_SPLASH_BUFFER',
+    'SHL_LOOP_TICK',
+    'SHL_LOOP_DIRTY',
+    'SHL_LOOP_KEYS_LO',
+    'SHL_LOOP_KEYS_HI',
+    'SHL_LOOP_JOYSTICK',
+    'SHL_LOOP_MODIFIERS',
     'SHL_COMMAND_BUFFER',
     'SHL_COMMAND_CAPACITY',
     'SHL_STATUS_OK',
@@ -189,6 +195,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_FEATURE_ENTRY',
     'SHL_FEATURE_SPLASH',
     'SHL_FEATURE_COMMAND_LOOP',
+    'SHL_DIRTY_INPUT',
+    'SHL_DIRTY_STATUS',
     'SHL_ACTION_NONE',
     'SHL_ACTION_EDIT',
     'SHL_ACTION_ASM',
@@ -208,6 +216,10 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /private `Tecm8ShellEntry` label/);
   assert.match(doc, /writes a\s+short status string through the VDU status-line service/);
   assert.match(doc, /do not\s+call that label directly/);
+  assert.match(doc, /runs one minimal polling-loop step/);
+  assert.match(doc, /calls `INP_READ`, increments `SHL_LOOP_TICK`/);
+  assert.match(doc, /renders `POLL` through\s+`VDU_SVC_STATUS_LINE`/);
+  assert.match(doc, /without becoming a game runtime or full shell loop/);
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, and `run`/);

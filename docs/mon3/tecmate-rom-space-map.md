@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `730` | `730` | `82DAh` | `15654` |
+| 0 | Shell, launcher, registry | `788` | `788` | `8314h` | `15596` |
 | 1 | VDU/TMS9918 boundary | `532` | `532` | `8214h` | `15852` |
 | 2 | TEC-FS boundary and block mapper | `799` | `799` | `831Fh` | `15585` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
@@ -70,15 +70,15 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `2401`
+Expansion occupied bytes: `2459`
 
-Expansion high-water span total: `2401`
+Expansion high-water span total: `2459`
 
-Latest demo milestone delta:
+Latest polling-loop milestone delta:
 
 ```text
-bank 0 span: 728 -> 730 bytes
-expansion total span: 2399 -> 2401 bytes
+bank 0 span: 730 -> 788 bytes
+expansion total span: 2401 -> 2459 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
@@ -99,10 +99,10 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `805Eh` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `82B1h` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 service registry | `82EBh` | Private service ID to bank/address/target-`A` table. |
 | Bank 0 shell entry | `809Ch` | Private descriptor and VDU splash path for `SHL_ENTRY`. |
-| Bank 0 shell command boundary | `8104h` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 info marker | `82ACh` | Private marker, not a fixed ABI location. |
+| Bank 0 shell command boundary | `8107h` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
+| Bank 0 info marker | `82E6h` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |

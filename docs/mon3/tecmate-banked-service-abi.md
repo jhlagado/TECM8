@@ -167,6 +167,12 @@ Shell parameter block:
 | `SHL_STATUS_BUFFER` | `3B98h` | Short zero-terminated shell status-line buffer. |
 | `SHL_STATUS_CAPACITY` | `08h` | Bytes reserved for the shell status-line buffer. |
 | `SHL_SPLASH_BUFFER` | `3BB0h` | RAM copy of the current shell splash string. |
+| `SHL_LOOP_TICK` | `3BB8h` | First polling-loop tick counter. |
+| `SHL_LOOP_DIRTY` | `3BB9h` | Coarse dirty mask set by the shell loop step. |
+| `SHL_LOOP_KEYS_LO` | `3BBAh` | Input snapshot key bitfield low byte copied by the loop step. |
+| `SHL_LOOP_KEYS_HI` | `3BBBh` | Input snapshot key bitfield high byte copied by the loop step. |
+| `SHL_LOOP_JOYSTICK` | `3BBCh` | Input snapshot joystick byte copied by the loop step. |
+| `SHL_LOOP_MODIFIERS` | `3BBDh` | Input snapshot modifier byte copied by the loop step. |
 | `SHL_COMMAND_BUFFER` | `3A80h` | Zero-terminated command line for `SHL_RUN_COMMAND`. |
 | `SHL_COMMAND_CAPACITY` | `20h` | Maximum bytes scanned from `SHL_COMMAND_BUFFER`. |
 
@@ -179,6 +185,8 @@ Shell status and feature values:
 | `SHL_FEATURE_ENTRY` | `01h` | Basic resident shell entry boundary present. |
 | `SHL_FEATURE_SPLASH` | `02h` | Entry writes the splash string through the VDU service boundary. |
 | `SHL_FEATURE_COMMAND_LOOP` | `04h` | One-command shell boundary present. |
+| `SHL_DIRTY_INPUT` | `01h` | Polling loop input snapshot changed/recorded. |
+| `SHL_DIRTY_STATUS` | `02h` | Polling loop status line changed. |
 | `SHL_ACTION_NONE` | `00h` | No command action selected. |
 | `SHL_ACTION_EDIT` | `01h` | Command classified as editor launch. |
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
@@ -196,6 +204,13 @@ Shell status and feature values:
 If the VDU splash call fails, the shell service stores the returned error code
 in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`, then returns
 with carry set.
+
+After the splash, `SHL_ENTRY` currently runs one minimal polling-loop step. It
+calls `INP_READ`, increments `SHL_LOOP_TICK`, copies the current input snapshot
+into `SHL_LOOP_KEYS_LO..SHL_LOOP_MODIFIERS`, sets
+`SHL_LOOP_DIRTY=SHL_DIRTY_INPUT+SHL_DIRTY_STATUS`, and renders `POLL` through
+`VDU_SVC_STATUS_LINE`. This is deliberately small: it proves the intended
+poll/update/render model without becoming a game runtime or full shell loop.
 
 `SHL_RUN_COMMAND` reads a zero-terminated command line from
 `SHL_COMMAND_BUFFER` and records the first command-loop result in the shell

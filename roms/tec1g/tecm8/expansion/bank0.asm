@@ -149,6 +149,7 @@ Tecm8ServiceCallUnknown:
         ; expects out A,carry
         callBankService 0x01,VDU_CALL,VDU_SVC_PUT_STRING
         jp c,Tecm8ShellSplashError
+        call Tecm8ShellLoopStep
         ld a,0x80
         or a
         ret
@@ -340,6 +341,11 @@ Tecm8ShellCopySplashNext:
 
 Tecm8ShellPublishReadyStatus:
         ld hl,Tecm8ShellReadyStatusText
+        jp Tecm8ShellPublishStatusFromHl
+
+Tecm8ShellPublishPollStatus:
+        ld hl,Tecm8ShellPollStatusText
+Tecm8ShellPublishStatusFromHl:
         ld de,SHL_STATUS_BUFFER
 Tecm8ShellCopyReadyStatusNext:
         ld a,(hl)
@@ -354,10 +360,32 @@ Tecm8ShellCopyReadyStatusNext:
         callBankService VDU_BANK,VDU_CALL,VDU_SVC_STATUS_LINE
         ret
 
+Tecm8ShellLoopStep:
+        ; expects out A,carry
+        callService INP_READ
+        ret c
+        ld a,(SHL_LOOP_TICK)
+        inc a
+        ld (SHL_LOOP_TICK),a
+        ld a,SHL_DIRTY_INPUT+SHL_DIRTY_STATUS
+        ld (SHL_LOOP_DIRTY),a
+        ld a,(INP_PARAM_KEYS_LO)
+        ld (SHL_LOOP_KEYS_LO),a
+        ld a,(INP_PARAM_KEYS_HI)
+        ld (SHL_LOOP_KEYS_HI),a
+        ld a,(INP_PARAM_JOYSTICK)
+        ld (SHL_LOOP_JOYSTICK),a
+        ld a,(INP_PARAM_MODIFIERS)
+        ld (SHL_LOOP_MODIFIERS),a
+        call Tecm8ShellPublishPollStatus
+        ret
+
 Tecm8ShellSplashText:
         .db     "TecMate",0
 Tecm8ShellReadyStatusText:
         .db     "READY",0
+Tecm8ShellPollStatusText:
+        .db     "POLL",0
 
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

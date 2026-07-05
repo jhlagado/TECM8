@@ -9,8 +9,8 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 730,
-      "span": 730
+      "occupied": 788,
+      "span": 788
     },
     {
       "bank": 1,
@@ -62,8 +62,8 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 2401,
-    "span": 2401,
+    "occupied": 2459,
+    "span": 2459,
     "hardSpan": 65536
   }
 }

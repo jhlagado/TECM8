@@ -47,7 +47,8 @@ test('Debug80 TecMate demo milestone records the manual ROM launch script', () =
   assert.match(doc, /use Debug80 only to inspect\s+the generated ROM artifacts/);
   assert.match(doc, /Do not start a RAM\s+program at `4000h`/);
   assert.match(doc, /Enter the monitor `Expansion` menu item/);
-  assert.match(doc, /`TecMate` splash and `READY` status text/);
+  assert.match(doc, /`TecMate` splash and `POLL` status text/);
+  assert.match(doc, /first input\/update\/render\s+loop slice/);
 });
 
 test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
