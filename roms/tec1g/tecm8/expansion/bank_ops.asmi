@@ -50,6 +50,7 @@ INP_BANK                    .equ    0x06
 INP_ADDR                    .equ    INP_ENTRY
 SHL_ENTRY                   .equ    SVC_BASE+0x20
 SHL_RUN_COMMAND             .equ    SVC_BASE+0x21
+SHL_RENDER_STATUS           .equ    SVC_BASE+0x22
 SHL_BANK                    .equ    0x00
 SVC_ERR_UNKNOWN             .equ    0xEE
 SVC_REG_ENTRY_SIZE          .equ    0x05

@@ -35,6 +35,11 @@ const EXP_HEADER_TYPE = 0x8006;
 const EXP_HEADER_FLAGS = 0x8007;
 const EXP_HEADER_INSTALL = 0x8008;
 const TFS_MOUNT = 0x61;
+const SHL_RUN_COMMAND = 0x81;
+const SHL_RENDER_STATUS = 0x82;
+const SHL_COMMAND_BUFFER = 0x3a80;
+const SHL_PARAM_COMMAND_ACTION = 0x3ba5;
+const SHL_ACTION_EDIT = 0x01;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_VOLUME_MIB = 128;
 const INP_PARAM_BANK = 0x3bc2;
@@ -215,6 +220,13 @@ function writeBytes(image: Buffer, address: number, bytes: number[]): void {
   image.set(bytes, address - 0x8000);
 }
 
+function writeAsciiZ(runtime: Runtime, address: number, value: string): void {
+  for (let index = 0; index < value.length; index += 1) {
+    runtime.hardware.forceMemWrite?.(address + index, value.charCodeAt(index));
+  }
+  runtime.hardware.forceMemWrite?.(address + value.length, 0x00);
+}
+
 function assertEqual(actual: number, expected: number, name: string): void {
   if (actual !== expected) {
     throw new Error(`${name}: got 0x${actual.toString(16)}, expected 0x${expected.toString(16)}`);
@@ -339,6 +351,29 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x82, 'bridge returned A');
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'bridge returned carry clear');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'bridge SYS_CTRL restored');
+
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'edit');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], SHL_ACTION_EDIT, 'shell command action edit');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x80, 'shell command returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell command returned carry clear');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_STATUS);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell status render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'EDIT', 'shell command visible status');
+  assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell visible status SYS_CTRL restored');
 
   return {
     instructions,

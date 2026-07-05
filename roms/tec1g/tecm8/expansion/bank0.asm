@@ -295,6 +295,32 @@ Tecm8ShellRunUnknown:
         scf
         ret
 
+@Tecm8ShellRenderCommandStatus:
+        ld a,(SHL_PARAM_STATUS)
+        cp SHL_STATUS_UNKNOWN_COMMAND
+        jp z,Tecm8ShellPublishCommandErrorStatus
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        cp SHL_ACTION_EDIT
+        jp z,Tecm8ShellPublishEditStatus
+        cp SHL_ACTION_ASM
+        jp z,Tecm8ShellPublishAsmStatus
+        cp SHL_ACTION_RUN
+        jp z,Tecm8ShellPublishRunStatus
+        jp Tecm8ShellPublishReadyStatus
+
+Tecm8ShellPublishCommandErrorStatus:
+        ld hl,Tecm8ShellCommandErrorStatusText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishEditStatus:
+        ld hl,Tecm8ShellEditStatusText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishAsmStatus:
+        ld hl,Tecm8ShellAsmStatusText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishRunStatus:
+        ld hl,Tecm8ShellRunStatusText
+        jp Tecm8ShellPublishStatusFromHl
+
 Tecm8ShellCommandLength:
         ld b,0x00
         ld c,SHL_COMMAND_CAPACITY
@@ -481,6 +507,14 @@ Tecm8ShellReadyStatusText:
         .db     "READY",0
 Tecm8ShellPollStatusText:
         .db     "POLL",0
+Tecm8ShellEditStatusText:
+        .db     "EDIT",0
+Tecm8ShellAsmStatusText:
+        .db     "ASM",0
+Tecm8ShellRunStatusText:
+        .db     "RUN",0
+Tecm8ShellCommandErrorStatusText:
+        .db     "ERRCMD",0
 
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION
@@ -507,6 +541,9 @@ Tecm8ShellPollStatusText:
         .db     SHL_RUN_COMMAND,SHL_BANK
         .dw     Tecm8ShellRunCommand
         .db     SHL_RUN_COMMAND
+        .db     SHL_RENDER_STATUS,SHL_BANK
+        .dw     Tecm8ShellRenderCommandStatus
+        .db     SHL_RENDER_STATUS
         .db     ABI_PROBE_NESTED,VDU_BANK
         .dw     VDU_ENTRY
         .db     ABI_PROBE_NESTED

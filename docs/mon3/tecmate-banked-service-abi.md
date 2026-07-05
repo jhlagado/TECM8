@@ -110,6 +110,7 @@ published as fixed callable addresses.
 | `INP_ADDR` | `8000h` | Input service bank-origin dispatcher. |
 | `SHL_ENTRY` | `80h` | Resident shell entry service ID. |
 | `SHL_RUN_COMMAND` | `81h` | Resident shell one-command boundary service ID. |
+| `SHL_RENDER_STATUS` | `82h` | Resident shell VDU status-line publisher service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 

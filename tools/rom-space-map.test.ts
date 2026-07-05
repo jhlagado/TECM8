@@ -75,9 +75,9 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /Latest shell ABI cleanup delta/);
-  assert.match(doc, /bank 0 span: 999 -> 966 bytes/);
-  assert.match(doc, /expansion total span: 2820 -> 2787 bytes/);
+  assert.match(doc, /Latest visible shell status delta/);
+  assert.match(doc, /bank 0 span: 966 -> 1044 bytes/);
+  assert.match(doc, /expansion total span: 2787 -> 2865 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 
@@ -107,6 +107,8 @@ test('TecMate ROM space map records current bank 0 private boundary labels', () 
     ['Bank 0 service dispatcher', 'Tecm8ServiceCall', 'Private table-driven label installed into the service vector.'],
     ['Bank 0 service registry', 'Tecm8ServiceRegistry', 'Private service ID to bank/address/target-`A` table.'],
     ['Bank 0 shell entry', 'Tecm8ShellEntry', 'Private descriptor and VDU home-screen path for `SHL_ENTRY`.'],
+    ['Bank 0 shell command boundary', 'Tecm8ShellRunCommand', 'Private one-command dispatcher reached through `SHL_RUN_COMMAND`.'],
+    ['Bank 0 shell status renderer', 'Tecm8ShellRenderCommandStatus', 'Private VDU status-line publisher reached through `SHL_RENDER_STATUS`.'],
     ['Bank 0 info marker', 'Tecm8ExpansionBank0Info', 'Private marker, not a fixed ABI location.'],
   ];
 
