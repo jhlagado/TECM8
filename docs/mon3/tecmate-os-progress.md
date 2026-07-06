@@ -152,6 +152,41 @@ expansion total span: 3145 -> 3234 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
+The latest compact planning loop did not grow the ROM image. It tightened the
+proof and documentation around the next MVP path:
+
+- unknown shell commands are now proof-backed as `ERRCMD` / `NONE`, with target
+  and result fields clear
+- the shell checkpoint matrix is pinned as the current command surface
+- TEC-FS metadata updates are constrained to the bank-2 caller-buffer model
+- the ROM editor starts from a small source file-buffer ABI on the VDU/TMS9918
+  path, with GLCD deferred unless needed
+- bank 0 is guarded as an exact-word classifier and dispatcher, not a path or
+  catalogue parser
+- the size gate now prints per-bank soft-budget headroom
+- the next manual demo path is `edit` -> TEC-FS target/metadata lookup ->
+  editor file-buffer service -> VDU/TMS9918 source window
+- TEC-FS services are classified as implemented proof services,
+  stubbed/reserved services, and deferred filesystem work
+- the assembler remains gated behind editor-buffer input and TEC-FS binary/map
+  output readiness
+
+Current size checkpoint:
+
+```text
+fixed monitor span: 16384/16384 bytes
+bank 0 span: 1284 bytes, softFree=764
+bank 1 span: 568 bytes, softFree=3528
+bank 2 span: 1042 bytes, softFree=3054
+bank 3 span: 95 bytes, softFree=929
+bank 4 span: 68 bytes, softFree=956
+bank 5 span: 40 bytes, softFree=984
+bank 6 span: 47 bytes, softFree=977
+bank 7 span: 45 bytes, softFree=8147
+bank 8 span: 45 bytes, softFree=4051
+expansion total span: 3234 bytes, softFree=29534
+```
+
 Manual checkpoint:
 
 ```text
