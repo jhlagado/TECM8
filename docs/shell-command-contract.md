@@ -144,6 +144,24 @@ slots in RAM. Inactive slots contribute zero to the count and are not file
 errors. This keeps the ROM path tiny while the later sector reader and real
 iterator are still absent.
 
+## Proved ROM Checkpoint Matrix
+
+`npm run checkpoint:tecmate-rom` currently proves this compact command surface:
+
+| Command | Route | Status | Result | Meaning |
+| --- | --- | --- | --- | --- |
+| `edit` | bank 0 shell | `EDIT` | n/a | Resolves the project main target. |
+| `asm` | bank 7 skeleton | `ASM` | `UNSUP` | Assembler target handoff exists; assembler is not linked yet. |
+| `run` | bank 8 skeleton | `RUN` | `UNSUP` | Output target handoff exists; runner is not linked yet. |
+| `dir` | bank 2 TEC-FS | `DIR` | `OK` | Reads two explicit catalogue slots and returns count 2. |
+| unknown | bank 0 shell | `ERRCMD` | `NONE` | Rejects the command and keeps target/result fields clear. |
+| `dir` bad buffer | bank 2 TEC-FS | n/a | `FILE` | Bad catalogue buffer pointer is reported as a file/storage error. |
+
+This matrix is the MVP shell contract until the editor buffer and real TEC-FS
+reader are present. New commands should not be added just to improve the demo;
+they should map to a real banked service boundary and keep the bank-0 parser
+small.
+
 ## Reserved Tool Namespaces
 
 The shell should reserve multi-word command namespaces for larger tool profiles

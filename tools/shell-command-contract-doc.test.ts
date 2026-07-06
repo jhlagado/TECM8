@@ -23,6 +23,20 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /keeps the\s+ROM path tiny/);
 });
 
+test('shell command contract pins the proved ROM checkpoint matrix', () => {
+  assert.match(doc, /## Proved ROM Checkpoint Matrix/);
+  assert.match(doc, /`npm run checkpoint:tecmate-rom` currently proves this compact command surface/);
+  assert.match(doc, /\| `edit` \| bank 0 shell \| `EDIT` \| n\/a \| Resolves the project main target\. \|/);
+  assert.match(doc, /\| `asm` \| bank 7 skeleton \| `ASM` \| `UNSUP` \| Assembler target handoff exists; assembler is not linked yet\. \|/);
+  assert.match(doc, /\| `run` \| bank 8 skeleton \| `RUN` \| `UNSUP` \| Output target handoff exists; runner is not linked yet\. \|/);
+  assert.match(doc, /\| `dir` \| bank 2 TEC-FS \| `DIR` \| `OK` \| Reads two explicit catalogue slots and returns count 2\. \|/);
+  assert.match(doc, /\| unknown \| bank 0 shell \| `ERRCMD` \| `NONE` \| Rejects the command and keeps target\/result fields clear\. \|/);
+  assert.match(doc, /\| `dir` bad buffer \| bank 2 TEC-FS \| n\/a \| `FILE` \| Bad catalogue buffer pointer is reported as a file\/storage error\. \|/);
+  assert.match(doc, /This matrix is the MVP shell contract until the editor buffer and real TEC-FS\s+reader are present/);
+  assert.match(doc, /New commands should not be added just to improve the demo/);
+  assert.match(doc, /keep the bank-0 parser\s+small/);
+});
+
 test('shell command contract defines project metadata import path', () => {
   assert.match(doc, /## Project Metadata Import Path/);
   assert.match(doc, /`\/tecm8\.prj` remains the human-readable project authority/);
