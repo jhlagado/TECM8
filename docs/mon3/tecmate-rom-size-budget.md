@@ -148,6 +148,13 @@ the smallest viable system.
 Bank 0 must not become a junk drawer. It owns discovery, registry, shell
 handoff, and supervision. Tool bodies belong in their own banks.
 
+Shell command results must stay byte-sized first. Bank 0 may publish compact
+status/result bytes and short VDU labels such as `OK`, `FILE`, or `UNSUP`, but
+rich diagnostic text, formatted listings, help screens, and tool-specific UI
+belong in tool banks or later overlays. `SHL_PARAM_COMMAND_RESULT_LO/HI` is the
+preferred Bank 0 contract: low byte for `SHL_RESULT_*`, high byte for
+command-specific detail such as a count or small error code.
+
 Do not duplicate shared logic across banks. Banked tools should use the VDU,
 input, TEC-FS, and monitor ABI instead of carrying private copies.
 

@@ -165,6 +165,10 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /editor, TEC-FS, and assembler/);
   assert.match(doc, /prevents GLCD or optional tooling from quietly consuming/);
   assert.match(doc, /Bank 0 must not become a junk drawer/);
+  assert.match(doc, /Shell command results must stay byte-sized first/);
+  assert.match(doc, /short VDU labels such as `OK`, `FILE`, or `UNSUP`/);
+  assert.match(doc, /rich diagnostic text, formatted listings, help screens, and tool-specific UI\s+belong in tool banks or later overlays/);
+  assert.match(doc, /`SHL_PARAM_COMMAND_RESULT_LO\/HI` is the\s+preferred Bank 0 contract/);
 });
 
 test('ROM size budget policy constrains profile and runtime growth', () => {
