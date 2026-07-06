@@ -467,6 +467,14 @@ return the unsupported error until the catalogue/range loader exists. The
 unknown-selector path returns `SVC_ERR_UNKNOWN` with carry set and does not
 modify the TEC-FS status fields.
 
+TEC-FS implementation state:
+
+| State | Services | Meaning |
+| --- | --- | --- |
+| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG` | ABI and parameter behaviour exist today. `READ`/`WRITE` still require an installed sector driver. |
+| Stubbed/reserved services | `LOAD_RANGE`, `SAVE_RANGE` | Service numbers are reserved and return unsupported. |
+| Deferred filesystem work | allocator, multi-sector catalogue scan, filename/prefix lookup, long-name storage, file create/delete/rename, transaction commit, PC repair/import utility | Not part of the current ROM proof and must not be implied by `dir`. |
+
 Current TEC-FS geometry:
 
 ```text

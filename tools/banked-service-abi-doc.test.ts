@@ -308,6 +308,12 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_DECODE_CATALOG` \(`0Dh`\) \| Implemented single-entry catalogue decoder/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_SUMMARIZE_CATALOG` \(`0Eh`\) \| Implemented one-slot catalogue summary/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_NEXT_CATALOG` \(`0Fh`\) \| Implemented one-slot caller pointer advance/);
+  assert.match(doc, /TEC-FS implementation state/);
+  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG` \|/);
+  assert.match(doc, /`READ`\/`WRITE` still require an installed sector driver/);
+  assert.match(doc, /\| Stubbed\/reserved services \| `LOAD_RANGE`, `SAVE_RANGE` \| Service numbers are reserved and return unsupported\. \|/);
+  assert.match(doc, /\| Deferred filesystem work \| allocator, multi-sector catalogue scan, filename\/prefix lookup, long-name storage, file create\/delete\/rename, transaction commit, PC repair\/import utility \|/);
+  assert.match(doc, /Not part of the current ROM proof and must not be implied by `dir`/);
 
   for (const name of [
     'TFS_ENTRY',
