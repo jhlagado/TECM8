@@ -139,17 +139,28 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-3145 occupied bytes currently
-3145 bytes total high-water span across all banks
+3234 occupied bytes currently
+3234 bytes total high-water span across all banks
 ```
 
-The current shell result renderer milestone keeps the expansion footprint small:
+The current shell/TEC-FS `dir` milestone keeps the expansion footprint small:
 
 ```text
-bank 0 span: 1143 -> 1229 bytes
-expansion total span: 3059 -> 3145 bytes
+bank 0 span: 1229 -> 1284 bytes
+bank 2 span: 1008 -> 1042 bytes
+expansion total span: 3145 -> 3234 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
+
+Manual checkpoint:
+
+```text
+npm run demo:tecmate-rom:manual
+```
+
+That prints the proof-backed ROM route, the expected TMS9918 shell screen, the
+installed monitor vectors, the aggregate two-slot `dir` count, the compact
+`FILE` error result, and the service inventory exercised by the proof.
 
 That changes the strategy. We do not need to gut MON3 immediately just to make
 progress. We can keep MON3 mostly intact while building serious TecMate
