@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const root = resolve(__dirname, '..');
 const doc = readFileSync(resolve(root, 'docs/shell-command-contract.md'), 'utf8');
 const ops = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank_ops.asmi'), 'utf8');
+const bank0 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank0.asm'), 'utf8');
 const proof = readFileSync(resolve(root, 'proofs/bank-abi/bank-abi-proof.asm'), 'utf8');
 const bankAbiRunner = readFileSync(resolve(root, 'tools/run-bank-abi-proof.ts'), 'utf8');
 
@@ -46,6 +47,27 @@ test('shell command contract defines project metadata import path', () => {
   assert.match(doc, /Call `TFS_FORMAT_META_RECORD` to create a blank `TFM1` record/);
   assert.match(doc, /Call `TFS_PATCH_META_RECORD` with `TFS_FILE_PROJECT`/);
   assert.match(doc, /text config is\s+authoritative, `TFM1` records are the compact ABI/);
+});
+
+test('shell command contract keeps bank 0 as a compact classifier', () => {
+  assert.match(doc, /## Bank 0 Parser Boundary/);
+  assert.match(doc, /compact shell classifier and service dispatcher/);
+  assert.match(doc, /must not become the path parser, project-file parser, catalogue\s+scanner, or filename resolver/);
+  assert.match(doc, /edit -> project-main target descriptor/);
+  assert.match(doc, /asm\s+-> project-main target descriptor, then bank 7/);
+  assert.match(doc, /run\s+-> project-output target descriptor, then bank 8/);
+  assert.match(doc, /dir\s+-> bank 2 catalogue summary service/);
+  assert.match(doc, /Path arguments, project defaults loaded from `\/tecm8\.prj`, long names, virtual\s+folders, and catalogue scanning belong to the editor, TEC-FS, project loader, or\s+future profile tools/);
+  assert.match(doc, /move behind a banked service instead of expanding the bank-0 parser/);
+
+  assert.match(bank0, /cp 0x03[\s\S]*jp z,Tecm8ShellRunCheckThree/);
+  assert.match(bank0, /cp 0x04[\s\S]*jp z,Tecm8ShellRunCheckFour/);
+  assert.match(bank0, /callBankService ASM_BANK,ASM_ENTRY,ASM_SVC_ASSEMBLE/);
+  assert.match(bank0, /callBankService RUN_BANK,RUN_ENTRY,RUN_SVC_RUN/);
+  assert.match(bank0, /callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG/);
+  assert.match(bank0, /callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_NEXT_CATALOG/);
+  assert.doesNotMatch(bank0, /tecm8\.prj|\.asm\b|\.bin\b|\/src|\/build|PATH_SEPARATOR|CATALOG_SCAN/i);
+  assert.doesNotMatch(bank0, /TFS_SVC_READ|TFS_SVC_WRITE|TFS_SVC_FORMAT_META_RECORD|TFS_SVC_PATCH_META_RECORD/);
 });
 
 test('shell command contract reserves assembler result semantics', () => {

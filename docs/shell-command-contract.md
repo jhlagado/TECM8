@@ -246,6 +246,27 @@ The map path is not directly targeted by a short command in shell v1. `asm`
 uses the derived map path as the default map/debug sidecar output when the
 assembler reaches that phase.
 
+## Bank 0 Parser Boundary
+
+Bank 0 is the compact shell classifier and service dispatcher. It may recognise
+exact short command words, publish a small target descriptor, and call banked
+services. It must not become the path parser, project-file parser, catalogue
+scanner, or filename resolver.
+
+For the ROM MVP, bank 0 only decides these shapes:
+
+```text
+edit -> project-main target descriptor
+asm  -> project-main target descriptor, then bank 7
+run  -> project-output target descriptor, then bank 8
+dir  -> bank 2 catalogue summary service
+```
+
+Path arguments, project defaults loaded from `/tecm8.prj`, long names, virtual
+folders, and catalogue scanning belong to the editor, TEC-FS, project loader, or
+future profile tools. If a feature needs more than exact word classification,
+it should move behind a banked service instead of expanding the bank-0 parser.
+
 ## `edit`
 
 `edit` opens one source file and returns to the shell when the editor exits.
