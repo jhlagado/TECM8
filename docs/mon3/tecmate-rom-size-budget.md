@@ -25,12 +25,24 @@ That command uses the same measurements and budgets, but prints a small
 Markdown table showing each bank's span, soft budget, hard budget, free space,
 and status.
 
+For the normal post-increment checkpoint, use:
+
+```text
+npm run checkpoint:tecmate-rom
+```
+
+That command runs the ROM build, the monitor-launch proof, the ROM footprint
+summary, and the manual Debug80 demo guide. It is the preferred copy/paste
+checkpoint because it shows both sides of the MVP question: what a human can
+see, and how many bytes the current ROMs occupy.
+
 ## Required Size Review
 
 Every meaningful ROM-facing development increment must include a binary-size
 review before it is considered complete. The minimum review is:
 
-1. Run `npm run rom:size:summary`.
+1. Run `npm run checkpoint:tecmate-rom`, or `npm run rom:size:summary` when the
+   increment is size-only and does not affect the visible ROM demo.
 2. Record the fixed monitor span.
 3. Record the expansion total high-water span against the hard budget, with
    occupied bytes as secondary context.
@@ -164,11 +176,12 @@ shape is good; a large body of unproven code is not.
 Any feature that grows a bank by roughly 512 bytes or more should include a size
 note in the commit message, documentation, or review summary.
 
-Every meaningful ROM-facing increment should publish the current footprint from
-`npm run rom:size:summary` in the review notes, commit summary, or handoff
-message. This keeps growth visible while the editor, TEC-FS, and assembler are
-still being shaped, and prevents GLCD or optional tooling from quietly consuming
-space needed by Tier 1 work.
+Every meaningful ROM-facing increment should publish the current checkpoint from
+`npm run checkpoint:tecmate-rom` in the review notes, commit summary, or handoff
+message. Size-only increments may use `npm run rom:size:summary` instead. This
+keeps both visible behavior and growth visible while the editor, TEC-FS, and
+assembler are still being shaped, and prevents GLCD or optional tooling from
+quietly consuming space needed by Tier 1 work.
 
 If a bank crosses its soft budget, review whether the feature is Tier 1. If it
 is not Tier 1, move it later or move it out.

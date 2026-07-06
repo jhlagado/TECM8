@@ -152,8 +152,12 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /Tier 3/);
   assert.match(doc, /npm run rom:size:check/);
   assert.match(doc, /npm run rom:size:summary/);
+  assert.match(doc, /npm run checkpoint:tecmate-rom/);
+  assert.match(doc, /preferred copy\/paste\s+checkpoint because it shows both sides of the MVP question/);
+  assert.match(doc, /what a human can\s+see, and how many bytes the current ROMs occupy/);
   assert.match(doc, /## Required Size Review/);
   assert.match(doc, /Every meaningful ROM-facing development increment must include a binary-size\s+review before it is considered complete/);
+  assert.match(doc, /Run `npm run checkpoint:tecmate-rom`, or `npm run rom:size:summary` when the\s+increment is size-only/);
   assert.match(doc, /Record the fixed monitor span/);
   assert.match(doc, /Record the expansion total high-water span against the hard budget/);
   assert.match(doc, /occupied bytes as secondary context/);
@@ -161,9 +165,11 @@ test('ROM size budget policy documents the smallest viable system rule', () => {
   assert.match(doc, /Record any changed per-bank spans and deltas/);
   assert.match(doc, /If the command fails, the increment is not complete/);
   assert.match(doc, /any fixed-ROM growth must be paired with an\s+identified removal, relocation, or split plan/);
-  assert.match(doc, /Every meaningful ROM-facing increment should publish the current footprint from\s+`npm run rom:size:summary` in the review notes, commit summary, or handoff\s+message/);
-  assert.match(doc, /editor, TEC-FS, and assembler/);
-  assert.match(doc, /prevents GLCD or optional tooling from quietly consuming/);
+  assert.match(doc, /Every meaningful ROM-facing increment should publish the current checkpoint from\s+`npm run checkpoint:tecmate-rom` in the review notes, commit summary, or handoff\s+message/);
+  assert.match(doc, /Size-only increments may use `npm run rom:size:summary` instead/);
+  assert.match(doc, /keeps both visible behavior and growth visible/);
+  assert.match(doc, /editor, TEC-FS, and\s+assembler/);
+  assert.match(doc, /prevents GLCD or optional tooling from\s+quietly consuming/);
   assert.match(doc, /Bank 0 must not become a junk drawer/);
   assert.match(doc, /Shell command results must stay byte-sized first/);
   assert.match(doc, /short VDU labels such as `OK`, `FILE`, or `UNSUP`/);
