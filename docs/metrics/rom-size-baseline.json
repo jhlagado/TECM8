@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 1008,
-      "span": 1008,
+      "occupied": 1042,
+      "span": 1042,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33776,
-      "freeAfterHighWater": 15376
+      "highWaterEnd": 33810,
+      "freeAfterHighWater": 15342
     },
     {
       "bank": 3,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 3145,
-    "span": 3145,
+    "occupied": 3179,
+    "span": 3179,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 144311
+    "freeAfterHighWater": 144277
   }
 }

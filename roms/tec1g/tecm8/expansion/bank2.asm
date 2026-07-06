@@ -44,6 +44,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         jp z,tecfsDecodeCatalogImpl
         cp TFS_SVC_SUMMARIZE_CATALOG
         jp z,tecfsSummarizeCatalogImpl
+        cp TFS_SVC_NEXT_CATALOG
+        jp z,tecfsNextCatalogImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -89,6 +91,9 @@ TFS_TOTAL_VOLUMES           .equ    31
 
 @tecfsSummarizeCatalog:
         jp tecfsSummarizeCatalogImpl
+
+@tecfsNextCatalog:
+        jp tecfsNextCatalogImpl
 
 @BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -551,6 +556,21 @@ tecfsClearSummary:
         ld (TFS_PARAM_SUMMARY_FIRST_FILE_TYPE),a
         ld (TFS_PARAM_SUMMARY_FIRST_NAME_LEN),a
         ld (TFS_PARAM_SUMMARY_FLAGS),a
+        ret
+
+@tecfsNextCatalogImpl:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld de,TFS_CATALOG_ENTRY_BYTES
+        add hl,de
+        ld (TFS_PARAM_BUFFER_LO),hl
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
         ret
 
 @tecfsBadLocator:

@@ -291,6 +291,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_PATCH_META_RECORD` \(`0Ch`\) \| Implemented `TFM1` metadata patcher/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_DECODE_CATALOG` \(`0Dh`\) \| Implemented single-entry catalogue decoder/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_SUMMARIZE_CATALOG` \(`0Eh`\) \| Implemented one-slot catalogue summary/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_NEXT_CATALOG` \(`0Fh`\) \| Implemented one-slot caller pointer advance/);
 
   for (const name of [
     'TFS_ENTRY',
@@ -307,6 +308,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_FORMAT_META_RECORD',
     'TFS_PATCH_META_RECORD',
     'TFS_SUMMARIZE_CATALOG',
+    'TFS_NEXT_CATALOG',
     'TFS_SVC_MOUNT',
     'TFS_SVC_SELECT_VOLUME',
     'TFS_SVC_READ',
@@ -321,6 +323,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_PATCH_META_RECORD',
     'TFS_SVC_DECODE_CATALOG',
     'TFS_SVC_SUMMARIZE_CATALOG',
+    'TFS_SVC_NEXT_CATALOG',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -502,6 +505,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /does not read SD sectors, scan\s+multiple slots, or allocate a directory cursor/);
   assert.match(doc, /MVP ROM\s+boundary small/);
   assert.match(doc, /empty catalogues explicit/);
+  assert.match(doc, /`TFS_SVC_NEXT_CATALOG` is the smallest possible step toward multi-slot listing/);
+  assert.match(doc, /adds `TFS_CATALOG_ENTRY_BYTES` to the caller-owned catalogue pointer/);
+  assert.match(doc, /does not inspect the slot, find the next\s+active file, cross a sector boundary, or maintain a cursor/);
   assert.match(doc, /publishes a count of zero/);
   assert.match(doc, /publishes a one-entry summary/);
   assert.match(doc, /`TFS_SUMMARY_RESULT_BASE`/);

@@ -36,6 +36,7 @@ PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xF7
 PROOF_FAIL_DECODE_CATALOG   .equ    0xF8
 PROOF_FAIL_FILE_READ        .equ    0xF9
 PROOF_FAIL_SUMMARY          .equ    0xFA
+PROOF_FAIL_NEXT_CATALOG     .equ    0xFB
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
@@ -283,6 +284,22 @@ ClearCatalogEntry:
         ld (0x6280+TFS_CATALOG_OFFSET_FILE_SIZE+3),a
         ld a,TFS_FILE_SOURCE
         ld (0x6280+TFS_CATALOG_OFFSET_FILE_TYPE),a
+        ld hl,0x62C0
+        ld b,TFS_CATALOG_ENTRY_BYTES
+ClearSecondCatalogEntry:
+        ld (hl),0
+        inc hl
+        djnz ClearSecondCatalogEntry
+        ld a,TFS_ENTRY_STATUS_ACTIVE
+        ld (0x62C0+TFS_CATALOG_OFFSET_STATUS),a
+        ld a,0x22
+        ld (0x62C0+TFS_CATALOG_OFFSET_FILE_ID),a
+        ld a,0x03
+        ld (0x62C0+TFS_CATALOG_OFFSET_PREFIX_ID),a
+        ld a,0x08
+        ld (0x62C0+TFS_CATALOG_OFFSET_NAME_LEN),a
+        ld a,TFS_FILE_BINARY
+        ld (0x62C0+TFS_CATALOG_OFFSET_FILE_TYPE),a
         ld hl,0x6280
         ld (TFS_PARAM_BUFFER_LO),hl
         ld a,TFS_SVC_DECODE_CATALOG
@@ -337,6 +354,34 @@ ClearCatalogEntry:
         ld a,(TFS_PARAM_SUMMARY_FLAGS)
         cp TFS_SUMMARY_FLAG_HAS_FIRST
         jp nz,FailSummary
+        ld a,TFS_SVC_NEXT_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailNextCatalog
+        cp 0x82
+        jp nz,FailNextCatalog
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld de,0x62C0
+        or a
+        sbc hl,de
+        jp nz,FailNextCatalog
+        ld a,TFS_SVC_DECODE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailNextCatalog
+        cp 0x82
+        jp nz,FailNextCatalog
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        cp 0x22
+        jp nz,FailNextCatalog
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        cp TFS_FILE_BINARY
+        jp nz,FailNextCatalog
+        ld hl,0x6280
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SVC_DECODE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailDecodeCatalog
+        cp 0x82
+        jp nz,FailDecodeCatalog
         ld a,(TFS_PARAM_ENTRY_FILE_ID)
         ld (TFS_PROOF_TRACE_BASE+0),a
         ld a,(TFS_PARAM_ENTRY_PREFIX_ID)
@@ -851,6 +896,9 @@ FailFileRead:
         jr Fail
 FailSummary:
         ld a,PROOF_FAIL_SUMMARY
+        jr Fail
+FailNextCatalog:
+        ld a,PROOF_FAIL_NEXT_CATALOG
 Fail:
         ld (TFS_PROOF_RESULT),a
         halt

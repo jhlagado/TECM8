@@ -425,6 +425,7 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_PATCH_META_RECORD` (`0Ch`) | Implemented `TFM1` metadata patcher. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_DECODE_CATALOG` (`0Dh`) | Implemented single-entry catalogue decoder. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_SUMMARIZE_CATALOG` (`0Eh`) | Implemented one-slot catalogue summary. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_NEXT_CATALOG` (`0Fh`) | Implemented one-slot caller pointer advance. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -442,6 +443,7 @@ TEC-FS routine.
 | `TFS_FORMAT_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_FORMAT_META_RECORD`. |
 | `TFS_PATCH_META_RECORD` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_PATCH_META_RECORD`. |
 | `TFS_SUMMARIZE_CATALOG` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_SUMMARIZE_CATALOG`. |
+| `TFS_NEXT_CATALOG` | `8000h` | Bank-origin dispatcher; use `A=TFS_SVC_NEXT_CATALOG`. |
 | `TFS_SVC_MOUNT` | `01h` | Publishes geometry, returns `A=82h`, carry clear. |
 | `TFS_SVC_SELECT_VOLUME` | `02h` | Selects volume `0..30`, returns `A=82h`, carry clear. |
 | `TFS_SVC_READ` | `03h` | 512-byte sector read contract. |
@@ -456,6 +458,7 @@ TEC-FS routine.
 | `TFS_SVC_PATCH_META_RECORD` | `0Ch` | Patches mutable fields in a caller-buffer metadata record. |
 | `TFS_SVC_DECODE_CATALOG` | `0Dh` | Decodes one active 64-byte TM8 catalogue entry from the caller buffer. |
 | `TFS_SVC_SUMMARIZE_CATALOG` | `0Eh` | Summarizes one catalogue slot for the shell `dir` path. |
+| `TFS_SVC_NEXT_CATALOG` | `0Fh` | Advances `TFS_PARAM_BUFFER_LO/HI` by one 64-byte catalogue slot. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -574,6 +577,11 @@ publishes a one-entry summary:
 This is not yet a full directory walker. Sector reads, prefix resolution,
 hidden-file filtering, and multi-entry iteration are expected to layer on this
 summary/decoder pair once the sector-driver path is stable.
+
+`TFS_SVC_NEXT_CATALOG` is the smallest possible step toward multi-slot listing:
+it adds `TFS_CATALOG_ENTRY_BYTES` to the caller-owned catalogue pointer and
+returns `A=82h` with carry clear. It does not inspect the slot, find the next
+active file, cross a sector boundary, or maintain a cursor.
 
 For the current shell path, `TFS_PARAM_BUFFER_LO/HI` is the caller-owned RAM
 pointer to that one slot. `SHL_RUN_COMMAND` does not read SD sectors, scan

@@ -73,6 +73,8 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(proof, /ld a,TFS_SVC_PATCH_META_RECORD[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82[\s\S]*cp TFS_FILE_GAME/);
   assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*cp 0x82[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_ID\)[\s\S]*cp 0x21/);
   assert.match(proof, /ld a,TFS_SVC_SUMMARIZE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_SUMMARY_COUNT_LO\)[\s\S]*cp 0x01/);
+  assert.match(proof, /ld a,TFS_SVC_NEXT_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld hl,\(TFS_PARAM_BUFFER_LO\)[\s\S]*ld de,0x62C0[\s\S]*sbc hl,de/);
+  assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_ID\)[\s\S]*cp 0x22[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_TYPE\)[\s\S]*cp TFS_FILE_BINARY/);
   assert.match(proof, /ld a,TFS_SVC_SUMMARIZE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_SUMMARY_FLAGS\)[\s\S]*or a/);
   assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*jp nc,FailDecodeCatalog[\s\S]*cp TFS_ERR_BAD_CATALOG/);
   assert.match(proof, /cp TFS_META_HW_TMS9918\+TFS_META_HW_JOYSTICK/);
@@ -83,16 +85,20 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(bank2, /cp TFS_SVC_PATCH_META_RECORD[\s\S]*jp z,tecfsPatchMetaRecordImpl/);
   assert.match(bank2, /cp TFS_SVC_DECODE_CATALOG[\s\S]*jp z,tecfsDecodeCatalogImpl/);
   assert.match(bank2, /cp TFS_SVC_SUMMARIZE_CATALOG[\s\S]*jp z,tecfsSummarizeCatalogImpl/);
+  assert.match(bank2, /cp TFS_SVC_NEXT_CATALOG[\s\S]*jp z,tecfsNextCatalogImpl/);
   assert.match(bank2, /tecfsFormatMetaRecordImpl:[\s\S]*ld b,TFS_META_RECORD_BYTES[\s\S]*djnz tecfsFormatMetaRecordClear[\s\S]*ld a,TFS_FILE_PROJECT/);
   assert.match(bank2, /tecfsPatchMetaRecordImpl:[\s\S]*ld a,\(TFS_META_PATCH_FILE_TYPE\)[\s\S]*ld a,\(TFS_META_PATCH_NAME_REF_HI\)/);
   assert.match(bank2, /tecfsDecodeCatalogImpl:[\s\S]*cp TFS_ENTRY_STATUS_ACTIVE[\s\S]*cp TFS_CATALOG_NAME_BYTES\+1/);
   assert.match(bank2, /tecfsSummarizeCatalogImpl:[\s\S]*call tecfsClearSummary[\s\S]*call tecfsDecodeCatalogImpl/);
+  assert.match(bank2, /tecfsNextCatalogImpl:[\s\S]*ld de,TFS_CATALOG_ENTRY_BYTES[\s\S]*add hl,de[\s\S]*ld \(TFS_PARAM_BUFFER_LO\),hl/);
   assert.match(doc, /Formats a TEC-FS locator header into the caller buffer/);
   assert.match(doc, /Validates a caller-buffer locator header and publishes its geometry/);
   assert.match(doc, /Formats a blank TEC-FS v1 metadata record into the caller buffer/);
   assert.match(doc, /Patches mutable fields in a caller-buffer metadata record/);
   assert.match(doc, /Decodes one active 64-byte TM8 catalogue entry/);
   assert.match(doc, /Summarizes one catalogue slot for the shell `dir` path/);
+  assert.match(doc, /Advances `TFS_PARAM_BUFFER_LO\/HI` by one 64-byte catalogue slot/);
+  assert.match(doc, /does not inspect the slot, find the next\s+active file, cross a sector boundary, or maintain a cursor/);
   assert.match(doc, /not yet a full directory walker/);
 });
 
