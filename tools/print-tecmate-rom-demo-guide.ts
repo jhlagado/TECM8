@@ -106,6 +106,13 @@ function main(): void {
   console.log('6. The proof also runs `edit` through the shell command service and renders status `EDIT` on the VDU status line.');
   console.log('7. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`.');
   console.log('');
+  console.log('Proof-backed service inventory:');
+  console.log('- fixed monitor: expansion discovery, installed menu vector, installed service vector');
+  console.log('- bank 0: shell entry, one-command shell boundary, status/result renderers');
+  console.log('- bank 1: VDU/TMS9918 text/status rendering');
+  console.log('- bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error');
+  console.log('- bank 6: input snapshot boundary');
+  console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
   console.log(`- installed menu vector: ${hex(installed.expectedMenuAddress)}`);

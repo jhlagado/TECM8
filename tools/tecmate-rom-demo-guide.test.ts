@@ -28,6 +28,8 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
   assert.match(guide, /expect `TecMate ROM Shell`, `TFS:30\+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`/);
   assert.match(guide, /runs `edit` through the shell command service and renders status `EDIT`/);
   assert.match(guide, /runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`/);
+  assert.match(guide, /Proof-backed service inventory/);
+  assert.match(guide, /bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error/);
   assert.match(guide, /fixed monitor, expansion discovery, bank 0 shell scaffold, VDU\/TMS9918/);
   assert.match(guide, /input snapshot service, TEC-FS service boundary, shell command status\/result paths, and `dir` catalogue summary/);
   assert.match(guide, /Do not use `GO 4000h`, `debug80:editor-image`, or the old RAM editor path/);
@@ -58,6 +60,12 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^- shell dir error result status: FILE$/m);
   assert.match(output, /^- shell dir aggregate count: 2$/m);
   assert.match(output, /^- shell dir last summary: fileId=0022h, fileType=0003h, nameLen=8, flags=0001h$/m);
+  assert.match(output, /^Proof-backed service inventory:$/m);
+  assert.match(output, /^- fixed monitor: expansion discovery, installed menu vector, installed service vector$/m);
+  assert.match(output, /^- bank 0: shell entry, one-command shell boundary, status\/result renderers$/m);
+  assert.match(output, /^- bank 1: VDU\/TMS9918 text\/status rendering$/m);
+  assert.match(output, /^- bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error$/m);
+  assert.match(output, /^- bank 6: input snapshot boundary$/m);
   assert.match(output, /final SYS_CTRL: 0001h/);
   assert.match(output, /final physical bank: 0/);
 });
