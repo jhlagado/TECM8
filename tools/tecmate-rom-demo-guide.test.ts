@@ -34,6 +34,8 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
   assert.match(guide, /bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error/);
   assert.match(guide, /bank 7: assembler skeleton handoff and unsupported result/);
   assert.match(guide, /bank 8: run skeleton handoff and unsupported result/);
+  assert.match(guide, /Proof-backed shell command matrix/);
+  assert.match(guide, /\| Command \| Route \| Visible status \| Visible result \| Detail \|/);
   assert.match(guide, /fixed monitor, expansion discovery, bank 0 shell scaffold, VDU\/TMS9918/);
   assert.match(guide, /input snapshot service, TEC-FS service boundary, assembler\/run skeleton handoffs, shell command status\/result paths, and `dir` catalogue summary/);
   assert.match(guide, /Do not use `GO 4000h`, `debug80:editor-image`, or the old RAM editor path/);
@@ -76,6 +78,12 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^- bank 6: input snapshot boundary$/m);
   assert.match(output, /^- bank 7: assembler skeleton handoff and unsupported result$/m);
   assert.match(output, /^- bank 8: run skeleton handoff and unsupported result$/m);
+  assert.match(output, /^Proof-backed shell command matrix:$/m);
+  assert.match(output, /^\| edit \| bank 0 shell \| EDIT \| n\/a \| project main target \|$/m);
+  assert.match(output, /^\| asm \| bank 7 skeleton \| ASM \| UNSUP \| project main target \|$/m);
+  assert.match(output, /^\| run \| bank 8 skeleton \| RUN \| UNSUP \| project output target \|$/m);
+  assert.match(output, /^\| dir \| bank 2 TEC-FS \| DIR \| OK \| count 2 \|$/m);
+  assert.match(output, /^\| dir bad-buffer \| bank 2 TEC-FS \| n\/a \| FILE \| buffer error path \|$/m);
   assert.match(output, /final SYS_CTRL: 0001h/);
   assert.match(output, /final physical bank: 0/);
 });

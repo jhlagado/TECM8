@@ -133,6 +133,15 @@ function main(): void {
   console.log('- bank 7: assembler skeleton handoff and unsupported result');
   console.log('- bank 8: run skeleton handoff and unsupported result');
   console.log('');
+  console.log('Proof-backed shell command matrix:');
+  console.log('| Command | Route | Visible status | Visible result | Detail |');
+  console.log('| --- | --- | --- | --- | --- |');
+  console.log(`| edit | bank 0 shell | ${installed.shellCommandStatus ?? 'unknown'} | n/a | project main target |`);
+  console.log(`| asm | bank 7 skeleton | ${installed.shellAsmStatus ?? 'unknown'} | ${installed.shellAsmResultStatus ?? 'unknown'} | project main target |`);
+  console.log(`| run | bank 8 skeleton | ${installed.shellRunStatus ?? 'unknown'} | ${installed.shellRunResultStatus ?? 'unknown'} | project output target |`);
+  console.log(`| dir | bank 2 TEC-FS | DIR | ${installed.shellDirResultStatus ?? 'unknown'} | count ${installed.shellDirResult?.count ?? 'unknown'} |`);
+  console.log(`| dir bad-buffer | bank 2 TEC-FS | n/a | ${installed.shellDirErrorResultStatus ?? 'unknown'} | buffer error path |`);
+  console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
   console.log(`- installed menu vector: ${hex(installed.expectedMenuAddress)}`);
