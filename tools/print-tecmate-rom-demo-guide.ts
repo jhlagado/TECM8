@@ -21,6 +21,8 @@ type LastRun = {
     expectedMenuAddress?: number;
     expectedServiceAddress?: number;
     shellCommandStatus?: string;
+    shellAsmStatus?: string;
+    shellAsmResultStatus?: string;
     shellDirResultStatus?: string;
     shellDirErrorResultStatus?: string;
     shellDirResult?: {
@@ -55,6 +57,12 @@ function readLastRun(): LastRun {
   }
   if (data.installed.shellCommandStatus !== 'EDIT') {
     throw new Error(`monitor launch proof output is missing exact shell command status EDIT: ${proofPath}`);
+  }
+  if (data.installed.shellAsmStatus !== 'ASM') {
+    throw new Error(`monitor launch proof output is missing exact shell asm status ASM: ${proofPath}`);
+  }
+  if (data.installed.shellAsmResultStatus !== 'UNSUP') {
+    throw new Error(`monitor launch proof output is missing exact shell asm result status UNSUP: ${proofPath}`);
   }
   if (data.installed.shellDirResult?.resultLo !== 0x01 || data.installed.shellDirResult.count !== 0x02) {
     throw new Error(`monitor launch proof output is missing exact shell dir TEC-FS result: ${proofPath}`);
@@ -104,7 +112,8 @@ function main(): void {
   console.log('4. Expect bank 0 to install the expansion vectors, then launch the TecMate shell scaffold.');
   console.log('5. On the TMS9918 VDU, expect `TecMate ROM Shell`, `TFS:30+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`.');
   console.log('6. The proof also runs `edit` through the shell command service and renders status `EDIT` on the VDU status line.');
-  console.log('7. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`.');
+  console.log('7. The proof runs `asm` through the shell command service, reaches the bank-7 assembler skeleton, and renders `ASM` then `UNSUP`.');
+  console.log('8. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`.');
   console.log('');
   console.log('Proof-backed service inventory:');
   console.log('- fixed monitor: expansion discovery, installed menu vector, installed service vector');
@@ -112,6 +121,7 @@ function main(): void {
   console.log('- bank 1: VDU/TMS9918 text/status rendering');
   console.log('- bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error');
   console.log('- bank 6: input snapshot boundary');
+  console.log('- bank 7: assembler skeleton handoff and unsupported result');
   console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
@@ -121,6 +131,8 @@ function main(): void {
   console.log(`- instructions to launch: ${installed.instructions ?? 'unknown'}`);
   console.log(`- bridge instructions: ${installed.bridgeInstructions ?? 'unknown'}`);
   console.log(`- shell command status: ${installed.shellCommandStatus}`);
+  console.log(`- shell asm status: ${installed.shellAsmStatus}`);
+  console.log(`- shell asm result status: ${installed.shellAsmResultStatus}`);
   console.log(`- shell dir result status: ${installed.shellDirResultStatus}`);
   console.log(`- shell dir error result status: ${installed.shellDirErrorResultStatus}`);
   console.log(`- shell dir aggregate count: ${installed.shellDirResult?.count ?? 'unknown'}`);
@@ -131,7 +143,7 @@ function main(): void {
   console.log(`- final physical bank: ${installed.finalPhysicalBank ?? 'unknown'}`);
   console.log('');
   console.log('Observable success means the fixed monitor, expansion discovery, bank 0 shell scaffold, VDU/TMS9918,');
-  console.log('input snapshot service, TEC-FS service boundary, shell command status/result paths, and `dir` catalogue summary all ran through the ROM path.');
+  console.log('input snapshot service, TEC-FS service boundary, assembler skeleton handoff, shell command status/result paths, and `dir` catalogue summary all ran through the ROM path.');
 }
 
 main();

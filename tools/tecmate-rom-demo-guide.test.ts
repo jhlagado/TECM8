@@ -27,11 +27,13 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
   assert.match(guide, /monitor `Expansion` menu item/);
   assert.match(guide, /expect `TecMate ROM Shell`, `TFS:30\+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`/);
   assert.match(guide, /runs `edit` through the shell command service and renders status `EDIT`/);
+  assert.match(guide, /runs `asm` through the shell command service, reaches the bank-7 assembler skeleton, and renders `ASM` then `UNSUP`/);
   assert.match(guide, /runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`/);
   assert.match(guide, /Proof-backed service inventory/);
   assert.match(guide, /bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error/);
+  assert.match(guide, /bank 7: assembler skeleton handoff and unsupported result/);
   assert.match(guide, /fixed monitor, expansion discovery, bank 0 shell scaffold, VDU\/TMS9918/);
-  assert.match(guide, /input snapshot service, TEC-FS service boundary, shell command status\/result paths, and `dir` catalogue summary/);
+  assert.match(guide, /input snapshot service, TEC-FS service boundary, assembler skeleton handoff, shell command status\/result paths, and `dir` catalogue summary/);
   assert.match(guide, /Do not use `GO 4000h`, `debug80:editor-image`, or the old RAM editor path/);
   assert.match(milestone, /npm run demo:tecmate-rom:manual/);
   assert.match(milestone, /prints the exact\s+generated ROM artifacts, monitor route, expected TMS9918 text, and last-run\s+trace markers/);
@@ -56,6 +58,8 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, new RegExp(`launchExpansion: ${launchAddress}h`));
   assert.match(output, /installed trace: 0000h 0000h 0000h 0003h 0081h 0082h 0083h 0086h 0080h/);
   assert.match(output, /^- shell command status: EDIT$/m);
+  assert.match(output, /^- shell asm status: ASM$/m);
+  assert.match(output, /^- shell asm result status: UNSUP$/m);
   assert.match(output, /^- shell dir result status: OK$/m);
   assert.match(output, /^- shell dir error result status: FILE$/m);
   assert.match(output, /^- shell dir aggregate count: 2$/m);
@@ -66,6 +70,7 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^- bank 1: VDU\/TMS9918 text\/status rendering$/m);
   assert.match(output, /^- bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error$/m);
   assert.match(output, /^- bank 6: input snapshot boundary$/m);
+  assert.match(output, /^- bank 7: assembler skeleton handoff and unsupported result$/m);
   assert.match(output, /final SYS_CTRL: 0001h/);
   assert.match(output, /final physical bank: 0/);
 });

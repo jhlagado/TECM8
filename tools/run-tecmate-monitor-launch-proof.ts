@@ -45,10 +45,23 @@ const SHL_PARAM_COMMAND_TARGET_HI = 0x3ba8;
 const SHL_PARAM_COMMAND_RESULT_LO = 0x3ba9;
 const SHL_PARAM_COMMAND_RESULT_HI = 0x3baa;
 const SHL_ACTION_EDIT = 0x01;
+const SHL_ACTION_ASM = 0x02;
 const SHL_ACTION_DIR = 0x04;
+const SHL_TARGET_DESC = 0x3bab;
+const SHL_TARGET_ACTION = 0x3bab;
+const SHL_TARGET_KIND = 0x3bac;
+const SHL_TARGET_KIND_PROJECT_MAIN = 0x01;
+const SHL_TARGET_FLAG_DEFAULT = 0x01;
 const SHL_RESULT_OK = 0x01;
 const SHL_RESULT_FILE_ERROR = 0x03;
+const SHL_RESULT_UNSUPPORTED = 0x04;
 const SHL_TARGET_FLAGS = 0x3baf;
+const ASM_PARAM_BANK = 0x3be6;
+const ASM_PARAM_VERSION = 0x3be7;
+const ASM_PARAM_TARGET_LO = 0x3be8;
+const ASM_PARAM_TARGET_HI = 0x3be9;
+const ASM_PARAM_RESULT_LO = 0x3bea;
+const ASM_PARAM_RESULT_HI = 0x3beb;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_PARAM_BUFFER_LO = 0x3b52;
 const TFS_PARAM_BUFFER_HI = 0x3b53;
@@ -386,6 +399,8 @@ function runInstalledExpansionCase(launchAddress: number): {
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
   shellCommandStatus?: string;
+  shellAsmStatus?: string;
+  shellAsmResultStatus?: string;
   shellDirResultStatus?: string;
   shellDirErrorResultStatus?: string;
   shellDirResult?: {
@@ -460,6 +475,55 @@ function runInstalledExpansionCase(launchAddress: number): {
   const shellCommandStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
   assertStringEqual(shellCommandStatus, 'EDIT', 'captured shell command visible status');
   assertEqual(platformRuntime.state.system?.sysCtrl ?? -1, SHADOW_OFF, 'shell visible status SYS_CTRL restored');
+
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'asm');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], SHL_ACTION_ASM, 'shell asm command action');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], SHL_TARGET_DESC & 0xff, 'shell asm target pointer lo');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], SHL_TARGET_DESC >> 8, 'shell asm target pointer hi');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_ACTION], SHL_ACTION_ASM, 'shell asm target descriptor action');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_KIND], SHL_TARGET_KIND_PROJECT_MAIN, 'shell asm target descriptor kind');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_FLAGS], SHL_TARGET_FLAG_DEFAULT, 'shell asm target descriptor flags');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_BANK], 0x07, 'shell asm service bank marker');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_VERSION], 0x01, 'shell asm service version');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_TARGET_LO], runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], 'shell asm target lo');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_TARGET_HI], runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], 'shell asm target hi');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_RESULT_LO], SHL_RESULT_UNSUPPORTED, 'shell asm skeleton result lo');
+  assertEqual(runtime.hardware.memory[ASM_PARAM_RESULT_HI], 0x00, 'shell asm skeleton result hi');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_UNSUPPORTED, 'shell asm command result');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x00, 'shell asm command detail');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x80, 'shell asm command returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell asm command returned carry clear');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_STATUS);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell asm status render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'ASM', 'shell asm visible status');
+  const shellAsmStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellAsmStatus, 'ASM', 'captured shell asm visible status');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell asm result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'UNSUP', 'shell asm visible result');
+  const shellAsmResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellAsmResultStatus, 'UNSUP', 'captured shell asm visible result');
 
   seedCatalogSlot(runtime);
   writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
@@ -588,6 +652,8 @@ function runInstalledExpansionCase(launchAddress: number): {
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
     shellCommandStatus,
+    shellAsmStatus,
+    shellAsmResultStatus,
     shellDirResultStatus,
     shellDirErrorResultStatus,
     shellDirResult,
