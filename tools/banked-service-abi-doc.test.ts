@@ -559,6 +559,11 @@ test('banked service ABI doc covers bank 7 assembler skeleton slots and paramete
   assert.match(doc, /Physical bank 7 owns the first assembler service skeleton/);
   assert.match(doc, /`ASM_SVC_ASSEMBLE` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
+  assert.match(doc, /The assembler MVP ABI is deliberately small/);
+  assert.match(doc, /the descriptor action is\s+`SHL_ACTION_ASM`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_MAIN`/);
+  assert.match(doc, /the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`/);
+  assert.match(doc, /bank 7 must not parse source, allocate buffers, or write build\s+artifacts/);
+  assert.match(doc, /only supported visible result is `SHL_RESULT_UNSUPPORTED` with\s+detail zero, rendered by the shell as `UNSUP`/);
   assert.match(doc, /Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set,\s+preserve the assembler status fields/);
   assert.match(doc, /do not dispatch through the\s+unsupported assemble path/);
 });

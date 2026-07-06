@@ -922,6 +922,14 @@ descriptor pointer, and returns `A=ASM_ERR_UNSUPPORTED` with carry set. This
 lets the shell and later project metadata path point at an assembler boundary
 without inventing the assembler implementation early.
 
+The assembler MVP ABI is deliberately small. The shell passes a pointer to
+`SHL_TARGET_DESC`; for the no-argument `asm` command the descriptor action is
+`SHL_ACTION_ASM`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_MAIN`, and
+the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`. Until a real assembler
+is linked in, bank 7 must not parse source, allocate buffers, or write build
+artifacts. Its only supported visible result is `SHL_RESULT_UNSUPPORTED` with
+detail zero, rendered by the shell as `UNSUP`.
+
 Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set,
 preserve the assembler status fields, and do not dispatch through the
 unsupported assemble path.
