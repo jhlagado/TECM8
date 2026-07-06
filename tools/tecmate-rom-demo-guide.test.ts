@@ -13,6 +13,7 @@ test('manual ROM demo command is wired to the proof-backed ROM launch path', () 
     pkg.scripts['demo:tecmate-rom:manual'],
     'npm run demo:tecmate-rom && node --experimental-strip-types tools/print-tecmate-rom-demo-guide.ts',
   );
+  assert.equal(pkg.scripts['checkpoint:tecmate-rom'], 'npm run demo:tecmate-rom:manual');
   assert.match(pkg.scripts['demo:tecmate-rom'], /tools\/run-tecmate-monitor-launch-proof\.ts/);
   assert.doesNotMatch(pkg.scripts['demo:tecmate-rom:manual'], /debug80:editor-image|GO 4000h|src\/main\.asm/);
 });
@@ -44,7 +45,7 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
 });
 
 test('manual ROM demo guide prints current proof-backed markers', () => {
-  execFileSync('npm', ['run', 'demo:tecmate-rom'], {
+  const output = execFileSync('npm', ['run', 'checkpoint:tecmate-rom'], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -53,12 +54,8 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   );
   const launchAddress = proof.launchAddress.toString(16).toUpperCase().padStart(4, '0');
 
-  const output = execFileSync('node', ['--experimental-strip-types', 'tools/print-tecmate-rom-demo-guide.ts'], {
-    cwd: root,
-    encoding: 'utf8',
-  });
-
   assert.match(output, /# TecMate ROM Demo Manual Launch/);
+  assert.match(output, /# TecMate ROM Footprint/);
   assert.match(output, new RegExp(`launchExpansion: ${launchAddress}h`));
   assert.match(output, /installed trace: 0000h 0000h 0000h 0003h 0081h 0082h 0083h 0086h 0080h/);
   assert.match(output, /^- shell command status: EDIT$/m);
