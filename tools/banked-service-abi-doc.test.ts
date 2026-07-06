@@ -280,6 +280,21 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /bank-7\s+assembler skeleton and bank-8 run skeleton currently publish\s+`SHL_RESULT_UNSUPPORTED`/);
 });
 
+test('shell command target descriptor stays compact and bounded', () => {
+  const desc = equateValue('SHL_TARGET_DESC');
+  assert.equal(equateValue('SHL_TARGET_ACTION'), desc);
+  assert.equal(equateValue('SHL_TARGET_KIND'), desc + 1);
+  assert.equal(equateValue('SHL_TARGET_PATH_LO'), desc + 2);
+  assert.equal(equateValue('SHL_TARGET_PATH_HI'), desc + 3);
+  assert.equal(equateValue('SHL_TARGET_FLAGS'), desc + 4);
+  assert.equal(equateValue('SHL_PARAM_COMMAND_RESULT_HI') + 1, desc);
+
+  assertNoOverlap('SHL_TARGET_DESC', desc, 5, 'SHL_LOOP_TICK', equateValue('SHL_LOOP_TICK'), 6);
+  assertNoOverlap('SHL_TARGET_DESC', desc, 5, 'INP_PARAM_BASE', equateValue('INP_PARAM_BASE'), 8);
+  assertNoOverlap('SHL_TARGET_DESC', desc, 5, 'ASM_PARAM_BASE', equateValue('ASM_PARAM_BASE'), 8);
+  assertNoOverlap('SHL_TARGET_DESC', desc, 5, 'RUN_PARAM_BASE', equateValue('RUN_PARAM_BASE'), 8);
+});
+
 test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /Compact service path:/);
   assert.match(doc, /RST 10h C=TFS_MOUNT \(61h\)/);
