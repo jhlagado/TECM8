@@ -25,6 +25,8 @@ type LastRun = {
     shellAsmResultStatus?: string;
     shellRunStatus?: string;
     shellRunResultStatus?: string;
+    shellUnknownStatus?: string;
+    shellUnknownResultStatus?: string;
     shellDirResultStatus?: string;
     shellDirErrorResultStatus?: string;
     shellDirResult?: {
@@ -71,6 +73,12 @@ function readLastRun(): LastRun {
   }
   if (data.installed.shellRunResultStatus !== 'UNSUP') {
     throw new Error(`monitor launch proof output is missing exact shell run result status UNSUP: ${proofPath}`);
+  }
+  if (data.installed.shellUnknownStatus !== 'ERRCMD') {
+    throw new Error(`monitor launch proof output is missing exact shell unknown status ERRCMD: ${proofPath}`);
+  }
+  if (data.installed.shellUnknownResultStatus !== 'NONE') {
+    throw new Error(`monitor launch proof output is missing exact shell unknown result status NONE: ${proofPath}`);
   }
   if (data.installed.shellDirResult?.resultLo !== 0x01 || data.installed.shellDirResult.count !== 0x02) {
     throw new Error(`monitor launch proof output is missing exact shell dir TEC-FS result: ${proofPath}`);
@@ -139,6 +147,7 @@ function main(): void {
   console.log(`| edit | bank 0 shell | ${installed.shellCommandStatus ?? 'unknown'} | n/a | project main target |`);
   console.log(`| asm | bank 7 skeleton | ${installed.shellAsmStatus ?? 'unknown'} | ${installed.shellAsmResultStatus ?? 'unknown'} | project main target |`);
   console.log(`| run | bank 8 skeleton | ${installed.shellRunStatus ?? 'unknown'} | ${installed.shellRunResultStatus ?? 'unknown'} | project output target |`);
+  console.log(`| unknown | bank 0 shell | ${installed.shellUnknownStatus ?? 'unknown'} | ${installed.shellUnknownResultStatus ?? 'unknown'} | target/result clear |`);
   console.log(`| dir | bank 2 TEC-FS | DIR | ${installed.shellDirResultStatus ?? 'unknown'} | count ${installed.shellDirResult?.count ?? 'unknown'} |`);
   console.log(`| dir bad-buffer | bank 2 TEC-FS | n/a | ${installed.shellDirErrorResultStatus ?? 'unknown'} | buffer error path |`);
   console.log('');
@@ -154,6 +163,8 @@ function main(): void {
   console.log(`- shell asm result status: ${installed.shellAsmResultStatus}`);
   console.log(`- shell run status: ${installed.shellRunStatus}`);
   console.log(`- shell run result status: ${installed.shellRunResultStatus}`);
+  console.log(`- shell unknown status: ${installed.shellUnknownStatus}`);
+  console.log(`- shell unknown result status: ${installed.shellUnknownResultStatus}`);
   console.log(`- shell dir result status: ${installed.shellDirResultStatus}`);
   console.log(`- shell dir error result status: ${installed.shellDirErrorResultStatus}`);
   console.log(`- shell dir aggregate count: ${installed.shellDirResult?.count ?? 'unknown'}`);

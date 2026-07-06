@@ -40,8 +40,8 @@ test('manual ROM demo guide documents the Debug80-visible ROM path', () => {
   assert.match(guide, /fixed monitor, expansion discovery, bank 0 shell scaffold, VDU\/TMS9918/);
   assert.match(guide, /input snapshot service, TEC-FS service boundary, assembler\/run skeleton handoffs, shell command status\/result paths, and `dir` catalogue summary/);
   assert.match(guide, /Do not use `GO 4000h`, `debug80:editor-image`, or the old RAM editor path/);
-  assert.match(milestone, /npm run demo:tecmate-rom:manual/);
-  assert.match(milestone, /prints the exact\s+generated ROM artifacts, monitor route, expected TMS9918 text, and last-run\s+trace markers/);
+  assert.match(milestone, /npm run checkpoint:tecmate-rom/);
+  assert.match(milestone, /prints the exact\s+generated ROM artifacts, monitor route, expected TMS9918 text, last-run trace\s+markers, compact command matrix, and current ROM footprint/);
 });
 
 test('manual ROM demo guide prints current proof-backed markers', () => {
@@ -63,6 +63,8 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^- shell asm result status: UNSUP$/m);
   assert.match(output, /^- shell run status: RUN$/m);
   assert.match(output, /^- shell run result status: UNSUP$/m);
+  assert.match(output, /^- shell unknown status: ERRCMD$/m);
+  assert.match(output, /^- shell unknown result status: NONE$/m);
   assert.match(output, /^- shell dir result status: OK$/m);
   assert.match(output, /^- shell dir error result status: FILE$/m);
   assert.match(output, /^- shell dir aggregate count: 2$/m);
@@ -79,6 +81,7 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^\| edit \| bank 0 shell \| EDIT \| n\/a \| project main target \|$/m);
   assert.match(output, /^\| asm \| bank 7 skeleton \| ASM \| UNSUP \| project main target \|$/m);
   assert.match(output, /^\| run \| bank 8 skeleton \| RUN \| UNSUP \| project output target \|$/m);
+  assert.match(output, /^\| unknown \| bank 0 shell \| ERRCMD \| NONE \| target\/result clear \|$/m);
   assert.match(output, /^\| dir \| bank 2 TEC-FS \| DIR \| OK \| count 2 \|$/m);
   assert.match(output, /^\| dir bad-buffer \| bank 2 TEC-FS \| n\/a \| FILE \| buffer error path \|$/m);
   assert.match(output, /final SYS_CTRL: 0001h/);

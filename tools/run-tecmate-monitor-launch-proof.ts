@@ -39,6 +39,8 @@ const SHL_RUN_COMMAND = 0x81;
 const SHL_RENDER_STATUS = 0x82;
 const SHL_RENDER_RESULT = 0x83;
 const SHL_COMMAND_BUFFER = 0x3a80;
+const SHL_PARAM_STATUS = 0x3ba0;
+const SHL_PARAM_LAST_ERROR = 0x3ba1;
 const SHL_PARAM_COMMAND_ACTION = 0x3ba5;
 const SHL_PARAM_COMMAND_TARGET_LO = 0x3ba7;
 const SHL_PARAM_COMMAND_TARGET_HI = 0x3ba8;
@@ -48,15 +50,19 @@ const SHL_ACTION_EDIT = 0x01;
 const SHL_ACTION_ASM = 0x02;
 const SHL_ACTION_RUN = 0x03;
 const SHL_ACTION_DIR = 0x04;
+const SHL_STATUS_UNKNOWN_COMMAND = 0x01;
 const SHL_TARGET_DESC = 0x3bab;
 const SHL_TARGET_ACTION = 0x3bab;
 const SHL_TARGET_KIND = 0x3bac;
+const SHL_TARGET_PATH_LO = 0x3bad;
+const SHL_TARGET_PATH_HI = 0x3bae;
 const SHL_TARGET_KIND_PROJECT_MAIN = 0x01;
 const SHL_TARGET_KIND_PROJECT_OUTPUT = 0x02;
 const SHL_TARGET_FLAG_DEFAULT = 0x01;
 const SHL_RESULT_OK = 0x01;
 const SHL_RESULT_FILE_ERROR = 0x03;
 const SHL_RESULT_UNSUPPORTED = 0x04;
+const SVC_ERR_UNKNOWN = 0xee;
 const SHL_TARGET_FLAGS = 0x3baf;
 const ASM_PARAM_BANK = 0x3be6;
 const ASM_PARAM_VERSION = 0x3be7;
@@ -411,6 +417,8 @@ function runInstalledExpansionCase(launchAddress: number): {
   shellAsmResultStatus?: string;
   shellRunStatus?: string;
   shellRunResultStatus?: string;
+  shellUnknownStatus?: string;
+  shellUnknownResultStatus?: string;
   shellDirResultStatus?: string;
   shellDirErrorResultStatus?: string;
   shellDirResult?: {
@@ -584,6 +592,53 @@ function runInstalledExpansionCase(launchAddress: number): {
   const shellRunResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
   assertStringEqual(shellRunResultStatus, 'UNSUP', 'captured shell run visible result');
 
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'zap');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_STATUS], SHL_STATUS_UNKNOWN_COMMAND, 'shell unknown command status');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_LAST_ERROR], SHL_STATUS_UNKNOWN_COMMAND, 'shell unknown command last error');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], 0x00, 'shell unknown command action remains none');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], 0x00, 'shell unknown target pointer lo remains clear');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], 0x00, 'shell unknown target pointer hi remains clear');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_ACTION], 0x00, 'shell unknown target descriptor action remains clear');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_KIND], 0x00, 'shell unknown target descriptor kind remains clear');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_PATH_LO], 0x00, 'shell unknown target descriptor path lo remains clear');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_PATH_HI], 0x00, 'shell unknown target descriptor path hi remains clear');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_FLAGS], 0x00, 'shell unknown target descriptor flags remain clear');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], 0x00, 'shell unknown result lo remains none');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x00, 'shell unknown result hi remains none');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], SVC_ERR_UNKNOWN, 'shell unknown command returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x01, 'shell unknown command returned carry set');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_STATUS);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell unknown status render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'ERRCMD', 'shell unknown visible status');
+  const shellUnknownStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellUnknownStatus, 'ERRCMD', 'captured shell unknown visible status');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell unknown result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'NONE', 'shell unknown visible result');
+  const shellUnknownResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellUnknownResultStatus, 'NONE', 'captured shell unknown visible result');
+
   seedCatalogSlot(runtime);
   writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
   runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
@@ -715,6 +770,8 @@ function runInstalledExpansionCase(launchAddress: number): {
     shellAsmResultStatus,
     shellRunStatus,
     shellRunResultStatus,
+    shellUnknownStatus,
+    shellUnknownResultStatus,
     shellDirResultStatus,
     shellDirErrorResultStatus,
     shellDirResult,
