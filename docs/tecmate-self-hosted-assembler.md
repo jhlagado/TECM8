@@ -65,6 +65,31 @@ Deliberately exclude from the first implementation:
 
 This gives TecMate a practical assembler before it tries to become AZM.
 
+## MVP Readiness Gates
+
+The assembler should not move beyond the bank-7 skeleton until the smaller
+file path exists:
+
+```text
+editor opens 32-byte-record source buffer
+  -> assembler reads that buffer or a TEC-FS source stream
+  -> assembler emits binary and map records through TEC-FS
+  -> shell `asm` reports `OK`, `BUILD`, `FILE`, or `UNSUP`
+```
+
+That means the first useful assembler is gated by the editor file-buffer ABI
+and by TEC-FS source/binary/map record writes. Before those exist, bank 7 should
+remain a compact handoff skeleton that proves target passing and result
+reporting only.
+
+Phase 1 source input should therefore be one loaded source buffer or a simple
+sequential TEC-FS source stream. It should not require a general project graph,
+directory scan, recursive include resolver, host-style build directory, or
+profile preprocessor. The first output path should be one binary record plus a
+minimal map record. Listings, include files, register-contract checking, and
+profile-generated source can wait until the source-buffer-to-output path is
+measured and small.
+
 ## Profile-Generated Source Compatibility
 
 Profile preprocessors must generate source that the TecMate assembler can

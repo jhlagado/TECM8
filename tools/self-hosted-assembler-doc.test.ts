@@ -67,6 +67,19 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /If the checker cannot prove a path,\s+it should say so clearly/);
 });
 
+test('self-hosted assembler doc gates MVP work on editor buffer and TEC-FS output', () => {
+  assert.match(doc, /## MVP Readiness Gates/);
+  assert.match(doc, /should not move beyond the bank-7 skeleton until the smaller\s+file path exists/);
+  assert.match(doc, /editor opens 32-byte-record source buffer[\s\S]*assembler reads that buffer or a TEC-FS source stream[\s\S]*assembler emits binary and map records through TEC-FS/);
+  assert.match(doc, /shell `asm` reports `OK`, `BUILD`, `FILE`, or `UNSUP`/);
+  assert.match(doc, /gated by the editor file-buffer ABI\s+and by TEC-FS source\/binary\/map record writes/);
+  assert.match(doc, /bank 7 should\s+remain a compact handoff skeleton/);
+  assert.match(doc, /one loaded source buffer or a simple\s+sequential TEC-FS source stream/);
+  assert.match(doc, /should not require a general project graph,\s+directory scan, recursive include resolver, host-style build directory, or\s+profile preprocessor/);
+  assert.match(doc, /one binary record plus a\s+minimal map record/);
+  assert.match(doc, /Listings, include files, register-contract checking, and\s+profile-generated source can wait/);
+});
+
 test('self-hosted assembler doc keeps profile-generated source self-hostable', () => {
   assert.match(doc, /## Profile-Generated Source Compatibility/);
   assert.match(doc, /Profile preprocessors must generate source that the TecMate assembler can\s+eventually assemble/);
