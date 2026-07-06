@@ -47,6 +47,7 @@ const SHL_PARAM_COMMAND_RESULT_HI = 0x3baa;
 const SHL_ACTION_EDIT = 0x01;
 const SHL_ACTION_DIR = 0x04;
 const SHL_RESULT_OK = 0x01;
+const SHL_RESULT_FILE_ERROR = 0x03;
 const SHL_TARGET_FLAGS = 0x3baf;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_PARAM_BUFFER_LO = 0x3b52;
@@ -59,6 +60,7 @@ const TFS_PARAM_SUMMARY_FIRST_NAME_LEN = 0x3bd6;
 const TFS_PARAM_SUMMARY_FLAGS = 0x3bd7;
 const TFS_SUMMARY_FLAG_HAS_FIRST = 0x01;
 const TFS_VOLUME_MIB = 128;
+const TFS_ERR_BAD_BUFFER = 0x0e;
 const TFS_CATALOG_BUFFER = 0x6280;
 const TFS_ENTRY_STATUS_ACTIVE = 0x01;
 const TFS_FILE_SOURCE = 0x02;
@@ -379,6 +381,7 @@ function runInstalledExpansionCase(launchAddress: number): {
   finalPhysicalBank?: number;
   shellCommandStatus?: string;
   shellDirResultStatus?: string;
+  shellDirErrorResultStatus?: string;
   shellDirResult?: {
     resultLo: number;
     count: number;
@@ -537,6 +540,34 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell empty dir result render returned carry clear');
   assertVramText(platformRuntime, 0x02e0, 'OK', 'shell empty dir visible result');
 
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_LO, 0x00);
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_HI, 0x00);
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], SHL_ACTION_DIR, 'shell bad-buffer dir command action');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_FILE_ERROR, 'shell bad-buffer dir result file error');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], TFS_ERR_BAD_BUFFER, 'shell bad-buffer dir result detail');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x80, 'shell bad-buffer dir command returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell bad-buffer dir command returned carry clear');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell bad-buffer dir result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'FILE', 'shell bad-buffer dir visible result');
+  const shellDirErrorResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellDirErrorResultStatus, 'FILE', 'captured shell bad-buffer dir visible result');
+
   return {
     instructions,
     bridgeInstructions,
@@ -552,6 +583,7 @@ function runInstalledExpansionCase(launchAddress: number): {
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
     shellCommandStatus,
     shellDirResultStatus,
+    shellDirErrorResultStatus,
     shellDirResult,
   };
 }

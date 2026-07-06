@@ -38,6 +38,11 @@ return `SHL_RESULT_OK`, publish a zero summary count, clear the first-entry
 flag, and render `OK`. This proves an empty catalogue is not treated as a file
 error.
 
+It also repeats `dir` with a zero catalogue-buffer pointer. That path must
+publish `SHL_RESULT_FILE_ERROR`, keep the compact TEC-FS error detail in the
+result high byte, and render `FILE`. This proves the shell error path is
+visible without adding a larger directory UI.
+
 The runner uses the monitor D8 map to locate `launchExpansion` and the bank-0
 D8 map to locate the installed menu provider, so the proof fails if discovery,
 installation, vector launch, or bridge dispatch stops reaching the bank-0

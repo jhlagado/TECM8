@@ -22,6 +22,7 @@ type LastRun = {
     expectedServiceAddress?: number;
     shellCommandStatus?: string;
     shellDirResultStatus?: string;
+    shellDirErrorResultStatus?: string;
     shellDirResult?: {
       resultLo?: number;
       count?: number;
@@ -60,6 +61,9 @@ function readLastRun(): LastRun {
   }
   if (data.installed.shellDirResultStatus !== 'OK') {
     throw new Error(`monitor launch proof output is missing exact shell dir result status OK: ${proofPath}`);
+  }
+  if (data.installed.shellDirErrorResultStatus !== 'FILE') {
+    throw new Error(`monitor launch proof output is missing exact shell dir error result status FILE: ${proofPath}`);
   }
 
   const expectedTrace = [0x00, undefined, undefined, undefined, 0x81, 0x82, 0x83, 0x86, 0x80];
@@ -100,7 +104,7 @@ function main(): void {
   console.log('4. Expect bank 0 to install the expansion vectors, then launch the TecMate shell scaffold.');
   console.log('5. On the TMS9918 VDU, expect `TecMate ROM Shell`, `TFS:30+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`.');
   console.log('6. The proof also runs `edit` through the shell command service and renders status `EDIT` on the VDU status line.');
-  console.log('7. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, and renders result status `OK`.');
+  console.log('7. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`.');
   console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
@@ -111,6 +115,7 @@ function main(): void {
   console.log(`- bridge instructions: ${installed.bridgeInstructions ?? 'unknown'}`);
   console.log(`- shell command status: ${installed.shellCommandStatus}`);
   console.log(`- shell dir result status: ${installed.shellDirResultStatus}`);
+  console.log(`- shell dir error result status: ${installed.shellDirErrorResultStatus}`);
   console.log(
     `- shell dir result: result=${hex(installed.shellDirResult?.resultLo)}, count=${installed.shellDirResult?.count ?? 'unknown'}, firstFileId=${hex(installed.shellDirResult?.firstFileId)}, firstFileType=${hex(installed.shellDirResult?.firstFileType)}, nameLen=${installed.shellDirResult?.firstNameLength ?? 'unknown'}, flags=${hex(installed.shellDirResult?.flags)}`,
   );
