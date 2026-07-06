@@ -286,17 +286,20 @@ session now expect:
   Internal implementation labels are private and movable. Bank 0 owns the
   discovery install entry, expansion vectors, the private runtime service
   registry, the current shell-splash scaffold, the first `SHL_RUN_COMMAND`
-  boundary that classifies `edit`, `asm`, and `run` from the shared shell
-  command buffer, the `SHL_TARGET_DESC` descriptor block published for shell
-  actions, and the shell result slots that now clear and publish target and
-  result pointers alongside the action and status bytes. Bank 1 owns the VDU
-  and TMS9918 dispatchers, including the text-screen clear path, row/column
-  cursor placement, scroll-up behavior, status-line redraw with caller-cursor
-  restore, the bounded `VDU_SVC_PUT_STRING_N` writer, and the one-byte VRAM
-  read helper used by the scrolling proof. Bank 2 owns the TEC-FS geometry
-  boundary, active-volume selection, logical-sector translation, locator-header
-  format/read services, metadata-record format and patch services, catalog-entry
-  decode, and the installable low-level sector-driver handoff used by the
+  boundary that classifies `edit`, `asm`, `run`, and `dir` from the shared
+  shell command buffer, the `SHL_TARGET_DESC` descriptor block published for
+  shell actions, the shell result slots that now clear and publish target and
+  result pointers alongside the action and status bytes, and the visible
+  status/result renderers that project compact shell result codes onto the VDU
+  status line. Bank 1 owns the VDU and TMS9918 dispatchers, including the
+  text-screen clear path, row/column cursor placement, scroll-up behavior,
+  status-line redraw with caller-cursor restore, the bounded
+  `VDU_SVC_PUT_STRING_N` writer, and the one-byte VRAM read helper used by the
+  scrolling proof. Bank 2 owns the TEC-FS geometry boundary, active-volume
+  selection, logical-sector translation, locator-header format/read services,
+  metadata-record format and patch services, catalog-entry decode, the compact
+  one-slot catalog summary and next-slot advance services used by the ROM
+  `dir` path, and the installable low-level sector-driver handoff used by the
   current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
   GLCD containment boundary, bank 5 carries the TEC-FS monitor-sector bridge
   simulation, bank 6 exposes the input snapshot boundary with neutral joystick
@@ -1324,8 +1327,10 @@ points including text clear, row/column cursor placement, scroll-up copying,
 status-line rendering with cursor restore, bounded string writes, and VRAM
 reads. The TEC-FS runner checks bank 2 volume selection, logical-sector
 mapping, locator-header format/read behavior, metadata-record format and patch
-behavior, catalog-entry decode, and installed sector-driver dispatch, and the
-RTC runner checks the bank 3 descriptor and unsupported UI status path.
+behavior, catalog-entry decode, the compact one-slot summary and next-slot
+advance services behind the ROM `dir` path, and installed sector-driver
+dispatch, and the RTC runner checks the bank 3 descriptor and unsupported UI
+status path.
 
 `tools/run-tecmate-monitor-launch-proof.ts` and
 `tools/run-tecmate-shell-launch-proof.ts` cover the higher-level launch path
@@ -1333,11 +1338,14 @@ that sits on top of those bank boundaries. The monitor-launch runner boots the
 fixed ROM, drives `launchExpansion` with and without an expansion image,
 checks that bank 0 installs the menu and service vectors on the discovered
 path, confirms the missing-expansion return path leaves those vectors cleared,
-and re-enters the monitor bridge with a TEC-FS service call to confirm the
-fixed-ROM bank trampoline restores `SYS_CTRL`. The shell-launch
-runner assembles a small RAM proof that calls the monitor bridge with
-`SHL_ENTRY`, then checks the bank 0 shell parameter block,
-feature bits, splash buffer, and TMS9918 cursor side effects.
+re-enters the monitor bridge with a TEC-FS service call to confirm the
+fixed-ROM bank trampoline restores `SYS_CTRL`, then drives the live ROM shell
+through `edit`, `asm`, `run`, `dir`, and unknown-command cases to check the
+bank-0 action classifier, visible VDU status/result rendering, the bank-2
+catalog summary path, the empty-directory success case, and the bad-buffer
+file-error case. The shell-launch runner assembles a small RAM proof that
+calls the monitor bridge with `SHL_ENTRY`, then checks the bank 0 shell
+parameter block, feature bits, splash buffer, and TMS9918 cursor side effects.
 
 The proof runners run AZM register-contract checking in strict mode. They pass
 `src/mon3.asmi` for MON3 ROM calls and rely on the `;!` comments in included
@@ -1403,13 +1411,13 @@ ROM-facing host tools also gate footprint and milestone drift:
 expansion bank against the checked per-bank soft and hard budgets,
 `tools/check-rom-size-delta.ts` compares the live build against
 `docs/metrics/rom-size-baseline.json`, `tools/print-tecmate-rom-demo-guide.ts`
-prints the proof-backed manual Debug80 checklist, and
+prints the proof-backed manual Debug80 checklist and shell command matrix, and
 `tools/rom-milestone-status.ts` reports the current monitor/bank footprint plus
 the last known integrated proof status for monitor launch, shell loop, VDU,
 TEC-FS, input snapshot, and bank ABI. The npm entry points
-`demo:tecmate-rom`, `demo:tecmate-rom:manual`, `rom:size:check`,
-`rom:size:summary`, `rom:size:delta`, and `rom:milestone:status` keep those
-checks in the standard workflow.
+`demo:tecmate-rom`, `demo:tecmate-rom:manual`, `checkpoint:tecmate-rom`,
+`rom:size:check`, `rom:size:summary`, `rom:size:delta`, and
+`rom:milestone:status` keep those checks in the standard workflow.
 
 `proof:display:shell-edit-create-source` covers the missing-source launch case:
 `edit fresh` creates `/src/fresh.asm` as a blank one-block source file and opens
@@ -1606,6 +1614,9 @@ What exists now:
 - MON3-backed storage and GLCD wrappers exist.
 - A storage-backed editor can load and render source pages.
 - A shell `edit` command can launch that editor path in proofs.
+- The ROM shell checkpoint can also classify `dir`, render compact command and
+  result statuses on the VDU path, and summarize two adjacent TEC-FS catalog
+  slots through the bank-2 service boundary.
 - Cursor movement, in-page character mutation, split-line, and join-line
   behavior are implemented and covered by proofs.
 - Whole-line selection and resident-page block copy, move, paste, replace and
