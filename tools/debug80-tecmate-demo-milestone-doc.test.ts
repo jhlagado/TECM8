@@ -58,6 +58,15 @@ test('Debug80 TecMate demo milestone records the manual ROM launch script', () =
   assert.match(doc, /`edit -> EDIT`, `asm -> ASM\/UNSUP`, `run -> RUN\/UNSUP`, `dir -> DIR\/OK`,\s+and `dir bad-buffer -> FILE`/);
 });
 
+test('Debug80 TecMate demo milestone defines the next editor-buffer manual target', () => {
+  assert.match(doc, /## Next Manual Milestone/);
+  assert.match(doc, /shell `edit`[\s\S]*project-main target descriptor[\s\S]*TEC-FS target\/metadata lookup boundary[\s\S]*editor file-buffer service/);
+  assert.match(doc, /VDU\/TMS9918 shows a loaded 32-byte-record source window/);
+  assert.match(doc, /not a complete editor loop/);
+  assert.match(doc, /one loaded\s+source window, a cursor position, a dirty flag shown as clear, and a return path\s+to the shell/);
+  assert.match(doc, /Save, insert\/delete, scrolling, assembler diagnostics, and GLCD\s+rendering can follow/);
+});
+
 test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
   for (const phrase of [
     '`npm run rom:check` builds the project-owned monitor and expansion ROMs',

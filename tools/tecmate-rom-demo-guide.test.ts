@@ -84,6 +84,10 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^\| unknown \| bank 0 shell \| ERRCMD \| NONE \| target\/result clear \|$/m);
   assert.match(output, /^\| dir \| bank 2 TEC-FS \| DIR \| OK \| count 2 \|$/m);
   assert.match(output, /^\| dir bad-buffer \| bank 2 TEC-FS \| n\/a \| FILE \| buffer error path \|$/m);
+  assert.match(output, /^Next manual milestone:$/m);
+  assert.match(output, /shell `edit` should hand a project-main target descriptor to TEC-FS lookup/);
+  assert.match(output, /one loaded 32-byte-record source window on the VDU\/TMS9918 path/);
+  assert.match(output, /not yet save, insert\/delete, scrolling, assembler diagnostics, or GLCD rendering/);
   assert.match(output, /final SYS_CTRL: 0001h/);
   assert.match(output, /final physical bank: 0/);
 });

@@ -124,6 +124,23 @@ confidence, not as the only release gate.
 8. If the manual screen differs, compare it with the automated evidence in
    `proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json`.
 
+## Next Manual Milestone
+
+The next thing to make visible should be the smallest editor-facing path:
+
+```text
+shell `edit`
+  -> project-main target descriptor
+  -> TEC-FS target/metadata lookup boundary
+  -> editor file-buffer service
+  -> VDU/TMS9918 shows a loaded 32-byte-record source window
+```
+
+This is not a complete editor loop. The manual success condition is one loaded
+source window, a cursor position, a dirty flag shown as clear, and a return path
+to the shell. Save, insert/delete, scrolling, assembler diagnostics, and GLCD
+rendering can follow after that route is visible and measured.
+
 ## Non-Goals
 
 This milestone must stay small. It does not require:

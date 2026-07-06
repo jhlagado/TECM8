@@ -151,6 +151,11 @@ function main(): void {
   console.log(`| dir | bank 2 TEC-FS | DIR | ${installed.shellDirResultStatus ?? 'unknown'} | count ${installed.shellDirResult?.count ?? 'unknown'} |`);
   console.log(`| dir bad-buffer | bank 2 TEC-FS | n/a | ${installed.shellDirErrorResultStatus ?? 'unknown'} | buffer error path |`);
   console.log('');
+  console.log('Next manual milestone:');
+  console.log('- shell `edit` should hand a project-main target descriptor to TEC-FS lookup, then to an editor file-buffer service.');
+  console.log('- visible success is one loaded 32-byte-record source window on the VDU/TMS9918 path, cursor state, dirty flag clear, and return to shell.');
+  console.log('- this is not yet save, insert/delete, scrolling, assembler diagnostics, or GLCD rendering.');
+  console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
   console.log(`- installed menu vector: ${hex(installed.expectedMenuAddress)}`);
