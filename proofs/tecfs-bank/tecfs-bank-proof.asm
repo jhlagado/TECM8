@@ -375,6 +375,22 @@ ClearSecondCatalogEntry:
         ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
         cp TFS_FILE_BINARY
         jp nz,FailNextCatalog
+        ld a,TFS_SVC_SUMMARIZE_CATALOG
+        farCall 0x02,TFS_ENTRY
+        jp c,FailSummary
+        cp 0x82
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
+        cp 0x01
+        jp nz,FailSummary
+        ld a,(TFS_PARAM_SUMMARY_FIRST_FILE_ID)
+        cp 0x22
+        jp nz,FailSummary
+        ld (TFS_PROOF_TRACE_BASE+12),a
+        ld a,(TFS_PARAM_SUMMARY_FIRST_FILE_TYPE)
+        cp TFS_FILE_BINARY
+        jp nz,FailSummary
+        ld (TFS_PROOF_TRACE_BASE+13),a
         ld hl,0x6280
         ld (TFS_PARAM_BUFFER_LO),hl
         ld a,TFS_SVC_DECODE_CATALOG

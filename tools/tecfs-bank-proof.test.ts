@@ -64,6 +64,7 @@ test('TEC-FS bank proof reads a catalog-described first file sector', () => {
 
 test('TEC-FS bank proof covers locator format and read services', () => {
   const proof = readFileSync(resolve(root, 'proofs/tecfs-bank/tecfs-bank-proof.asm'), 'utf8');
+  const runner = readFileSync(resolve(root, 'tools/run-tecfs-bank-proof.ts'), 'utf8');
   const doc = readFileSync(resolve(root, 'docs/mon3/tecmate-banked-service-abi.md'), 'utf8');
   const bank2 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank2.asm'), 'utf8');
 
@@ -75,6 +76,9 @@ test('TEC-FS bank proof covers locator format and read services', () => {
   assert.match(proof, /ld a,TFS_SVC_SUMMARIZE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_SUMMARY_COUNT_LO\)[\s\S]*cp 0x01/);
   assert.match(proof, /ld a,TFS_SVC_NEXT_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld hl,\(TFS_PARAM_BUFFER_LO\)[\s\S]*ld de,0x62C0[\s\S]*sbc hl,de/);
   assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_ID\)[\s\S]*cp 0x22[\s\S]*ld a,\(TFS_PARAM_ENTRY_FILE_TYPE\)[\s\S]*cp TFS_FILE_BINARY/);
+  assert.match(proof, /ld a,TFS_SVC_SUMMARIZE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_SUMMARY_FIRST_FILE_ID\)[\s\S]*cp 0x22[\s\S]*ld \(TFS_PROOF_TRACE_BASE\+12\),a/);
+  assert.match(runner, /TEC-FS next catalog summary file id/);
+  assert.match(runner, /TEC-FS next catalog summary file type/);
   assert.match(proof, /ld a,TFS_SVC_SUMMARIZE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*ld a,\(TFS_PARAM_SUMMARY_FLAGS\)[\s\S]*or a/);
   assert.match(proof, /ld a,TFS_SVC_DECODE_CATALOG[\s\S]*farCall 0x02,TFS_ENTRY[\s\S]*jp nc,FailDecodeCatalog[\s\S]*cp TFS_ERR_BAD_CATALOG/);
   assert.match(proof, /cp TFS_META_HW_TMS9918\+TFS_META_HW_JOYSTICK/);

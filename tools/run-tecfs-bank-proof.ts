@@ -203,7 +203,7 @@ async function main(): Promise<void> {
   const traceBase = symbolNumber(symbols, 'TFS_PROOF_TRACE_BASE');
   const result = runtime.hardware.memory[resultAddr];
   const params = readTrace(runtime, paramBase, 32);
-  const trace = readTrace(runtime, traceBase, 12);
+  const trace = readTrace(runtime, traceBase, 14);
 
   assertEqual(result, PROOF_PASS, 'TEC-FS bank proof result marker');
   assertEqual(params[0], 0x1d, 'active TEC-FS volume');
@@ -250,6 +250,8 @@ async function main(): Promise<void> {
   assertEqual(trace[9], 0xa2, 'TEC-FS file read translated sector byte 0');
   assertEqual(trace[10], 0x74, 'TEC-FS file read translated sector byte 2');
   assertEqual(trace[11], 0xa5, 'TEC-FS file read copied sector marker');
+  assertEqual(trace[12], 0x22, 'TEC-FS next catalog summary file id');
+  assertEqual(trace[13], 0x03, 'TEC-FS next catalog summary file type');
 
   writeFileSync(
     LAST_RUN,
