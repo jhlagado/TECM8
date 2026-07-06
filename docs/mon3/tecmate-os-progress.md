@@ -155,12 +155,13 @@ fixed monitor span: unchanged at 16384 bytes
 Manual checkpoint:
 
 ```text
-npm run demo:tecmate-rom:manual
+npm run checkpoint:tecmate-rom
 ```
 
 That prints the proof-backed ROM route, the expected TMS9918 shell screen, the
-installed monitor vectors, the aggregate two-slot `dir` count, the compact
-`FILE` error result, and the service inventory exercised by the proof.
+installed monitor vectors, the shell command matrix, the aggregate two-slot
+`dir` count, the compact `FILE` error result, the service inventory exercised
+by the proof, and the current ROM footprint.
 
 That changes the strategy. We do not need to gut MON3 immediately just to make
 progress. We can keep MON3 mostly intact while building serious TecMate
@@ -185,6 +186,23 @@ The larger pieces should grow in expansion ROM:
 - GLCD services
 - RTC tools
 - editor, assembler, BASIC, debugger, and game-development support
+
+## Next Compact Milestones
+
+The next work should keep the same MVP bias:
+
+1. Expand the bank-2 TEC-FS boundary from catalogue summary toward a minimal
+   read/write sector and metadata update path, without pulling FAT32/PATA back
+   into the monitor.
+2. Add the smallest editor-facing file buffer contract that can load, mark
+   dirty, and save one source file through TEC-FS.
+3. Keep the assembler bank as an unsupported skeleton until the shell, project
+   target descriptor, and file contracts are stable enough to feed it a real
+   source file.
+4. Add only the VDU/TMS9918 text services needed by the shell/editor path before
+   adding richer graphics helpers.
+5. Treat GLCD as a compatibility boundary and low-priority optional bank unless
+   it blocks the core editor/TEC-FS/assembler path.
 
 ## Why This Builds Forward
 

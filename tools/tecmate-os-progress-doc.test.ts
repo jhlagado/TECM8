@@ -34,9 +34,23 @@ test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /bank 2 span: 1008 -> 1042 bytes/);
   assert.match(doc, /expansion total span: 3145 -> 3234 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
-  assert.match(doc, /npm run demo:tecmate-rom:manual/);
-  assert.match(doc, /aggregate two-slot `dir` count/);
-  assert.match(doc, /service inventory exercised by the proof/);
+  assert.match(doc, /npm run checkpoint:tecmate-rom/);
+  assert.match(doc, /shell command matrix/);
+  assert.match(doc, /aggregate two-slot\s+`dir` count/);
+  assert.match(doc, /current ROM footprint/);
+  assert.match(doc, /service inventory exercised\s+by the proof/);
+});
+
+test('TecMate OS progress note records the next compact milestones', () => {
+  assert.match(doc, /## Next Compact Milestones/);
+  assert.match(doc, /minimal\s+read\/write sector and metadata update path/);
+  assert.match(doc, /without pulling FAT32\/PATA back\s+into the monitor/);
+  assert.match(doc, /smallest editor-facing file buffer contract/);
+  assert.match(doc, /load, mark\s+dirty, and save one source file through TEC-FS/);
+  assert.match(doc, /Keep the assembler bank as an unsupported skeleton/);
+  assert.match(doc, /VDU\/TMS9918 text services needed by the shell\/editor path/);
+  assert.match(doc, /Treat GLCD as a compatibility boundary and low-priority optional bank/);
+  assert.match(doc, /core editor\/TEC-FS\/assembler path/);
 });
 
 test('TecMate OS progress note keeps game work behind general services', () => {
