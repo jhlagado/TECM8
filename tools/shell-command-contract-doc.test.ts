@@ -14,9 +14,13 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /edit -> main/);
   assert.match(doc, /asm\s+-> main/);
   assert.match(doc, /run\s+-> derived output/);
+  assert.match(doc, /dir\s+-> current volume catalogue summary/);
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
   assert.match(doc, /A blank command line is a successful no-op/);
   assert.match(doc, /return to the prompt without reporting an unknown\s+command/);
+  assert.match(doc, /`TFS_PARAM_BUFFER_LO\/HI` must point at one 64-byte TM8 v1 catalogue slot in RAM/);
+  assert.match(doc, /inactive slot is a successful empty result, not a file error/);
+  assert.match(doc, /keeps the\s+ROM path tiny/);
 });
 
 test('shell command contract defines project metadata import path', () => {

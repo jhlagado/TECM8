@@ -498,6 +498,10 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /default formatted record is `TFS_FILE_PROJECT`/);
   assert.match(doc, /`TFS_SVC_DECODE_CATALOG`\s+expects `TFS_PARAM_BUFFER_LO\/HI` to point at one 64-byte TM8 v1 file catalogue/);
   assert.match(doc, /`TFS_SVC_SUMMARIZE_CATALOG` is the next small step toward `dir`/);
+  assert.match(doc, /caller-owned RAM\s+pointer to that one slot/);
+  assert.match(doc, /does not read SD sectors, scan\s+multiple slots, or allocate a directory cursor/);
+  assert.match(doc, /MVP ROM\s+boundary small/);
+  assert.match(doc, /empty catalogues explicit/);
   assert.match(doc, /publishes a count of zero/);
   assert.match(doc, /publishes a one-entry summary/);
   assert.match(doc, /`TFS_SUMMARY_RESULT_BASE`/);

@@ -137,6 +137,11 @@ the target descriptor clear, returns `SHL_RESULT_OK` on success, and stores the
 summary count in `SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS
 handoff before the real multi-entry catalogue reader is linked in.
 
+The current catalogue buffer is deliberately explicit: before `dir` is called,
+`TFS_PARAM_BUFFER_LO/HI` must point at one 64-byte TM8 v1 catalogue slot in RAM.
+An inactive slot is a successful empty result, not a file error. This keeps the
+ROM path tiny while the later sector reader and iterator are still absent.
+
 ## Reserved Tool Namespaces
 
 The shell should reserve multi-word command namespaces for larger tool profiles

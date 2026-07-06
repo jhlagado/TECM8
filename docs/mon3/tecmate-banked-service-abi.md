@@ -575,6 +575,12 @@ This is not yet a full directory walker. Sector reads, prefix resolution,
 hidden-file filtering, and multi-entry iteration are expected to layer on this
 summary/decoder pair once the sector-driver path is stable.
 
+For the current shell path, `TFS_PARAM_BUFFER_LO/HI` is the caller-owned RAM
+pointer to that one slot. `SHL_RUN_COMMAND` does not read SD sectors, scan
+multiple slots, or allocate a directory cursor yet; it simply asks bank 2 to
+summarize the slot already selected by the caller. That keeps the MVP ROM
+boundary small and makes empty catalogues explicit.
+
 Catalog entry constants mirror the host TM8 format:
 
 | Constant | Value | Meaning |
