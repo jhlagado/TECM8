@@ -964,6 +964,15 @@ bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
 `RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
 descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
 
+The run MVP ABI is deliberately small. The shell passes a pointer to
+`SHL_TARGET_DESC`; for the no-argument `run` command the descriptor action is
+`SHL_ACTION_RUN`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_OUTPUT`, and
+the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`. Until a real loader or
+debugger is linked in, bank 8 must not load files, relocate code, alter the
+program counter, or change the current expansion bank. Its only supported
+visible result is `SHL_RESULT_UNSUPPORTED` with detail zero, rendered by the
+shell as `UNSUP`.
+
 Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set, preserve
 the run status fields, and do not dispatch through the unsupported run path.
 

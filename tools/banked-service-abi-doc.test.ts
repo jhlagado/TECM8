@@ -591,6 +591,11 @@ test('banked service ABI doc covers bank 8 run skeleton slots and parameters', (
   assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
   assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
   assert.match(doc, /preserves target\s+descriptor pointer/);
+  assert.match(doc, /The run MVP ABI is deliberately small/);
+  assert.match(doc, /the descriptor action is\s+`SHL_ACTION_RUN`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_OUTPUT`/);
+  assert.match(doc, /the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`/);
+  assert.match(doc, /bank 8 must not load files, relocate code, alter the\s+program counter, or change the current expansion bank/);
+  assert.match(doc, /only supported\s+visible result is `SHL_RESULT_UNSUPPORTED` with detail zero, rendered by the\s+shell as `UNSUP`/);
   assert.match(doc, /Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set, preserve\s+the run status fields/);
   assert.match(doc, /do not\s+dispatch through the unsupported run path/);
   assert.match(doc, /`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff/);
