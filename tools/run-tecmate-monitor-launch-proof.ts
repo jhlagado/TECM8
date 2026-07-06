@@ -46,11 +46,13 @@ const SHL_PARAM_COMMAND_RESULT_LO = 0x3ba9;
 const SHL_PARAM_COMMAND_RESULT_HI = 0x3baa;
 const SHL_ACTION_EDIT = 0x01;
 const SHL_ACTION_ASM = 0x02;
+const SHL_ACTION_RUN = 0x03;
 const SHL_ACTION_DIR = 0x04;
 const SHL_TARGET_DESC = 0x3bab;
 const SHL_TARGET_ACTION = 0x3bab;
 const SHL_TARGET_KIND = 0x3bac;
 const SHL_TARGET_KIND_PROJECT_MAIN = 0x01;
+const SHL_TARGET_KIND_PROJECT_OUTPUT = 0x02;
 const SHL_TARGET_FLAG_DEFAULT = 0x01;
 const SHL_RESULT_OK = 0x01;
 const SHL_RESULT_FILE_ERROR = 0x03;
@@ -62,6 +64,12 @@ const ASM_PARAM_TARGET_LO = 0x3be8;
 const ASM_PARAM_TARGET_HI = 0x3be9;
 const ASM_PARAM_RESULT_LO = 0x3bea;
 const ASM_PARAM_RESULT_HI = 0x3beb;
+const RUN_PARAM_BANK = 0x3bfa;
+const RUN_PARAM_VERSION = 0x3bfb;
+const RUN_PARAM_TARGET_LO = 0x3bfc;
+const RUN_PARAM_TARGET_HI = 0x3bfd;
+const RUN_PARAM_RESULT_LO = 0x3bfe;
+const RUN_PARAM_RESULT_HI = 0x3bff;
 const TFS_PARAM_VOLUME_MIB = 0x3b44;
 const TFS_PARAM_BUFFER_LO = 0x3b52;
 const TFS_PARAM_BUFFER_HI = 0x3b53;
@@ -401,6 +409,8 @@ function runInstalledExpansionCase(launchAddress: number): {
   shellCommandStatus?: string;
   shellAsmStatus?: string;
   shellAsmResultStatus?: string;
+  shellRunStatus?: string;
+  shellRunResultStatus?: string;
   shellDirResultStatus?: string;
   shellDirErrorResultStatus?: string;
   shellDirResult?: {
@@ -524,6 +534,55 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertVramText(platformRuntime, 0x02e0, 'UNSUP', 'shell asm visible result');
   const shellAsmResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
   assertStringEqual(shellAsmResultStatus, 'UNSUP', 'captured shell asm visible result');
+
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'run');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], SHL_ACTION_RUN, 'shell run command action');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], SHL_TARGET_DESC & 0xff, 'shell run target pointer lo');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], SHL_TARGET_DESC >> 8, 'shell run target pointer hi');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_ACTION], SHL_ACTION_RUN, 'shell run target descriptor action');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_KIND], SHL_TARGET_KIND_PROJECT_OUTPUT, 'shell run target descriptor kind');
+  assertEqual(runtime.hardware.memory[SHL_TARGET_FLAGS], SHL_TARGET_FLAG_DEFAULT, 'shell run target descriptor flags');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_BANK], 0x08, 'shell run service bank marker');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_VERSION], 0x01, 'shell run service version');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_TARGET_LO], runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_LO], 'shell run target lo');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_TARGET_HI], runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], 'shell run target hi');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_RESULT_LO], SHL_RESULT_UNSUPPORTED, 'shell run skeleton result lo');
+  assertEqual(runtime.hardware.memory[RUN_PARAM_RESULT_HI], 0x00, 'shell run skeleton result hi');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_UNSUPPORTED, 'shell run command result');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x00, 'shell run command detail');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_A], 0x80, 'shell run command returned A');
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell run command returned carry clear');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_STATUS);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell run status render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'RUN', 'shell run visible status');
+  const shellRunStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellRunStatus, 'RUN', 'captured shell run visible status');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell run result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'UNSUP', 'shell run visible result');
+  const shellRunResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellRunResultStatus, 'UNSUP', 'captured shell run visible result');
 
   seedCatalogSlot(runtime);
   writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
@@ -654,6 +713,8 @@ function runInstalledExpansionCase(launchAddress: number): {
     shellCommandStatus,
     shellAsmStatus,
     shellAsmResultStatus,
+    shellRunStatus,
+    shellRunResultStatus,
     shellDirResultStatus,
     shellDirErrorResultStatus,
     shellDirResult,
