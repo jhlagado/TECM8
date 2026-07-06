@@ -729,6 +729,16 @@ the record magic, version, and byte-count header. This gives the shell,
 assembler, and runner a small service for turning a blank metadata record into a
 source, binary, game, or asset record without duplicating field offsets.
 
+The next metadata update boundary should stay in bank 2 and keep the same
+caller-buffer model. The compact path is: format or read a catalogue/metadata
+buffer in RAM, patch the `TFM1` fields there, write new data blocks first, write
+and verify the updated metadata sector, then commit by updating the catalogue or
+locator generation/checksum. The monitor should not regain FAT32, PATA, or
+high-level file-record update code for this; it should only provide the stable
+bank-call route and any eventual low-level SD sector hook. Until the sector
+writer is real, `TFS_PATCH_META_RECORD` is the only metadata mutation service
+and it must not allocate blocks, choose filenames, or scan directories.
+
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
 a volume/block pair should call `TFS_MAP_BLOCK`, then `TFS_TRANSLATE_SECTOR`,

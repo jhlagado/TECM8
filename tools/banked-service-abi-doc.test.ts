@@ -506,6 +506,12 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_FORMAT_LOCATOR` writes the current locator header fields/);
   assert.match(doc, /`TFS_READ_LOCATOR` validates the magic\/version/);
   assert.match(doc, /`TFS_PATCH_META_RECORD` copies the metadata patch parameter block/);
+  assert.match(doc, /next metadata update boundary should stay in bank 2/);
+  assert.match(doc, /keep the same\s+caller-buffer model/);
+  assert.match(doc, /write new data blocks first, write\s+and verify the updated metadata sector/);
+  assert.match(doc, /commit by updating the catalogue or\s+locator generation\/checksum/);
+  assert.match(doc, /monitor should not regain FAT32, PATA, or\s+high-level file-record update code/);
+  assert.match(doc, /`TFS_PATCH_META_RECORD` is the only metadata mutation service\s+and it must not allocate blocks, choose filenames, or scan directories/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /magic is `TFS1`/);
   assert.match(doc, /16-byte volume records/);
