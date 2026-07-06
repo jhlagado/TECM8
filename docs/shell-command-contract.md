@@ -299,6 +299,11 @@ SHL_RESULT_FILE_ERROR  source, output, map, or project file could not be used
 SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
 ```
 
+`SHL_RENDER_RESULT` turns the low result byte into a short VDU status label:
+`OK`, `BUILD`, `FILE`, `UNSUP`, or `NONE`. It is deliberately a compact mapper,
+not a diagnostic formatter. Detailed messages, line numbers, and filenames
+belong in later tool views, not in the eight-character shell status slot.
+
 Until project parsing and the assembler are linked behind the shell,
 `SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal
 `SHL_TARGET_DESC`, marks that descriptor as the project-main default, calls the

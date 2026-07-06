@@ -362,6 +362,34 @@ Tecm8ShellPublishDirStatus:
         ld hl,Tecm8ShellDirStatusText
         jp Tecm8ShellPublishStatusFromHl
 
+@Tecm8ShellRenderCommandResult:
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_OK
+        jp z,Tecm8ShellPublishOkResult
+        cp SHL_RESULT_BUILD_ERROR
+        jp z,Tecm8ShellPublishBuildResult
+        cp SHL_RESULT_FILE_ERROR
+        jp z,Tecm8ShellPublishFileResult
+        cp SHL_RESULT_UNSUPPORTED
+        jp z,Tecm8ShellPublishUnsupportedResult
+        jp Tecm8ShellPublishNoneResult
+
+Tecm8ShellPublishOkResult:
+        ld hl,Tecm8ShellOkResultText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishBuildResult:
+        ld hl,Tecm8ShellBuildResultText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishFileResult:
+        ld hl,Tecm8ShellFileResultText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishUnsupportedResult:
+        ld hl,Tecm8ShellUnsupportedResultText
+        jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishNoneResult:
+        ld hl,Tecm8ShellNoneResultText
+        jp Tecm8ShellPublishStatusFromHl
+
 Tecm8ShellCommandLength:
         ld b,0x00
         ld c,SHL_COMMAND_CAPACITY
@@ -558,6 +586,16 @@ Tecm8ShellDirStatusText:
         .db     "DIR",0
 Tecm8ShellCommandErrorStatusText:
         .db     "ERRCMD",0
+Tecm8ShellOkResultText:
+        .db     "OK",0
+Tecm8ShellBuildResultText:
+        .db     "BUILD",0
+Tecm8ShellFileResultText:
+        .db     "FILE",0
+Tecm8ShellUnsupportedResultText:
+        .db     "UNSUP",0
+Tecm8ShellNoneResultText:
+        .db     "NONE",0
 
 @Tecm8ExpansionBank0Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION
@@ -587,6 +625,9 @@ Tecm8ShellCommandErrorStatusText:
         .db     SHL_RENDER_STATUS,SHL_BANK
         .dw     Tecm8ShellRenderCommandStatus
         .db     SHL_RENDER_STATUS
+        .db     SHL_RENDER_RESULT,SHL_BANK
+        .dw     Tecm8ShellRenderCommandResult
+        .db     SHL_RENDER_RESULT
         .db     ABI_PROBE_NESTED,VDU_BANK
         .dw     VDU_ENTRY
         .db     ABI_PROBE_NESTED

@@ -37,6 +37,7 @@ const EXP_HEADER_INSTALL = 0x8008;
 const TFS_MOUNT = 0x61;
 const SHL_RUN_COMMAND = 0x81;
 const SHL_RENDER_STATUS = 0x82;
+const SHL_RENDER_RESULT = 0x83;
 const SHL_COMMAND_BUFFER = 0x3a80;
 const SHL_PARAM_COMMAND_ACTION = 0x3ba5;
 const SHL_PARAM_COMMAND_TARGET_LO = 0x3ba7;
@@ -369,6 +370,7 @@ function runInstalledExpansionCase(launchAddress: number): {
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
   shellCommandStatus?: string;
+  shellDirResultStatus?: string;
   shellDirResult?: {
     resultLo: number;
     count: number;
@@ -489,6 +491,18 @@ function runInstalledExpansionCase(launchAddress: number): {
     flags: runtime.hardware.memory[TFS_PARAM_SUMMARY_FLAGS],
   };
 
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'OK', 'shell dir visible result');
+  const shellDirResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
+  assertStringEqual(shellDirResultStatus, 'OK', 'captured shell dir visible result');
+
   return {
     instructions,
     bridgeInstructions,
@@ -503,6 +517,7 @@ function runInstalledExpansionCase(launchAddress: number): {
     finalSysCtrl: platformRuntime.state.system?.sysCtrl,
     finalPhysicalBank: platformRuntime.state.system?.memoryExpansionPhysicalBank,
     shellCommandStatus,
+    shellDirResultStatus,
     shellDirResult,
   };
 }

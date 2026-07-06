@@ -12,6 +12,7 @@ test('TecMate monitor launch proof artifacts are wired into the repository', () 
 
 test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher path', () => {
   const runner = readFileSync(resolve(root, 'tools/run-tecmate-monitor-launch-proof.ts'), 'utf8');
+  const readme = readFileSync(resolve(root, 'proofs/tecmate-monitor-launch/README.md'), 'utf8');
   const monitor = readFileSync(resolve(root, 'roms/tec1g/tecm8/monitor/monitor.asm'), 'utf8');
   const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
@@ -41,6 +42,11 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(runner, /demo input service bank side effect/);
   assert.match(runner, /demo input neutral joystick state/);
   assert.match(runner, /demo TEC-FS mount side effect/);
+  assert.match(runner, /const SHL_RENDER_RESULT = 0x83/);
+  assert.match(runner, /shellDirResultStatus/);
+  assert.match(runner, /captured shell dir visible result/);
+  assert.match(readme, /calls\s+`SHL_RENDER_RESULT` to show `OK`/);
+  assert.match(readme, /installed\.shellDirResultStatus/);
   assert.equal(
     pkg.scripts['proof:tecmate-monitor-launch'],
     'npm run rom:check && node --experimental-strip-types tools/run-tecmate-monitor-launch-proof.ts',

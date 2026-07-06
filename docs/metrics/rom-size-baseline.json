@@ -9,12 +9,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 1143,
-      "span": 1143,
+      "occupied": 1229,
+      "span": 1229,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 33911,
-      "freeAfterHighWater": 15241
+      "highWaterEnd": 33997,
+      "freeAfterHighWater": 15155
     },
     {
       "bank": 1,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 3059,
-    "span": 3059,
+    "occupied": 3145,
+    "span": 3145,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 144397
+    "freeAfterHighWater": 144311
   }
 }

@@ -26,6 +26,13 @@ The installed runtime then writes `edit` into the shell command buffer, calls
 line contains exactly `EDIT`. The last-run JSON records this as
 `installed.shellCommandStatus`, which is used by the manual ROM demo guide.
 
+The same installed runtime also seeds one TEC-FS catalogue slot, writes `dir`
+into the shell command buffer, calls `SHL_RUN_COMMAND`, checks the bank-2
+catalogue summary result, calls `SHL_RENDER_STATUS` to show `DIR`, and calls
+`SHL_RENDER_RESULT` to show `OK`. The last-run JSON records the compact result
+as `installed.shellDirResult` and the visible result status as
+`installed.shellDirResultStatus`.
+
 The runner uses the monitor D8 map to locate `launchExpansion` and the bank-0
 D8 map to locate the installed menu provider, so the proof fails if discovery,
 installation, vector launch, or bridge dispatch stops reaching the bank-0

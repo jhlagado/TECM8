@@ -110,7 +110,8 @@ published as fixed callable addresses.
 | `INP_ADDR` | `8000h` | Input service bank-origin dispatcher. |
 | `SHL_ENTRY` | `80h` | Resident shell entry service ID. |
 | `SHL_RUN_COMMAND` | `81h` | Resident shell one-command boundary service ID. |
-| `SHL_RENDER_STATUS` | `82h` | Resident shell VDU status-line publisher service ID. |
+| `SHL_RENDER_STATUS` | `82h` | Resident shell VDU action/status-line publisher service ID. |
+| `SHL_RENDER_RESULT` | `83h` | Resident shell VDU command-result status-line publisher service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
@@ -268,6 +269,13 @@ The command buffer capacity is `SHL_COMMAND_CAPACITY` bytes. The service scans
 at most that many bytes, so a missing terminator cannot run into the expansion
 menu/service vectors at `3BF0h..3BF7h`. Callers must treat `3A80h..3A9Fh` as
 the v1 shell command input slot.
+
+`SHL_RENDER_STATUS` and `SHL_RENDER_RESULT` are separate because they answer
+different UI questions. `SHL_RENDER_STATUS` maps the current command action to
+short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`. `SHL_RENDER_RESULT` maps
+`SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,
+`FILE`, `UNSUP`, or `NONE`. The monitor proof uses this to show that `dir` can
+both report the action `DIR` and then render the TEC-FS-backed result `OK`.
 
 For the future assembler path, `SHL_PARAM_COMMAND_TARGET_LO/HI` is reserved for
 a pointer to the resolved command target or artifact descriptor, and

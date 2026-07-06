@@ -75,9 +75,9 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /Latest shell-to-TEC-FS `dir` handoff delta/);
-  assert.match(doc, /bank 0 span: 1099 -> 1143 bytes/);
-  assert.match(doc, /expansion total span: 3015 -> 3059 bytes/);
+  assert.match(doc, /Latest shell result renderer delta/);
+  assert.match(doc, /bank 0 span: 1143 -> 1229 bytes/);
+  assert.match(doc, /expansion total span: 3059 -> 3145 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 
@@ -109,6 +109,7 @@ test('TecMate ROM space map records current bank 0 private boundary labels', () 
     ['Bank 0 shell entry', 'Tecm8ShellEntry', 'Private descriptor and VDU home-screen path for `SHL_ENTRY`.'],
     ['Bank 0 shell command boundary', 'Tecm8ShellRunCommand', 'Private one-command dispatcher reached through `SHL_RUN_COMMAND`.'],
     ['Bank 0 shell status renderer', 'Tecm8ShellRenderCommandStatus', 'Private VDU status-line publisher reached through `SHL_RENDER_STATUS`.'],
+    ['Bank 0 shell result renderer', 'Tecm8ShellRenderCommandResult', 'Private VDU result publisher reached through `SHL_RENDER_RESULT`.'],
     ['Bank 0 info marker', 'Tecm8ExpansionBank0Info', 'Private marker, not a fixed ABI location.'],
   ];
 

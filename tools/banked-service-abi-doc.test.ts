@@ -101,6 +101,10 @@ test('banked service ABI doc covers bank 0 service registry entries', () => {
     'INP_READ',
     'INP_BANK',
     'INP_ADDR',
+    'SHL_ENTRY',
+    'SHL_RUN_COMMAND',
+    'SHL_RENDER_STATUS',
+    'SHL_RENDER_RESULT',
     'SHL_BANK',
   ]) {
     assertDocRow(name);
@@ -257,6 +261,9 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /`dir` records `SHL_ACTION_DIR`/);
   assert.match(doc, /calls the bank-2\s+`TFS_SVC_SUMMARIZE_CATALOG` service/);
   assert.match(doc, /summary count in `SHL_PARAM_COMMAND_RESULT_HI`/);
+  assert.match(doc, /`SHL_RENDER_STATUS` and `SHL_RENDER_RESULT` are separate/);
+  assert.match(doc, /maps the current command action to\s+short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`/);
+  assert.match(doc, /maps\s+`SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,\s+`FILE`, `UNSUP`, or `NONE`/);
   assert.match(doc, /leaves the target pointer and flags clear/);
   assert.match(doc, /blank command is a\s+successful no-op/);
   assert.match(doc, /leaves `SHL_ACTION_NONE`, records length zero, keeps status\s+OK/);

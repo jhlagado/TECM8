@@ -38,6 +38,8 @@ test('shell command contract reserves assembler result semantics', () => {
   assert.match(doc, /SHL_RESULT_BUILD_ERROR source parsed but did not assemble/);
   assert.match(doc, /SHL_RESULT_FILE_ERROR\s+source, output, map, or project file could not be used/);
   assert.match(doc, /SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked/);
+  assert.match(doc, /`SHL_RENDER_RESULT` turns the low result byte into a short VDU status label/);
+  assert.match(doc, /not a diagnostic formatter/);
   assert.match(doc, /`SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal\s+`SHL_TARGET_DESC`/);
   assert.match(doc, /marks that descriptor as the project-main default/);
   assert.match(doc, /calls the\s+bank-7 assembler skeleton/);

@@ -49,6 +49,11 @@ in C
 out A,carry
 clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
 end
+service rst 0x10 C 0x83 SHL_RENDER_RESULT
+in C
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
 service rst 0x10 C 0x90 ABI_PROBE_NESTED
 in C
 out A,carry
