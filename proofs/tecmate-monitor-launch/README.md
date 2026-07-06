@@ -33,6 +33,11 @@ catalogue summary result, calls `SHL_RENDER_STATUS` to show `DIR`, and calls
 as `installed.shellDirResult` and the visible result status as
 `installed.shellDirResultStatus`.
 
+It then repeats `dir` with an inactive catalogue slot. That path must still
+return `SHL_RESULT_OK`, publish a zero summary count, clear the first-entry
+flag, and render `OK`. This proves an empty catalogue is not treated as a file
+error.
+
 The runner uses the monitor D8 map to locate `launchExpansion` and the bank-0
 D8 map to locate the installed menu provider, so the proof fails if discovery,
 installation, vector launch, or bridge dispatch stops reaching the bank-0

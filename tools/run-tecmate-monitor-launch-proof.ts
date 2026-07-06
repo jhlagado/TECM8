@@ -270,6 +270,14 @@ function seedCatalogSlot(runtime: Runtime): void {
   runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_HI, TFS_CATALOG_BUFFER >> 8);
 }
 
+function seedInactiveCatalogSlot(runtime: Runtime): void {
+  for (let offset = 0; offset < 0x40; offset += 1) {
+    runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + offset, 0x00);
+  }
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_LO, TFS_CATALOG_BUFFER & 0xff);
+  runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_HI, TFS_CATALOG_BUFFER >> 8);
+}
+
 function assertEqual(actual: number, expected: number, name: string): void {
   if (actual !== expected) {
     throw new Error(`${name}: got 0x${actual.toString(16)}, expected 0x${expected.toString(16)}`);
@@ -502,6 +510,32 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertVramText(platformRuntime, 0x02e0, 'OK', 'shell dir visible result');
   const shellDirResultStatus = readVramAscii(platformRuntime, 0x02e0, 8).trimEnd();
   assertStringEqual(shellDirResultStatus, 'OK', 'captured shell dir visible result');
+
+  seedInactiveCatalogSlot(runtime);
+  writeAsciiZ(runtime, SHL_COMMAND_BUFFER, 'dir');
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RUN_COMMAND);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_ACTION], SHL_ACTION_DIR, 'shell empty dir command action');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_OK, 'shell empty dir result ok');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x00, 'shell empty dir result count');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_LO], 0x00, 'shell empty dir TEC-FS summary count lo');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_HI], 0x00, 'shell empty dir TEC-FS summary count hi');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FLAGS], 0x00, 'shell empty dir TEC-FS summary flags');
+
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_A, 0x00);
+  runtime.hardware.forceMemWrite?.(BRIDGE_RESULT_F, 0x00);
+  writeBridgeServiceStub(runtime, SHL_RENDER_RESULT);
+  runtime.cpu.halted = false;
+  runtime.cpu.pc = RETURN_STUB;
+  runtime.cpu.sp = STACK_RETURN;
+  runUntilHalt(runtime, platformRuntime);
+  assertEqual(runtime.hardware.memory[BRIDGE_RESULT_F] & 0x01, 0x00, 'shell empty dir result render returned carry clear');
+  assertVramText(platformRuntime, 0x02e0, 'OK', 'shell empty dir visible result');
 
   return {
     instructions,

@@ -43,9 +43,14 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(runner, /demo input neutral joystick state/);
   assert.match(runner, /demo TEC-FS mount side effect/);
   assert.match(runner, /const SHL_RENDER_RESULT = 0x83/);
+  assert.match(runner, /seedInactiveCatalogSlot/);
+  assert.match(runner, /shell empty dir result count/);
+  assert.match(runner, /shell empty dir TEC-FS summary flags/);
   assert.match(runner, /shellDirResultStatus/);
   assert.match(runner, /captured shell dir visible result/);
   assert.match(readme, /calls\s+`SHL_RENDER_RESULT` to show `OK`/);
+  assert.match(readme, /repeats `dir` with an inactive catalogue slot/);
+  assert.match(readme, /empty catalogue is not treated as a file\s+error/);
   assert.match(readme, /installed\.shellDirResultStatus/);
   assert.equal(
     pkg.scripts['proof:tecmate-monitor-launch'],
