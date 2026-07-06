@@ -22,12 +22,13 @@ summary. It is the first command to run before a manual Debug80 inspection.
 For manual Debug80 inspection, use:
 
 ```text
-npm run demo:tecmate-rom:manual
+npm run checkpoint:tecmate-rom
 ```
 
 That command runs the same proof-backed build path and then prints the exact
-generated ROM artifacts, monitor route, expected TMS9918 text, and last-run
-trace markers to use while inspecting Debug80.
+generated ROM artifacts, monitor route, expected TMS9918 text, last-run trace
+markers, compact command matrix, and current ROM footprint to use while
+inspecting Debug80.
 
 For a compact integrated milestone report, use:
 
@@ -87,7 +88,8 @@ The milestone is complete when:
    geometry/locator/mount state is available.
 8. The final Debug80 trace or screen state proves success without requiring a
    human to inspect internal memory by hand.
-9. `npm run rom:size:summary` is recorded with before/after footprint deltas.
+9. `npm run checkpoint:tecmate-rom` is recorded with before/after footprint
+   deltas, unless the increment is size-only.
 10. `npm run rom:milestone:status` reports `ok` for the integrated ROM proof
     surfaces: monitor launch, shell command loop, VDU/TMS9918, TEC-FS, input
     snapshot, and bank ABI.
@@ -98,7 +100,7 @@ confidence, not as the only release gate.
 
 ## Manual Debug80 Script
 
-1. From the TECM8 repo root, run `npm run demo:tecmate-rom:manual`.
+1. From the TECM8 repo root, run `npm run checkpoint:tecmate-rom`.
 2. Open Debug80 with the TECM8 profile after the command has generated the ROM
    artifacts. The current `main` target may still compile the older
    `src/main.asm` RAM program; for this milestone, use Debug80 only to inspect
@@ -116,7 +118,10 @@ confidence, not as the only release gate.
    `TecMate ROM Shell` title, `TFS:30+1 128M 4K` TEC-FS geometry line,
    `KEY:0000 JOY:00` input echo, `>` prompt, and `POLL` status text after the
    first input/update/render loop slice.
-7. If the manual screen differs, compare it with the automated evidence in
+7. In the printed checkpoint output, expect the shell command matrix to show:
+   `edit -> EDIT`, `asm -> ASM/UNSUP`, `run -> RUN/UNSUP`, `dir -> DIR/OK`,
+   and `dir bad-buffer -> FILE`.
+8. If the manual screen differs, compare it with the automated evidence in
    `proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json`.
 
 ## Non-Goals

@@ -33,10 +33,12 @@ test('Debug80 TecMate demo milestone defines the ROM demo command', () => {
   );
   assert.match(doc, /## ROM Demo Command/);
   assert.match(doc, /npm run demo:tecmate-rom/);
+  assert.match(doc, /npm run checkpoint:tecmate-rom/);
   assert.match(doc, /npm run rom:milestone:status/);
   assert.match(doc, /builds the TECM8 fixed monitor ROM/);
   assert.match(doc, /runs the Debug80 monitor-launch proof/);
   assert.match(doc, /prints the ROM size\s+summary/);
+  assert.match(doc, /compact command matrix, and current ROM footprint/);
   assert.match(doc, /reports the current fixed-monitor\s+and expansion-bank footprint/);
   assert.match(doc, /monitor launch,\s+the shell command loop, VDU\/TMS9918, TEC-FS, input snapshot, and bank ABI/);
   assert.match(doc, /not the older GLCD editor demo path/);
@@ -52,6 +54,8 @@ test('Debug80 TecMate demo milestone records the manual ROM launch script', () =
   assert.match(doc, /Enter the monitor `Expansion` menu item/);
   assert.match(doc, /`TecMate ROM Shell` title, `TFS:30\+1 128M 4K` TEC-FS geometry line,\s+`KEY:0000 JOY:00` input echo, `>` prompt, and `POLL` status text/);
   assert.match(doc, /first input\/update\/render\s+loop slice/);
+  assert.match(doc, /shell command matrix to show/);
+  assert.match(doc, /`edit -> EDIT`, `asm -> ASM\/UNSUP`, `run -> RUN\/UNSUP`, `dir -> DIR\/OK`,\s+and `dir bad-buffer -> FILE`/);
 });
 
 test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
@@ -64,7 +68,7 @@ test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
     'reads the bank 6 input snapshot boundary',
     'calls the bank 2 TEC-FS boundary',
     'final Debug80 trace or screen state proves success',
-    '`npm run rom:size:summary` is recorded with before/after footprint deltas',
+    '`npm run checkpoint:tecmate-rom` is recorded with before/after footprint',
     '`npm run rom:milestone:status` reports `ok` for the integrated ROM proof',
   ]) {
     assert.match(doc, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
