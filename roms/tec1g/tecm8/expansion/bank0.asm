@@ -267,16 +267,34 @@ Tecm8ShellRunDir:
         ld a,SHL_ACTION_DIR
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        push hl
         ; expects out A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG
-        jp c,Tecm8ShellPublishDirError
-        ld a,SHL_RESULT_OK
-        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        jp c,Tecm8ShellPublishDirErrorPop
         ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ; expects out A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_NEXT_CATALOG
+        jp c,Tecm8ShellPublishDirErrorPop
+        ; expects out A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG
+        jp c,Tecm8ShellPublishDirErrorPop
+        ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
+        ld b,a
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        add a,b
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        pop hl
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,SHL_RESULT_OK
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
         ld a,0x80
         or a
         ret
+Tecm8ShellPublishDirErrorPop:
+        pop hl
+        ld (TFS_PARAM_BUFFER_LO),hl
 Tecm8ShellPublishDirError:
         ld a,SHL_RESULT_FILE_ERROR
         ld (SHL_PARAM_COMMAND_RESULT_LO),a

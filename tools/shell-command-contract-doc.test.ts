@@ -18,8 +18,8 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
   assert.match(doc, /A blank command line is a successful no-op/);
   assert.match(doc, /return to the prompt without reporting an unknown\s+command/);
-  assert.match(doc, /`TFS_PARAM_BUFFER_LO\/HI` must point at one 64-byte TM8 v1 catalogue slot in RAM/);
-  assert.match(doc, /inactive slot is a successful empty result, not a file error/);
+  assert.match(doc, /`TFS_PARAM_BUFFER_LO\/HI` must point at two adjacent 64-byte TM8 v1 catalogue\s+slots in RAM/);
+  assert.match(doc, /Inactive slots contribute zero to the count and are not file\s+errors/);
   assert.match(doc, /keeps the\s+ROM path tiny/);
 });
 
@@ -73,8 +73,9 @@ test('shell command contract reserves game command namespace without enabling it
   assert.match(doc, /should not replace the general `edit`, `asm`, and `run` commands/);
   assert.match(doc, /`SHL_RUN_COMMAND` boundary still classifies only exact\s+single-word `edit`, `asm`, `run`, and `dir`/);
   assert.match(doc, /dir\s+-> current volume catalogue summary/);
-  assert.match(doc, /calls the bank-2 TEC-FS\s+`TFS_SVC_SUMMARIZE_CATALOG` primitive/);
-  assert.match(doc, /stores the\s+summary count in `SHL_PARAM_COMMAND_RESULT_HI`/);
+  assert.match(doc, /calls the bank-2 TEC-FS one-slot summary\s+primitive/);
+  assert.match(doc, /advances once with `TFS_SVC_NEXT_CATALOG`/);
+  assert.match(doc, /stores the two-slot count in\s+`SHL_PARAM_COMMAND_RESULT_HI`/);
   assert.match(doc, /It should reject `game` until a real\s+multi-word shell parser and game tool dispatcher are implemented/);
   assert.doesNotMatch(ops, /SHL_ACTION_GAME/);
   assert.doesNotMatch(ops, /SHL_ACTION_PROFILE/);

@@ -56,7 +56,7 @@ test('manual ROM demo guide prints current proof-backed markers', () => {
   assert.match(output, /^- shell command status: EDIT$/m);
   assert.match(output, /^- shell dir result status: OK$/m);
   assert.match(output, /^- shell dir error result status: FILE$/m);
-  assert.match(output, /^- shell dir result: result=0001h, count=1, firstFileId=0021h, firstFileType=0002h, nameLen=8, flags=0001h$/m);
+  assert.match(output, /^- shell dir result: result=0001h, count=2, lastSummaryFileId=0022h, lastSummaryFileType=0003h, nameLen=8, flags=0001h$/m);
   assert.match(output, /final SYS_CTRL: 0001h/);
   assert.match(output, /final physical bank: 0/);
 });

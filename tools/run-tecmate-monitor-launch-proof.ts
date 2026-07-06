@@ -64,6 +64,7 @@ const TFS_ERR_BAD_BUFFER = 0x0e;
 const TFS_CATALOG_BUFFER = 0x6280;
 const TFS_ENTRY_STATUS_ACTIVE = 0x01;
 const TFS_FILE_SOURCE = 0x02;
+const TFS_FILE_BINARY = 0x03;
 const INP_PARAM_BANK = 0x3bc2;
 const INP_PARAM_JOYSTICK = 0x3bc6;
 const ALT_INSTALL_ADDR = 0x8200;
@@ -268,12 +269,17 @@ function seedCatalogSlot(runtime: Runtime): void {
   runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x30, 0x00);
   runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x31, 0x00);
   runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x32, TFS_FILE_SOURCE);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x40, TFS_ENTRY_STATUS_ACTIVE);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x41, 0x22);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x42, 0x02);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x43, 0x08);
+  runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + 0x72, TFS_FILE_BINARY);
   runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_LO, TFS_CATALOG_BUFFER & 0xff);
   runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_HI, TFS_CATALOG_BUFFER >> 8);
 }
 
 function seedInactiveCatalogSlot(runtime: Runtime): void {
-  for (let offset = 0; offset < 0x40; offset += 1) {
+  for (let offset = 0; offset < 0x80; offset += 1) {
     runtime.hardware.forceMemWrite?.(TFS_CATALOG_BUFFER + offset, 0x00);
   }
   runtime.hardware.forceMemWrite?.(TFS_PARAM_BUFFER_LO, TFS_CATALOG_BUFFER & 0xff);
@@ -469,11 +475,11 @@ function runInstalledExpansionCase(launchAddress: number): {
   assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_TARGET_HI], 0x00, 'shell dir target pointer hi remains clear');
   assertEqual(runtime.hardware.memory[SHL_TARGET_FLAGS], 0x00, 'shell dir target flags remain clear');
   assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_LO], SHL_RESULT_OK, 'shell dir result ok');
-  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x01, 'shell dir result count');
+  assertEqual(runtime.hardware.memory[SHL_PARAM_COMMAND_RESULT_HI], 0x02, 'shell dir result count');
   assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_LO], 0x01, 'shell dir TEC-FS summary count lo');
   assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_COUNT_HI], 0x00, 'shell dir TEC-FS summary count hi');
-  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_ID], 0x21, 'shell dir TEC-FS first file id');
-  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_TYPE], TFS_FILE_SOURCE, 'shell dir TEC-FS first file type');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_ID], 0x22, 'shell dir TEC-FS last summarized file id');
+  assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_FILE_TYPE], TFS_FILE_BINARY, 'shell dir TEC-FS last summarized file type');
   assertEqual(runtime.hardware.memory[TFS_PARAM_SUMMARY_FIRST_NAME_LEN], 0x08, 'shell dir TEC-FS first name length');
   assertEqual(
     runtime.hardware.memory[TFS_PARAM_SUMMARY_FLAGS],

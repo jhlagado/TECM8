@@ -131,16 +131,18 @@ clear stale command state and return to the prompt without reporting an unknown
 command.
 
 `dir` is the first storage-backed shell command. In the current ROM increment it
-does not walk a full directory yet. It calls the bank-2 TEC-FS
-`TFS_SVC_SUMMARIZE_CATALOG` primitive over the current catalogue buffer, leaves
-the target descriptor clear, returns `SHL_RESULT_OK` on success, and stores the
-summary count in `SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS
-handoff before the real multi-entry catalogue reader is linked in.
+does not walk a full directory yet. It calls the bank-2 TEC-FS one-slot summary
+primitive, advances once with `TFS_SVC_NEXT_CATALOG`, summarizes the second
+slot, restores the original catalogue pointer, leaves the target descriptor
+clear, returns `SHL_RESULT_OK` on success, and stores the two-slot count in
+`SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS handoff before
+the real multi-entry catalogue reader is linked in.
 
 The current catalogue buffer is deliberately explicit: before `dir` is called,
-`TFS_PARAM_BUFFER_LO/HI` must point at one 64-byte TM8 v1 catalogue slot in RAM.
-An inactive slot is a successful empty result, not a file error. This keeps the
-ROM path tiny while the later sector reader and iterator are still absent.
+`TFS_PARAM_BUFFER_LO/HI` must point at two adjacent 64-byte TM8 v1 catalogue
+slots in RAM. Inactive slots contribute zero to the count and are not file
+errors. This keeps the ROM path tiny while the later sector reader and real
+iterator are still absent.
 
 ## Reserved Tool Namespaces
 

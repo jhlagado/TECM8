@@ -252,10 +252,12 @@ in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
 at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
 target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`,
 leaves the target pointer and flags clear, calls the bank-2
-`TFS_SVC_SUMMARIZE_CATALOG` service, and publishes `SHL_RESULT_OK` with the
-summary count in `SHL_PARAM_COMMAND_RESULT_HI`. A blank command is a
-successful no-op: it leaves `SHL_ACTION_NONE`, records length zero, keeps status
-OK, returns `A=80h`, and clears carry. `asm` calls the bank-7 assembler
+`TFS_SVC_SUMMARIZE_CATALOG`, `TFS_SVC_NEXT_CATALOG`, and
+`TFS_SVC_SUMMARIZE_CATALOG` services, restores the original catalogue pointer,
+and publishes `SHL_RESULT_OK` with the two-slot count in
+`SHL_PARAM_COMMAND_RESULT_HI`. A blank command is a successful no-op: it leaves
+`SHL_ACTION_NONE`, records length zero, keeps status OK, returns `A=80h`, and
+clears carry. `asm` calls the bank-7 assembler
 skeleton, `run` calls the bank-8 run skeleton, and both commands copy the
 bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI` before
 returning `A=80h` with carry clear. Unknown non-empty commands store
@@ -584,9 +586,10 @@ returns `A=82h` with carry clear. It does not inspect the slot, find the next
 active file, cross a sector boundary, or maintain a cursor.
 
 For the current shell path, `TFS_PARAM_BUFFER_LO/HI` is the caller-owned RAM
-pointer to that one slot. `SHL_RUN_COMMAND` does not read SD sectors, scan
-multiple slots, or allocate a directory cursor yet; it simply asks bank 2 to
-summarize the slot already selected by the caller. That keeps the MVP ROM
+pointer to two adjacent catalogue slots. `SHL_RUN_COMMAND` does not read SD
+sectors, scan an arbitrary catalogue, or allocate a directory cursor yet; it
+summarizes the selected slot, advances once, summarizes the next slot, restores
+the original pointer, and reports that two-slot count. That keeps the MVP ROM
 boundary small and makes empty catalogues explicit.
 
 Catalog entry constants mirror the host TM8 format:

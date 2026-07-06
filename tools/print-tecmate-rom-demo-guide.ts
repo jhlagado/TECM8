@@ -56,7 +56,7 @@ function readLastRun(): LastRun {
   if (data.installed.shellCommandStatus !== 'EDIT') {
     throw new Error(`monitor launch proof output is missing exact shell command status EDIT: ${proofPath}`);
   }
-  if (data.installed.shellDirResult?.resultLo !== 0x01 || data.installed.shellDirResult.count !== 0x01) {
+  if (data.installed.shellDirResult?.resultLo !== 0x01 || data.installed.shellDirResult.count !== 0x02) {
     throw new Error(`monitor launch proof output is missing exact shell dir TEC-FS result: ${proofPath}`);
   }
   if (data.installed.shellDirResultStatus !== 'OK') {
@@ -117,7 +117,7 @@ function main(): void {
   console.log(`- shell dir result status: ${installed.shellDirResultStatus}`);
   console.log(`- shell dir error result status: ${installed.shellDirErrorResultStatus}`);
   console.log(
-    `- shell dir result: result=${hex(installed.shellDirResult?.resultLo)}, count=${installed.shellDirResult?.count ?? 'unknown'}, firstFileId=${hex(installed.shellDirResult?.firstFileId)}, firstFileType=${hex(installed.shellDirResult?.firstFileType)}, nameLen=${installed.shellDirResult?.firstNameLength ?? 'unknown'}, flags=${hex(installed.shellDirResult?.flags)}`,
+    `- shell dir result: result=${hex(installed.shellDirResult?.resultLo)}, count=${installed.shellDirResult?.count ?? 'unknown'}, lastSummaryFileId=${hex(installed.shellDirResult?.firstFileId)}, lastSummaryFileType=${hex(installed.shellDirResult?.firstFileType)}, nameLen=${installed.shellDirResult?.firstNameLength ?? 'unknown'}, flags=${hex(installed.shellDirResult?.flags)}`,
   );
   console.log(`- final SYS_CTRL: ${hex(installed.finalSysCtrl)}`);
   console.log(`- final physical bank: ${installed.finalPhysicalBank ?? 'unknown'}`);
