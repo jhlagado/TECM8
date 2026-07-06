@@ -2,36 +2,39 @@
 
 ## Goal
 
-The first editor should be a small GLCD text editor: closer to a simple
-WordStar/Pico/Nano-style editor than to a full GUI IDE.
+The first ROM editor should be a small source editor: closer to a simple
+WordStar/Pico/Nano-style editor than to a full GUI IDE. Earlier GLCD editor
+work remains useful reference material, but the ROM MVP should target the
+TecMate VDU/TMS9918 text path first and keep GLCD support deferred unless it is
+needed for compatibility or hardware proofing.
 
 It should edit one file at a time, save reliably, and return to the shell so
 other tools can run.
 
 ## Display Targets
 
-Initial target:
-
-```text
-GLCD: 20 columns x 10 rows using MON3's current 6x6 terminal cell
-```
-
-Future target:
+ROM MVP target:
 
 ```text
 TMS9918 VDU: 32 columns x 24 rows
+```
+
+Legacy/reference target:
+
+```text
+GLCD: 20 columns x 10 rows using MON3's current 6x6 terminal cell
 ```
 
 The editor core should not depend on either display. It should expose a
 viewport model that renderers can draw differently.
 
 The display dependency should follow the BIOS profile boundary in
-[TECM8 BIOS API Draft](tecm8-bios-api.md). The editor may require the rich
-TECM8 profile for its first usable version, meaning GLCD plus matrix keyboard,
-but the editor should still talk to a display backend rather than to MON3's
-terminal policy directly. Character LCD, seven-segment display, and hexadecimal
-keypad support remain core fallback/diagnostic surfaces, not the primary editor
-surface.
+[TECM8 BIOS API Draft](tecm8-bios-api.md). The first ROM editor may require the
+rich TECM8 profile for its usable version, meaning VDU/TMS9918 text plus matrix
+keyboard, but it should still talk to a display backend rather than to MON3's
+terminal policy directly. GLCD can remain a legacy/reference renderer.
+Character LCD, seven-segment display, and hexadecimal keypad support remain
+core fallback/diagnostic surfaces, not the primary editor surface.
 
 The MON3 GLCD terminal is not an 8x8 tile display. Its current character path
 uses 6x6 pixel cells on a 128x64 bitmap display. The practical terminal
@@ -252,6 +255,47 @@ This provides:
 512-byte sector = 16 lines
 4K block        = 128 lines
 ```
+
+## ROM MVP File Buffer ABI
+
+The ROM editor path should start with one compact source-file buffer contract,
+not by moving the old GLCD editor wholesale into expansion ROM. The first
+banked editor service only needs to open the project-main source target already
+resolved by the shell, expose a RAM window of 32-byte source records, track
+whether that window is dirty, and return a small result code to the shell.
+
+Minimum caller-visible state:
+
+```text
+editor target descriptor  from SHL_TARGET_DESC
+buffer base               word, caller/editor-owned RAM
+buffer bytes              word, normally 512, 1024, 2048, or 4096
+first line number         word
+loaded line count         word
+cursor line               word
+cursor column             byte
+dirty flags               byte, bit 0 means buffer changed
+result code               byte, compatible with SHL_RESULT_*
+```
+
+The editor should treat TEC-FS as the file authority. Load, save, and metadata
+updates should cross the bank-2 TEC-FS boundary; bank 0 should not parse paths
+or scan catalogues on the editor's behalf. The shell's job is to classify
+`edit`, point at the compact target descriptor, and transfer control. The editor
+can later ask TEC-FS to resolve/read/write the target.
+
+The first ROM implementation can be deliberately modest:
+
+- one source file open at a time
+- one RAM window active at a time
+- explicit save only
+- no background flush
+- no dependency on GLCD-specific terminal policy
+- VDU/TMS9918 text rendering first, with GLCD support deferred unless needed
+
+This preserves the useful old editor work as reference material, but the ROM
+MVP should be driven by this small file-buffer ABI and the 32-byte source record
+format above.
 
 ## Editor RAM Window And SD Latency
 

@@ -12,6 +12,13 @@ function readRepoFile(path: string): string {
 test('editor design documents the structured display model constants', () => {
   const docs = readRepoFile('docs/editor-design.md');
 
+  assert.match(docs, /first ROM editor should be a small source editor/);
+  assert.match(docs, /VDU\/TMS9918 text path first and keep GLCD support deferred/);
+  assert.match(docs, /ROM MVP target:[\s\S]*TMS9918 VDU: 32 columns x 24 rows/);
+  assert.match(docs, /Legacy\/reference target:[\s\S]*GLCD: 20 columns x 10 rows/);
+  assert.match(docs, /rich TECM8 profile[\s\S]*VDU\/TMS9918 text plus matrix\s+keyboard/);
+  assert.doesNotMatch(docs, /first usable version, meaning GLCD plus matrix keyboard/);
+
   for (const phrase of [
     'TECM8_DISPLAY_GLCD_COLUMNS',
     'TECM8_DISPLAY_GLCD_ROWS',
@@ -25,6 +32,24 @@ test('editor design documents the structured display model constants', () => {
   ]) {
     assert.match(docs, new RegExp(`\\b${phrase}\\b`));
   }
+});
+
+test('editor design defines a compact ROM MVP file-buffer ABI', () => {
+  const docs = readRepoFile('docs/editor-design.md');
+
+  assert.match(docs, /## ROM MVP File Buffer ABI/);
+  assert.match(docs, /one compact source-file buffer contract/);
+  assert.match(docs, /not by moving the old GLCD editor wholesale into expansion ROM/);
+  assert.match(docs, /project-main source target already\s+resolved by the shell/);
+  assert.match(docs, /32-byte source records/);
+  assert.match(docs, /dirty flags\s+byte, bit 0 means buffer changed/);
+  assert.match(docs, /result code\s+byte, compatible with SHL_RESULT_\*/);
+  assert.match(docs, /TEC-FS as the file authority/);
+  assert.match(docs, /bank 0 should not parse paths\s+or scan catalogues on the editor's behalf/);
+  assert.match(docs, /one source file open at a time/);
+  assert.match(docs, /explicit save only/);
+  assert.match(docs, /VDU\/TMS9918 text rendering first, with GLCD support deferred unless needed/);
+  assert.match(docs, /ROM\s+MVP should be driven by this small file-buffer ABI/);
 });
 
 test('structured display model has assembly entry points', () => {
