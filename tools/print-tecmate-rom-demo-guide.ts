@@ -116,8 +116,9 @@ function main(): void {
   console.log(`- shell command status: ${installed.shellCommandStatus}`);
   console.log(`- shell dir result status: ${installed.shellDirResultStatus}`);
   console.log(`- shell dir error result status: ${installed.shellDirErrorResultStatus}`);
+  console.log(`- shell dir aggregate count: ${installed.shellDirResult?.count ?? 'unknown'}`);
   console.log(
-    `- shell dir result: result=${hex(installed.shellDirResult?.resultLo)}, count=${installed.shellDirResult?.count ?? 'unknown'}, lastSummaryFileId=${hex(installed.shellDirResult?.firstFileId)}, lastSummaryFileType=${hex(installed.shellDirResult?.firstFileType)}, nameLen=${installed.shellDirResult?.firstNameLength ?? 'unknown'}, flags=${hex(installed.shellDirResult?.flags)}`,
+    `- shell dir last summary: fileId=${hex(installed.shellDirResult?.firstFileId)}, fileType=${hex(installed.shellDirResult?.firstFileType)}, nameLen=${installed.shellDirResult?.firstNameLength ?? 'unknown'}, flags=${hex(installed.shellDirResult?.flags)}`,
   );
   console.log(`- final SYS_CTRL: ${hex(installed.finalSysCtrl)}`);
   console.log(`- final physical bank: ${installed.finalPhysicalBank ?? 'unknown'}`);
