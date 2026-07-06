@@ -29,6 +29,7 @@ test('ROM size budget gate defines per-bank hard budgets and total expansion gua
   assert.match(checker, /exceeds soft budget/);
   assert.match(checker, /function printSummary/);
   assert.match(checker, /function validateBudget/);
+  assert.match(checker, /function softFree/);
   assert.match(checker, /--json/);
   assert.match(checker, /# TecMate ROM Footprint/);
 });
@@ -44,9 +45,9 @@ test('ROM size budget checker executes against current D8 artifacts', () => {
   });
 
   assert.match(output, /monitor span=16384\/16384/);
-  assert.match(output, /bank 0 Shell, launcher, registry:/);
+  assert.match(output, /bank 0 Shell, launcher, registry: occupied=\d+ span=\d+ soft=2048 softFree=\d+ hard=4096/);
   assert.match(output, /bank 8 Run skeleton:/);
-  assert.match(output, /expansion total: occupied=/);
+  assert.match(output, /expansion total: occupied=\d+ span=\d+ soft=32768 softFree=\d+ hard=65536/);
 });
 
 test('ROM size checker can emit machine-readable JSON for delta tooling', () => {
@@ -128,8 +129,8 @@ test('ROM size budget checker can print a compact footprint summary', () => {
   assert.match(output, /# TecMate ROM Footprint/);
   assert.match(output, /Fixed monitor span: 16384\/16384 bytes/);
   assert.match(output, /Expansion total span: \d+\/65536 bytes hard budget/);
-  assert.match(output, /\| Bank \| Role \| Span \| Soft \| Hard \| Free \| Status \|/);
-  assert.match(output, /\| 0 \| Shell, launcher, registry \|/);
+  assert.match(output, /\| Bank \| Role \| Span \| Soft \| Soft Free \| Hard \| Free \| Status \|/);
+  assert.match(output, /\| 0 \| Shell, launcher, registry \| \d+ \| 2048 \| \d+ \| 4096 \|/);
   assert.match(output, /\| 8 \| Run skeleton \|/);
 });
 

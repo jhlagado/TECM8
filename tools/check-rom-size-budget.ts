@@ -173,7 +173,7 @@ function checkExpansion(report: RomSizeReport): void {
     }
 
     console.log(
-      `bank ${bank.bank} ${bank.role}: occupied=${bank.occupied} span=${bank.span} hard=${bank.hardSpan} free=${bank.freeAfterHighWater}`,
+      `bank ${bank.bank} ${bank.role}: occupied=${bank.occupied} span=${bank.span} soft=${bank.softSpan} softFree=${softFree(bank.span, bank.softSpan)} hard=${bank.hardSpan} free=${bank.freeAfterHighWater}`,
     );
   }
 
@@ -184,7 +184,7 @@ function checkExpansion(report: RomSizeReport): void {
   }
 
   console.log(
-    `expansion total: occupied=${report.expansionTotal.occupied} span=${report.expansionTotal.span} hard=${totalExpansionHardSpan} free=${report.expansionTotal.freeAfterHighWater}`,
+    `expansion total: occupied=${report.expansionTotal.occupied} span=${report.expansionTotal.span} soft=${report.expansionTotal.softSpan} softFree=${softFree(report.expansionTotal.span, report.expansionTotal.softSpan)} hard=${totalExpansionHardSpan} free=${report.expansionTotal.freeAfterHighWater}`,
   );
 }
 
@@ -221,6 +221,10 @@ function statusFor(span: number, softSpan: number, hardSpan: number): string {
   return 'ok';
 }
 
+function softFree(span: number, softSpan: number): number {
+  return softSpan - span;
+}
+
 function printSummary(report: RomSizeReport): void {
   console.log('# TecMate ROM Footprint');
   console.log('');
@@ -229,11 +233,11 @@ function printSummary(report: RomSizeReport): void {
     `Expansion total span: ${report.expansionTotal.span}/${report.expansionTotal.hardSpan} bytes hard budget, occupied ${report.expansionTotal.occupied} bytes.`,
   );
   console.log('');
-  console.log('| Bank | Role | Span | Soft | Hard | Free | Status |');
-  console.log('| ---: | --- | ---: | ---: | ---: | ---: | --- |');
+  console.log('| Bank | Role | Span | Soft | Soft Free | Hard | Free | Status |');
+  console.log('| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |');
   for (const bank of report.banks) {
     console.log(
-      `| ${bank.bank} | ${bank.role} | ${bank.span} | ${bank.softSpan} | ${bank.hardSpan} | ${bank.freeAfterHighWater} | ${statusFor(bank.span, bank.softSpan, bank.hardSpan)} |`,
+      `| ${bank.bank} | ${bank.role} | ${bank.span} | ${bank.softSpan} | ${softFree(bank.span, bank.softSpan)} | ${bank.hardSpan} | ${bank.freeAfterHighWater} | ${statusFor(bank.span, bank.softSpan, bank.hardSpan)} |`,
     );
   }
 }
