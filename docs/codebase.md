@@ -1512,7 +1512,7 @@ the current shrink priorities, and the strict-contract audit output.
 `tools/rom-size-budget.test.ts`, `tools/debug80-tecmate-demo-milestone-doc.test.ts`,
 `tools/input-polling-abi-doc.test.ts`, `tools/profile-preprocessor-contract.test.ts`,
 `tools/profile-tecfs-packaging-doc.test.ts`, `tools/rom-ownership-policy-doc.test.ts`,
-`tools/vdu-tms-minimum-primitives-doc.test.ts`, `tools/gamer-doc.test.ts`, and
+`tools/vdu-tms-minimum-primitives-doc.test.ts`, and
 `tools/rom-milestone-status.test.ts` keep the newer ROM milestone, footprint,
 and profile-direction docs aligned with the live code and reports.
 
@@ -1544,10 +1544,6 @@ toward.
   keyboard, keypad, and optional joystick/game panel snapshots.
 - `docs/vdu-tms-minimum-primitives.md`: minimum bank-1 VDU/TMS9918 service
   surface for shell, editor, profile, and game-style programs.
-- `docs/gamer.md`: game creation mission framed as a proving profile for the
-  general shell/editor/assembler/debugger platform.
-- `docs/gamer-vertical-slice.md`: first game runtime slice and service contract
-  tying games back to VDU, input, TEC-FS, and assembler artifacts.
 - `docs/game-register-contracts.md`: game-facing register contract conventions.
 - `docs/editor-design.md`: GLCD editor model and source records.
 - `docs/editor-command-policy.md`: current editor command surface,
