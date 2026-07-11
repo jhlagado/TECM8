@@ -11,8 +11,8 @@ each pilot with the observed tradeoffs, proof commands, and size results.
 
 ## Current State
 
-TECM8 already uses a strong part of AZM: public routine entries use `@` labels
-and most source modules carry AZMDoc `;!` register contracts. Build and proof
+TECM8 already uses a strong part of AZM: callable routine entries use plain
+labels with adjacent `.routine` register contracts. Build and proof
 tooling compiles with strict register-care settings and the MON3 profile.
 
 The codebase does not yet use several other native AZM features:
@@ -23,11 +23,10 @@ The codebase does not yet use several other native AZM features:
 - `op` inline instruction idioms.
 - `.cstr`, `.pstr`, or `.istr` string directives.
 
-The installed assembler dependency is `@jhlagado/azm@0.2.10`, which is new
-enough for the first-release `.import` feature. TECM8 proof scripts emit native
-bin and D8M artifacts, so `.import` fits the current local toolchain. The main
-caution is ASM80-lowered `.z80` output: AZM currently rejects `.import` source
-units for that output path.
+The installed assembler dependency is `@jhlagado/azm@0.3.2`, which includes the
+plain-label `.routine`, `.expectout`, and `.rcignore` syntax used by this tree.
+TECM8 proof scripts emit native bin and D8M artifacts, so future `.import`
+pilots should be measured against the current AZM 0.3 import/export model.
 
 ## Adoption Guardrail
 
@@ -51,7 +50,7 @@ directives. That keeps every helper label in one global namespace and makes
 large modules harder to treat as real units.
 
 Use `.import` for source files that behave like routine modules. Public entries
-remain `@Name:` and are callable from other modules as `Name`; plain labels
+remain `Name:` and are callable from other modules as `Name`; plain labels
 inside the imported file become private implementation details.
 
 Keep `.include` for:
@@ -167,7 +166,7 @@ Good candidates:
 Avoid ops for:
 
 - longer routines,
-- logic that should have a `;!` contract,
+- logic that should have a `.routine` contract,
 - code repeated often enough that a subroutine is smaller,
 - anything that hides meaningful register or flag effects.
 

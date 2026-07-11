@@ -7,9 +7,8 @@
 PROOF_PASS                  .equ    0x42
 ASM_PROOF_RESULT            .equ    0x3C10
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         xor a
         ld (ASM_PARAM_STATUS),a
         ld (ASM_PARAM_LAST_ERROR),a

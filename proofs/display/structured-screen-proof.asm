@@ -13,9 +13,8 @@ MON3_VPORT      .equ     0x0E13
 CursorAdjacentMarker .equ     0x13E4
 CursorFarRightMarker .equ     0x13F0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -23,7 +22,7 @@ CursorFarRightMarker .equ     0x13F0
         LD      (MON3_VPORT),HL
 
         LD      HL,StructuredScreenLong
-        ;! rc-ignore-next definite_contract_violation: A is not live after rendering the screen model.
+        .rcignore definite_contract_violation "A is not live after rendering the screen model."
         CALL    DisplayRenderScreen
         JR      C,ProofFailed
 
@@ -55,7 +54,7 @@ CursorFarRightMarker .equ     0x13F0
         CALL    DisplayEraseCursorCell
         JR      C,ProofFailed
 
-        ;! rc-ignore-next definite_contract_violation: A is not live after this full flush proof call.
+        .rcignore definite_contract_violation "A is not live after this full flush proof call."
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 
@@ -82,9 +81,8 @@ ProofFailedDone:
 ; DrainDisplayWork -
 ; Structured proofs do not run the live idle loop, so drain queued GLCD bytes
 ; before host-side visible-pixel assertions.
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@DrainDisplayWork:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+DrainDisplayWork:
         CALL    GlcdTileStep
         RET     C
         OR      A

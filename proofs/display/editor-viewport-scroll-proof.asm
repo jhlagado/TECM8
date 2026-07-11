@@ -12,9 +12,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         LD      A,1
         LD      (CaseMarker),A
         CALL    DisplayInit
@@ -237,10 +236,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! in DE,HL
-;! out A,DE,HL,carry,zero
-;! clobbers A,BC
-@CopyRowText:
+.routine in DE,HL out A,DE,HL,carry,zero clobbers BC
+CopyRowText:
         LD      B,32
 
 CopyRowTextLoop:
@@ -254,9 +251,8 @@ CopyRowTextLoop:
         XOR     A
         RET
 
-;! out A,carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunSyntheticControlArrowUp:
+.routine out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+RunSyntheticControlArrowUp:
         LD      A,TECM8_EDITOR_KEY_ARROW_UP
         LD      (BiosInputRawPrimary),A
         LD      A,0x01
@@ -280,9 +276,8 @@ RunSyntheticControlArrowUpErr:
         SCF
         RET
 
-;! out A,carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunSyntheticControlArrowDown:
+.routine out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+RunSyntheticControlArrowDown:
         LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
         LD      (BiosInputRawPrimary),A
         LD      A,0x01

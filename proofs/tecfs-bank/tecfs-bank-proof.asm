@@ -40,9 +40,8 @@ PROOF_FAIL_NEXT_CATALOG     .equ    0xFB
 TFS_PROOF_TRACE_BASE      .equ    0x3B80
 TFS_PROOF_RESULT          .equ    0x3BA0
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld hl,TFS_PARAM_BASE
         ld b,64
 ClearParams:

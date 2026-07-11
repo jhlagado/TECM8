@@ -29,9 +29,9 @@ test('GLCD tile layer exposes direct cell primitives', () => {
     'GlcdTileClearDirtyCellRow',
     'GlcdTilePrepareCell',
   ]) {
-    assert.match(source, new RegExp(`^@${label}:`, 'm'));
+    assert.match(source, new RegExp(`^${label}:`, 'm'));
   }
-  assert.match(rowSource, /^@GlcdTileClearTextRow:/m);
+  assert.match(rowSource, /^GlcdTileClearTextRow:/m);
   assert.match(rowSource, /CALL\s+GlcdTileClearCell/);
 
   assert.match(source, /^TECM8_GLCD_TILE_COLUMNS\s+\.equ\s+TECM8_GLCD_COLUMNS$/m);
@@ -56,7 +56,7 @@ test('GLCD tile layer exposes direct cell primitives', () => {
   assert.match(source, /GlcdTileSetMaskTable:/);
   assert.match(source, /GlcdTileClearMaskTable:/);
   assert.match(source, /LD\s+HL,TECM8_GLCD_TILE_TGBUF\n\s+LD\s+\(TECM8_GLCD_TILE_VPORT\),HL\n\s+CALL\s+BiosDisplayUpdate/);
-  const rowFlush = source.slice(source.indexOf('@GlcdTileFlushRow:'), source.indexOf('GlcdTileRangeError:'));
+  const rowFlush = source.slice(source.indexOf('GlcdTileFlushRow:'), source.indexOf('GlcdTileRangeError:'));
   assert.doesNotMatch(rowFlush, /CALL\s+BiosDisplayUpdate/);
   assert.doesNotMatch(rowFlush, /CALL\s+BiosDisplaySetBitmapMode/);
   assert.match(rowFlush, /OUT\s+\(TECM8_GLCD_TILE_PORT_CMD\),A/);
@@ -73,7 +73,7 @@ test('GLCD tile layer exposes direct cell primitives', () => {
   assert.match(source, /GlcdTileDirtyCellRowsHi:\n\s+\.db\s+0/);
   assert.match(source, /GlcdTileDirtyCellMin:/);
   assert.match(source, /GlcdTileDirtyCellMax:/);
-  assert.match(source, /@GlcdTileStep:[\s\S]*?CALL\s+GlcdTileStartDirtyRow/);
+  assert.match(source, /GlcdTileStep:[\s\S]*?CALL\s+GlcdTileStartDirtyRow/);
 });
 
 test('GLCD tile layer does not call MON3 terminal glyph policy', () => {

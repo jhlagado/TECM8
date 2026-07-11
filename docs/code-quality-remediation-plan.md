@@ -44,7 +44,7 @@ current binary rather than trusting stale offsets.
 
 1. Keep the editor runnable after every increment. `npm run check` is the main
    gate, and manual Debug80 behavior must not regress.
-2. Preserve the AZM discipline. New public routines need `;!` contracts, and
+2. Preserve the AZM discipline. New public routines need `.routine` contracts, and
    refactors must keep register boundaries clear rather than hiding clobbers.
 3. Prefer native AZM structure where it improves boundaries, layout safety, or
    readability: `.import` for routine modules, layout types for records, enums
@@ -285,8 +285,8 @@ Actions:
 - Audit labels over a conservative threshold, such as 28-32 characters or more
   than four PascalCase words.
 - Classify each long label as public API, proof/test-pinned, or private helper.
-- Do not rename public `@` entries casually. Prefer compatibility wrappers or
-  defer public renames until the owning module is already being refactored.
+- Do not rename public callable entries casually. Prefer compatibility wrappers
+  or defer public renames until the owning module is already being refactored.
 - Rename private helper labels opportunistically when touching the owning
   routine for real work.
 - Use shorter module/routine stems for branch labels. Prefer a compact local
@@ -596,7 +596,7 @@ Goal: make the new organization the documented system.
 
 Actions:
 
-- Done: audited public `@` labels for AZMDoc `;!` contracts and added the
+- Done: audited public labels for AZM `.routine` contracts and added the
   missing standalone keyboard-tester entry contract.
 - Done: updated `docs/codebase.md` with the split module map and reading order.
 - Done: updated `docs/memory-and-code-quality.md` with current RAM use and

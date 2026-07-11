@@ -29,7 +29,7 @@ Guardrails:
   the same change.
 - Prefer local, reversible transformations. The goal is to learn which
   techniques work well in this codebase, not to commit to a global style.
-- Keep AZMDoc `;!` contracts accurate for any new public helper.
+- Keep AZM `.routine` contracts accurate for any new public helper.
 - Preserve current user-facing behavior and compact status strings unless the
   changed wording is explicitly part of the increment.
 - Reject any optimization that saves only a few bytes by making a key editor or

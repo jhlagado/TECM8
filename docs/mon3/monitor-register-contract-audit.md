@@ -10,7 +10,7 @@ registerContractsProfile: mon3
 
 The production monitor ROM build deliberately keeps register contracts off for
 now because the copied MON3 source is legacy code and does not yet describe its
-register/flag behavior in AZMDoc form.
+register/flag behavior in AZM `.routine` form.
 
 ## Summary
 

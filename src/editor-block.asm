@@ -3,9 +3,8 @@
 ; EditorBlockSelectionBeginIfNeeded -
 ; Start an exclusive-endpoint whole-line block selection at the current
 ; absolute line if no ordinary selection is already active.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
-@EditorBlockSelectionBeginIfNeeded:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,HL
+EditorBlockSelectionBeginIfNeeded:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         RET     NZ
@@ -23,12 +22,11 @@
 
 ; EditorBlockSelectionCapturePageAnchor -
 ; Save the current absolute line and active state before a page-selection move.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
-@EditorBlockSelectionCapturePageAnchor:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,HL
+EditorBlockSelectionCapturePageAnchor:
         LD      A,(EditorBlockSelectionActive)
         LD      (EditorBlockSelectionPageWasActive),A
-        ; expects out HL
+        .expectout HL
         CALL    EditorBlockSelectionCurrentLine
         LD      A,L
         LD      (EditorBlockSelectionPageAnchorLo),A
@@ -40,9 +38,8 @@
 ; EditorBlockSelectionRestorePageAnchor -
 ; Ensure a successful page-selection move has an anchor. Existing selections
 ; keep their original anchor; fresh page selections anchor at the old line.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorBlockSelectionRestorePageAnchor:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+EditorBlockSelectionRestorePageAnchor:
         LD      A,(EditorBlockSelectionPageWasActive)
         OR      A
         JR      NZ,EditorBlockSelectionRestoreExisting
@@ -59,10 +56,9 @@ EditorBlockSelectionRestoreExisting:
 
 ; EditorBlockSelectionUpdateActive -
 ; Move the active end of the ordinary selection to the current absolute line.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
-@EditorBlockSelectionUpdateActive:
-        ; expects out HL
+.routine out A,carry,zero clobbers sign,parity,halfCarry,HL
+EditorBlockSelectionUpdateActive:
+        .expectout HL
         CALL    EditorBlockSelectionCurrentLine
         LD      A,L
         LD      (EditorBlockSelectionActiveLo),A
@@ -87,16 +83,16 @@ EditorBlockSelectionUpdateStillActive:
 ; EditorBlockSelectionClearState -
 ; Clear ordinary selection state without repainting. Used before full page
 ; renders and cursor resets.
-;! out carry,zero,A,sign,parity,halfCarry
-@EditorBlockSelectionClearState:
+.routine out carry,zero,A,sign,parity,halfCarry
+EditorBlockSelectionClearState:
         XOR     A
         LD      (EditorBlockSelectionActive),A
         RET
 
 ; EditorPendingBlockClearState -
 ; Clear the pending copy/move source without repainting.
-;! out carry,zero,A,sign,parity,halfCarry
-@EditorPendingBlockClearState:
+.routine out carry,zero,A,sign,parity,halfCarry
+EditorPendingBlockClearState:
         XOR     A
         LD      (EditorPendingBlockMode),A
         RET
@@ -104,10 +100,8 @@ EditorBlockSelectionUpdateStillActive:
 ; EditorPendingBlockArm -
 ; Convert the ordinary selected range into a pending copy/move source.
 ; Input: A = TECM8_EDITOR_PENDING_BLOCK_COPY or *_MOVE.
-;! in A
-;! out BC,DE,A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
-@EditorPendingBlockArm:
+.routine in A out BC,DE,A,carry,zero clobbers sign,parity,halfCarry,HL
+EditorPendingBlockArm:
         LD      (EditorPendingBlockRequestedMode),A
         LD      A,(EditorBlockSelectionActive)
         OR      A
@@ -147,9 +141,8 @@ EditorPendingBlockArmNoSelection:
 ; active. The first version is conservative: source and destination must be in
 ; the current resident page, unsafe overlap/self cases are rejected, and empty
 ; tail rows must exist so no records are discarded.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockPasteInsert:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockPasteInsert:
         LD      A,(EditorPendingBlockMode)
         OR      A
         JP      Z,EditorPendingBlockPasteNoop
@@ -202,9 +195,8 @@ EditorPendingBlockPasteNoop:
 ; Replace an ordinary destination selection with a pending copy or move source.
 ; This first B6 slice is intentionally narrow: current page only, equal-sized
 ; ranges only, and no overlap.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockPasteReplace:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockPasteReplace:
         CALL    EditorPendingBlockRowsForCurrentPage
         JP      C,EditorPendingBlockPasteNoop
         CALL    EditorPendingBlockDestinationRowsForCurrentPage
@@ -241,9 +233,8 @@ EditorPendingBlockPasteReplaceMarkDirty:
         LD      A,1
         RET
 
-;! out A,L,carry,zero
-;! clobbers sign,parity,halfCarry,BC,H
-@EditorPendingBlockRowsForCurrentPage:
+.routine out A,L,carry,zero clobbers sign,parity,halfCarry,BC,H
+EditorPendingBlockRowsForCurrentPage:
         CALL    EditorPendingBlockPageBaseForCurrentPage
         LD      A,(EditorPendingBlockStartHi)
         LD      H,A
@@ -277,9 +268,8 @@ EditorPendingBlockPasteReplaceMarkDirty:
         XOR     A
         RET
 
-;! out A,carry,zero,HL
-;! clobbers sign,parity,halfCarry
-@EditorPendingBlockPageBaseForCurrentPage:
+.routine out A,carry,zero,HL clobbers sign,parity,halfCarry
+EditorPendingBlockPageBaseForCurrentPage:
         LD      A,(EditorNavCurrentPage)
         LD      H,0
         LD      L,A
@@ -298,9 +288,8 @@ EditorPendingBlockRowsErr:
         SCF
         RET
 
-;! out DE,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,HL
-@EditorPendingBlockDestinationRowsForCurrentPage:
+.routine out DE,A,carry,zero clobbers sign,parity,halfCarry,BC,HL
+EditorPendingBlockDestinationRowsForCurrentPage:
         CALL    EditorBlockSelectionNormalize
         LD      A,(EditorBlockSelectionStartHi)
         LD      B,A
@@ -338,9 +327,8 @@ EditorPendingBlockDestinationRowsErr:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B
-@EditorPendingBlockRejectInsertOverlap:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B
+EditorPendingBlockRejectInsertOverlap:
         LD      A,(EditorCursorRow)
         LD      (EditorPendingBlockDestRow),A
         LD      B,A
@@ -361,9 +349,8 @@ EditorPendingBlockRejectOverlap:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B
-@EditorPendingBlockRejectReplaceOverlap:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B
+EditorPendingBlockRejectReplaceOverlap:
         LD      A,(EditorPendingBlockDestEndRow)
         LD      B,A
         LD      A,(EditorPendingBlockSourceStartRow)
@@ -385,18 +372,16 @@ EditorPendingBlockReplaceOverlap:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B
-@EditorPendingBlockReplaceSameSize:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B
+EditorPendingBlockReplaceSameSize:
         LD      A,(EditorPendingBlockDestRowCount)
         LD      B,A
         LD      A,(EditorPendingBlockRowCount)
         CP      B
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,HL
-@EditorPendingBlockTailAvailable:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,HL
+EditorPendingBlockTailAvailable:
         LD      A,16
         LD      B,A
         LD      A,(EditorPendingBlockRowCount)
@@ -432,9 +417,8 @@ EditorPendingBlockTailNo:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,A,B
-@EditorPendingBlockRejectCopySourceShiftOutOfPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B
+EditorPendingBlockRejectCopySourceShiftOutOfPage:
         LD      A,(EditorPendingBlockPasteMode)
         CP      TECM8_EDITOR_PENDING_BLOCK_COPY
         JR      NZ,EditorPendingBlockCopySourceShiftInPage
@@ -458,9 +442,8 @@ EditorPendingBlockCopySourceShiftOutOfPage:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockCopySourceToScratch:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockCopySourceToScratch:
         CALL    EditorNavInvalidateWindowSlot3
         LD      A,(EditorPendingBlockSourceStartRow)
         CALL    EditorKeyRecordAtRow
@@ -469,9 +452,8 @@ EditorPendingBlockCopySourceShiftOutOfPage:
         CALL    Tecm8RecordShiftRecordsUp
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockShiftRowsDown:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockShiftRowsDown:
         LD      A,16
         LD      B,A
         LD      A,(EditorPendingBlockRowCount)
@@ -510,9 +492,8 @@ EditorPendingBlockShiftDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,A,B,HL
-@EditorPendingBlockAdjustCopySourceAfterInsert:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,HL
+EditorPendingBlockAdjustCopySourceAfterInsert:
         LD      A,(EditorPendingBlockPasteMode)
         CP      TECM8_EDITOR_PENDING_BLOCK_COPY
         RET     NZ
@@ -542,12 +523,11 @@ EditorPendingBlockShiftDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockCopyScratchToDest:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockCopyScratchToDest:
         CALL    EditorNavInvalidateWindowSlot3
         LD      A,(EditorPendingBlockDestRow)
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyRecordAtRow
         LD      D,H
         LD      E,L
@@ -556,9 +536,8 @@ EditorPendingBlockShiftDone:
         CALL    Tecm8RecordShiftRecordsUp
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockDeleteMovedSource:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockDeleteMovedSource:
         LD      A,(EditorPendingBlockSourceStartRow)
         LD      B,A
         LD      A,(EditorPendingBlockDestRow)
@@ -616,7 +595,7 @@ EditorPendingBlockDeleteClearLoop:
         LD      A,(EditorPendingBlockTailCheckRow)
         CP      16
         JR      Z,EditorPendingBlockDeleteDone
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyRecordAtRow
         CALL    EditorKeyClearRecord
         LD      A,(EditorPendingBlockTailCheckRow)
@@ -628,15 +607,13 @@ EditorPendingBlockDeleteDone:
         XOR     A
         RET
 
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorPendingBlockDeleteOriginalSource:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorPendingBlockDeleteOriginalSource:
         LD      A,(EditorPendingBlockSourceStartRow)
         JP      EditorPendingBlockDeleteStartReady
 
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,HL
-@EditorPendingBlockSelectInsertedRows:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,HL
+EditorPendingBlockSelectInsertedRows:
         LD      A,(EditorPendingBlockDestRow)
         LD      B,A
         LD      A,(EditorPendingBlockPasteMode)
@@ -689,9 +666,8 @@ EditorPendingBlockCursorRowReady:
 
 ; EditorBlockSelectionClearIfActive -
 ; Clear ordinary selection state and repaint visible gutter markers when needed.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorBlockSelectionClearIfActive:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorBlockSelectionClearIfActive:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         RET     Z
@@ -702,9 +678,8 @@ EditorPendingBlockCursorRowReady:
 
 ; EditorBlockStateClearForEdit -
 ; Clear ordinary selection and pending source before mutating source records.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorBlockStateClearForEdit:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorBlockStateClearForEdit:
         LD      A,(EditorBlockSelectionActive)
         LD      B,A
         LD      A,(EditorPendingBlockMode)
@@ -718,9 +693,8 @@ EditorPendingBlockCursorRowReady:
 
 ; EditorBlockSelectionRenderMarkers -
 ; Repaint all visible gutter markers after a selection range change.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorBlockSelectionRenderMarkers:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorBlockSelectionRenderMarkers:
         XOR     A
         LD      (EditorBlockSelectionMarkerRow),A
 
@@ -741,9 +715,8 @@ EditorBlockSelectionRenderMarkerLoop:
 
 ; EditorBlockSelectionCurrentLine -
 ; Compute the current absolute source line as page * 16 + current row.
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorBlockSelectionCurrentLine:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry
+EditorBlockSelectionCurrentLine:
         LD      A,(EditorNavCurrentPage)
         LD      H,0
         LD      L,A
@@ -761,9 +734,8 @@ EditorBlockSelectionCurrentLineDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorDeleteSelectedBlock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorDeleteSelectedBlock:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         JP      Z,EditorDeleteSelectedBlockNoop

@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
         CALL    LineEditInitRecords
@@ -153,9 +152,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers BC,DE,HL
-@LineEditInitRecords:
+.routine out A,carry,zero clobbers BC,DE,HL
+LineEditInitRecords:
         LD      HL,LineEditRecord0
         LD      DE,EditorNavPageBuffer
         CALL    LineEditCopyRecord
@@ -207,18 +205,15 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! in DE,HL
-;! out A,BC,DE,HL,carry,zero
-@LineEditCopyRecord:
+.routine in DE,HL out A,BC,DE,HL,carry,zero
+LineEditCopyRecord:
         LD      BC,32
         LDIR
         XOR     A
         RET
 
-;! in HL
-;! out A,HL,carry,zero
-;! clobbers A
-@LineEditSaveCursor:
+.routine in HL out A,HL,carry,zero
+LineEditSaveCursor:
         LD      A,(EditorCursorRow)
         LD      (HL),A
         INC     HL
@@ -228,10 +223,8 @@ ProofFailedDone:
         RET
 
 ; Stub LoadProjectConfig for included shell command code.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,LineEditExpectedMain
         LD      C,B
 

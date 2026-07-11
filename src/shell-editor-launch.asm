@@ -14,10 +14,8 @@ TECM8_SHELL_LAUNCH_ERR_TARGET          .equ    0x59
 ; Output:
 ;   carry clear, A=SHELL_OK after the editor opens
 ;   carry set, A=SHELL_ERR_* or TECM8_SHELL_LAUNCH_ERR_*
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@ShellRunEditorLine:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+ShellRunEditorLine:
         CALL    RunShellCommandLine
         RET     C
 

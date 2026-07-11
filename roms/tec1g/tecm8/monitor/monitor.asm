@@ -2616,7 +2616,7 @@ RTCResetLoop1:
         jr nz,$+5           ;no, ignore
         ld hl,0000h         ;set beep and auto address inc to on
         djnz RTCResetLoop1
-        call RTCfillRAM     ;fill RTC PRAM to Mon3 Ram
+        call RTCFillRAM     ;fill RTC PRAM to Mon3 Ram
 
         ;get checksum
 RTCSaveChecksum:

@@ -17,8 +17,6 @@ test('docs index and codebase tour link current assembler and game direction doc
     '[Profile TEC-FS Packaging](profile-tecfs-packaging.md)',
     '[Input Polling ABI](input-polling-abi.md)',
     '[VDU/TMS Minimum Primitives](vdu-tms-minimum-primitives.md)',
-    '[TECM8 Game Creation Mission](gamer.md)',
-    '[Gamer Vertical Slice Specification](gamer-vertical-slice.md)',
     '[Game-Facing Register Contracts](game-register-contracts.md)',
   ]) {
     assert.match(readme, new RegExp(link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -37,8 +35,5 @@ test('docs index and codebase tour link current assembler and game direction doc
   assert.match(codebase, /cooperative input polling ABI/);
   assert.match(codebase, /vdu-tms-minimum-primitives\.md/);
   assert.match(codebase, /minimum bank-1 VDU\/TMS9918 service\s+surface/);
-  assert.match(codebase, /gamer\.md/);
-  assert.match(codebase, /gamer-vertical-slice\.md/);
-  assert.match(codebase, /game runtime slice and service contract/);
   assert.match(codebase, /game-register-contracts\.md/);
 });

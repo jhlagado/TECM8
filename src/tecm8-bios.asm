@@ -30,36 +30,29 @@ TECM8_BIOS_KEY_MOD_CAPS      .equ     TECM8_KEY_MOD_CAPS
 
 ; BiosFileOpen -
 ; Open a MON3/FAT32 file by NUL-terminated name.
-;! in HL
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@BiosFileOpen:
+.routine in HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+BiosFileOpen:
         CALL    MON3_OPEN_FILE
         RET
 
 ; BiosFileReadSector -
 ; Read a 512-byte sector from the current MON3 file into DISK_BUFF.
-;! in DE,HL
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@BiosFileReadSector:
+.routine in DE,HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+BiosFileReadSector:
         CALL    MON3_READ_SECTOR
         RET
 
 ; BiosFileWriteSector -
 ; Write a 512-byte sector from DISK_BUFF to the current MON3 file.
-;! in DE,HL
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@BiosFileWriteSector:
+.routine in DE,HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+BiosFileWriteSector:
         CALL    MON3_WRITE_SECTOR
         RET
 
 ; BiosDisplayInit -
 ; Initialize the MON3 GLCD terminal path for TECM8 display output.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayInit:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayInit:
         CALL    MON3_GLCD_INIT_TERMINAL
         CALL    MON3_GLCD_CLEAR_GBUF
         CALL    MON3_GLCD_PLOT_TO_LCD
@@ -69,9 +62,8 @@ TECM8_BIOS_KEY_MOD_CAPS      .equ     TECM8_KEY_MOD_CAPS
 ; BiosDisplayClear -
 ; Clear the active MON3 GLCD graphics buffer without reinitializing the terminal
 ; cursor policy.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayClear:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayClear:
         CALL    MON3_GLCD_CLEAR_GBUF
         CALL    MON3_GLCD_PLOT_TO_LCD
         XOR     A
@@ -79,20 +71,16 @@ TECM8_BIOS_KEY_MOD_CAPS      .equ     TECM8_KEY_MOD_CAPS
 
 ; BiosDisplaySetCursor -
 ; Move the GLCD graphics cursor. B = X pixel, C = Y pixel.
-;! in BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplaySetCursor:
+.routine in BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplaySetCursor:
         CALL    MON3_GLCD_SET_CURSOR
         XOR     A
         RET
 
 ; BiosDisplayPutChar -
 ; Write one ASCII character through the MON3 GLCD terminal.
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayPutChar:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayPutChar:
         LD      C,A
         CALL    MON3_GLCD_SEND_CHAR_TO_LCD
         XOR     A
@@ -100,10 +88,8 @@ TECM8_BIOS_KEY_MOD_CAPS      .equ     TECM8_KEY_MOD_CAPS
 
 ; BiosDisplayPutString -
 ; Write a NUL-terminated ASCII string through the MON3 GLCD terminal.
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayPutString:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayPutString:
         LD      D,H
         LD      E,L
         LD      C,0
@@ -113,10 +99,8 @@ TECM8_BIOS_KEY_MOD_CAPS      .equ     TECM8_KEY_MOD_CAPS
 
 ; BiosDisplayDrawCharAt -
 ; Draw one 6x6 font character at B,C pixel coordinates without terminal scroll.
-;! in A,BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayDrawCharAt:
+.routine in A,BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayDrawCharAt:
         LD      (BiosDisplayChar),A
         LD      A,C
         CP      0x40
@@ -140,18 +124,16 @@ BiosDisplayDrawCharRange:
 
 ; BiosDisplayUpdate -
 ; Push the current MON3 GLCD viewport to the physical/displayed GLCD state.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplayUpdate:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplayUpdate:
         CALL    MON3_GLCD_PLOT_TO_LCD
         XOR     A
         RET
 
 ; BiosDisplaySetBitmapMode -
 ; Select the MON3 GLCD graphics mode for bitmap operations.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@BiosDisplaySetBitmapMode:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+BiosDisplaySetBitmapMode:
         CALL    MON3_GLCD_SET_GR_MODE
         XOR     A
         RET
@@ -161,9 +143,8 @@ BiosDisplayDrawCharRange:
 ; Output:
 ;   carry set: A = debounced ASCII key from MON3 parseMatrixScan
 ;   carry clear: no ASCII key is ready
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@BiosInputPollAscii:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+BiosInputPollAscii:
         CALL    MON3_MATRIX_SCAN
         CALL    MON3_PARSE_MATRIX_SCAN
         RET
@@ -175,10 +156,9 @@ BiosDisplayDrawCharRange:
 ;   carry clear: no new key event; D/E contain the latest raw scan result or FFh
 ; Normal callers should use A/B. D/E are exposed for diagnostics and unmapped
 ; key handling.
-;! out DE,A,B,carry,zero
-;! clobbers sign,parity,halfCarry,C,HL
-@BiosInputPollKey:
-        ; expects out DE
+.routine out DE,A,B,carry,zero clobbers sign,parity,halfCarry,C,HL
+BiosInputPollKey:
+        .expectout DE
         CALL    MON3_MATRIX_SCAN
         JR      Z,BiosInputPollKeyRaw
         LD      A,E
@@ -213,7 +193,7 @@ BiosInputPollKeyNew:
         CALL    BiosInputIgnoreStandaloneModifier
         RET     NC
         LD      A,D
-        ; expects out A
+        .expectout A
         CALL    BiosInputModifierFlags
         LD      (BiosInputModifierBits),A
         LD      A,(BiosInputRawSecondary)
@@ -221,7 +201,7 @@ BiosInputPollKeyNew:
         LD      D,A
         LD      A,(BiosInputRawPrimary)
         LD      E,A
-        ; expects out A
+        .expectout A
         CALL    MON3_MATRIX_SCAN_ASCII
         LD      (BiosInputTranslatedRawKey),A
         LD      (BiosInputTranslatedKey),A
@@ -234,7 +214,7 @@ BiosInputPollKeyNew:
 
 BiosInputPollKeyNoCaps:
         LD      A,(BiosInputTranslatedKey)
-        ; expects out A
+        .expectout A
         CALL    BiosInputNormalizeControlKey
         LD      (BiosInputTranslatedKey),A
         LD      A,(BiosInputRawSecondary)
@@ -271,9 +251,8 @@ BiosInputPollKeyNoRaw:
 ; Modifier keys pressed alone are state, not editor actions. Alt shares raw
 ; primary 03h with ArrowUp in the current matrix path, so Alt is suppressed
 ; only when it is the modifier left held after a real chord.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@BiosInputIgnoreStandaloneModifier:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+BiosInputIgnoreStandaloneModifier:
         LD      A,(BiosInputRawSecondary)
         CALL    BiosInputModifierFlags
         OR      A
@@ -299,10 +278,8 @@ BiosInputIgnoreStandaloneModifierRealKey:
         SCF
         RET
 
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@BiosInputModifierFlags:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry
+BiosInputModifierFlags:
         CP      0
         JR      Z,BiosInputModifierShift
         CP      1
@@ -333,10 +310,8 @@ BiosInputModifierAlt:
 ; BiosInputNormalizeControlKey -
 ; Convert Ctrl+A..Z and Ctrl+a..z into ASCII control codes 01h..1Ah.
 ; Input: A = translated ASCII/key code
-;! in A
-;! out A
-;! clobbers C,F
-@BiosInputNormalizeControlKey:
+.routine in A out A clobbers C,F
+BiosInputNormalizeControlKey:
         LD      C,A
         LD      A,(BiosInputModifierBits)
         AND     TECM8_BIOS_KEY_MOD_CTRL

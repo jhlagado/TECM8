@@ -190,8 +190,8 @@ Caution:
 - Use `JR` when layout permits; use `JP` only when the saving still survives the
   3-byte branch cost.
 - Keep public routine contracts clean. Compact private tails can use registers
-  opportunistically, but public `@` entry contracts should remain readable and
-  AZM-verifiable.
+  opportunistically, but public callable entry contracts should remain readable
+  and AZM-verifiable.
 
 ## Next Q5 Slice
 
@@ -395,7 +395,8 @@ proofs, and reject the idea if the byte count or readability does not improve.
   based.
 - Keep Control as the command modifier. Alt parity has been retired.
 - Preserve the raw-key guard for Ctrl-C versus physical ArrowUp.
-- Keep public `@` labels stable unless a proof or caller is deliberately moved.
+- Keep public callable labels stable unless a proof or caller is deliberately
+  moved.
 - Keep AZM register contracts on public entries and use contract failures as a
   design signal, not as noise to work around.
 - Treat the command descriptor format as ROM data. It must be readable in Z80

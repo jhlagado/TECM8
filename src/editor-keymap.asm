@@ -6,9 +6,8 @@
 ; flags instead of an ASCII control byte.
 ; Input: EditorPendingChar, EditorPendingModifier
 ; Output: A = TECM8_EDITOR_KEY_* command or 0
-;! out A,carry
-;! clobbers E,HL,zero,sign,parity,halfCarry
-@EditorModifiedCommandFromKey:
+.routine out A,carry clobbers E,HL,zero,sign,parity,halfCarry
+EditorModifiedCommandFromKey:
         LD      A,(EditorPendingModifier)
         AND     TECM8_EDITOR_KEY_MOD_CTRL
         JR      Z,EditorModifiedCommandNone
@@ -31,6 +30,7 @@ EditorModifiedCommandNone:
         XOR     A
         RET
 
+.routine in A,HL out A,zero clobbers E,H,L,sign,parity,halfCarry
 EditorModifiedCommandLookup:
         LD      E,A
 EditorModifiedCommandLookupLoop:
@@ -74,9 +74,8 @@ EditorModifiedCommandTable:
 ; EditorShouldIgnoreModifiedPrintable -
 ; Return A=1 when a Ctrl-modified printable key did not match a known command.
 ; This prevents a failed host modifier chord from inserting text.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorShouldIgnoreModifiedPrintable:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+EditorShouldIgnoreModifiedPrintable:
         LD      A,(EditorPendingModifier)
         AND     TECM8_EDITOR_KEY_MOD_CTRL
         JR      Z,EditorShouldIgnoreModifiedPrintableNo

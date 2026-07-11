@@ -266,7 +266,7 @@ Beginner-facing game routines should be written in the self-hosted assembler
 subset where possible:
 
 ```asm
-@Player_Update:
+Player_Update:
         call API_GetInput
         ret
 ```
@@ -275,10 +275,8 @@ Game hook contracts should eventually be expressible in the same register
 contract style as the rest of TecMate:
 
 ```asm
-;! in IX
-;! out
-;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
-@Player_Update:
+.routine in IX clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
+Player_Update:
         ret
 ```
 

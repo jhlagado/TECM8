@@ -200,7 +200,7 @@ BiosFileClose
 The current external interface is [src/mon3.asmi](../src/mon3.asmi). The first
 implementation module is [src/tecm8-bios.asm](../src/tecm8-bios.asm), which
 currently keeps the storage wrappers as thin MON3-compatible calls. TECM8-owned
-wrapper contracts live in local AZMDoc `;!` blocks, not duplicate interface
+wrapper contracts live in local AZM `.routine` directives, not duplicate interface
 files.
 
 Open issue: current TECM8 proof code relies on MON3's fixed `DISK_BUFF`. A

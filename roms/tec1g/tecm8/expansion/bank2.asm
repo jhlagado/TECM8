@@ -13,7 +13,7 @@ TFS_USER_VOLUMES            .equ    30
 TFS_SPARE_VOLUME            .equ    30
 TFS_TOTAL_VOLUMES           .equ    31
 
-@Tecm8ExpansionBank2Entry:
+Tecm8ExpansionBank2Entry:
         cp ABI_PROBE_NESTED
         jp z,BankAbiNestedTarget
         cp TFS_SVC_MOUNT
@@ -50,60 +50,60 @@ TFS_TOTAL_VOLUMES           .equ    31
         scf
         ret
 
-@tecfsMount:
+tecfsMount:
         jp tecfsMountImpl
 
-@tecfsSelectVolume:
+tecfsSelectVolume:
         jp tecfsSelectVolumeImpl
 
-@tecfsRead:
+tecfsRead:
         jp tecfsReadSectorImpl
 
-@tecfsWrite:
+tecfsWrite:
         jp tecfsWriteSectorImpl
 
-@tecfsLoadRange:
+tecfsLoadRange:
         jp tecfsUnsupported
 
-@tecfsSaveRange:
+tecfsSaveRange:
         jp tecfsUnsupported
 
-@tecfsMapBlock:
+tecfsMapBlock:
         jp tecfsMapBlockImpl
 
-@tecfsTranslateSector:
+tecfsTranslateSector:
         jp tecfsTranslateSectorImpl
 
-@tecfsFormatLocator:
+tecfsFormatLocator:
         jp tecfsFormatLocatorImpl
 
-@tecfsReadLocator:
+tecfsReadLocator:
         jp tecfsReadLocatorImpl
 
-@tecfsFormatMetaRecord:
+tecfsFormatMetaRecord:
         jp tecfsFormatMetaRecordImpl
 
-@tecfsPatchMetaRecord:
+tecfsPatchMetaRecord:
         jp tecfsPatchMetaRecordImpl
 
-@tecfsDecodeCatalog:
+tecfsDecodeCatalog:
         jp tecfsDecodeCatalogImpl
 
-@tecfsSummarizeCatalog:
+tecfsSummarizeCatalog:
         jp tecfsSummarizeCatalogImpl
 
-@tecfsNextCatalog:
+tecfsNextCatalog:
         jp tecfsNextCatalogImpl
 
-@BankAbiNestedTarget:
+BankAbiNestedTarget:
         ld c,MON_SYS_GET
-        ; expects out A
+        .expectout A
         rst 10H
         ld (ABI_TRACE_8),a
         ld a,0xB2
         ret
 
-@tecfsMountImpl:
+tecfsMountImpl:
         xor a
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
@@ -143,7 +143,7 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsSelectVolumeImpl:
+tecfsSelectVolumeImpl:
         ld a,(TFS_PARAM_REQUEST_VOLUME)
         cp TFS_TOTAL_VOLUMES
         jr nc,tecfsBadVolume
@@ -155,14 +155,14 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsBadVolume:
+tecfsBadVolume:
         ld a,TFS_ERR_BAD_VOLUME
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsMapBlockImpl:
+tecfsMapBlockImpl:
         ld a,(TFS_PARAM_BLOCK_INDEX_HI)
         bit 7,a
         jr nz,tecfsBadBlock
@@ -195,14 +195,14 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsBadBlock:
+tecfsBadBlock:
         ld a,TFS_ERR_BAD_BLOCK
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsTranslateSectorImpl:
+tecfsTranslateSectorImpl:
         call tecfsValidateSector
         jp c,tecfsBadSector
         ld hl,(TFS_PARAM_SECTOR_0)
@@ -222,15 +222,15 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsReadSectorImpl:
+tecfsReadSectorImpl:
         ld a,TFS_DRIVER_OP_READ
         jr tecfsSectorIoWithDriverOp
 
-@tecfsWriteSectorImpl:
+tecfsWriteSectorImpl:
         ld a,TFS_DRIVER_OP_WRITE
         jr tecfsSectorIoWithDriverOp
 
-@tecfsSectorIoWithDriverOp:
+tecfsSectorIoWithDriverOp:
         ld (TFS_PARAM_DRIVER_OP),a
         call tecfsValidateCardSector
         jp c,tecfsBadSector
@@ -241,7 +241,8 @@ TFS_TOTAL_VOLUMES           .equ    31
         call tecfsSectorDriverHook
         ret
 
-@tecfsSectorDriverHook:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsSectorDriverHook:
         ld a,(TFS_PARAM_DRIVER_ADDR_LO)
         ld l,a
         ld a,(TFS_PARAM_DRIVER_ADDR_HI)
@@ -258,14 +259,14 @@ TFS_TOTAL_VOLUMES           .equ    31
         rst 10H
         ret
 
-@tecfsNoSectorDriver:
+tecfsNoSectorDriver:
         ld a,TFS_ERR_NO_DRIVER
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsFormatLocatorImpl:
+tecfsFormatLocatorImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -315,7 +316,7 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsReadLocatorImpl:
+tecfsReadLocatorImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -370,7 +371,7 @@ TFS_TOTAL_VOLUMES           .equ    31
         or a
         ret
 
-@tecfsFormatMetaRecordImpl:
+tecfsFormatMetaRecordImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -410,7 +411,7 @@ tecfsFormatMetaRecordClear:
         or a
         ret
 
-@tecfsPatchMetaRecordImpl:
+tecfsPatchMetaRecordImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -460,7 +461,8 @@ tecfsFormatMetaRecordClear:
         or a
         ret
 
-@tecfsDecodeCatalogImpl:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,D,E,H,L
+tecfsDecodeCatalogImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -513,7 +515,7 @@ tecfsFormatMetaRecordClear:
         or a
         ret
 
-@tecfsSummarizeCatalogImpl:
+tecfsSummarizeCatalogImpl:
         call tecfsClearSummary
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
@@ -548,6 +550,7 @@ tecfsSummarizeActive:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 tecfsClearSummary:
         xor a
         ld (TFS_PARAM_SUMMARY_COUNT_LO),a
@@ -558,7 +561,7 @@ tecfsClearSummary:
         ld (TFS_PARAM_SUMMARY_FLAGS),a
         ret
 
-@tecfsNextCatalogImpl:
+tecfsNextCatalogImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
         or l
@@ -573,21 +576,22 @@ tecfsClearSummary:
         or a
         ret
 
-@tecfsBadLocator:
+tecfsBadLocator:
         ld a,TFS_ERR_BAD_LOCATOR
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsBadCatalog:
+tecfsBadCatalog:
         ld a,TFS_ERR_BAD_CATALOG
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsValidateSector:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+tecfsValidateSector:
         ld a,(TFS_PARAM_SECTOR_3)
         or a
         scf
@@ -597,7 +601,8 @@ tecfsClearSummary:
         ccf
         ret
 
-@tecfsValidateCardSector:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+tecfsValidateCardSector:
         ld a,(TFS_PARAM_SECTOR_3)
         or a
         scf
@@ -613,34 +618,34 @@ tecfsClearSummary:
         ccf
         ret
 
-@tecfsCardSectorValid:
+tecfsCardSectorValid:
         or a
         ret
 
-@tecfsCardSectorInvalid:
+tecfsCardSectorInvalid:
         scf
         ret
 
-@tecfsBadSector:
+tecfsBadSector:
         ld a,TFS_ERR_BAD_SECTOR
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsBadBuffer:
+tecfsBadBuffer:
         ld a,TFS_ERR_BAD_BUFFER
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@tecfsUnsupported:
+tecfsUnsupported:
         ld a,TFS_ERR_UNSUPPORTED
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
         ret
 
-@Tecm8ExpansionBank2Info:
+Tecm8ExpansionBank2Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

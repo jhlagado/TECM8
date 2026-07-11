@@ -22,20 +22,16 @@ EDITOR_LOAD_ERR_CREATE  .equ    0x39
 
 ; EditorLoadMainSector -
 ; Load the first sector of /src/main.asm into caller buffer HL.
-;! in HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorLoadMainSector:
+.routine in HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorLoadMainSector:
         XOR     A
         JP      EditorLoadMainPage
 
 ; EditorLoadMainPage -
 ; Load one 512-byte sector page of /src/main.asm into caller buffer HL.
 ; Page A is limited to 0..127.
-;! in A,HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorLoadMainPage:
+.routine in A,HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorLoadMainPage:
         LD      DE,EditorLoadMainPath
         JP      EditorLoadSourcePage
 
@@ -45,10 +41,8 @@ EDITOR_LOAD_ERR_CREATE  .equ    0x39
 ;   A  = page index, limited to 0..127
 ;   DE = NUL-terminated TM8 path, e.g. /src/main.asm
 ;   HL = caller destination buffer
-;! in A,DE,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadSourcePage:
+.routine in A,DE,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadSourcePage:
         PUSH    AF
         XOR     A
         LD      (EditorLoadAllowShort),A
@@ -105,10 +99,8 @@ EditorLoadPrefixReady:
 ;   A  = page index, limited to 0..127
 ;   DE = NUL-terminated TM8 path, e.g. /src/main.asm
 ;   HL = caller source buffer
-;! in A,DE,HL
-;! out A,carry
-;! clobbers BC,DE,HL,zero,sign,parity,halfCarry
-@EditorSaveSourcePage:
+.routine in A,DE,HL out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+EditorSaveSourcePage:
         PUSH    AF
         LD      A,1
         LD      (EditorSaveGrowMode),A
@@ -117,10 +109,8 @@ EditorLoadPrefixReady:
 
 ; EditorSaveSourcePageNoGrow -
 ; Save one sector without catalog-size growth. Used by fixed-size backup files.
-;! in A,DE,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSaveSourcePageNoGrow:
+.routine in A,DE,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSaveSourcePageNoGrow:
         PUSH    AF
         XOR     A
         LD      (EditorSaveGrowMode),A
@@ -191,10 +181,8 @@ EditorSaveSourcePageClean:
 ; Create a one-block source file for an already-existing TM8 prefix.
 ; Input:
 ;   DE = NUL-terminated TM8 path, e.g. /src/.main.asm.b
-;! in DE
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateSourceFile:
+.routine in DE out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateSourceFile:
         LD      (EditorLoadSourcePathPtr),DE
         CALL    EditorLoadParseSourcePath
         RET     C
@@ -240,9 +228,8 @@ EditorLoadPageErr:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@EditorLoadReadSuperblock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+EditorLoadReadSuperblock:
         LD      HL,0
         LD      DE,0
         CALL    BiosFileReadSector
@@ -391,9 +378,8 @@ EditorLoadCreateErr:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadParseSourcePath:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadParseSourcePath:
         LD      HL,(EditorLoadSourcePathPtr)
         LD      A,(HL)
         CP      "/"
@@ -453,9 +439,8 @@ EditorLoadParseStoreNameLen:
         XOR     A
         RET
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorLoadFindSourcePrefix:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorLoadFindSourcePrefix:
         LD      DE,TM8_PREFIX_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_PREFIX_SECTORS
         LD      (EditorLoadSectorsLeft),A
@@ -490,10 +475,8 @@ EditorLoadPrefixEntry:
         SCF
         RET
 
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@EditorLoadMatchPrefixEntry:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+EditorLoadMatchPrefixEntry:
         LD      A,(HL)
         CP      TM8_ENTRY_ACTIVE
         JP      NZ,EditorLoadEntryNo
@@ -514,9 +497,8 @@ EditorLoadPrefixEntry:
         RET     NC
         JP      EditorLoadEntryNo
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorLoadFindSource:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorLoadFindSource:
         LD      DE,TM8_CATALOG_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_CATALOG_SECTORS
         LD      (EditorLoadSectorsLeft),A
@@ -562,10 +544,8 @@ EditorLoadCatalogEntryMiss:
         SCF
         RET
 
-;! in HL
-;! out A,E,carry,zero
-;! clobbers sign,parity,halfCarry,B,D,HL
-@EditorLoadMatchCatalogEntry:
+.routine in HL out A,E,carry,zero clobbers sign,parity,halfCarry,B,D,HL
+EditorLoadMatchCatalogEntry:
         LD      (EditorLoadEntryBase),HL
         PUSH    HL
         LD      DE,0 - DISK_BUFF
@@ -665,9 +645,8 @@ EditorLoadBlockErr:
         SCF
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadReadSourceSector:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadReadSourceSector:
         LD      HL,(EditorLoadFirstBlock)
         CALL    EditorLoadResolveSourceBlock
         RET     C
@@ -684,9 +663,8 @@ EditorLoadBlockErr:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateFindFreeBlock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateFindFreeBlock:
         LD      DE,TM8_ALLOC_START_BLOCK * TM8_BLOCK_BYTES
         LD      (EditorCreateAllocOffset),DE
         LD      HL,0
@@ -738,9 +716,8 @@ EditorCreateFreeBlockFound:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateMarkAllocatedBlock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateMarkAllocatedBlock:
         LD      HL,(EditorCreateFreeBlock)
         LD      A,H
         ADD     A,A
@@ -775,9 +752,8 @@ EditorCreateMarkOffsetOk:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateFindCatalogSlot:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateFindCatalogSlot:
         LD      DE,TM8_CATALOG_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_CATALOG_SECTORS
         LD      (EditorLoadSectorsLeft),A
@@ -807,9 +783,8 @@ EditorCreateFreeCatalogFound:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateNextFileId:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateNextFileId:
         XOR     A
         LD      (EditorCreateFileId),A
 
@@ -828,9 +803,8 @@ EditorCreateNextFileIdOk:
         XOR     A
         RET
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorCreateFileIdUsed:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorCreateFileIdUsed:
         LD      DE,TM8_CATALOG_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_CATALOG_SECTORS
         LD      (EditorLoadSectorsLeft),A
@@ -868,9 +842,8 @@ EditorCreateFileIdFound:
         LD      A,1
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateWriteCatalogEntry:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateWriteCatalogEntry:
         LD      DE,TM8_CATALOG_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_CATALOG_SECTORS
         LD      (EditorLoadSectorsLeft),A
@@ -954,9 +927,8 @@ EditorCreateCatalogNameLoop:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,DE,HL
-@EditorCreateUpdateSuperblock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,DE,HL
+EditorCreateUpdateSuperblock:
         LD      HL,0
         LD      DE,0
         CALL    BiosFileReadSector
@@ -983,9 +955,8 @@ EditorCreateFreeCountOk:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateBlankCreatedSource:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateBlankCreatedSource:
         CALL    EditorCreateClearBlankPageBuffer
         XOR     A
         LD      (EditorCreateBlankPageIndex),A
@@ -1004,15 +975,13 @@ EditorCreateBlankCreatedSourceLoop:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateClearBlankPageBuffer:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateClearBlankPageBuffer:
         LD      HL,EditorCreateBlankPageBuffer
         JP      Tecm8StorageClearSectorBuffer
 
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCreateRecomputeSuperblockChecksum:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCreateRecomputeSuperblockChecksum:
         LD      HL,DISK_BUFF + 72
         XOR     A
         LD      (HL),A
@@ -1052,9 +1021,8 @@ EditorCreateChecksumNoCarry:
         LD      (HL),A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadWriteSourceSector:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadWriteSourceSector:
         LD      HL,(EditorLoadFirstBlock)
         CALL    EditorLoadResolveSourceBlock
         RET     C
@@ -1084,9 +1052,8 @@ EditorCreateChecksumNoCarry:
 ; EditorSaveExtendCatalogSize -
 ; Grow the matched source file's catalog byte size to include the just-written
 ; sector. This is monotonic and preserves already-large 32-bit catalog sizes.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSaveExtendCatalogSize:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSaveExtendCatalogSize:
         CALL    EditorLoadFindSource
         RET     C
         LD      A,(EditorLoadSectorsLeft)
@@ -1156,10 +1123,8 @@ EditorSaveCatalogSizeOk:
         XOR     A
         RET
 
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadResolveSourceBlock:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadResolveSourceBlock:
         LD      (EditorLoadResolvedBlock),HL
         LD      A,(EditorLoadBlockSteps)
         LD      (EditorLoadBlocksLeft),A
@@ -1170,7 +1135,7 @@ EditorLoadResolveLoop:
         JR      Z,EditorLoadResolveOk
 
         LD      HL,(EditorLoadResolvedBlock)
-        ; expects out HL
+        .expectout HL
         CALL    EditorLoadResolveNextBlock
         RET     C
         LD      (EditorLoadResolvedBlock),HL
@@ -1184,19 +1149,15 @@ EditorLoadResolveOk:
         XOR     A
         RET
 
-;! in HL
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorLoadResolveNextBlock:
+.routine in HL out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorLoadResolveNextBlock:
         LD      A,(EditorSaveGrowMode)
         OR      A
         JP      NZ,EditorSaveReadOrGrowAllocationEntry
         JP      EditorLoadReadAllocationEntry
 
-;! in HL
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorSaveReadOrGrowAllocationEntry:
+.routine in HL out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorSaveReadOrGrowAllocationEntry:
         LD      (EditorSavePreviousBlock),HL
         LD      (EditorLoadCurrentBlock),HL
         LD      A,H
@@ -1261,10 +1222,8 @@ EditorSaveGrowAllocateBlock:
         XOR     A
         RET
 
-;! in DE,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSaveWriteAllocationEntryValue:
+.routine in DE,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSaveWriteAllocationEntryValue:
         LD      (EditorLoadCurrentBlock),HL
         LD      (EditorSaveAllocationValue),DE
         LD      A,H
@@ -1303,10 +1262,8 @@ EditorSaveWriteAllocOffsetOk:
         XOR     A
         RET
 
-;! in HL
-;! out A,carry,zero,HL
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorLoadReadAllocationEntry:
+.routine in HL out A,carry,zero,HL clobbers sign,parity,halfCarry,BC,DE
+EditorLoadReadAllocationEntry:
         LD      (EditorLoadCurrentBlock),HL
         LD      A,H
         CP      4

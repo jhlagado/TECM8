@@ -27,7 +27,7 @@ test('VDU/TMS minimum primitives doc matches current bank 1 service families', (
   assert.match(ops, /VDU_SVC_STATUS_LINE\s+\.equ\s+0x09/);
   assert.match(ops, /VDU_SVC_PUT_STRING_N\s+\.equ\s+0x0A/);
   assert.match(ops, /TMS_SVC_READ_VRAM\s+\.equ\s+0x24/);
-  assert.match(bank1, /@vduServiceCall:/);
+  assert.match(bank1, /vduServiceCall:/);
   assert.match(bank1, /Tecm8VduServiceTable:/);
   assert.match(bank1, /Tecm8TmsServiceTable:/);
 });

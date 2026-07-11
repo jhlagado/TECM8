@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x03
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank3Entry:
+Tecm8ExpansionBank3Entry:
         cp ABI_PROBE_FARJUMP
         jp z,BankAbiFarJumpTarget
         cp ABI_PROBE_RETURNING_FARJUMP
@@ -24,16 +24,16 @@ EXP_VERSION       .equ    0x01
         scf
         ret
 
-@rtcToolEntry:
+rtcToolEntry:
         jp rtcServiceEntryImpl
 
-@rtcSetupUi:
+rtcSetupUi:
         jp rtcUnsupportedUi
 
-@rtcPramViewer:
+rtcPramViewer:
         jp rtcUnsupportedUi
 
-@rtcServiceEntryImpl:
+rtcServiceEntryImpl:
         ld a,EXP_BANK
         ld (DBG_TRACE_3),a
         ld (RTC_PARAM_BANK),a
@@ -48,20 +48,21 @@ EXP_VERSION       .equ    0x01
         or a
         ret
 
-@rtcUnsupportedUi:
+rtcUnsupportedUi:
         ld a,RTC_ERR_UNSUPPORTED
         ld (RTC_PARAM_STATUS),a
         ld (RTC_PARAM_LAST_ERROR),a
         scf
         ret
 
-@BankAbiFarJumpTarget:
+BankAbiFarJumpTarget:
+        .rcignore missing_callee_contract "Proof-only far-jump marker lands in the bank ABI harness outside this ROM image."
         jp ABI_FARJUMP_LANDED
 
-@BankAbiReturningFarJumpTarget:
+BankAbiReturningFarJumpTarget:
         ld a,0xD3
         ld (ABI_TRACE_BASE+16),a
         ret
 
-@Tecm8ExpansionBank3Info:
+Tecm8ExpansionBank3Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

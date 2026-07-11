@@ -2,10 +2,8 @@
 
 ; EditorPromptAskYesNo -
 ; Activate a status-line yes/no prompt using the NUL-terminated text at HL.
-;! in HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorPromptAskYesNo:
+.routine in HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorPromptAskYesNo:
         LD      (EditorPromptTextPtr),HL
         CALL    EditorHideCursor
         RET     C
@@ -15,10 +13,8 @@
         LD      (EditorPromptActive),A
         JP      EditorViewportRenderStatusOverlay
 
-;! in A
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorPromptHandleKey:
+.routine in A out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorPromptHandleKey:
         CP      "y"
         JR      Z,EditorPromptYes
         CP      "Y"
@@ -45,9 +41,8 @@ EditorPromptComplete:
         LD      (EditorPromptActive),A
         JP      EditorViewportRestoreStatusRow
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPromptDispatch:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPromptDispatch:
         LD      A,(EditorPromptActive)
         OR      A
         RET     NZ

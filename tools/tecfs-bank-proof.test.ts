@@ -43,7 +43,7 @@ test('TEC-FS bank proof covers installable sector bridge dispatch', () => {
   assert.match(proof, /ld a,0x7F[\s\S]*farCall 0x05,TFS_SECTOR_BRIDGE[\s\S]*jp nc,FailDriverHook[\s\S]*cp SVC_ERR_UNKNOWN[\s\S]*ld a,\(TFS_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(TFS_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
   assert.match(runner, /assertEqual\(params\[29\], 0x05, 'TEC-FS driver bank'\)/);
   assert.match(runner, /assertEqual\(params\[31\], 0x80, 'TEC-FS driver address high byte'\)/);
-  assert.match(bank5, /@Tecm8ExpansionBank5Entry:[\s\S]*cp TFS_DRIVER_OP_READ[\s\S]*jp z,tecfsSectorBridgeRead[\s\S]*cp TFS_DRIVER_OP_WRITE/);
+  assert.match(bank5, /Tecm8ExpansionBank5Entry:[\s\S]*cp TFS_DRIVER_OP_READ[\s\S]*jp z,tecfsSectorBridgeRead[\s\S]*cp TFS_DRIVER_OP_WRITE/);
   assert.match(bank5, /ld a,SVC_ERR_UNKNOWN\s+scf\s+ret/);
   assert.match(bank5, /tecfsSectorBridgeRead:[\s\S]*ld a,TFS_BRIDGE_READ_MARKER[\s\S]*ld \(hl\),a/);
   assert.match(doc, /Monitor-Sector Bridge/);

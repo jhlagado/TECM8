@@ -12,9 +12,8 @@ PROOF_PASS                  .equ    0x42
 PROOF_FAIL_FARJUMP_RETURNED .equ    0xE1
 PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld hl,ABI_TRACE_BASE
         ld b,64
 ClearTrace:
@@ -258,7 +257,7 @@ ReturningFarJumpProbe:
         halt
 
         .org    ABI_FARJUMP_LANDED
-@BankAbiFarJumpLanded:
+BankAbiFarJumpLanded:
         ld c,MON_SYS_GET
         rst 10H
         ld (ABI_TRACE_5),a

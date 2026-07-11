@@ -48,9 +48,8 @@ TECM8_EDITOR_CURSOR_BLINK_IDLE_TICKS    .equ    0x0600
 ; EditorKeyLoop -
 ; Execute the prepared key stream/event state until the stream ends or the
 ; editor requests quit. Input setup lives in src/editor-input.asm.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorKeyLoop:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorKeyLoop:
         LD      A,(EditorQuitRequested)
         OR      A
         JP      NZ,EditorKeyDone
@@ -341,7 +340,7 @@ EditorKeySelectDownAtBottom:
         RET     C
         LD      A,(EditorCursorRow)
         LD      (EditorCursorPreviousRow),A
-        ; expects out HL
+        .expectout HL
         CALL    EditorBlockSelectionCurrentLine
         INC     HL
         LD      A,L
@@ -537,10 +536,8 @@ EditorKeyTailSelectPageLoop:
         CALL    EditorInvalidateCursorOverlay
         JP      EditorKeyLoop
 
-;! in HL
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyShowStatus:
+.routine in HL out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyShowStatus:
         LD      (EditorStatusTextPtr),HL
         CALL    EditorHideCursor
         RET     C

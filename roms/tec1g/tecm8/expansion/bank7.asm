@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x07
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank7Entry:
+Tecm8ExpansionBank7Entry:
         cp ASM_SVC_ASSEMBLE
         jp z,asmAssembleUnsupported
         ld a,ASM_ERR_UNKNOWN
@@ -30,5 +30,5 @@ asmAssembleUnsupported:
         scf
         ret
 
-@Tecm8ExpansionBank7Info:
+Tecm8ExpansionBank7Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

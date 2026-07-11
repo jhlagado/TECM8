@@ -12,10 +12,8 @@
 ; unknown keys are ignored.
 ; Input:
 ;   HL = NUL-terminated key stream
-;! in HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRunKeys:
+.routine in HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRunKeys:
         LD      (EditorKeyStreamPtr),HL
         XOR     A
         LD      (EditorKeyStreamModifier),A
@@ -28,10 +26,8 @@
 ; Input:
 ;   A = translated key
 ;   B = modifier flags
-;! in A,B
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRunModifiedKey:
+.routine in A,B out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRunModifiedKey:
         LD      C,A
         LD      A,(BiosInputRawSecondary)
         CP      0xFF
@@ -69,9 +65,8 @@ EditorRunModifiedKeyRawPrimaryReady:
 ; Poll TECM8 key events from the MON3-backed matrix scanner until the editor
 ; requests quit. A/B carry the editor-facing translated key and modifier flags;
 ; raw D/E remains available at the BIOS layer for diagnostics.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRunLive:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRunLive:
         XOR     A
         LD      (EditorQuitRequested),A
         LD      (EditorInsertMode),A

@@ -27,10 +27,8 @@ PROJECT_CFG_ERR_EXTRA  .equ 5
 ; Output:
 ;   carry clear, A=PROJECT_CFG_OK, destination is NUL-terminated main path
 ;   carry set, A=ProjectCfgErr*
-;! in B,DE,HL
-;! out A,C,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@ParseProjectConfig:
+.routine in B,DE,HL out A,C,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+ParseProjectConfig:
         PUSH    DE
         LD      DE,ProjectCfgMagicLine
         CALL    ProjectCfgMatchLine
@@ -39,7 +37,7 @@ PROJECT_CFG_ERR_EXTRA  .equ 5
 
         PUSH    DE
         LD      DE,ProjectCfgMainKey
-        ; expects out HL
+        .expectout HL
         CALL    ProjectCfgMatchText
         POP     DE
         JP      C,ProjectCfgMainErr
@@ -114,11 +112,9 @@ ProjectCfgExtraErr:
 ; Match zero-terminated text at DE against HL, then require LF.
 ; Input: HL = source, DE = literal
 ; Output: carry clear on match, HL after LF; carry set on mismatch
-;! in DE,HL
-;! out DE,HL,A,carry,zero
-;! clobbers sign,parity,halfCarry
-@ProjectCfgMatchLine:
-        ; expects out HL
+.routine in DE,HL out DE,HL,A,carry,zero clobbers sign,parity,halfCarry
+ProjectCfgMatchLine:
+        .expectout HL
         CALL    ProjectCfgMatchText
         RET     C
         LD      A,(HL)
@@ -136,10 +132,8 @@ ProjectCfgLineOk:
 ; Match zero-terminated literal at DE against bytes at HL.
 ; Input: HL = source, DE = literal
 ; Output: carry clear on match, HL after literal; carry set on mismatch
-;! in DE,HL
-;! out DE,HL,A,carry,zero
-;! clobbers sign,parity,halfCarry
-@ProjectCfgMatchText:
+.routine in DE,HL out DE,HL,A,carry,zero clobbers sign,parity,halfCarry
+ProjectCfgMatchText:
         LD      A,(DE)
         OR      A
         RET     Z

@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -35,10 +34,8 @@ ProofFailedDone:
 
 ; Stub LoadProjectConfig for link completeness. Named edit must not depend on
 ; the project-main cache because the command supplies an explicit source name.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      A,SHELL_ERR_PROJECT
         SCF
         RET

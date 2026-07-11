@@ -57,8 +57,6 @@ Start here:
 - [Profile TEC-FS Packaging](profile-tecfs-packaging.md)
 - [Input Polling ABI](input-polling-abi.md)
 - [VDU/TMS Minimum Primitives](vdu-tms-minimum-primitives.md)
-- [TECM8 Game Creation Mission](gamer.md)
-- [Gamer Vertical Slice Specification](gamer-vertical-slice.md)
 - [Game-Facing Register Contracts](game-register-contracts.md)
 - [TECM8 AZM Style Guide](azm-style-guide.md)
 - [AZM Adoption Opportunities](azm-adoption-opportunities.md)

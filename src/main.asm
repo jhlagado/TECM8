@@ -11,9 +11,8 @@ TECM8_MAIN_STACK       .equ     0x3FF0
 
         .include "tecm8-equates.asm"
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,BC,DE,HL
+Start:
         LD      SP,TECM8_MAIN_STACK
         JP      LiveStart
 
@@ -28,9 +27,8 @@ MainFailed:
         LD      (MainResultMarker),A
         JP      MainDone
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,BC,DE,HL
-@LiveStart:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,BC,DE,HL
+LiveStart:
         CALL    DisplayInit
         JP      C,MainFailed
         LD      HL,MainEditCommand

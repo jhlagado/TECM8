@@ -18,9 +18,8 @@ SHELL_PROGRAM_INPUT .equ     1
 ; to the prompt-ready state.
 ; Output:
 ;   carry clear, A=SHELL_PROGRAM_READY
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@RunShellProgramEntry:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+RunShellProgramEntry:
         CALL    InitShellProgramState
 
 ShellProgramInput:
@@ -37,9 +36,8 @@ ShellProgramPromptReady:
 
 ; InitShellProgramState —
 ; Clear prompt-visible shell state before entering the input cycle.
-;! out DE,HL,A,C,zero,carry
-;! clobbers sign,parity,halfCarry
-@InitShellProgramState:
+.routine out DE,HL,A,C,zero,carry clobbers sign,parity,halfCarry
+InitShellProgramState:
         XOR     A
         LD      (ShellProgramState),A
         LD      (ShellPromptStatus),A
@@ -62,10 +60,8 @@ ShellProgramPromptReady:
 ; Output:
 ;   carry clear, A=SHELL_PROGRAM_READY
 ;   carry set, A=shell error from the failing prompt cycle
-;! in B
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@RunShellProgramCycles:
+.routine in B out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+RunShellProgramCycles:
         LD      A,B
         LD      (ShellProgramCyclesLeft),A
         CALL    InitShellProgramState
@@ -109,9 +105,8 @@ ShellProgramCycleErr:
 ; Output:
 ;   HL = entered line bytes
 ;   C  = entered byte count, including the CR terminator
-;! out BC,DE,HL,carry
-;! clobbers zero,sign,parity,halfCarry,A
-@ReadShellInputLine:
+.routine out BC,DE,HL,carry clobbers zero,sign,parity,halfCarry,A
+ReadShellInputLine:
         CALL    FillShellLineBuffer
         LD      HL,ShellLineBuffer + 1
         LD      A,(ShellLineBuffer)
@@ -123,14 +118,13 @@ ShellProgramCycleErr:
 ; Minimal editable line routine. It reads key events from the current key
 ; source, appends printable characters, handles backspace, stops on CR, and
 ; appends the CR terminator.
-;! out carry,A,B,DE,HL
-;! clobbers zero,sign,parity,halfCarry,C
-@FillShellLineBuffer:
+.routine out carry,A,B,DE,HL clobbers zero,sign,parity,halfCarry,C
+FillShellLineBuffer:
         LD      DE,ShellLineBuffer + 1
         LD      B,0
 
 ShellLineEditLoop:
-        ; expects out A
+        .expectout A
         CALL    ReadShellKey
         CP      0x0D
         JR      Z,ShellLineFillTerminator
@@ -170,9 +164,8 @@ ShellLineFillTerminator:
 ; ReadShellKey —
 ; Stubbed key source. Real monitor input will replace this provider; proofs seed
 ; ShellKeySeedPtr with a byte stream ending in CR.
-;! out A
-;! clobbers HL,F
-@ReadShellKey:
+.routine out A clobbers HL,F
+ReadShellKey:
         LD      HL,(ShellKeySeedPtr)
         LD      A,H
         OR      L
@@ -195,10 +188,8 @@ ShellKeySeedReady:
 ;   C  = entered byte count
 ; Output:
 ;   carry clear, A=SHELL_PROMPT_OK or SHELL_PROMPT_ERROR
-;! in C,HL
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@RunShellPromptCycle:
+.routine in C,HL out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+RunShellPromptCycle:
         CALL    RunShellInputLine
         JR      C,ShellPromptCycleError
 
@@ -223,10 +214,8 @@ ShellPromptCycleError:
 ; Output:
 ;   carry clear, A=SHELL_OK after a stub handles the command
 ;   carry set, A=SHELL_ERR_* if normalization, dispatch, or execution fails
-;! in C,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@RunShellInputLine:
+.routine in C,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+RunShellInputLine:
         LD      DE,ShellInputCommand
         LD      B,SHELL_INPUT_LEN
         CALL    NormalizeShellInputLine
@@ -244,10 +233,8 @@ ShellPromptCycleError:
 ; Output:
 ;   carry clear, A=SHELL_OK, output buffer is NUL-terminated
 ;   carry set, A=SHELL_ERR_LONG when no byte remains for the final NUL
-;! in BC,DE,HL
-;! out BC,HL,carry,zero,A
-;! clobbers sign,parity,halfCarry,DE
-@NormalizeShellInputLine:
+.routine in BC,DE,HL out BC,HL,carry,zero,A clobbers sign,parity,halfCarry,DE
+NormalizeShellInputLine:
         LD      A,B
         OR      A
         JP      Z,ShellLongErr

@@ -10,7 +10,7 @@
 EXP_BANK          .equ    0x00
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionHeader:
+Tecm8ExpansionHeader:
         .db     EXP_MAGIC_0,EXP_MAGIC_1
         .db     EXP_MAGIC_2,EXP_MAGIC_3
         .db     EXP_HEADER_VERSION
@@ -35,7 +35,8 @@ Tecm8ExpansionInstall:
         ld (EXP_SVC_VEC_FLAGS),a
         ret
 
-@Tecm8ExpansionBank0Entry:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ExpansionBank0Entry:
         ld a,EXP_BANK
         ld (DBG_TRACE_0),a
         call Tecm8BootstrapVdu
@@ -44,34 +45,38 @@ Tecm8ExpansionInstall:
         call Tecm8BootstrapShell
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8BootstrapVdu:
-        ; expects out A
+        .expectout A
         callService VDU_INIT
         ld (DBG_TRACE_4),a
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8BootstrapTecfs:
-        ; expects out A
+        .expectout A
         callService TFS_MOUNT
         ld (DBG_TRACE_5),a
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8BootstrapInput:
-        ; expects out A
+        .expectout A
         callService INP_READ
         ld (DBG_TRACE_7),a
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8BootstrapShell:
-        ; expects out A
+        .expectout A
         callService RTC_TOOL
         ld (DBG_TRACE_6),a
-        ; expects out A
+        .expectout A
         callService SHL_ENTRY
         ld (DBG_TRACE_8),a
         ret
 
-@Tecm8ServiceCall:
+Tecm8ServiceCall:
         push hl
         push de
         push af
@@ -116,7 +121,8 @@ Tecm8ServiceCallUnknown:
         scf
         ret
 
-@Tecm8ShellEntry:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellEntry:
         ld a,EXP_BANK
         ld (SHL_PARAM_BANK),a
         ld a,EXP_VERSION
@@ -137,6 +143,7 @@ Tecm8ShellSplashError:
         scf
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry
 Tecm8ShellClearCommandState:
         xor a
         ld (SHL_PARAM_STATUS),a
@@ -154,7 +161,8 @@ Tecm8ShellClearCommandState:
         ld (SHL_TARGET_FLAGS),a
         ret
 
-@Tecm8ShellRunCommand:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellRunCommand:
         call Tecm8ShellClearCommandState
         ld hl,SHL_COMMAND_BUFFER
         ld a,(hl)
@@ -244,7 +252,7 @@ Tecm8ShellRunAsm:
         ld hl,(SHL_PARAM_COMMAND_TARGET_LO)
         ld (ASM_PARAM_TARGET_LO),hl
         or a
-        ; expects out A,carry
+        .expectout A,carry
         callBankService ASM_BANK,ASM_ENTRY,ASM_SVC_ASSEMBLE
         call Tecm8ShellPublishAsmResult
         ld a,0x80
@@ -257,7 +265,7 @@ Tecm8ShellRunRun:
         ld hl,(SHL_PARAM_COMMAND_TARGET_LO)
         ld (RUN_PARAM_TARGET_LO),hl
         or a
-        ; expects out A,carry
+        .expectout A,carry
         callBankService RUN_BANK,RUN_ENTRY,RUN_SVC_RUN
         call Tecm8ShellPublishRunResult
         ld a,0x80
@@ -269,15 +277,15 @@ Tecm8ShellRunDir:
         ld (SHL_TARGET_ACTION),a
         ld hl,(TFS_PARAM_BUFFER_LO)
         push hl
-        ; expects out A,carry
+        .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG
         jp c,Tecm8ShellPublishDirErrorPop
         ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
-        ; expects out A,carry
+        .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_NEXT_CATALOG
         jp c,Tecm8ShellPublishDirErrorPop
-        ; expects out A,carry
+        .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG
         jp c,Tecm8ShellPublishDirErrorPop
         ld a,(TFS_PARAM_SUMMARY_COUNT_LO)
@@ -319,18 +327,21 @@ Tecm8ShellRunNoop:
         ld a,0x80
         or a
         ret
+.routine out A clobbers sign,parity,halfCarry
 Tecm8ShellPublishAsmResult:
         ld a,(ASM_PARAM_RESULT_LO)
         ld (SHL_PARAM_COMMAND_RESULT_LO),a
         ld a,(ASM_PARAM_RESULT_HI)
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
         ret
+.routine out A clobbers sign,parity,halfCarry
 Tecm8ShellPublishRunResult:
         ld a,(RUN_PARAM_RESULT_LO)
         ld (SHL_PARAM_COMMAND_RESULT_LO),a
         ld a,(RUN_PARAM_RESULT_HI)
         ld (SHL_PARAM_COMMAND_RESULT_HI),a
         ret
+.routine in A,B out A,H,L clobbers sign,parity,halfCarry
 Tecm8ShellPublishTarget:
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
@@ -349,7 +360,7 @@ Tecm8ShellRunUnknown:
         scf
         ret
 
-@Tecm8ShellRenderCommandStatus:
+Tecm8ShellRenderCommandStatus:
         ld a,(SHL_PARAM_STATUS)
         cp SHL_STATUS_UNKNOWN_COMMAND
         jp z,Tecm8ShellPublishCommandErrorStatus
@@ -380,7 +391,7 @@ Tecm8ShellPublishDirStatus:
         ld hl,Tecm8ShellDirStatusText
         jp Tecm8ShellPublishStatusFromHl
 
-@Tecm8ShellRenderCommandResult:
+Tecm8ShellRenderCommandResult:
         ld a,(SHL_PARAM_COMMAND_RESULT_LO)
         cp SHL_RESULT_OK
         jp z,Tecm8ShellPublishOkResult
@@ -408,6 +419,7 @@ Tecm8ShellPublishNoneResult:
         ld hl,Tecm8ShellNoneResultText
         jp Tecm8ShellPublishStatusFromHl
 
+.routine in HL out A,B,zero clobbers sign,parity,halfCarry,C,H,L
 Tecm8ShellCommandLength:
         ld b,0x00
         ld c,SHL_COMMAND_CAPACITY
@@ -419,13 +431,13 @@ Tecm8ShellCommandLengthNext:
         inc hl
         dec c
         jp z,Tecm8ShellCommandLengthDone
-        ;! rc-ignore-next definite_contract_violation: AZM cannot yet prove this local bounded count loop preserves B/C/HL across the backward branch.
         jp Tecm8ShellCommandLengthNext
 Tecm8ShellCommandLengthDone:
         ld a,b
         ld (SHL_PARAM_COMMAND_LENGTH),a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,D,E,H,L
 Tecm8ShellCopySplash:
         ld hl,Tecm8ShellSplashText
         ld de,SHL_SPLASH_BUFFER
@@ -438,10 +450,9 @@ Tecm8ShellCopySplashNext:
         jp nz,Tecm8ShellCopySplashNext
         ret
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8ShellRenderHome:
-        ; expects out A,carry
+        .expectout A,carry
         callBankService VDU_BANK,VDU_CALL,VDU_SVC_CLEAR
         ret c
         ld a,0x00
@@ -454,33 +465,28 @@ Tecm8ShellRenderHome:
         ret c
         ld a,0x03
         ld hl,Tecm8ShellPromptText
-        ;! rc-ignore-next definite_contract_violation: HL is the input string pointer for this final home-line call and is not live after the following carry check.
         call Tecm8ShellWriteHomeLine
         ret c
         jp Tecm8ShellPublishReadyStatus
 
-;! in A,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+.routine in A,HL out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8ShellWriteHomeLine:
         ld (TMS_PARAM_ROW),a
         xor a
         ld (TMS_PARAM_COL),a
-        ;! rc-ignore-next definite_contract_violation: DE/flags are scratch while copying the bank-local string into the cross-bank RAM line buffer.
+        .rcignore flag_lifetime_risk "Flags from clearing the row/column setup are scratch; only the following VDU service result is observed."
         call Tecm8ShellCopyLineToBuffer
         ld hl,SHL_LINE_BUFFER
         ld (TMS_PARAM_STRING_LO),hl
-        ; expects out A,carry
-        ;! rc-ignore-next definite_contract_violation: callBankService reloads its own B/C/HL frame; the VDU_SET_ROWCOL service does not consume caller DE/HL.
+        .expectout A,carry
+        .rcignore definite_contract_violation "callBankService reloads its own B/C/HL frame; the VDU_SET_ROWCOL service does not consume caller DE/HL."
         callBankService VDU_BANK,VDU_CALL,VDU_SVC_SET_ROWCOL
         ret c
-        ; expects out A,carry
+        .expectout A,carry
         callBankService VDU_BANK,VDU_CALL,VDU_SVC_PUT_STRING
         ret
 
-;! in HL
-;! out A,zero
-;! clobbers sign,parity,halfCarry,A,B,D,E,H,L
+.routine in HL out A,zero clobbers sign,parity,halfCarry,B,D,E,H,L
 Tecm8ShellCopyLineToBuffer:
         ld de,SHL_LINE_BUFFER
         ld b,SHL_LINE_CAPACITY-1
@@ -501,6 +507,7 @@ Tecm8ShellPublishReadyStatus:
         ld hl,Tecm8ShellReadyStatusText
         jp Tecm8ShellPublishStatusFromHl
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,D,E,H,L
 Tecm8ShellPublishPollStatus:
         ld hl,Tecm8ShellPollStatusText
 Tecm8ShellPublishStatusFromHl:
@@ -514,12 +521,13 @@ Tecm8ShellCopyReadyStatusNext:
         jp nz,Tecm8ShellCopyReadyStatusNext
         ld hl,SHL_STATUS_BUFFER
         ld (TMS_PARAM_STRING_LO),hl
-        ; expects out A,carry
+        .expectout A,carry
         callBankService VDU_BANK,VDU_CALL,VDU_SVC_STATUS_LINE
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8ShellLoopStep:
-        ; expects out A,carry
+        .expectout A,carry
         callService INP_READ
         ret c
         ld a,(SHL_LOOP_TICK)
@@ -540,8 +548,7 @@ Tecm8ShellLoopStep:
         call Tecm8ShellPublishPollStatus
         ret
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8ShellRenderInputEcho:
         ld hl,Tecm8ShellInputEchoText
         call Tecm8ShellCopyLineToBuffer
@@ -558,6 +565,7 @@ Tecm8ShellRenderInputEcho:
         ld hl,SHL_LINE_BUFFER
         jp Tecm8ShellWriteHomeLine
 
+.routine in A,DE out A,D,E,carry,zero clobbers sign,parity,halfCarry
 Tecm8ShellHexByte:
         push af
         srl a
@@ -572,6 +580,7 @@ Tecm8ShellHexByte:
         ld (de),a
         ret
 
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry
 Tecm8ShellHexNibble:
         and 0x0F
         add a,"0"
@@ -615,10 +624,10 @@ Tecm8ShellUnsupportedResultText:
 Tecm8ShellNoneResultText:
         .db     "NONE",0
 
-@Tecm8ExpansionBank0Info:
+Tecm8ExpansionBank0Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION
 
-@Tecm8ServiceRegistry:
+Tecm8ServiceRegistry:
         .db     VDU_INIT,VDU_BANK
         .dw     VDU_ADDR
         .db     VDU_SVC_INIT
@@ -649,5 +658,5 @@ Tecm8ShellNoneResultText:
         .db     ABI_PROBE_NESTED,VDU_BANK
         .dw     VDU_ENTRY
         .db     ABI_PROBE_NESTED
-@Tecm8ServiceRegistryEnd:
+Tecm8ServiceRegistryEnd:
         .db     SVC_REG_END

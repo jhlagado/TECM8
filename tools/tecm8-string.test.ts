@@ -21,7 +21,7 @@ test('shared string helper proof covers bounded copy boundary behavior', () => {
   assert.match(proof, /AssertCopyOverflow/);
   assert.match(proof, /\.include\s+"..\/..\/src\/tecm8-string\.asm"/);
   assert.ok(
-    proof.indexOf('@Start:') < proof.indexOf('.include "../../src/tecm8-string.asm"'),
+    proof.indexOf('Start:') < proof.indexOf('.include "../../src/tecm8-string.asm"'),
     'byte-emitting shared string helpers must not be included before proof entry'
   );
   assert.match(runner, /tecm8-string-proof\.asm/);

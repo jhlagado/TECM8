@@ -41,7 +41,7 @@ of every AZM feature.
 
 | Feature | TECM8 experience | Keep using? | Main feedback |
 |---|---|---:|---|
-| AZMDoc register contracts | Very high value; changed code shape for the better | Yes | Add local suppressions/hints for non-local control flow |
+| AZM `.routine` register contracts | Very high value; changed code shape for the better | Yes | Add local suppressions/hints for non-local control flow |
 | `--rc` modes | Useful development ladder from audit to strict | Yes | Document diagnostics-first workflow more prominently |
 | `.asmi` external interfaces | Good fit for MON3 ROM calls | Yes | Provide more external ROM/API examples |
 | D8/D8M artifacts | Essential for Debug80 proofs and size work | Yes | Add clearer byte ownership/routine range metadata |
@@ -102,7 +102,7 @@ TECM8's point of view.
 
 TECM8 already depends heavily on these AZM surfaces:
 
-- AZMDoc register contracts in source comments.
+- AZM `.routine` register contracts in source comments.
 - Strict register-contract checking for the main editor image and proof
   programs.
 - `.asmi` contracts for external MON3 routines.
@@ -156,7 +156,7 @@ Current concrete evidence:
 - Contract annotation experiment: running
   `azm --contracts --fix --rc audit --reg-profile mon3 --interface src/mon3.asmi src/main.asm`
   successfully rewrote contract comments across the included source tree. TECM8
-  normalized those comments to one compact clause per `;!` line because that is
+  normalized those comments to one compact clause per `.routine` directive because that is
   easier to diff and review in dense assembly. During this work I briefly saw
   strict-check diagnostics after a broad generated rewrite, but I do not yet
   have an isolated repro proving an AZM parser or checker defect. Treat that as
@@ -174,7 +174,7 @@ Practical advantages:
   effects.
 - `--rc strict` forces routines to have clear boundaries. This has pushed code
   away from long jumpy flows and toward smaller routines with local exits.
-- AZMDoc comments keep the contract beside the routine, which makes review much
+- AZM `.routine` directives keep the contract beside the routine, which makes review much
   easier than reading an external manifest.
 - `.asmi` files are a good fit for MON3. TECM8 can describe ROM routines that
   are not part of this source tree while still keeping strict checks on calls
@@ -182,9 +182,9 @@ Practical advantages:
 
 Costs and awkward cases:
 
-- Routine boundaries are currently tied to the `@` label structure. That is
-  useful and simple, but it becomes crude when code jumps across routine-like
-  regions or deliberately transfers control outside the local block.
+- Routine boundaries are now tied to explicit `.routine` directives. That is
+  useful and simple, but it can still become crude when code jumps across
+  routine-like regions or deliberately transfers control outside the local block.
 - Strict checking is good at revealing unstructured code, but it can also flag
   cases where the intended control flow is real and safe but not expressible
   with the current contract language.

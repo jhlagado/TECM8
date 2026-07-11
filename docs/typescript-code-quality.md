@@ -114,7 +114,7 @@ Extract the shared proof ceremony into one module, then re-point every
 - `buildFat32Image(opts)` / `createTm8Volume(...)` — image + volume construction.
 - `startTecRuntime(cfg)` — Debug80 TEC-1G runtime, MON3 ROM load, shadow-ROM
   disable, SD seed.
-- `assembleProof(src)` — `@jhlagado/azm` assembly with strict `;!` contracts +
+- `assembleProof(src)` — `@jhlagado/azm` assembly with strict `.routine` contracts +
   `src/mon3.asmi`.
 - `readSymbol(name)` / `readGlcd()` / `captureGlcdPgm(path)` / `expectResultMarker()`.
 - **Verify:** `npm run check` (every proof runner exercises the new harness).

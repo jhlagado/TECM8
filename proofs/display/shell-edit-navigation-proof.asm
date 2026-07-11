@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -49,10 +48,8 @@ ProofFailedDone:
 
 ; Stub LoadProjectConfig for shell-to-editor proof. This proof uses the real
 ; storage path for the source file but keeps project config out of the proof.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,ExpectedMain
         LD      C,B
 

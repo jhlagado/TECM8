@@ -24,21 +24,21 @@ DISFLAG:    .equ DISRAM + 40 ;DIS FLAG FOR HL,IX,IY
 DISFROM:    .equ DISRAM + 41 ;DIS START ADDRESS
 
 disStart:
-        ld hl, disline1
+        ld hl, DISLINE1
         xor a
-        ld (disflag), a
-        ld (disptr), hl
-        ld hl, (disfrom)
+        ld (DISFLAG), a
+        ld (DISPTR), hl
+        ld hl, (DISFROM)
         push hl
-        call l0x318a    ; write address to disline1
+        call l0x318a    ; write address to DISLINE1
         ld b, 22H
         call l0x31b9    ;fill rest with spaces
 
-        ld hl, disline1 ; patch to fix absoute memory addressing
+        ld hl, DISLINE1 ; patch to fix absoute memory addressing
         ld bc, 5
         add hl, bc
 
-        ld (disptr), hl
+        ld (DISPTR), hl
         pop hl
         ld a, (hl)
         push hl
@@ -51,9 +51,9 @@ disStart:
         ld a, (hl)
         call nc, l0x340e
 l0x302e:                        ; why jp to this code; just do it here?
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         inc hl
-        ld (disfrom), hl
+        ld (DISFROM), hl
         ret
 l0x3031:
         cp 40H
@@ -159,7 +159,7 @@ l0x30c1:
         ld c, a
         jr l0x3106
 l0x30d7:
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         inc hl
         ld a, (hl)
         cp 0CBH
@@ -180,7 +180,7 @@ l0x30ed:
         push af
         ld b, 04H
         ld a, c
-        ld (disflag), a
+        ld (DISFLAG), a
         bit 7, c
         jr nz, l0x30fb
         dec b
@@ -201,7 +201,7 @@ l0x310d:
         ld hl, tableREG
         jr l0x3145
 l0x3112:
-        ld a, (disflag)
+        ld a, (DISFLAG)
         or a
         jr nz, l0x311e
         ld c, 08H
@@ -218,24 +218,24 @@ l0x3126:
         call l0x310d
         pop af
         rla
-        ld de, (disfrom)
+        ld de, (DISFROM)
         jr nc, l0x3134
         dec de
 l0x3134:
-        ld a, (disptr)
+        ld a, (DISPTR)
         sub 03H
-        ld (disptr), a
+        ld (DISPTR), a
         ld a, (de)
         call l0x3191
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         ret
 l0x3145:
-        ld de, (disptr)
+        ld de, (DISPTR)
         add hl, bc
         ld c, a
         ldir
-        ld (disptr), de
+        ld (DISPTR), de
         scf
         ret
 l0x3153:
@@ -247,19 +247,19 @@ l0x3153:
         ex de, hl
         jr l0x3169
 l0x315d:
-        ld hl, disline2
-        ld (disptr), hl
+        ld hl, DISLINE2
+        ld (DISPTR), hl
         ret
 l0x3164:
         ld bc, 0006H
         jr l0x310b
 l0x3169:
-        ld hl, (disptr)
+        ld hl, (DISPTR)
         ld a, (de)
         ld (hl), a
         res 7, (hl)
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         inc de
         or a
         jp m, l0x31b7
@@ -298,10 +298,10 @@ l0x319a:
         daa
         adc a, 40H
         daa
-        ld hl, (disptr)
+        ld hl, (DISPTR)
         ld (hl), a
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         scf
         ret
 l0x31ac:
@@ -318,15 +318,15 @@ l0x31b7:
         ld b, 01H
 l0x31b9:
         ld a, 20H
-        ld hl, (disptr)
+        ld hl, (DISPTR)
 l0x31be:
         ld (hl), a
         inc hl
         djnz l0x31be
-        ld (disptr), hl
+        ld (DISPTR), hl
         ret
 l0x31c6:
-        ld de, (disfrom)
+        ld de, (DISFROM)
 l0x31ca:
         push bc
         ld a, (de)
@@ -338,7 +338,7 @@ l0x31ca:
         pop bc
         djnz l0x31ca
         dec de
-        ld (disfrom), de
+        ld (DISFROM), de
         ret
 l0x31de:
         ld b, 02H
@@ -378,7 +378,7 @@ l0x320b:
         ld c, a
         ret
 l0x3221:
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         ld a, (hl)
         push hl
         call l0x3191
@@ -389,7 +389,7 @@ l0x3221:
         call l0x3191
         pop hl
         inc hl
-        ld (disfrom), hl
+        ld (DISFROM), hl
         ret
 l0x3236:
         and 0C7H
@@ -403,7 +403,7 @@ l0x3236:
         call l0x35e7
         call l0x3164
 l0x324d:
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         ld a, (hl)
         jp l0x3191
 l0x3254:
@@ -553,7 +553,7 @@ l0x3353:
 fixcomma:               ; comma fix for jp/jr <flag>, xxx
         push hl
         push af
-        ld hl, (disptr)
+        ld hl, (DISPTR)
         dec hl
         ld a, 2CH       ; ","
         ld (hl), a
@@ -561,7 +561,7 @@ fixcomma:               ; comma fix for jp/jr <flag>, xxx
         ; ld a, 20H       ; " "
         ; ld (hl), a
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         pop af
         pop hl
         ret
@@ -664,7 +664,7 @@ l0x3401:
         inc hl
         ld (hl), 46H
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         ret
 l0x340b:
         jp l0x320b
@@ -701,7 +701,7 @@ l0x3439:
 l0x3440:
         cp 0EDH
         jp nz, l0x34e8
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         inc hl
         ld a, (hl)
         ld c, a
@@ -776,7 +776,7 @@ l0x34c5:
         jp l0x320a
 l0x34cf:
         ld b, 1CH
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         inc hl
         ld a, (hl)
         ld hl, tableEXC
@@ -799,17 +799,17 @@ l0x34f7:
         ld b, 02H
         jr l0x3513
 l0x34fb:
-        ld hl, (disptr) ; re-write to add () to in/out (xx),a
+        ld hl, (DISPTR) ; re-write to add () to in/out (xx),a
         ld a, 28H       ; "("
         ld (hl), a
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         call l0x324d
-        ld hl, (disptr)
+        ld hl, (DISPTR)
         ld a, 29H       ; ")"
         ld (hl), a
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         ret
 l0x3502:
         cp 0DBH
@@ -847,7 +847,7 @@ l0x352f:
         ld b, d
         call l0x31ff
         pop hl
-        ld de, (disptr)
+        ld de, (DISPTR)
 l0x3539:
         inc hl
         ld a, (hl)
@@ -859,11 +859,11 @@ l0x3539:
         dec hl
         res 7, (hl)
         inc hl
-        ld (disptr), hl
+        ld (DISPTR), hl
         or a
         ret
 l0x354b:
-        ld hl, (disptr)
+        ld hl, (DISPTR)
         cp 0DDH
         jr nz, l0x3559
         ld (hl), 44H
@@ -877,16 +877,16 @@ l0x3559:
         inc hl
         ld a, 22H
 l0x3562:
-        ld (disflag), a
+        ld (DISFLAG), a
         ld (hl), 44H
         inc hl
         inc hl
-        ld (disptr), hl
-        ld hl, (disfrom)
+        ld (DISPTR), hl
+        ld hl, (DISFROM)
         inc hl
         ld c, (hl)
         ld a, (hl)
-        ld (disfrom), hl
+        ld (DISFROM), hl
         cp 36H
         push hl
         call z, l0x31fd
@@ -908,10 +908,10 @@ l0x358d:
 l0x3590:
         jp l0x31e9
 l0x3593:
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         dec hl
         dec hl
-        ld (disfrom), hl
+        ld (DISFROM), hl
         call l0x3106
 l0x35a6:
         rra
@@ -919,7 +919,7 @@ l0x35a6:
         rra
         cp 04H
         ret nz
-        ld a, (disflag)
+        ld a, (DISFLAG)
         rrca
         jr nc, l0x35b5
         ld a, 0F3H
@@ -938,7 +938,7 @@ l0x35bb:
         ld bc, 000BH
         jp l0x310b
 l0x35cd:
-        ld a, (disflag)
+        ld a, (DISFLAG)
         ld b, 00H
         rrca
         jr nc, l0x35d9
@@ -955,7 +955,7 @@ l0x35e2:
         ld a, 02H
         jp l0x310d
 l0x35e7:
-        ld a, (disflag)
+        ld a, (DISFLAG)
         rrca
 l0x35eb:
         jr c, l0x3593
@@ -963,7 +963,7 @@ l0x35eb:
         jr c, l0x35eb
         jp l0x3106
 l0x35f3:
-        ld hl, (disfrom)
+        ld hl, (DISFROM)
         ld e, (hl)
         xor a
         bit 7, e
@@ -991,7 +991,7 @@ l0x360e:
         ld (hl), 49H
         inc hl
         ld (hl), 58H
-        ld a, (disflag)
+        ld a, (DISFLAG)
         rrca
         ret c
         inc (hl)

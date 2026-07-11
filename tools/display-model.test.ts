@@ -64,7 +64,7 @@ test('structured display model has assembly entry points', () => {
     'DisplayRenderCursorCell',
     'DisplayEraseCursorCell',
   ]) {
-    assert.match(source, new RegExp(`^@${label}:`, 'm'));
+    assert.match(source, new RegExp(`^${label}:`, 'm'));
   }
   for (const constant of [
     'TECM8_DISPLAY_GLCD_COLUMNS',
@@ -85,20 +85,20 @@ test('structured display model has assembly entry points', () => {
   assert.match(equates, /^TECM8_GLCD_Y_ORIGIN\s+\.equ\s+2$/m);
   assert.match(equates, /^TECM8_GLCD_ROWS\s+\.equ\s+10$/m);
   assert.match(equates, /^TECM8_MON3_GLCD_TGBUF\s+\.equ\s+0x13C0$/m);
-  assert.match(source, /@DisplayRenderGutter:\n\s+LD\s+\(DisplayRow\),A/);
-  assert.match(source, /@DisplayRenderScreen:\n\s+LD\s+A,\(DisplayRenderScreenCount\)\n\s+INC\s+A\n\s+LD\s+\(DisplayRenderScreenCount\),A\n\s+LD\s+\(DisplayCursor\),HL\n\s+LD\s+A,TECM8_DISPLAY_EDIT_ROWS/);
-  assert.match(source, /@DisplayInit:\n\s+CALL\s+BiosDisplayInit\n\s+RET\s+C\n\s+CALL\s+BiosDisplayClear/);
+  assert.match(source, /DisplayRenderGutter:\n\s+LD\s+\(DisplayRow\),A/);
+  assert.match(source, /DisplayRenderScreen:\n\s+LD\s+A,\(DisplayRenderScreenCount\)\n\s+INC\s+A\n\s+LD\s+\(DisplayRenderScreenCount\),A\n\s+LD\s+\(DisplayCursor\),HL\n\s+LD\s+A,TECM8_DISPLAY_EDIT_ROWS/);
+  assert.match(source, /DisplayInit:\n\s+CALL\s+BiosDisplayInit\n\s+RET\s+C\n\s+CALL\s+BiosDisplayClear/);
   assert.doesNotMatch(source, /TECM8_DISPLAY_TOP_ROW/);
   assert.doesNotMatch(source, /TECM8_DISPLAY_FIRST_EDIT_ROW/);
   assert.doesNotMatch(source, /TECM8_DISPLAY_BOTTOM_ROW/);
   assert.match(source, /AND\s+0x0F/);
-  assert.match(source, /@DisplayRenderCursorCell:/);
-  assert.match(source, /@DisplayEraseCursorCell:/);
+  assert.match(source, /DisplayRenderCursorCell:/);
+  assert.match(source, /DisplayEraseCursorCell:/);
   assert.match(source, /CP\s+TECM8_DISPLAY_EDIT_ROWS/);
   assert.match(source, /CP\s+TECM8_DISPLAY_MAX_TEXT_CHARS/);
   assert.doesNotMatch(source, /CALL\s+GlcdTileFlushRow/);
   assert.match(source, /CALL\s+GlcdTileMarkCellDirty/);
-  assert.match(source, /@DisplayMarkCursorDirty:/);
+  assert.match(source, /DisplayMarkCursorDirty:/);
   assert.match(source, /DEC\s+A\n\s+LD\s+C,A\n\s+CALL\s+GlcdTileMarkCellDirty/);
   assert.match(source, /DisplayCursorSavedBytes:/);
   assert.match(source, /TECM8_DISPLAY_MARKER_COPY_SOURCE\s+\.equ\s+8/);

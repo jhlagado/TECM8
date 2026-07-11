@@ -16,9 +16,8 @@ PROOF_FAIL_PRAM_VIEWER      .equ    0xE3
 PROOF_FAIL_UNKNOWN_SELECTOR .equ    0xE4
 RTC_PROOF_RESULT            .equ    0x3BB0
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld hl,RTC_PARAM_BASE
         ld b,16
 ClearParams:

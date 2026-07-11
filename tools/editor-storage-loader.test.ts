@@ -12,12 +12,12 @@ function readRepoFile(path: string): string {
 test('editor storage loader exposes a fixed main-source sector entry point', () => {
   const source = readRepoFile('src/editor-storage-loader.asm');
 
-  assert.match(source, /^@EditorLoadMainSector:/m);
-  assert.match(source, /^@EditorLoadMainPage:/m);
-  assert.match(source, /^@EditorLoadSourcePage:/m);
-  assert.match(source, /^@EditorSaveSourcePage:/m);
-  assert.match(source, /^@EditorSaveSourcePageNoGrow:/m);
-  assert.match(source, /@EditorLoadSourcePage:\n\s+PUSH\s+AF\n\s+XOR\s+A\n\s+LD\s+\(EditorLoadAllowShort\),A\n\s+LD\s+\(EditorSaveGrowMode\),A\n\s+POP\s+AF/);
+  assert.match(source, /^EditorLoadMainSector:/m);
+  assert.match(source, /^EditorLoadMainPage:/m);
+  assert.match(source, /^EditorLoadSourcePage:/m);
+  assert.match(source, /^EditorSaveSourcePage:/m);
+  assert.match(source, /^EditorSaveSourcePageNoGrow:/m);
+  assert.match(source, /EditorLoadSourcePage:\n\s+PUSH\s+AF\n\s+XOR\s+A\n\s+LD\s+\(EditorLoadAllowShort\),A\n\s+LD\s+\(EditorSaveGrowMode\),A\n\s+POP\s+AF/);
 
   assert.match(source, /CALL\s+BiosFileOpen/);
   assert.match(source, /CALL\s+BiosFileReadSector/);
@@ -27,10 +27,10 @@ test('editor storage loader exposes a fixed main-source sector entry point', () 
   assert.match(source, /LD\s+\(EditorLoadBlockSteps\),A/);
   assert.match(source, /CALL\s+EditorLoadResolveSourceBlock/);
   assert.match(source, /CALL\s+EditorLoadResolveNextBlock/);
-  assert.match(source, /@EditorLoadResolveNextBlock:/);
+  assert.match(source, /EditorLoadResolveNextBlock:/);
   assert.match(source, /JP\s+NZ,EditorSaveReadOrGrowAllocationEntry/);
   assert.match(source, /JP\s+EditorLoadReadAllocationEntry/);
-  assert.match(source, /@EditorSaveReadOrGrowAllocationEntry:/);
+  assert.match(source, /EditorSaveReadOrGrowAllocationEntry:/);
   assert.match(source, /CALL\s+EditorCreateFindFreeBlock/);
   assert.match(source, /CALL\s+EditorCreateMarkAllocatedBlock/);
   assert.match(source, /CALL\s+EditorCreateUpdateSuperblock\n\s+RET\s+C\n\s+JP\s+EditorCreateBlankCreatedSource/);
@@ -38,14 +38,14 @@ test('editor storage loader exposes a fixed main-source sector entry point', () 
   assert.match(source, /CALL\s+EditorLoadWriteSourceSector/);
   assert.match(source, /CALL\s+EditorSaveExtendCatalogSize/);
   assert.match(source, /EditorSaveGrowMode:\n\s+\.db\s+0/);
-  assert.match(source, /@EditorSaveExtendCatalogSize:[\s\S]*?LD\s+A,\(EditorSaveRequiredSizeUpper\)\n\s+CP\s+B/);
+  assert.match(source, /EditorSaveExtendCatalogSize:[\s\S]*?LD\s+A,\(EditorSaveRequiredSizeUpper\)\n\s+CP\s+B/);
   assert.match(source, /EditorSaveCatalogUpdate:\n\s+LD\s+DE,\(EditorLoadCatalogEntryOffset\)\n\s+LD\s+HL,DISK_BUFF \+ 46\n\s+ADD\s+HL,DE/);
   assert.match(source, /LD\s+A,\(EditorSaveRequiredSizeHigh\)\n\s+LD\s+\(HL\),A\n\s+INC\s+HL\n\s+LD\s+A,\(EditorSaveRequiredSizeUpper\)/);
   assert.match(source, /JR\s+NC,EditorLoadAllocationOffsetOk\n\s+INC\s+D/);
   assert.match(source, /EditorLoadPageErr:\n\s+LD\s+A,EDITOR_LOAD_ERR_PAGE\n\s+SCF\n\s+RET/);
-  assert.match(source, /@EditorCreateBlankCreatedSource:\n\s+CALL\s+EditorCreateClearBlankPageBuffer/);
-  assert.match(source, /@EditorCreateBlankCreatedSource:[\s\S]*?LD\s+HL,EditorCreateBlankPageBuffer[\s\S]*?CALL\s+EditorSaveSourcePageNoGrow/);
-  assert.match(source, /@EditorCreateClearBlankPageBuffer:\n\s+LD\s+HL,EditorCreateBlankPageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
+  assert.match(source, /EditorCreateBlankCreatedSource:\n\s+CALL\s+EditorCreateClearBlankPageBuffer/);
+  assert.match(source, /EditorCreateBlankCreatedSource:[\s\S]*?LD\s+HL,EditorCreateBlankPageBuffer[\s\S]*?CALL\s+EditorSaveSourcePageNoGrow/);
+  assert.match(source, /EditorCreateClearBlankPageBuffer:\n\s+LD\s+HL,EditorCreateBlankPageBuffer\n\s+JP\s+Tecm8StorageClearSectorBuffer/);
   assert.match(source, /CP\s+8\n\s+JR\s+NZ,EditorCreateBlankCreatedSourceLoop/);
   assert.doesNotMatch(source, /EditorCreateBlankPageBuffer:\n\s+\.ds\s+TM8_SECTOR_BYTES/);
   assert.match(readRepoFile('src/tecm8-equates.asm'), /EditorCreateBlankPageBuffer\s+\.equ\s+TECM8_EDITOR_NAV_BLANK_BASE/);
@@ -78,22 +78,22 @@ test('editor storage loader finds /src/main.asm through TM8 prefix and catalog t
   assert.match(source, /CALL\s+Tecm8StringMatchBytes/);
   assert.match(source, /CALL\s+Tecm8StorageValidateCoreSuperblock/);
   assert.doesNotMatch(source, /EditorLoadMagic:/);
-  assert.doesNotMatch(source, /@EditorLoadMatchBytes:/);
-  assert.match(stringSource, /^@Tecm8StringMatchBytes:/m);
-  assert.match(storageSource, /^@Tecm8StorageBlockToOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageBlockSectorToOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageValidateCoreSuperblock:/m);
-  assert.match(storageSource, /^@Tecm8StorageAdvanceSectorOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageReadSectorPreserveOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageAdvancePrefixEntryPtr:/m);
-  assert.match(storageSource, /^@Tecm8StorageAdvanceCatalogEntryPtr:/m);
+  assert.doesNotMatch(source, /EditorLoadMatchBytes:/);
+  assert.match(stringSource, /^Tecm8StringMatchBytes:/m);
+  assert.match(storageSource, /^Tecm8StorageBlockToOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageBlockSectorToOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageValidateCoreSuperblock:/m);
+  assert.match(storageSource, /^Tecm8StorageAdvanceSectorOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageReadSectorPreserveOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageAdvancePrefixEntryPtr:/m);
+  assert.match(storageSource, /^Tecm8StorageAdvanceCatalogEntryPtr:/m);
   assert.match(source, /LD\s+\(EditorLoadFirstBlock\),DE/);
   assert.match(source, /CALL\s+Tecm8StorageBlockSectorToOffset/);
   assert.match(source, /CALL\s+Tecm8StorageAdvanceSectorOffset/);
   assert.match(source, /CALL\s+Tecm8StorageReadSectorPreserveOffset/);
   assert.match(source, /CALL\s+Tecm8StorageAdvancePrefixEntryPtr/);
   assert.match(source, /CALL\s+Tecm8StorageAdvanceCatalogEntryPtr/);
-  assert.doesNotMatch(source, /@EditorLoadBlockToOffset:/);
+  assert.doesNotMatch(source, /EditorLoadBlockToOffset:/);
 });
 
 test('editor storage loader validates the fixed TM8 v1 layout it depends on', () => {

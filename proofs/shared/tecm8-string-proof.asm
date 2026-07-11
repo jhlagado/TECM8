@@ -5,9 +5,8 @@
 PROOF_PASS      .equ    0x42
 PROOF_FAIL      .equ    0xE0
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,BC,DE,HL
+Start:
         CALL    AssertCopyZeroCapacity
         JR      C,ProofFailed
         CALL    AssertCopyExactFit
@@ -25,9 +24,8 @@ ProofFailed:
 
         .include "../../src/tecm8-string.asm"
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@AssertCopyZeroCapacity:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+AssertCopyZeroCapacity:
         LD      A,1
         LD      (CopyCaseMarker),A
         LD      HL,CopySourceShort
@@ -38,9 +36,8 @@ ProofFailed:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,C,DE,HL
-@AssertCopyExactFit:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,DE,HL
+AssertCopyExactFit:
         LD      A,2
         LD      (CopyCaseMarker),A
         LD      HL,CopySourceShort
@@ -59,9 +56,8 @@ ProofFailed:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@AssertCopyOverflow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+AssertCopyOverflow:
         LD      A,3
         LD      (CopyCaseMarker),A
         LD      HL,CopySourceShort

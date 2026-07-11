@@ -28,32 +28,29 @@ test('game register contracts doc defines draft register roles and hook contract
     '| `IX` | Current actor pointer for beginner-facing actor hooks. |',
     '| `IY` | Reserved until a later runtime contract assigns it. |',
     'Actor update hook, v1 convention',
-    ';! in IX',
-    ';! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry',
-    '@Player_Update:',
+    '.routine in IX clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry',
+    'Player_Update:',
     'Actor touch hook, v1 convention',
-    ';! in IX,HL',
-    '@Actor_Touch:',
+    '.routine in IX,HL clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry',
+    'Actor_Touch:',
   ]);
 });
 
 test('game register contracts doc covers first runtime API contract examples', () => {
   assertMentionsAll([
-    '@API_GetInput:',
-    ';! out A',
-    ';! clobbers zero,sign,parity,halfCarry',
-    '@API_MoveActorBlocked:',
-    ';! out carry',
-    ';! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry',
-    '@API_DestroyCurrentActor:',
-    '@API_AddScore:',
-    ';! clobbers A,H,L,zero,sign,parity,halfCarry',
-    '@API_PlaySound:',
-    ';! clobbers A,zero,sign,parity,halfCarry',
+    'API_GetInput:',
+    '.routine out A clobbers zero,sign,parity,halfCarry',
+    'API_MoveActorBlocked:',
+    '.routine in IX,B,C out carry clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry',
+    'API_DestroyCurrentActor:',
+    'API_AddScore:',
+    '.routine in A clobbers A,H,L,zero,sign,parity,halfCarry',
+    'API_PlaySound:',
+    '.routine in A clobbers A,zero,sign,parity,halfCarry',
     '`API_MoveActorBlocked` uses `IX` as actor pointer, `B` as signed `dx`, and `C`',
     'Carry clear means movement was applied. Carry set means movement',
   ]);
-  assert.doesNotMatch(doc, /;! clobbers AF/);
+  assert.doesNotMatch(doc, /.routine clobbers AF/);
 });
 
 test('game register contracts doc keeps game runtime layered on TecMate services', () => {

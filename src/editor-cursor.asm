@@ -2,9 +2,8 @@
 
 ; EditorCursorReset -
 ; Reset the visible cursor to the top-left source cell.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry
-@EditorCursorReset:
+.routine out A,carry clobbers zero,sign,parity,halfCarry
+EditorCursorReset:
         XOR     A
         LD      (EditorCursorRow),A
         LD      (EditorCursorVisibleRow),A
@@ -26,8 +25,8 @@
 
 ; EditorCursorResetState -
 ; Reset cursor state after a page render has already reset the viewport.
-;! out A,carry,zero,sign,parity,halfCarry
-@EditorCursorResetState:
+.routine out A,carry,zero,sign,parity,halfCarry
+EditorCursorResetState:
         XOR     A
         LD      (EditorCursorRow),A
         LD      (EditorCursorVisibleRow),A
@@ -42,8 +41,8 @@
 
 ; EditorCursorResetStateKeepSelection -
 ; Reset cursor state after a page render while preserving block selection.
-;! out carry,zero,A,sign,parity,halfCarry
-@EditorCursorResetStateKeepSelection:
+.routine out carry,zero,A,sign,parity,halfCarry
+EditorCursorResetStateKeepSelection:
         XOR     A
         LD      (EditorCursorRow),A
         LD      (EditorCursorVisibleRow),A
@@ -57,9 +56,8 @@
 
 ; EditorRenderCursor -
 ; Overlay the logical cursor when it is inside the visible edit pane.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorRenderCursor:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorRenderCursor:
         LD      A,(EditorCursorRendered)
         OR      A
         JR      Z,EditorCursorRenderCheckVisible
@@ -94,9 +92,8 @@ EditorCursorRenderDone:
 
 ; EditorHideCursor -
 ; Erase any rendered cursor without drawing a replacement.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorHideCursor:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorHideCursor:
         LD      A,(EditorCursorRendered)
         OR      A
         JR      Z,EditorHideCursorDone
@@ -114,9 +111,8 @@ EditorHideCursorDone:
 
 ; EditorCursorBlinkReset -
 ; Restart the idle blink countdown after a key event or explicit cursor render.
-;! out A,carry,zero,sign,parity,halfCarry
-;! clobbers HL
-@EditorCursorBlinkReset:
+.routine out A,carry,zero,sign,parity,halfCarry clobbers HL
+EditorCursorBlinkReset:
         LD      HL,TECM8_EDITOR_CURSOR_BLINK_IDLE_TICKS
         LD      (EditorCursorBlinkCounter),HL
         XOR     A
@@ -124,9 +120,8 @@ EditorHideCursorDone:
 
 ; EditorCursorBlinkStep -
 ; Advance the cooperative cursor blink state once from the live idle path.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorCursorBlinkStep:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorCursorBlinkStep:
         LD      A,(EditorPromptActive)
         OR      A
         JR      NZ,EditorCursorBlinkNoop
@@ -166,8 +161,8 @@ EditorCursorBlinkNoop:
 
 ; EditorInvalidateCursorOverlay -
 ; Mark the cursor overlay absent after a full redraw replaces the pixels under it.
-;! out carry,zero,A,sign,parity,halfCarry
-@EditorInvalidateCursorOverlay:
+.routine out carry,zero,A,sign,parity,halfCarry
+EditorInvalidateCursorOverlay:
         XOR     A
         LD      (EditorCursorRendered),A
         RET

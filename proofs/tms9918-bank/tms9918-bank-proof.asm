@@ -38,9 +38,8 @@ TMS_PROOF_TRACE_24          .equ    TMS_PROOF_TRACE_BASE+24
 TMS_PROOF_TRACE_25          .equ    TMS_PROOF_TRACE_BASE+25
 TMS_PROOF_RESULT            .equ    0x3B30
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld hl,TMS_PROOF_TRACE_BASE
         ld b,26
 ClearTrace:

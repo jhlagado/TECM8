@@ -11,7 +11,7 @@ test('keyboard tester is a standalone 4000h diagnostic target', () => {
   const source = readFileSync(sourcePath, 'utf8');
 
   assert.match(source, /\.org\s+0x4000/);
-  assert.match(source, /@Start:/);
+  assert.match(source, /Start:/);
   assert.match(source, /CALL\s+BiosInputPollKey/);
   assert.match(source, /\.include\s+"glcd-tile\.asm"/);
   assert.match(source, /\.include\s+"glcd-tile-row\.asm"/);
@@ -33,16 +33,16 @@ test('keyboard tester renders ctrl and alt chords distinctly', () => {
   assert.doesNotMatch(source, /KbdTestAppendSpecialLeft:[\s\S]*?LD\s+A,"L"/);
   assert.doesNotMatch(source, /KbdTestAppendSpecialRight:[\s\S]*?LD\s+A,"R"/);
   assert.match(source, /LD\s+A,0x5C/);
-  assert.match(source, /@KbdTestAppendCtrlName:/);
-  assert.match(source, /@KbdTestAppendChordName:/);
+  assert.match(source, /KbdTestAppendCtrlName:/);
+  assert.match(source, /KbdTestAppendChordName:/);
 });
 
 test('keyboard tester exposes raw matrix bytes for diagnostics', () => {
   const source = readFileSync(sourcePath, 'utf8');
 
   assert.match(source, /CALL\s+KbdTestAppendHexByte/);
-  assert.match(source, /@KbdTestWriteHexByte:/);
-  assert.match(source, /@KbdTestAppendHexByte:/);
+  assert.match(source, /KbdTestWriteHexByte:/);
+  assert.match(source, /KbdTestAppendHexByte:/);
   assert.match(source, /KbdTestRawSecondary/);
   assert.match(source, /KbdTestRawPrimary/);
 });

@@ -20,9 +20,8 @@ KbdTestKeyEnter                     .equ    0x0D
 KbdTestKeyEscape                    .equ    0x1B
 KbdTestKeyDelete                    .equ    0x7F
 
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@Start:
+.routine out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+Start:
         CALL    BiosDisplayInit
         JP      C,KbdTestFatal
         CALL    BiosDisplaySetBitmapMode
@@ -43,9 +42,8 @@ KbdTestIdle:
         JP      C,KbdTestFatal
         JP      KbdTestLoop
 
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestClearScreen:
+.routine out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestClearScreen:
         XOR     A
         LD      (KbdTestRow),A
 
@@ -70,9 +68,8 @@ KbdTestClearScreenDone:
         LD      (KbdTestColumn),A
         RET
 
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestRenderHeader:
+.routine out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestRenderHeader:
         LD      HL,KbdTestTitle
         LD      B,0
         LD      C,0
@@ -88,10 +85,8 @@ KbdTestClearScreenDone:
 
 ; Append one translated key event to the rolling display log.
 ; Input: A = translated key/code, B = modifier flags, D/E = raw scan
-;! in A,B,D,E
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendKey:
+.routine in A,B,D,E out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendKey:
         LD      (KbdTestKeyCode),A
         LD      A,B
         LD      (KbdTestKeyMods),A
@@ -141,10 +136,8 @@ KbdTestAppendTokenDone:
         CALL    GlcdTileFlushFull
         RET
 
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendCtrlName:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendCtrlName:
         LD      (KbdTestSpecialCandidate),A
         CP      KbdTestKeyArrowUp
         JR      C,KbdTestAppendCtrlLetter
@@ -166,10 +159,8 @@ KbdTestAppendCtrlLetter:
         ADD     A,0x40
         JP      KbdTestAppendChar
 
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendChordName:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendChordName:
         CALL    KbdTestUppercaseAscii
         CP      " "
         JR      C,KbdTestAppendSpecialName
@@ -177,10 +168,8 @@ KbdTestAppendCtrlLetter:
         JR      NC,KbdTestAppendSpecialName
         JP      KbdTestAppendChar
 
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendKeyName:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendKeyName:
         CP      " "
         JR      C,KbdTestAppendSpecialName
         CP      0x7F
@@ -189,10 +178,8 @@ KbdTestAppendCtrlLetter:
 
 ; Compact names for non-printable/special keys.
 ; ^/>/</_ = arrows, B = backspace, T = tab, N = enter, E = escape, X = delete.
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendSpecialName:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendSpecialName:
         CP      KbdTestKeyArrowUp
         JR      Z,KbdTestAppendSpecialUp
         CP      KbdTestKeyArrowDown
@@ -250,10 +237,8 @@ KbdTestAppendSpecialDelete:
         LD      A,"X"
         JP      KbdTestAppendChar
 
-;! in A
-;! out A
-;! clobbers A,zero,sign,parity,halfCarry
-@KbdTestUppercaseAscii:
+.routine in A out A clobbers zero,sign,parity,halfCarry
+KbdTestUppercaseAscii:
         CP      "a"
         RET     C
         CP      "z" + 1
@@ -261,10 +246,8 @@ KbdTestAppendSpecialDelete:
         SUB     0x20
         RET
 
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendChar:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendChar:
         LD      (KbdTestPendingChar),A
         LD      A,(KbdTestColumn)
         CP      TECM8_GLCD_TILE_COLUMNS
@@ -286,9 +269,8 @@ KbdTestAppendCharReady:
         XOR     A
         RET
 
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAdvanceLine:
+.routine out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAdvanceLine:
         XOR     A
         LD      (KbdTestColumn),A
         LD      A,(KbdTestRow)
@@ -304,9 +286,8 @@ KbdTestAdvanceLineStore:
         XOR     A
         RET
 
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestClearHistory:
+.routine out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestClearHistory:
         LD      A,KbdTestHistoryFirstRow
         LD      (KbdTestClearRow),A
 
@@ -326,10 +307,8 @@ KbdTestClearHistoryDone:
         CALL    GlcdTileFlushFull
         RET
 
-;! in A,HL
-;! out HL
-;! clobbers A,BC,HL,zero,sign,parity,halfCarry
-@KbdTestWriteHexByte:
+.routine in A,HL out HL clobbers A,BC,zero,sign,parity,halfCarry
+KbdTestWriteHexByte:
         LD      B,A
         AND     0xF0
         RRCA
@@ -345,10 +324,8 @@ KbdTestClearHistoryDone:
         LD      (HL),A
         RET
 
-;! in A
-;! out carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@KbdTestAppendHexByte:
+.routine in A out carry clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
+KbdTestAppendHexByte:
         LD      HL,KbdTestHexBuffer
         CALL    KbdTestWriteHexByte
         LD      A,(KbdTestHexBuffer)
@@ -358,10 +335,8 @@ KbdTestClearHistoryDone:
         CALL    KbdTestAppendChar
         RET
 
-;! in A
-;! out A
-;! clobbers A,zero,sign,parity,halfCarry
-@KbdTestHexNibble:
+.routine in A out A clobbers zero,sign,parity,halfCarry
+KbdTestHexNibble:
         CP      10
         JR      C,KbdTestHexDigit
         ADD     A,"A" - 10

@@ -14,16 +14,16 @@ test('editor viewport module exposes a source-record render entry point', () => 
   const blockStateSource = readRepoFile('src/editor-block-state.asm');
   const equates = readRepoFile('src/tecm8-equates.asm');
 
-  assert.match(source, /^@EditorViewportRender:/m);
-  assert.match(source, /^@EditorViewportRenderRecordRow:/m);
-  assert.match(source, /^@EditorViewportSetTopRow:/m);
-  assert.match(source, /^@EditorViewportSetColOffset:/m);
-  assert.match(source, /^@EditorViewportSetCurrentPage:/m);
-  assert.match(source, /^@EditorViewportTopRecordPtr:/m);
-  assert.match(source, /^@EditorBlockSelectionVisibleRowSelected:/m);
-  assert.match(source, /^@EditorBlockSelectionVisibleLine:/m);
-  assert.match(source, /^@EditorBlockSelectionNormalize:/m);
-  assert.match(source, /^@EditorBlockSelectionCompareHlDe:/m);
+  assert.match(source, /^EditorViewportRender:/m);
+  assert.match(source, /^EditorViewportRenderRecordRow:/m);
+  assert.match(source, /^EditorViewportSetTopRow:/m);
+  assert.match(source, /^EditorViewportSetColOffset:/m);
+  assert.match(source, /^EditorViewportSetCurrentPage:/m);
+  assert.match(source, /^EditorViewportTopRecordPtr:/m);
+  assert.match(source, /^EditorBlockSelectionVisibleRowSelected:/m);
+  assert.match(source, /^EditorBlockSelectionVisibleLine:/m);
+  assert.match(source, /^EditorBlockSelectionNormalize:/m);
+  assert.match(source, /^EditorBlockSelectionCompareHlDe:/m);
   for (const constant of [
     'TECM8_EDITOR_RECORD_BYTES',
     'TECM8_EDITOR_VISIBLE_ROWS',
@@ -61,19 +61,19 @@ test('editor viewport module exposes a source-record render entry point', () => 
   assert.match(source, /EditorRecordBasePtr:\n\s+\.dw\s+0/);
   assert.match(source, /CALL\s+EditorViewportTopRecordPtr/);
   assert.match(source, /LD\s+A,\(EditorViewportColOffset\)/);
-  assert.match(source, /^@EditorViewportRenderStatusOverlay:/m);
-  assert.match(source, /^@EditorViewportRestoreStatusRow:/m);
-  assert.match(source, /^@EditorViewportRowTextPtr:/m);
-  assert.match(source, /^@EditorViewportSetCurrentRow:/m);
-  assert.match(source, /^@EditorViewportMarkerForRow:/m);
+  assert.match(source, /^EditorViewportRenderStatusOverlay:/m);
+  assert.match(source, /^EditorViewportRestoreStatusRow:/m);
+  assert.match(source, /^EditorViewportRowTextPtr:/m);
+  assert.match(source, /^EditorViewportSetCurrentRow:/m);
+  assert.match(source, /^EditorViewportMarkerForRow:/m);
   assert.match(source, /CALL\s+EditorBlockSelectionVisibleRowSelected/);
-  assert.match(source, /^@EditorPendingBlockVisibleRowMode:/m);
+  assert.match(source, /^EditorPendingBlockVisibleRowMode:/m);
   assert.match(source, /CALL\s+EditorPendingBlockVisibleRowMode/);
   assert.match(source, /OR\s+TECM8_DISPLAY_MARKER_COPY_SOURCE/);
   assert.match(source, /OR\s+TECM8_DISPLAY_MARKER_MOVE_SOURCE/);
   assert.doesNotMatch(source, /OR\s+TECM8_DISPLAY_MARKER_CURRENT/);
-  assert.match(source, /^@EditorViewportRenderRowMarker:/m);
-  assert.match(source, /^@EditorViewportStoreDescriptorMarker:/m);
+  assert.match(source, /^EditorViewportRenderRowMarker:/m);
+  assert.match(source, /^EditorViewportStoreDescriptorMarker:/m);
   assert.match(source, /EditorViewportRenderRowMarkerCount:\n\s+\.db\s+0/);
   assert.match(source, /LD\s+A,TECM8_DISPLAY_STATUS_ROW/);
   assert.match(source, /LD\s+HL,EditorRowText9/);

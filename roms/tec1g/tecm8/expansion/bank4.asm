@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x04
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank4Entry:
+Tecm8ExpansionBank4Entry:
         cp GLC_SVC_INIT
         jp z,glcdUnsupported
         cp GLC_SVC_CLEAR
@@ -16,16 +16,16 @@ EXP_VERSION       .equ    0x01
         jp z,glcdUnsupported
         jp glcdBoundaryEntryImpl
 
-@glcdInit:
+glcdInit:
         jp glcdUnsupported
 
-@glcdClear:
+glcdClear:
         jp glcdUnsupported
 
-@glcdPlot:
+glcdPlot:
         jp glcdUnsupported
 
-@glcdBoundaryEntryImpl:
+glcdBoundaryEntryImpl:
         ld a,EXP_BANK
         ld (GLC_PARAM_BANK),a
         ld a,EXP_VERSION
@@ -39,12 +39,12 @@ EXP_VERSION       .equ    0x01
         or a
         ret
 
-@glcdUnsupported:
+glcdUnsupported:
         ld a,GLC_ERR_UNSUPPORTED
         ld (GLC_PARAM_STATUS),a
         ld (GLC_PARAM_LAST_ERROR),a
         scf
         ret
 
-@Tecm8ExpansionBank4Info:
+Tecm8ExpansionBank4Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

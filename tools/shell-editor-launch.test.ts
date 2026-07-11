@@ -13,7 +13,7 @@ test('shell editor launcher exposes edit launch entries', () => {
   const source = readRepoFile('src/shell-editor-launch.asm');
   const sessionSource = readRepoFile('src/shell-editor-session.asm');
 
-  assert.match(source, /^@ShellRunEditorLine:/m);
+  assert.match(source, /^ShellRunEditorLine:/m);
   assert.match(source, /CALL\s+RunShellCommandLine/);
   assert.match(source, /LD\s+A,\(ShellLastExecAction\)\n\s+CP\s+SHELL_CMD_EDIT/);
   assert.match(source, /CALL\s+EditorOpenPath/);
@@ -23,9 +23,9 @@ test('shell editor launcher exposes edit launch entries', () => {
   assert.match(source, /CALL\s+EditorCursorReset/);
   assert.doesNotMatch(source, /LD\s+DE,ShellMainPath/);
   assert.doesNotMatch(source, /CALL\s+EditorOpenMain/);
-  assert.doesNotMatch(source, /^@ShellRunEditorSession:/m);
+  assert.doesNotMatch(source, /^ShellRunEditorSession:/m);
 
-  assert.match(sessionSource, /^@ShellRunEditorSession:/m);
+  assert.match(sessionSource, /^ShellRunEditorSession:/m);
   assert.match(sessionSource, /CALL\s+ShellRunEditorLine/);
   assert.match(sessionSource, /CALL\s+EditorRunKeys/);
   assert.match(sessionSource, /ShellEditorSessionKeys:\n\s+\.dw\s+0/);
@@ -38,16 +38,16 @@ test('Debug80 main entry separates live launch from scripted verification', () =
   const packageJson = readRepoFile('package.json');
 
   assert.match(mainSource, /^TECM8_MAIN_STACK\s+\.equ\s+0x3FF0$/m);
-  assert.match(mainSource, /^@Start:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+JP\s+LiveStart/m);
-  assert.doesNotMatch(mainSource, /^@ScriptStart:/m);
+  assert.match(mainSource, /^Start:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+JP\s+LiveStart/m);
+  assert.doesNotMatch(mainSource, /^ScriptStart:/m);
   assert.doesNotMatch(mainSource, /MainEditSaveQuitKeys:/);
-  assert.match(mainSource, /^@LiveStart:/m);
+  assert.match(mainSource, /^LiveStart:/m);
   assert.match(mainSource, /CALL\s+ShellRunEditorLine\n\s+JP\s+C,MainFailed\n\s+CALL\s+EditorCursorReset\n\s+CALL\s+EditorRunLive/);
   assert.match(mainSource, /LD\s+HL,MainShellReadyText\n\s+CALL\s+EditorKeyShowStatus/);
   assert.match(mainSource, /MainShellReadyText:\n\s+\.db\s+"Shell",0/);
-  assert.match(scriptSource, /^@ScriptStart:/m);
+  assert.match(scriptSource, /^ScriptStart:/m);
   assert.match(scriptSource, /^TECM8_MAIN_STACK\s+\.equ\s+0x3FF0$/m);
-  assert.match(scriptSource, /^@ScriptStart:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+CALL\s+DisplayInit/m);
+  assert.match(scriptSource, /^ScriptStart:\n\s+LD\s+SP,TECM8_MAIN_STACK\n\s+CALL\s+DisplayInit/m);
   assert.match(scriptSource, /CALL\s+ShellRunEditorSession/);
   assert.match(scriptSource, /\.include\s+"shell-editor-session\.asm"/);
   assert.match(runner, /symbolAddress\(symbols, 'ScriptStart'\)/);
@@ -140,29 +140,29 @@ test('shell command loop proves edit asm run sequence', () => {
   const stringSource = readRepoFile('src/tecm8-string.asm');
   const proof = readRepoFile('proofs/shell-commands/shell-commands-proof.asm');
 
-  assert.match(programSource, /^@RunShellProgramCycles:/m);
+  assert.match(programSource, /^RunShellProgramCycles:/m);
   assert.match(programSource, /CALL\s+RunShellPromptCycle/);
   assert.match(programSource, /CP\s+SHELL_PROMPT_ERROR/);
-  assert.match(resolverSource, /^@RunShellCommandLine:/m);
-  assert.match(resolverSource, /^@ShellRecordExecAction:/m);
+  assert.match(resolverSource, /^RunShellCommandLine:/m);
+  assert.match(resolverSource, /^ShellRecordExecAction:/m);
   assert.match(resolverSource, /SHELL_EXEC_LOG_LEN\s+\.equ\s+8/);
   assert.match(resolverSource, /ShellExecActionLog:\n\s+\.ds\s+SHELL_EXEC_LOG_LEN/);
   assert.match(resolverSource, /CALL\s+Tecm8StringFindLocalName/);
   assert.match(resolverSource, /CALL\s+Tecm8StringCopyNulBounded/);
   assert.match(resolverSource, /CALL\s+Tecm8StringSkipSpaces/);
-  assert.doesNotMatch(resolverSource, /^@RunShellProgramCycles:/m);
-  assert.doesNotMatch(resolverSource, /^@ReadShellInputLine:/m);
+  assert.doesNotMatch(resolverSource, /^RunShellProgramCycles:/m);
+  assert.doesNotMatch(resolverSource, /^ReadShellInputLine:/m);
   assert.doesNotMatch(resolverSource, /ShellLineBuffer:\n\s+\.ds/);
-  assert.doesNotMatch(resolverSource, /^@ShellFindLocalName:/m);
-  assert.doesNotMatch(resolverSource, /^@ShellSkipSpaces:/m);
-  assert.match(stringSource, /^@Tecm8StringFindLocalName:/m);
-  assert.match(stringSource, /^@Tecm8StringCopyNulBounded:/m);
-  assert.match(stringSource, /^@Tecm8StringSkipSpaces:/m);
+  assert.doesNotMatch(resolverSource, /^ShellFindLocalName:/m);
+  assert.doesNotMatch(resolverSource, /^ShellSkipSpaces:/m);
+  assert.match(stringSource, /^Tecm8StringFindLocalName:/m);
+  assert.match(stringSource, /^Tecm8StringCopyNulBounded:/m);
+  assert.match(stringSource, /^Tecm8StringSkipSpaces:/m);
   assert.match(proof, /\.include\s+"..\/..\/src\/shell-resolver\.asm"/);
   assert.match(proof, /\.include\s+"..\/..\/src\/shell-program\.asm"/);
   assert.match(proof, /\.include\s+"..\/..\/src\/tecm8-string\.asm"/);
   assert.ok(
-    proof.indexOf('@Start:') < proof.indexOf('.include "../../src/tecm8-string.asm"'),
+    proof.indexOf('Start:') < proof.indexOf('.include "../../src/tecm8-string.asm"'),
     'byte-emitting shared string helpers must not be included before proof entry'
   );
   assert.match(proof, /AssertShellProgramCommandLoop/);

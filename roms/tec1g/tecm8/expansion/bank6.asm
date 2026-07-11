@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x06
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank6Entry:
+Tecm8ExpansionBank6Entry:
         cp INP_SVC_READ
         jp z,Tecm8InputRead
         ld a,INP_ERR_UNKNOWN
@@ -30,5 +30,5 @@ Tecm8InputRead:
         or a
         ret
 
-@Tecm8ExpansionBank6Info:
+Tecm8ExpansionBank6Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

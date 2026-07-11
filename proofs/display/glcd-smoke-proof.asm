@@ -11,9 +11,8 @@ PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 MON3_TGBUF       .equ     0x13C0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    BiosDisplayInit
         JR      C,ProofFailed
 

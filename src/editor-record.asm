@@ -1,16 +1,13 @@
 ; TECM8 editor fixed-record helpers and line-edit scratch state.
 
-;! out A,carry,zero,HL
-;! clobbers sign,parity,halfCarry,B,DE
-@EditorKeyCurrentRecord:
+.routine out A,carry,zero,HL clobbers sign,parity,halfCarry,B,DE
+EditorKeyCurrentRecord:
         LD      A,(EditorCursorRow)
         CALL    EditorKeyRecordAtRow
         RET
 
-;! in A
-;! out A,carry,zero,HL
-;! clobbers sign,parity,halfCarry,B,DE
-@EditorKeyRecordAtRow:
+.routine in A out A,carry,zero,HL clobbers sign,parity,halfCarry,B,DE
+EditorKeyRecordAtRow:
         LD      HL,EditorNavPageBuffer
         OR      A
         RET     Z
@@ -23,33 +20,24 @@ EditorRecordAtRowOffsetLoop:
         XOR     A
         RET
 
-;! in A,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyZeroRecordPadding:
+.routine in A,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyZeroRecordPadding:
         JP      Tecm8RecordZeroPadding
 
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorKeyReadRecordLength:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry
+EditorKeyReadRecordLength:
         JP      Tecm8RecordReadLength
 
-;! in A,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B
-@EditorKeyWriteRecordLength:
+.routine in A,HL out A,carry,zero clobbers sign,parity,halfCarry,B
+EditorKeyWriteRecordLength:
         JP      Tecm8RecordWriteLength
 
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,HL
-@EditorKeyClearRecord:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,HL
+EditorKeyClearRecord:
         JP      Tecm8RecordClear
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorKeyAdvanceCursor:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+EditorKeyAdvanceCursor:
         LD      A,(EditorCursorCol)
         CP      TECM8_EDITOR_CURSOR_MAX_COL
         JR      Z,EditorKeyAdvanceDone

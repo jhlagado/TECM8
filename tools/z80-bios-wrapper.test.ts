@@ -13,9 +13,9 @@ test('TECM8 BIOS storage wrappers are real assembly entry points', () => {
   const source = readRepoFile('src/tecm8-bios.asm');
 
   for (const label of [
-    '@BiosFileOpen:',
-    '@BiosFileReadSector:',
-    '@BiosFileWriteSector:',
+    'BiosFileOpen:',
+    'BiosFileReadSector:',
+    'BiosFileWriteSector:',
   ]) {
     assert.match(source, new RegExp(`^${label}`, 'm'));
   }
@@ -29,11 +29,11 @@ test('project config storage loader calls TECM8 BIOS wrappers', () => {
   assert.match(source, /CALL\s+BiosFileOpen/);
   assert.match(source, /CALL\s+BiosFileReadSector/);
   assert.match(source, /CALL\s+Tecm8StringMatchBytes/);
-  assert.match(storageSource, /^@Tecm8StorageBlockToOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageValidateCoreSuperblock:/m);
-  assert.match(storageSource, /^@Tecm8StorageAdvanceSectorOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageReadSectorPreserveOffset:/m);
-  assert.match(storageSource, /^@Tecm8StorageAdvanceCatalogEntryPtr:/m);
+  assert.match(storageSource, /^Tecm8StorageBlockToOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageValidateCoreSuperblock:/m);
+  assert.match(storageSource, /^Tecm8StorageAdvanceSectorOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageReadSectorPreserveOffset:/m);
+  assert.match(storageSource, /^Tecm8StorageAdvanceCatalogEntryPtr:/m);
   assert.match(storageSource, /Tecm8StorageMagic:\n\s+\.db\s+"TECM8VOL"/);
   assert.match(storageSource, /^TM8_CATALOG_ENTRY\s+\.equ\s+64/m);
   assert.match(source, /CALL\s+Tecm8StorageValidateCoreSuperblock/);
@@ -41,8 +41,8 @@ test('project config storage loader calls TECM8 BIOS wrappers', () => {
   assert.match(source, /CALL\s+Tecm8StorageAdvanceSectorOffset/);
   assert.match(source, /CALL\s+Tecm8StorageReadSectorPreserveOffset/);
   assert.match(source, /CALL\s+Tecm8StorageAdvanceCatalogEntryPtr/);
-  assert.doesNotMatch(source, /@ProjectLoadMatchBytes:/);
-  assert.doesNotMatch(source, /@ProjectLoadBlockToOffset:/);
+  assert.doesNotMatch(source, /ProjectLoadMatchBytes:/);
+  assert.doesNotMatch(source, /ProjectLoadBlockToOffset:/);
   assert.doesNotMatch(source, /ProjectLoadMagic:/);
   assert.match(storageProof, /\.include\s+"..\/..\/src\/tecm8-string\.asm"/);
   assert.match(storageProof, /\.include\s+"..\/..\/src\/tecm8-storage\.asm"/);
@@ -56,7 +56,7 @@ test('storage helper includes stay after proof entry trampolines', () => {
     'proofs/display/editor-file-list-proof.asm',
   ]) {
     const source = readRepoFile(path);
-    const startIndex = source.indexOf('@Start:');
+    const startIndex = source.indexOf('Start:');
     const storageIndex = source.indexOf('.include "../../src/tecm8-storage.asm"');
     const loaderIndex = source.search(/\.include "\.\.\/\.\.\/src\/(?:project-config-loader|editor-storage-loader)\.asm"/);
 
@@ -69,7 +69,7 @@ test('storage helper includes stay after proof entry trampolines', () => {
 test('storage helper exposes shared sector-buffer primitives', () => {
   const storageSource = readRepoFile('src/tecm8-storage.asm');
 
-  assert.match(storageSource, /^@Tecm8StorageClearSectorBuffer:/m);
+  assert.match(storageSource, /^Tecm8StorageClearSectorBuffer:/m);
   assert.match(storageSource, /LD\s+BC,TM8_SECTOR_BYTES - 1/);
   assert.match(storageSource, /LD\s+\(HL\),0\n\s+LDIR/);
 });
@@ -109,11 +109,11 @@ test('TECM8 BIOS GLCD display wrappers are real assembly entry points', () => {
     'BiosInputPollAscii',
     'BiosInputPollKey',
   ]) {
-    assert.match(source, new RegExp(`^@${label}:`, 'm'));
+    assert.match(source, new RegExp(`^${label}:`, 'm'));
   }
-  assert.match(source, /@BiosDisplayInit:\n\s+CALL\s+MON3_GLCD_INIT_TERMINAL\n\s+CALL\s+MON3_GLCD_CLEAR_GBUF\n\s+CALL\s+MON3_GLCD_PLOT_TO_LCD/);
-  assert.match(source, /@BiosDisplayClear:\n\s+CALL\s+MON3_GLCD_CLEAR_GBUF\n\s+CALL\s+MON3_GLCD_PLOT_TO_LCD/);
-  assert.doesNotMatch(source, /@BiosDisplayClear:\n\s+CALL\s+MON3_GLCD_INIT_TERMINAL/);
+  assert.match(source, /BiosDisplayInit:\n\s+CALL\s+MON3_GLCD_INIT_TERMINAL\n\s+CALL\s+MON3_GLCD_CLEAR_GBUF\n\s+CALL\s+MON3_GLCD_PLOT_TO_LCD/);
+  assert.match(source, /BiosDisplayClear:\n\s+CALL\s+MON3_GLCD_CLEAR_GBUF\n\s+CALL\s+MON3_GLCD_PLOT_TO_LCD/);
+  assert.doesNotMatch(source, /BiosDisplayClear:\n\s+CALL\s+MON3_GLCD_INIT_TERMINAL/);
   assert.match(source, /MON3_MATRIX_SCAN\s+\.equ\s+0xCC40/);
   assert.match(source, /MON3_MATRIX_SCAN_ASCII\s+\.equ\s+0xD0CB/);
   assert.match(source, /MON3_PARSE_MATRIX_SCAN\s+\.equ\s+0xD142/);
@@ -128,14 +128,14 @@ test('TECM8 BIOS GLCD display wrappers are real assembly entry points', () => {
   assert.match(equates, /TECM8_KEY_MOD_FN\s+\.equ\s+0x04/);
   assert.match(equates, /TECM8_KEY_MOD_ALT\s+\.equ\s+0x08/);
   assert.match(source, /CALL\s+MON3_MATRIX_SCAN\n\s+CALL\s+MON3_PARSE_MATRIX_SCAN/);
-  assert.match(source, /@BiosInputPollKey:/);
+  assert.match(source, /BiosInputPollKey:/);
   assert.match(source, /CP\s+0x07\n\s+JR\s+Z,BiosInputPollKeyToggleCaps/);
   assert.match(source, /CP\s+3\n\s+JR\s+NZ,BiosInputPollKeyNoRaw/);
   assert.match(source, /CALL\s+BiosInputIgnoreStandaloneModifier\n\s+RET\s+NC/);
-  assert.match(source, /^@BiosInputIgnoreStandaloneModifier:/m);
+  assert.match(source, /^BiosInputIgnoreStandaloneModifier:/m);
   assert.match(source, /CALL\s+MON3_MATRIX_SCAN_ASCII/);
   assert.match(source, /CALL\s+BiosInputNormalizeControlKey/);
-  assert.match(source, /^@BiosInputNormalizeControlKey:/m);
+  assert.match(source, /^BiosInputNormalizeControlKey:/m);
   assert.match(source, /AND\s+TECM8_BIOS_KEY_MOD_CTRL/);
   assert.match(source, /CP\s+"A"/);
   assert.match(source, /CP\s+"z" \+ 1/);

@@ -17,8 +17,6 @@ test('roadmap frames game creation as a proving profile for general TecMate serv
 });
 
 test('roadmap links game direction documents from the proving-profile section', () => {
-  assert.match(roadmap, /\[TECM8 Game Creation Mission\]\(gamer\.md\)/);
-  assert.match(roadmap, /\[Gamer Vertical Slice Specification\]\(gamer-vertical-slice\.md\)/);
   assert.match(roadmap, /\[Game-Facing Register Contracts\]\(game-register-contracts\.md\)/);
   assert.match(roadmap, /\[Profile Preprocessor Contract\]\(profile-preprocessor-contract\.md\)/);
   assert.match(roadmap, /\[Polling State Runtime\]\(polling-state-runtime\.md\)/);

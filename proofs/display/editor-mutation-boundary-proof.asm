@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
         CALL    BoundaryInitRecords
@@ -157,9 +156,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers BC,DE,HL
-@BoundaryInitRecords:
+.routine out A,carry,zero clobbers BC,DE,HL
+BoundaryInitRecords:
         LD      HL,BoundaryRecord0
         LD      DE,EditorNavPageBuffer
         CALL    BoundaryCopyRecord
@@ -187,18 +185,15 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! in DE,HL
-;! out A,BC,DE,HL,carry,zero
-@BoundaryCopyRecord:
+.routine in DE,HL out A,BC,DE,HL,carry,zero
+BoundaryCopyRecord:
         LD      BC,32
         LDIR
         XOR     A
         RET
 
-;! in HL
-;! out A,HL,carry,zero
-;! clobbers A
-@BoundarySaveCursor:
+.routine in HL out A,HL,carry,zero
+BoundarySaveCursor:
         LD      A,(EditorCursorRow)
         LD      (HL),A
         INC     HL
@@ -208,10 +203,8 @@ ProofFailedDone:
         RET
 
 ; Stub LoadProjectConfig for included shell command code.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,BoundaryExpectedMain
         LD      C,B
 

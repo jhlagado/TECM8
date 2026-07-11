@@ -27,9 +27,8 @@ MON3_TGBUF                          .equ    TECM8_MON3_GLCD_TGBUF
 
 ; DisplayInit -
 ; Initialize and clear the current display.
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@DisplayInit:
+.routine out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+DisplayInit:
         CALL    BiosDisplayInit
         RET     C
         CALL    BiosDisplayClear
@@ -41,10 +40,8 @@ MON3_TGBUF                          .equ    TECM8_MON3_GLCD_TGBUF
 ; Render a fixed structured screen descriptor.
 ; Input: HL = descriptor:
 ;        ten records of db marker, dw source text
-;! in HL
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@DisplayRenderScreen:
+.routine in HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+DisplayRenderScreen:
         LD      A,(DisplayRenderScreenCount)
         INC     A
         LD      (DisplayRenderScreenCount),A
@@ -81,10 +78,8 @@ DisplayScreenLoop:
 ; DisplayRenderLine -
 ; Render one screen row with gutter marker and text.
 ; Input: A = display row, C = marker flags, HL = NUL-terminated text
-;! in A,C,HL
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@DisplayRenderLine:
+.routine in A,C,HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+DisplayRenderLine:
         LD      (DisplayText),HL
         LD      (DisplayRow),A
         CALL    DisplayRenderGutter
@@ -103,9 +98,8 @@ DisplayScreenLoop:
 
 ; DisplayResetRowExtents -
 ; Forget the last-rendered text length for every display row.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,HL
-@DisplayResetRowExtents:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,HL
+DisplayResetRowExtents:
         LD      HL,DisplayRowTextExtent
         LD      B,TECM8_DISPLAY_EDIT_ROWS
         XOR     A
@@ -120,10 +114,8 @@ DisplayResetRowExtentsLoop:
 ; Measure a NUL-terminated text run, capped to the visible cell count.
 ; Input: HL = text
 ; Output: A = visible text cells
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,HL
-@DisplayMeasureTextExtent:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,HL
+DisplayMeasureTextExtent:
         LD      B,0
 
 DisplayMeasureTextExtentLoop:
@@ -146,9 +138,8 @@ DisplayMeasureTextExtentDone:
 ; DisplayPrepareTextTail -
 ; Compare this row's new text width with its previous width and prepare any
 ; stale tail cells for clearing.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@DisplayPrepareTextTail:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+DisplayPrepareTextTail:
         LD      A,(DisplayRow)
         LD      E,A
         LD      D,0
@@ -173,9 +164,8 @@ DisplayPrepareTextTailNone:
 
 ; DisplayClearTextTail -
 ; Clear only the cells that were occupied by the previous, longer row text.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@DisplayClearTextTail:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+DisplayClearTextTail:
         LD      A,(DisplayTailCount)
         OR      A
         RET     Z
@@ -199,10 +189,8 @@ DisplayClearTextTailLoop:
 ; DisplayRenderGutter -
 ; Draw a 4-pixel marker in the left gutter for one display row.
 ; Input: A = display row, C = marker flags
-;! in A,C
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@DisplayRenderGutter:
+.routine in A,C out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+DisplayRenderGutter:
         LD      (DisplayRow),A
         XOR     A
         LD      (DisplaySawtoothGutter),A
@@ -288,10 +276,8 @@ DisplayGutterWritePatternReady:
         XOR     A
         RET
 
-;! in A
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,DE,HL
-@DisplaySawtoothPatternForRow:
+.routine in A out A,carry clobbers zero,sign,parity,halfCarry,DE,HL
+DisplaySawtoothPatternForRow:
         LD      E,A
         LD      D,0
         LD      HL,DisplaySawtoothPatternTable
@@ -302,10 +288,8 @@ DisplayGutterWritePatternReady:
 ; DisplayRenderCursorCell -
 ; Overlay an XOR insertion cursor bar one pixel before the active cell.
 ; Input: A = edit row (0-9), C = text column (0-19)
-;! in A,C
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@DisplayRenderCursorCell:
+.routine in A,C out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+DisplayRenderCursorCell:
         CP      TECM8_DISPLAY_EDIT_ROWS
         JP      NC,DisplayCursorNoop
         LD      (DisplayCursorCellRow),A
@@ -441,10 +425,8 @@ DisplayCursorNoop:
 ; DisplayEraseCursorCell -
 ; Restore the bytes saved before the XOR insertion cursor bar was overlaid.
 ; Input: A = edit row (0-9), C = text column (0-19)
-;! in A,C
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@DisplayEraseCursorCell:
+.routine in A,C out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+DisplayEraseCursorCell:
         CP      TECM8_DISPLAY_EDIT_ROWS
         JP      NC,DisplayCursorEraseNoop
         LD      (DisplayCursorCellRow),A
@@ -558,9 +540,8 @@ DisplayCursorEraseNoop:
 ; DisplayMarkCursorDirty -
 ; Mark the insertion bar byte range dirty. The bar is drawn one pixel before
 ; the active text cell, so byte-boundary columns also need the previous cell.
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@DisplayMarkCursorDirty:
+.routine out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+DisplayMarkCursorDirty:
         LD      A,(DisplayCursorCellRow)
         LD      B,A
         LD      A,(DisplayCursorCellCol)
@@ -581,10 +562,8 @@ DisplayCursorEraseNoop:
 ; Convert a 0-9 display row to a Y pixel coordinate.
 ; Input: A = row
 ; Output: C = row * 6 + TECM8_DISPLAY_Y_ORIGIN
-;! in A
-;! out C,zero
-;! clobbers carry,sign,parity,halfCarry,A
-@DisplayRowToPixel:
+.routine in A out C,zero clobbers carry,sign,parity,halfCarry,A
+DisplayRowToPixel:
         LD      C,A
         ADD     A,A
         ADD     A,C

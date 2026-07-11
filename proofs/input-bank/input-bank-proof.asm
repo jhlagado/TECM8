@@ -11,9 +11,8 @@
 PROOF_PASS                  .equ    0x42
 INP_PROOF_RESULT            .equ    0x3BD0
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld a,0xAA
         ld (INP_PARAM_STATUS),a
         ld (INP_PARAM_LAST_ERROR),a

@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x05
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank5Entry:
+Tecm8ExpansionBank5Entry:
         cp TFS_DRIVER_OP_READ
         jp z,tecfsSectorBridgeRead
         cp TFS_DRIVER_OP_WRITE
@@ -33,5 +33,5 @@ tecfsSectorBridgeOk:
         or a
         ret
 
-@Tecm8ExpansionBank5Info:
+Tecm8ExpansionBank5Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

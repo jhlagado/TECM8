@@ -17,11 +17,11 @@ test('editor input module owns key-stream and live polling entry points', () => 
   const interaction = readRepoFile('src/editor-interaction.asm');
 
   for (const entry of ['EditorRunKeys', 'EditorRunModifiedKey', 'EditorRunLive']) {
-    assert.match(input, new RegExp(`^@${entry}:`, 'm'));
-    assert.doesNotMatch(interaction, new RegExp(`^@${entry}:`, 'm'));
+    assert.match(input, new RegExp(`^${entry}:`, 'm'));
+    assert.doesNotMatch(interaction, new RegExp(`^${entry}:`, 'm'));
   }
 
-  assert.match(interaction, /^@EditorKeyLoop:/m);
+  assert.match(interaction, /^EditorKeyLoop:/m);
   assert.match(interaction, /\.include\s+"editor-input\.asm"/);
 
   for (const stateByte of [

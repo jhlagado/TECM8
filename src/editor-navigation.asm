@@ -7,18 +7,15 @@ TECM8_EDITOR_NAV_ERR_PATH       .equ    0x51
 TECM8_EDITOR_NAV_ERR_BACKUP     .equ    0x52
 ; EditorOpenMain -
 ; Reset navigation to page 0 and render /src/main.asm.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorOpenMain:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorOpenMain:
         LD      HL,EditorNavMainPath
         JP      EditorOpenPath
 
 ; EditorOpenPath -
 ; Reset navigation to page 0 and render the source file at HL.
-;! in HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorOpenPath:
+.routine in HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorOpenPath:
         LD      DE,EditorNavPathBuffer
         LD      B,TECM8_EDITOR_NAV_PATH_LEN
         CALL    EditorNavCopyPath
@@ -40,15 +37,14 @@ TECM8_EDITOR_NAV_ERR_BACKUP     .equ    0x52
 
 ; EditorRenderCurrent -
 ; Load and render the current page.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRenderCurrent:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRenderCurrent:
         LD      A,(EditorNavCurrentPage)
         CALL    EditorNavRenderPage
         RET     C
         CALL    EditorRenderPageBuffer
         RET     C
-        ; expects out carry
+        .expectout carry
         CALL    EditorNavLoadNextWindowPage
         RET     C
         XOR     A
@@ -56,7 +52,6 @@ TECM8_EDITOR_NAV_ERR_BACKUP     .equ    0x52
         LD      A,2
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavCachePageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorRenderCurrentSlot2Error
 
@@ -64,7 +59,7 @@ EditorRenderCurrentSlot3:
         LD      A,3
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavBackupPageBuffer
-        ; expects out carry
+        .expectout carry
         CALL    EditorLoadSourcePage
         JR      C,EditorRenderCurrentSlot3Error
         LD      A,1
@@ -106,9 +101,8 @@ EditorRenderCurrentSlot3Error:
 
 ; EditorRenderPageBuffer -
 ; Render the already-loaded page buffer without reloading it from storage.
-;! out carry,A
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRenderPageBuffer:
+.routine out carry,A clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRenderPageBuffer:
         LD      A,(EditorRenderPageBufferCount)
         INC     A
         LD      (EditorRenderPageBufferCount),A
@@ -129,9 +123,8 @@ EditorRenderPageBufferFlush:
 ; EditorRenderPageBufferDirtyRows -
 ; Render the already-loaded page buffer and queue all visible rows for
 ; cooperative transfer by GlcdTileStep.
-;! out carry,A
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorRenderPageBufferDirtyRows:
+.routine out carry,A clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorRenderPageBufferDirtyRows:
         LD      A,(EditorRenderPageBufferCount)
         INC     A
         LD      (EditorRenderPageBufferCount),A
@@ -150,9 +143,8 @@ EditorRenderPageBufferDirtyRowsQueue:
 
 ; EditorMarkViewportRowsDirty -
 ; Queue all visible editor text rows for cooperative GLCD transfer.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorMarkViewportRowsDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorMarkViewportRowsDirty:
         XOR     A
         LD      (EditorViewportDirtyRow),A
 
@@ -170,9 +162,8 @@ EditorMarkViewportRowsDirtyLoop:
 
 ; EditorNavResetViewport -
 ; Reset the in-page viewport to logical row 0 and sync cursor row bookkeeping.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry
-@EditorNavResetViewport:
+.routine out A,carry clobbers zero,sign,parity,halfCarry
+EditorNavResetViewport:
         XOR     A
         LD      (EditorNavViewportTopRow),A
         LD      (EditorNavCurrentRow),A
@@ -186,9 +177,8 @@ EditorMarkViewportRowsDirtyLoop:
 
 ; EditorNavSyncViewport -
 ; Apply the navigation viewport top row and current row to the renderer.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC
-@EditorNavSyncViewport:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC
+EditorNavSyncViewport:
         LD      A,(EditorNavCurrentPage)
         CALL    EditorViewportSetCurrentPage
         RET     C
@@ -232,9 +222,8 @@ EditorNavSyncViewportVisibleCurrent:
 ; Return A=1 after rendering when the viewport starts in the cached previous
 ; page and continues into the current page. Return A=0 when normal rendering
 ; should proceed.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavRenderMixedPreviousCurrent:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavRenderMixedPreviousCurrent:
         LD      A,(EditorNavViewportTopRow)
         LD      B,A
         LD      A,(EditorNavCurrentRow)
@@ -264,19 +253,15 @@ EditorNavRenderMixedNo:
 
 ; EditorSaveCurrentPage -
 ; Save the already-loaded page buffer back to the current source page.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorSaveCurrentPage:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorSaveCurrentPage:
         LD      HL,EditorStatusSavingText
         CALL    EditorNavShowStatus
         RET     C
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupCurrentPage
         JR      C,EditorSaveCurrentPageRestoreError
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupCachedPageIfDirty
         JR      C,EditorSaveCurrentPageRestoreError
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorBackupNextPageIfDirty
         JR      C,EditorSaveCurrentPageRestoreError
         LD      A,(EditorNavDirtySectors)
@@ -285,7 +270,6 @@ EditorNavRenderMixedNo:
         LD      A,(EditorNavCurrentPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavPageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
 
@@ -302,7 +286,6 @@ EditorSaveCurrentPageMaybeNext:
         INC     A
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavNextPageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
         XOR     A
@@ -318,7 +301,6 @@ EditorSaveCurrentPageDone:
         LD      A,(EditorNavCachedPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavCachePageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorSaveSourcePage
         JR      C,EditorSaveCurrentPageRestoreError
         XOR     A
@@ -336,9 +318,8 @@ EditorSaveCurrentPageRestoreError:
 
 ; EditorBackupCurrentPage -
 ; Save the current on-disk page to the derived hidden backup path.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorBackupCurrentPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorBackupCurrentPage:
         LD      A,(EditorNavCurrentPage)
         CALL    EditorNavBackedPageContains
         RET     Z
@@ -351,7 +332,6 @@ EditorSaveCurrentPageRestoreError:
         LD      A,(EditorNavCurrentPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavBackupPageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorBackupCurrentPageLoadError
 
@@ -389,9 +369,8 @@ EditorBackupCurrentPageError:
 ; EditorBackupCachedPageIfDirty -
 ; Preserve the original on-disk copy of a dirty cached previous page before
 ; save writes that cached page back.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorBackupCachedPageIfDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorBackupCachedPageIfDirty:
         LD      A,(EditorNavCachedPageDirty)
         OR      A
         JR      Z,EditorBackupCachedPageDone
@@ -424,9 +403,8 @@ EditorBackupCachedPageDone:
 ; EditorBackupNextPageIfDirty -
 ; Preserve the original on-disk copy of a dirty adjacent next page before save
 ; writes the resident next-page buffer back.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorBackupNextPageIfDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorBackupNextPageIfDirty:
         LD      A,(EditorNavDirtySectors)
         AND     2
         JR      Z,EditorBackupNextPageDone
@@ -460,9 +438,8 @@ EditorBackupNextPageDone:
 
 ; EditorLoadCurrentBackupPage -
 ; Load the derived hidden backup path into the current page buffer.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorLoadCurrentBackupPage:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorLoadCurrentBackupPage:
         LD      HL,(EditorNavPathPtr)
         LD      DE,EditorNavBackupPathBuffer
         LD      B,TECM8_EDITOR_NAV_PATH_LEN
@@ -474,7 +451,6 @@ EditorBackupNextPageDone:
         LD      A,(EditorNavCurrentPage)
         LD      DE,EditorNavBackupPathBuffer
         LD      HL,EditorNavPageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorLoadCurrentBackupPageRestoreError
         XOR     A
@@ -488,9 +464,8 @@ EditorLoadCurrentBackupPageRestoreError:
 
 ; EditorLoadCurrentBackupWindow -
 ; Restore the current backup page and any resident adjacent next page.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorLoadCurrentBackupWindow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorLoadCurrentBackupWindow:
         LD      A,(EditorNavCurrentPage)
         CALL    EditorNavBackedPageContains
         JR      NZ,EditorLoadCurrentBackupWindowMaybeNext
@@ -545,10 +520,8 @@ EditorLoadCurrentBackupWindowError:
 
 ; EditorNavBackedPageContains -
 ; Return Z when A is present in the session backed-page table.
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,C,HL
-@EditorNavBackedPageContains:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,B,C,HL
+EditorNavBackedPageContains:
         LD      C,A
         LD      A,(EditorNavBackedPageCount)
         OR      A
@@ -574,10 +547,8 @@ EditorNavBackedPageFound:
 
 ; EditorNavBackedPageAdd -
 ; Add A to the session backed-page table if it is not already present.
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,C,HL
-@EditorNavBackedPageAdd:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,B,C,HL
+EditorNavBackedPageAdd:
         LD      (EditorNavBackedPageCandidate),A
         CALL    EditorNavBackedPageContains
         RET     Z
@@ -609,9 +580,8 @@ EditorNavBackedPageAddFull:
 
 ; EditorClearDirty -
 ; Mark the current editor page clean after a successful load or save.
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry
-@EditorClearDirty:
+.routine out carry,zero,A clobbers sign,parity,halfCarry
+EditorClearDirty:
         XOR     A
         LD      (EditorNavDirty),A
         LD      (EditorNavDirtySectors),A
@@ -620,9 +590,8 @@ EditorNavBackedPageAddFull:
 ; EditorMarkCurrentSectorDirty -
 ; Mark the active source sector dirty. Cross-sector mutations can OR in the
 ; adjacent-sector bit directly when they modify EditorNavNextPageBuffer.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,HL
-@EditorMarkCurrentSectorDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,HL
+EditorMarkCurrentSectorDirty:
         LD      A,1
         LD      (EditorNavDirty),A
         LD      HL,EditorNavDirtySectors
@@ -633,9 +602,8 @@ EditorNavBackedPageAddFull:
 
 ; EditorPageDown -
 ; Advance one page, render it, and commit the page only if rendering succeeds.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@EditorPageDown:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+EditorPageDown:
         LD      A,(EditorNavCurrentPage)
         CP      127
         JP      Z,EditorNavPageErr
@@ -682,9 +650,8 @@ EditorNavCommitPendingPageFromWindow:
 
 ; EditorPageUp -
 ; Move back one page, render it, and commit the page only if rendering succeeds.
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorPageUp:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorPageUp:
         LD      A,(EditorNavCurrentPage)
         OR      A
         JP      Z,EditorNavPageErr
@@ -719,9 +686,8 @@ EditorPageUpCanMove:
 ; Cross from the active page to the already-resident adjacent next page without
 ; preloading another source sector. Used by plain line movement at the row-15
 ; boundary; explicit page movement still preloads ahead.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@EditorPageDownResidentNoPreload:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+EditorPageDownResidentNoPreload:
         LD      A,(EditorNavCurrentPage)
         CP      127
         JP      Z,EditorNavPageErr
@@ -758,9 +724,8 @@ EditorPageDownResidentReady:
 
 ; EditorPageUpResidentNoPreload -
 ; Cross from row 0 to the cached previous page without loading another sector.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorPageUpResidentNoPreload:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorPageUpResidentNoPreload:
         LD      A,(EditorNavCurrentPage)
         OR      A
         JP      Z,EditorNavPageErr
@@ -822,9 +787,8 @@ EditorPageUpResidentCurrentDirtyReady:
 ; the page above it is still resident in the previous-page cache. Mirror that
 ; cache page back into the adjacent-next buffer so another plain Down can cross
 ; without storage.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavRestoreNextWindowFromCache:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavRestoreNextWindowFromCache:
         LD      A,(EditorNavCurrentPage)
         CP      127
         JR      Z,EditorNavRestoreNextWindowUnavailable
@@ -861,9 +825,8 @@ EditorNavRestoreNextWindowUnavailable:
 
 ; EditorNavRememberCurrentPage -
 ; Keep the clean current page in the one-page RAM cache before loading another.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavRememberCurrentPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavRememberCurrentPage:
         LD      A,(EditorNavCacheStoreCount)
         INC     A
         LD      (EditorNavCacheStoreCount),A
@@ -889,9 +852,8 @@ EditorNavRememberCurrentDirtyReady:
 ; Swap the pending page from the RAM cache into the live buffer when available.
 ; The caller commits page/viewport state and renders afterward.
 ; Returns NC,A=1 on cache hit, NC,A=0 on miss.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavRenderCachedPendingPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavRenderCachedPendingPage:
         LD      A,(EditorNavCacheValid)
         OR      A
         RET     Z
@@ -937,9 +899,8 @@ EditorNavCachedPageMiss:
 ; Slide the preloaded adjacent sector into the active page when paging down by
 ; one sector. The caller commits page/viewport state and renders afterward.
 ; Returns NC,A=1 on window hit, NC,A=0 on miss, or C on preparation failure.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@EditorNavRenderNextWindowPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+EditorNavRenderNextWindowPage:
         LD      A,(EditorNavNextPageValid)
         OR      A
         RET     Z
@@ -1056,7 +1017,7 @@ EditorNavNextWindowUseAdjacentOnly:
         LD      (EditorNavNextPageNumber),A
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavNextPageBuffer
-        ; expects out carry
+        .expectout carry
         CALL    EditorLoadSourcePage
         JR      C,EditorNavNextWindowAdjacentLoadError
         XOR     A
@@ -1098,9 +1059,8 @@ EditorNavNextWindowPageMiss:
 
 ; EditorNavSwapCachePage -
 ; Exchange the live page buffer with the cached page buffer.
-;! out DE,HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
-@EditorNavSwapCachePage:
+.routine out DE,HL,A,carry,zero clobbers sign,parity,halfCarry,BC
+EditorNavSwapCachePage:
         LD      HL,EditorNavPageBuffer
         LD      DE,EditorNavCachePageBuffer
         LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
@@ -1124,9 +1084,8 @@ EditorNavSwapCachePageLoop:
 ; EditorNavRotatePageNextCacheForward -
 ; Move one page down when the cache holds the already-loaded page after next:
 ; page <- next, next <- cache, cache <- old page.
-;! out DE,HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,IX
-@EditorNavRotatePageNextCacheForward:
+.routine out DE,HL,A,carry,zero clobbers sign,parity,halfCarry,BC,IX
+EditorNavRotatePageNextCacheForward:
         LD      HL,EditorNavPageBuffer
         LD      DE,EditorNavNextPageBuffer
         LD      IX,EditorNavCachePageBuffer
@@ -1154,9 +1113,8 @@ EditorNavRotatePageNextCacheForwardLoop:
 ; EditorNavRotatePageNextBackupForward -
 ; Move one page down once cache is the previous-page victim:
 ; page <- next, next <- backup, cache <- old page.
-;! out DE,HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,IX,IY
-@EditorNavRotatePageNextBackupForward:
+.routine out DE,HL,A,carry,zero clobbers sign,parity,halfCarry,BC,IX,IY
+EditorNavRotatePageNextBackupForward:
         LD      HL,EditorNavPageBuffer
         LD      DE,EditorNavNextPageBuffer
         LD      IX,EditorNavBackupPageBuffer
@@ -1185,9 +1143,8 @@ EditorNavRotatePageNextBackupForwardLoop:
 
 ; EditorNavRefreshAggregateDirty -
 ; Keep the legacy EditorNavDirty flag compatible with the per-sector dirty bits.
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry
-@EditorNavRefreshAggregateDirty:
+.routine out carry,zero,A clobbers sign,parity,halfCarry
+EditorNavRefreshAggregateDirty:
         LD      A,(EditorNavDirtySectors)
         OR      A
         JR      NZ,EditorNavRefreshAggregateSet
@@ -1207,9 +1164,8 @@ EditorNavRefreshAggregateClean:
 
 ; EditorNavSlideNextPageToCurrent -
 ; Copy the adjacent sector into the active sector buffer.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavSlideNextPageToCurrent:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavSlideNextPageToCurrent:
         LD      HL,EditorNavNextPageBuffer
         LD      DE,EditorNavPageBuffer
         LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
@@ -1217,10 +1173,8 @@ EditorNavRefreshAggregateClean:
         XOR     A
         RET
 
-;! in A
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorNavRenderPage:
+.routine in A out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorNavRenderPage:
         LD      (EditorNavRenderPageInput),A
         LD      HL,EditorStatusLoadingText
         CALL    EditorNavShowStatus
@@ -1228,7 +1182,6 @@ EditorNavRefreshAggregateClean:
         LD      A,(EditorNavRenderPageInput)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavPageBuffer
-        ;! rc-ignore-next flag_lifetime_risk: The following branch consumes the call's returned carry, not pre-call flags.
         CALL    EditorLoadSourcePage
         JR      C,EditorNavRenderPageRestoreError
         XOR     A
@@ -1244,9 +1197,8 @@ EditorNavRenderPageRestoreError:
 ; EditorNavLoadNextWindowPage -
 ; Preload the next source sector into the adjacent window buffer. A short file
 ; is represented as a blank sector so edits can grow into it before save.
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavLoadNextWindowPage:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavLoadNextWindowPage:
         LD      A,(EditorNavCurrentPage)
         CP      127
         JR      Z,EditorNavNextWindowUnavailable
@@ -1280,7 +1232,7 @@ EditorNavLoadNextWindowFromDisk:
         LD      A,(EditorNavNextPageNumber)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavNextPageBuffer
-        ; expects out carry
+        .expectout carry
         CALL    EditorLoadSourcePage
         JR      C,EditorNavLoadNextWindowError
         XOR     A
@@ -1310,13 +1262,12 @@ EditorNavNextWindowUnavailable:
 ; EditorNavLoadBackupWindowPage -
 ; Load the high edge of the rolling source window into the backup/slot-3
 ; buffer. A short file is represented as a clean synthetic blank page.
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavLoadBackupWindowPage:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavLoadBackupWindowPage:
         LD      A,(EditorNavBackupPage)
         LD      DE,(EditorNavPathPtr)
         LD      HL,EditorNavBackupPageBuffer
-        ; expects out carry
+        .expectout carry
         CALL    EditorLoadSourcePage
         JR      C,EditorNavLoadBackupWindowError
         LD      A,(EditorNavWindowMissLoadCount)
@@ -1346,9 +1297,8 @@ EditorNavLoadBackupWindowError:
 ; Record the V1 four-slot source window after slots 0-3 have been populated.
 ; This compatibility layer keeps the current active/next/cache APIs while
 ; recording the four-slot rolling-window shape.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorNavRecordInitialWindow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+EditorNavRecordInitialWindow:
         XOR     A
         LD      (EditorNavWindowBasePage),A
         LD      (EditorNavWindowDirtyMask),A
@@ -1407,9 +1357,8 @@ EditorNavInitialSlot2SyntheticReady:
 ; EditorNavInvalidateWindowSlot3 -
 ; Mark the fourth source-window slot invalid when its physical buffer is reused
 ; as backup/block scratch.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorNavInvalidateWindowSlot3:
+.routine out A,carry,zero clobbers sign,parity,halfCarry
+EditorNavInvalidateWindowSlot3:
         LD      A,(EditorNavWindowValidMask)
         AND     0xF7
         LD      (EditorNavWindowValidMask),A
@@ -1422,27 +1371,23 @@ EditorNavInitialSlot2SyntheticReady:
         XOR     A
         RET
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorNavClearCachePageBuffer:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorNavClearCachePageBuffer:
         LD      HL,EditorNavCachePageBuffer
         JP      Tecm8StorageClearSectorBuffer
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorNavClearBackupPageBuffer:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorNavClearBackupPageBuffer:
         LD      HL,EditorNavBackupPageBuffer
         JP      Tecm8StorageClearSectorBuffer
 
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@EditorNavClearNextPageBuffer:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+EditorNavClearNextPageBuffer:
         LD      HL,EditorNavNextPageBuffer
         JP      Tecm8StorageClearSectorBuffer
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorNavCopyCachedPageToNext:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorNavCopyCachedPageToNext:
         LD      HL,EditorNavCachePageBuffer
         LD      DE,EditorNavNextPageBuffer
         LD      BC,TECM8_EDITOR_NAV_PAGE_BYTES
@@ -1452,22 +1397,18 @@ EditorNavInitialSlot2SyntheticReady:
 
 ; EditorNavShowStatus -
 ; Render a transient status line before a slow storage operation.
-;! in HL
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorNavShowStatus:
+.routine in HL out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorNavShowStatus:
         LD      (EditorPromptTextPtr),HL
         JP      EditorViewportRenderStatusOverlay
 
 ; EditorNavShowError -
 ; Render a compact status-row error for an editor/storage error code.
 ; Input: A = error code
-;! in A
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorNavShowError:
+.routine in A out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorNavShowError:
         LD      (EditorLastErrorCode),A
-        ; expects out HL
+        .expectout HL
         CALL    EditorNavErrorTextForCode
         LD      (EditorLastErrorTextPtr),HL
         JP      EditorNavShowStatus
@@ -1476,10 +1417,8 @@ EditorNavInitialSlot2SyntheticReady:
 ; Map compact editor error codes to short user-visible text.
 ; Input: A = error code
 ; Output: HL = NUL-terminated message
-;! in A
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorNavErrorTextForCode:
+.routine in A out HL,A,carry,zero clobbers sign,parity,halfCarry
+EditorNavErrorTextForCode:
         CP      EDITOR_LOAD_ERR_OPEN
         JR      Z,EditorNavErrTextOpen
         CP      EDITOR_LOAD_ERR_SUPER
@@ -1582,10 +1521,8 @@ EditorNavPageErr:
         SCF
         RET
 
-;! in B,DE,HL
-;! out DE,HL,A,B,carry,zero
-;! clobbers sign,parity,halfCarry
-@EditorNavCopyPath:
+.routine in B,DE,HL out DE,HL,A,B,carry,zero clobbers sign,parity,halfCarry
+EditorNavCopyPath:
         CALL    Tecm8StringCopyNulBounded
         RET     NC
 
@@ -1594,10 +1531,8 @@ EditorNavPathErr:
         SCF
         RET
 
-;! in B,DE,HL
-;! out DE,HL,A,C,carry,zero
-;! clobbers sign,parity,halfCarry,B
-@EditorNavDeriveBackupPath:
+.routine in B,DE,HL out DE,HL,A,C,carry,zero clobbers sign,parity,halfCarry,B
+EditorNavDeriveBackupPath:
         LD      (EditorNavBackupSourcePtr),HL
         LD      C,B
         LD      A,C

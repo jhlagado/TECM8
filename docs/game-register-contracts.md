@@ -45,10 +45,8 @@ has a documented use for it.
 Actor update hook, v1 convention:
 
 ```asm
-;! in IX
-;! out
-;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
-@Player_Update:
+.routine in IX clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
+Player_Update:
         ret
 ```
 
@@ -64,10 +62,8 @@ Meaning:
 Actor touch hook, v1 convention:
 
 ```asm
-;! in IX,HL
-;! out
-;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
-@Actor_Touch:
+.routine in IX,HL clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
+Actor_Touch:
         ret
 ```
 
@@ -87,19 +83,16 @@ game routines depend on it.
 Early game APIs should be small, register-first routines. Draft examples:
 
 ```asm
-;! out A
-;! clobbers zero,sign,parity,halfCarry
-@API_GetInput:
+.routine out A clobbers zero,sign,parity,halfCarry
+API_GetInput:
         ret
 ```
 
 `API_GetInput` returns a compact input bitfield in `A`.
 
 ```asm
-;! in IX,B,C
-;! out carry
-;! clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
-@API_MoveActorBlocked:
+.routine in IX,B,C out carry clobbers A,B,C,D,E,H,L,zero,sign,parity,halfCarry
+API_MoveActorBlocked:
         ret
 ```
 
@@ -108,30 +101,24 @@ as signed `dy`. Carry clear means movement was applied. Carry set means movement
 was blocked.
 
 ```asm
-;! in IX
-;! out
-;! clobbers A,zero,sign,parity,halfCarry
-@API_DestroyCurrentActor:
+.routine in IX clobbers A,zero,sign,parity,halfCarry
+API_DestroyCurrentActor:
         ret
 ```
 
 `API_DestroyCurrentActor` marks the current actor inactive.
 
 ```asm
-;! in A
-;! out
-;! clobbers A,H,L,zero,sign,parity,halfCarry
-@API_AddScore:
+.routine in A clobbers A,H,L,zero,sign,parity,halfCarry
+API_AddScore:
         ret
 ```
 
 `API_AddScore` adds the value in `A` to the current score or collection counter.
 
 ```asm
-;! in A
-;! out
-;! clobbers A,zero,sign,parity,halfCarry
-@API_PlaySound:
+.routine in A clobbers A,zero,sign,parity,halfCarry
+API_PlaySound:
         ret
 ```
 

@@ -12,9 +12,8 @@ PROOF_FAIL       .equ     0xE0
 PROOF_MOD_SHIFT  .equ     0x01
 PROOF_MOD_CTRL   .equ     0x02
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
 
@@ -94,16 +93,14 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@SelectRowsZeroToOne:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+SelectRowsZeroToOne:
         LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
         LD      B,PROOF_MOD_SHIFT
         JP      EditorRunModifiedKey
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertDeleteBlockNoCancelled:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertDeleteBlockNoCancelled:
         LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
@@ -127,9 +124,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertDeleteBlockYesRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertDeleteBlockYesRows:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         JP      NZ,AssertFail
@@ -174,9 +170,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertDeleteCurrentLineRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertDeleteCurrentLineRows:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         JP      NZ,AssertFail
@@ -218,10 +213,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! in DE,HL
-;! out A,BC,DE,HL,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertRecordEquals:
+.routine in DE,HL out A,BC,DE,HL,carry,zero
+AssertRecordEquals:
         LD      A,(HL)
         LD      B,A
         INC     B
@@ -236,10 +229,8 @@ AssertRecordEqualsLoop:
         XOR     A
         RET
 
-;! in HL
-;! out A,B,HL,carry,zero
-;! clobbers A,B,HL
-@AssertRecordZeroed:
+.routine in HL out A,B,HL,carry,zero
+AssertRecordZeroed:
         LD      B,32
 
 AssertRecordZeroedLoop:
@@ -256,10 +247,8 @@ AssertFail:
         RET
 
 ; Stub LoadProjectConfig for shell-to-editor proof.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,ExpectedMain
         LD      C,B
 

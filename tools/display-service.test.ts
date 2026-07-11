@@ -26,12 +26,12 @@ test('display service exposes editor-facing GLCD operations as contract wrappers
     ['Tecm8DisplayRenderCursorCell', 'DisplayRenderCursorCell'],
     ['Tecm8DisplayEraseCursorCell', 'DisplayEraseCursorCell'],
   ]) {
-    assert.match(source, new RegExp(`^@${wrapper}:\\n\\s+JP\\s+${target}$`, 'm'));
+    assert.match(source, new RegExp(`^${wrapper}:\\n\\s+JP\\s+${target}$`, 'm'));
   }
 
-  assert.match(source, /;! out A,carry,zero\n;! clobbers sign,parity,halfCarry,BC,DE,HL\n@Tecm8DisplayStep:/);
-  assert.match(source, /;! in A,C,HL\n;! out carry\n;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL\n@Tecm8DisplayRenderLine:/);
-  assert.match(source, /;! in A,C\n;! out A,carry,zero\n;! clobbers sign,parity,halfCarry,BC,DE,HL\n@Tecm8DisplayRenderCursorCell:/);
+  assert.match(source, /.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL\nTecm8DisplayStep:/);
+  assert.match(source, /.routine in A,C,HL out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL\nTecm8DisplayRenderLine:/);
+  assert.match(source, /.routine in A,C out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL\nTecm8DisplayRenderCursorCell:/);
 });
 
 test('editor modules call display through the TECM8 display service boundary', () => {

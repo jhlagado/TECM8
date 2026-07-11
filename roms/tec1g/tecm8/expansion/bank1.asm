@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x01
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank1Entry:
+Tecm8ExpansionBank1Entry:
         push af
         ld a,(ABI_PROBE_REQUEST)
         cp ABI_PROBE_PRESERVE
@@ -22,10 +22,11 @@ Tecm8ExpansionBank1PreserveProbe:
         pop af
         jp BankAbiPreserveProbe
 
-@Tecm8ExpansionBank1Info:
+Tecm8ExpansionBank1Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION
 
-@vduServiceCall:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+vduServiceCall:
         cp TMS_SVC_INIT
         jr nc,tmsServiceCall
         cp VDU_SVC_INIT
@@ -75,12 +76,14 @@ Tecm8TmsServiceTable:
         jp      tmsFillVramImpl
         jp      tmsReadVramImpl
 
+.routine out A,zero clobbers sign,parity,halfCarry
 vduInitImpl:
         call tmsInitImpl
         ld a,0x81
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 vduClearImpl:
         xor a
         ld (TMS_PARAM_ADDR_LO),a
@@ -94,6 +97,7 @@ vduClearImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 vduSetCursorImpl:
         ld hl,(TMS_PARAM_ADDR_LO)
         res 6,h
@@ -103,6 +107,7 @@ vduSetCursorImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 vduPutCharImpl:
         ld a,(TMS_PARAM_CURSOR_LO)
         ld (TMS_PARAM_ADDR_LO),a
@@ -118,6 +123,7 @@ vduPutCharImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 vduPutStringImpl:
         ld hl,(TMS_PARAM_STRING_LO)
 vduPutStringUnboundedNext:
@@ -135,6 +141,7 @@ vduPutStringDone:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,D,E,H,L
 vduPutStringNImpl:
         ld hl,(TMS_PARAM_STRING_LO)
         ld de,(TMS_PARAM_COUNT_LO)
@@ -158,6 +165,7 @@ vduPutStringBoundedNext:
         jr nz,vduPutStringBoundedNext
         jr vduPutStringDone
 
+.routine out A,zero clobbers sign,parity,halfCarry,D,E,H,L
 vduNewlineImpl:
         ld hl,(TMS_PARAM_CURSOR_LO)
         ld a,l
@@ -172,6 +180,7 @@ vduNewlineImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,D,E,H,L
 vduSetRowColImpl:
         ld a,(TMS_PARAM_ROW)
         ld l,a
@@ -191,6 +200,7 @@ vduSetRowColImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 vduScrollUpImpl:
         ld hl,VDU_ROW_BYTES
         ld de,0x0000
@@ -225,6 +235,7 @@ vduScrollUpNext:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 vduStatusLineImpl:
         ld hl,(TMS_PARAM_CURSOR_LO)
         push hl
@@ -244,6 +255,7 @@ vduStatusLineImpl:
         or a
         ret
 
+.routine out A,zero clobbers sign,parity,halfCarry
 tmsInitImpl:
         ld a,0x07
         ld (TMS_PARAM_REGISTER),a
@@ -256,6 +268,7 @@ tmsInitImpl:
 
 ; Input: TMS_PARAM_REGISTER = TMS register 0-7,
 ;        TMS_PARAM_VALUE = value.
+.routine out A,zero clobbers sign,parity,halfCarry
 tmsSetRegisterImpl:
         ld a,(TMS_PARAM_VALUE)
         out (TMS_CONTROL_PORT),a
@@ -269,6 +282,7 @@ tmsSetRegisterImpl:
 
 ; Input: TMS_PARAM_ADDR_LO/HI = VRAM address,
 ;        TMS_PARAM_VALUE = byte value.
+.routine out A,zero clobbers sign,parity,halfCarry
 tmsWriteVramImpl:
         ld a,(TMS_PARAM_ADDR_LO)
         out (TMS_CONTROL_PORT),a
@@ -284,6 +298,7 @@ tmsWriteVramImpl:
 
 ; Input: TMS_PARAM_ADDR_LO/HI = VRAM address.
 ; Output: TMS_PARAM_VALUE = byte read.
+.routine out A,zero clobbers sign,parity,halfCarry
 tmsReadVramImpl:
         ld a,(TMS_PARAM_ADDR_LO)
         out (TMS_CONTROL_PORT),a
@@ -299,6 +314,7 @@ tmsReadVramImpl:
 ; Input: TMS_PARAM_ADDR_LO/HI = start VRAM address,
 ;        TMS_PARAM_VALUE = byte value,
 ;        TMS_PARAM_COUNT_LO/HI = byte count.
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
 tmsFillVramImpl:
         ld hl,(TMS_PARAM_COUNT_LO)
         ld a,h
@@ -322,17 +338,17 @@ tmsFillVramDone:
         or a
         ret
 
-@BankAbiNestedCall:
+BankAbiNestedCall:
         ld a,0xA1
         ld (ABI_TRACE_6),a
         ld a,ABI_PROBE_NESTED
-        ; expects out A
+        .expectout A
         farCall 0x02,TFS_ENTRY
         ld (ABI_TRACE_7),a
         ld a,0x91
         ret
 
-@BankAbiPreserveProbe:
+BankAbiPreserveProbe:
         ld (ABI_TRACE_BASE+10),a
         ld a,d
         ld (ABI_TRACE_BASE+11),a

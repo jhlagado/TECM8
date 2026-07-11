@@ -11,9 +11,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
 
@@ -199,9 +198,8 @@ PROOF_FAIL       .equ     0xE0
 ProofDone:
         JP      ProofDone
 
-;! out A,carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunSyntheticControlArrowUp:
+.routine out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+RunSyntheticControlArrowUp:
         LD      A,TECM8_EDITOR_KEY_ARROW_UP
         LD      (BiosInputRawPrimary),A
         LD      A,0x01
@@ -235,10 +233,8 @@ ProofFailedDone:
 ; Capture one text byte from each pixel row of the transient status row. This
 ; lets the host proof compare prompt-visible and source-restored row states.
 ; Input: HL = six-byte destination
-;! in HL
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@CaptureStatusRowTextByte:
+.routine in HL out carry,zero clobbers A,BC,DE,HL
+CaptureStatusRowTextByte:
         LD      DE,MON3_TGBUF + ((TECM8_DISPLAY_STATUS_ROW * TECM8_DISPLAY_ROW_HEIGHT + TECM8_DISPLAY_Y_ORIGIN) * TECM8_DISPLAY_ROW_BYTES) + 1
         CALL    CaptureStatusRowOneByte
         CALL    CaptureStatusRowOneByte
@@ -249,10 +245,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! in DE,HL
-;! out DE,HL,carry,halfCarry
-;! clobbers A,BC,carry,halfCarry
-@CaptureStatusRowOneByte:
+.routine in DE,HL out DE,HL,carry,halfCarry clobbers A,BC
+CaptureStatusRowOneByte:
         LD      A,(DE)
         LD      (HL),A
         INC     HL

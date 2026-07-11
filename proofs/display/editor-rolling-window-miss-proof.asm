@@ -12,9 +12,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL,IX,IY
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL,IX,IY
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
 
@@ -52,9 +51,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@RunCleanMissCase:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+RunCleanMissCase:
         CALL    EditorOpenMain
         RET     C
         LD      A,(EditorNavWindowMissLoadCount)
@@ -84,9 +82,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@RunStaleBackupCase:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+RunStaleBackupCase:
         CALL    EditorPageDown
         RET     C
         CALL    EditorPageUp
@@ -111,9 +108,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@RunDirtyAdjacentReturnCase:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+RunDirtyAdjacentReturnCase:
         CALL    EditorPageDown
         RET     C
         CALL    EditorPageDown
@@ -145,9 +141,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
-@RunDirtyEvictionCase:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL,IX,IY
+RunDirtyEvictionCase:
         CALL    EditorMarkCurrentSectorDirty
         RET     C
         CALL    EditorPageDown
@@ -169,10 +164,8 @@ DirtyEvictionUnexpectedSuccess:
         SCF
         RET
 
-;! in DE,HL
-;! out A,DE,HL,carry,zero
-;! clobbers A,BC
-@CopyRecordText:
+.routine in DE,HL out A,DE,HL,carry,zero clobbers BC
+CopyRecordText:
         INC     HL
         LD      B,32
 

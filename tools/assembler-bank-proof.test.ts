@@ -38,8 +38,8 @@ test('assembler bank proof covers unsupported skeleton service', () => {
   assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
   assert.match(proof, /ld a,\(RUN_PARAM_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED/);
   assert.match(proof, /ld a,\(RUN_PARAM_RESULT_HI\)[\s\S]*or a[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_HI\)[\s\S]*or a/);
-  assert.match(bank7, /@Tecm8ExpansionBank7Entry:[\s\S]*cp ASM_SVC_ASSEMBLE\s*\n\s*jp z,asmAssembleUnsupported/);
-  assert.match(bank8, /@Tecm8ExpansionBank8Entry:[\s\S]*cp RUN_SVC_RUN\s*\n\s*jp z,runUnsupported/);
+  assert.match(bank7, /Tecm8ExpansionBank7Entry:[\s\S]*cp ASM_SVC_ASSEMBLE\s*\n\s*jp z,asmAssembleUnsupported/);
+  assert.match(bank8, /Tecm8ExpansionBank8Entry:[\s\S]*cp RUN_SVC_RUN\s*\n\s*jp z,runUnsupported/);
   assert.match(
     readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank0.asm'), 'utf8'),
     /Tecm8ShellRunAsm:[\s\S]*ld \(ASM_PARAM_TARGET_LO\),hl[\s\S]*callBankService ASM_BANK,ASM_ENTRY,ASM_SVC_ASSEMBLE[\s\S]*call Tecm8ShellPublishAsmResult/,

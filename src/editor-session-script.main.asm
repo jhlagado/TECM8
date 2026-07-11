@@ -11,14 +11,12 @@ TECM8_MAIN_STACK       .equ     0x3FF0
 
         .include "tecm8-equates.asm"
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,BC,DE,HL
+Start:
         JP      ScriptStart
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,BC,DE,HL
-@ScriptStart:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,BC,DE,HL
+ScriptStart:
         LD      SP,TECM8_MAIN_STACK
         CALL    DisplayInit
         JP      C,MainFailed

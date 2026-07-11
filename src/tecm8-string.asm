@@ -3,10 +3,8 @@
 ; Tecm8StringMatchBytes -
 ; Compare B bytes from DE against HL.
 ; Output: carry clear on match, carry set on mismatch.
-;! in B,DE,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@Tecm8StringMatchBytes:
+.routine in B,DE,HL out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+Tecm8StringMatchBytes:
         LD      A,(DE)
         CP      (HL)
         JR      NZ,Tecm8StringMatchBytesBad
@@ -24,10 +22,8 @@ Tecm8StringMatchBytesBad:
 ; Copy a NUL-terminated string from HL to DE with capacity B.
 ; Capacity includes the final NUL. On success DE points at the stored NUL and
 ; B is the remaining capacity before that NUL byte.
-;! in B,DE,HL
-;! out DE,HL,A,B,carry,zero
-;! clobbers sign,parity,halfCarry
-@Tecm8StringCopyNulBounded:
+.routine in B,DE,HL out DE,HL,A,B,carry,zero clobbers sign,parity,halfCarry
+Tecm8StringCopyNulBounded:
         LD      A,B
         OR      A
         JR      Z,Tecm8StringCopyNulBoundedErr
@@ -53,10 +49,8 @@ Tecm8StringCopyNulBoundedErr:
 
 ; Tecm8StringSkipSpaces -
 ; Advance HL past ASCII spaces.
-;! in HL
-;! out HL,A,carry
-;! clobbers zero,sign,parity,halfCarry
-@Tecm8StringSkipSpaces:
+.routine in HL out HL,A,carry clobbers zero,sign,parity,halfCarry
+Tecm8StringSkipSpaces:
         LD      A,(HL)
         CP      0x20
         RET     NZ
@@ -66,10 +60,8 @@ Tecm8StringCopyNulBoundedErr:
 ; Tecm8StringFindLocalName -
 ; Return HL pointing at the byte after the last slash in a NUL-terminated path.
 ; If no slash is present, HL returns to the original input pointer.
-;! in HL
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,DE
-@Tecm8StringFindLocalName:
+.routine in HL out HL,A,carry,zero clobbers sign,parity,halfCarry,DE
+Tecm8StringFindLocalName:
         LD      D,H
         LD      E,L
 

@@ -12,9 +12,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL,IX,IY
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL,IX,IY
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -46,9 +45,8 @@ ProofPageDownLoop:
 ProofDone:
         JP      ProofDone
 
-;! out A,carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunSyntheticControlArrowUp:
+.routine out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+RunSyntheticControlArrowUp:
         LD      A,TECM8_EDITOR_KEY_ARROW_UP
         LD      (BiosInputRawPrimary),A
         LD      A,0x01

@@ -107,10 +107,8 @@ When there is a choice between equally useful increments, prefer the one that
 also helps the future game profile. Do not start a full game engine until the
 shell, assembler, runner, and basic VDU/input/storage services can support it.
 
-The detailed game direction lives in [TECM8 Game Creation Mission](gamer.md),
-[Gamer Vertical Slice Specification](gamer-vertical-slice.md), and
-[Game-Facing Register Contracts](game-register-contracts.md).
-The shared profile/runtime foundations now also live in
+The detailed game/profile direction lives in
+[Game-Facing Register Contracts](game-register-contracts.md),
 [Profile Preprocessor Contract](profile-preprocessor-contract.md),
 [Polling State Runtime](polling-state-runtime.md),
 [Profile TEC-FS Packaging](profile-tecfs-packaging.md),
@@ -124,8 +122,8 @@ quality without destabilizing the editor milestone. This is a low-priority
 quality track: each feature should be piloted in a small, measured increment
 rather than applied as broad syntax churn.
 
-- `.import` for routine modules with explicit public `@` entries and private
-  helper labels.
+- `.import` for routine modules with explicit exported entries and private
+  helper labels under the AZM 0.3 import/export model.
 - layout declarations, `sizeof`, `offset`, and selective layout casts for
   memory records and on-disk TM8 structures.
 - `.enum` for closed status, command, prompt, marker, and action families.

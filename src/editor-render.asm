@@ -1,8 +1,7 @@
 ; TECM8 editor dirty render policy and viewport visibility helpers.
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderDirty:
         CALL    EditorMarkDirty
         CALL    EditorHideCursor
         RET     C
@@ -15,9 +14,8 @@
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderCurrentLineDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderCurrentLineDirty:
         CALL    EditorMarkDirty
         CALL    EditorHideCursor
         RET     C
@@ -39,9 +37,8 @@
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderCurrentLineCellsDirty:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderCurrentLineCellsDirty:
         CALL    EditorMarkDirty
         CALL    EditorHideCursor
         RET     C
@@ -125,9 +122,8 @@ EditorKeyRenderCurrentLineCellsDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderCursorRowMarkers:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderCursorRowMarkers:
         CALL    EditorHideCursor
         RET     C
         CALL    EditorEnsureCursorVisible
@@ -150,7 +146,7 @@ EditorKeyRenderCursorRowMarkersNeeded:
         CALL    EditorViewportSetCurrentRow
         RET     C
         LD      A,(EditorCursorPreviousRow)
-        ; expects out A
+        .expectout A
         CALL    EditorLogicalRowVisible
         JR      C,EditorKeyRenderCursorNewOnly
         LD      (EditorCursorPreviousVisibleRow),A
@@ -173,9 +169,8 @@ EditorKeyRenderCursorFlushCurrent:
         XOR     A
         RET
 
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderCursorMove:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderCursorMove:
         CALL    EditorEnsureCursorVisible
         RET     C
         OR      A
@@ -186,9 +181,8 @@ EditorKeyRenderCursorFlushCurrent:
         JP      NZ,EditorKeyRenderViewport
         JP      EditorKeyRenderCursorRowMarkers
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderCursorColumnMove:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderCursorColumnMove:
         CALL    EditorEnsureCursorVisibleColumn
         RET     C
         OR      A
@@ -196,9 +190,8 @@ EditorKeyRenderCursorFlushCurrent:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorKeyRenderViewport:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorKeyRenderViewport:
         CALL    EditorRenderPageBufferDirtyRows
         RET     C
         JP      EditorInvalidateCursorOverlay
@@ -206,9 +199,8 @@ EditorKeyRenderCursorFlushCurrent:
 ; EditorEnsureCursorVisible -
 ; Keep the 16-row logical cursor inside the 10-row GLCD viewport.
 ; Returns A=1 when the viewport top changed, A=0 when it did not.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
-@EditorEnsureCursorVisible:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC
+EditorEnsureCursorVisible:
         LD      A,(EditorCursorRow)
         LD      B,A
         LD      A,(EditorNavViewportTopRow)
@@ -314,9 +306,8 @@ EditorEnsureCursorScrollDownCurrent:
 ; EditorEnsureCursorVisibleColumn -
 ; Keep the 31-column logical cursor inside the 20-column GLCD text viewport.
 ; Returns A=1 when the horizontal viewport changed, A=0 when it did not.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
-@EditorEnsureCursorVisibleColumn:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC
+EditorEnsureCursorVisibleColumn:
         LD      A,(EditorCursorCol)
         LD      B,A
         LD      A,(EditorViewportColOffset)
@@ -361,10 +352,8 @@ EditorEnsureCursorColumnScrollRight:
         OR      A
         RET
 
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC
-@EditorLogicalRowVisible:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,BC
+EditorLogicalRowVisible:
         LD      B,A
         LD      A,(EditorNavViewportTopRow)
         CP      B
@@ -393,9 +382,8 @@ EditorLogicalRowHidden:
         SCF
         RET
 
-;! out A,carry
-;! clobbers zero,sign,parity,halfCarry,HL
-@EditorMarkDirty:
+.routine out A,carry clobbers zero,sign,parity,halfCarry,HL
+EditorMarkDirty:
         JP      EditorMarkCurrentSectorDirty
 
 EditorLineDirtyStartCol:

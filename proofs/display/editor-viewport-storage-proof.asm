@@ -11,9 +11,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -44,7 +43,7 @@ PROOF_FAIL       .equ     0xE0
         CALL    EditorViewportRender
         JR      C,ProofFailed
 
-        ;! rc-ignore-next definite_contract_violation: A is not live after this full flush proof call.
+        .rcignore definite_contract_violation "A is not live after this full flush proof call."
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 

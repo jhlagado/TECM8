@@ -78,10 +78,10 @@ Expected: no output.
 
 TECM8_MONITOR_VERSION          .equ    0x01
 
-@Tecm8MonitorEntry:
+Tecm8MonitorEntry:
         JP      Tecm8MonitorHold
 
-@Tecm8MonitorInfo:
+Tecm8MonitorInfo:
         .db     "T","M","8",TECM8_MONITOR_VERSION
 
 Tecm8MonitorHold:
@@ -100,10 +100,10 @@ Tecm8MonitorHold:
 
 TECM8_EXPANSION_VERSION        .equ    0x01
 
-@Tecm8ExpansionEntry:
+Tecm8ExpansionEntry:
         RET
 
-@Tecm8ExpansionInfo:
+Tecm8ExpansionInfo:
         .db     "T","M","8",TECM8_EXPANSION_VERSION
 ```
 

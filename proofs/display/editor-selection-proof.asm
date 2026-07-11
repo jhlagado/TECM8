@@ -13,9 +13,8 @@ PROOF_FAIL       .equ     0xE0
 PROOF_MOD_SHIFT  .equ     0x01
 PROOF_MOD_CTRL   .equ     0x02
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
 
@@ -502,9 +501,8 @@ PROOF_MOD_CTRL   .equ     0x02
 ProofDone:
         JP      ProofDone
 
-;! out A,carry
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunSyntheticShiftControlArrowUp:
+.routine out A,carry clobbers BC,DE,HL,zero,sign,parity,halfCarry
+RunSyntheticShiftControlArrowUp:
         LD      A,TECM8_EDITOR_KEY_ARROW_UP
         LD      (BiosInputRawPrimary),A
         LD      A,0x01
@@ -537,9 +535,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunShiftDownCount:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+RunShiftDownCount:
         LD      A,(ShiftDownCount)
         OR      A
         RET     Z
@@ -552,9 +549,8 @@ ProofFailedDone:
         LD      (ShiftDownCount),A
         JR      RunShiftDownCount
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@RunPlainDownCount:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+RunPlainDownCount:
         LD      A,(PlainDownCount)
         OR      A
         RET     Z
@@ -567,9 +563,8 @@ ProofFailedDone:
         LD      (PlainDownCount),A
         JR      RunPlainDownCount
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@SelectRowsZeroToOne:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+SelectRowsZeroToOne:
         LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
         LD      B,PROOF_MOD_SHIFT
         CALL    EditorRunModifiedKey
@@ -578,9 +573,8 @@ ProofFailedDone:
         LD      B,PROOF_MOD_SHIFT
         JP      EditorRunModifiedKey
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@SelectRowsZeroToTwo:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+SelectRowsZeroToTwo:
         LD      A,TECM8_EDITOR_KEY_ARROW_DOWN
         LD      B,PROOF_MOD_SHIFT
         CALL    EditorRunModifiedKey
@@ -593,9 +587,8 @@ ProofFailedDone:
         LD      B,PROOF_MOD_SHIFT
         JP      EditorRunModifiedKey
 
-;! out A,carry,zero
-;! clobbers A,B,HL
-@ClearPasteTailRows:
+.routine out A,carry,zero clobbers B,HL
+ClearPasteTailRows:
         LD      A,14
         CALL    EditorKeyRecordAtRow
         CALL    EditorKeyClearRecord
@@ -603,9 +596,8 @@ ProofFailedDone:
         CALL    EditorKeyRecordAtRow
         JP      EditorKeyClearRecord
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertSelectionRowsZeroToOne:
+.routine out A,carry,zero clobbers HL
+AssertSelectionRowsZeroToOne:
         LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
@@ -633,9 +625,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertSelectionRowsZeroToTwo:
+.routine out A,carry,zero clobbers HL
+AssertSelectionRowsZeroToTwo:
         LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
@@ -667,18 +658,16 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A
-@AssertSelectionClear:
+.routine out A,carry,zero
+AssertSelectionClear:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         JP      NZ,AssertFail
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertBlockStateClear:
+.routine out A,carry,zero clobbers HL
+AssertBlockStateClear:
         LD      A,(EditorBlockSelectionActive)
         OR      A
         JP      NZ,AssertFail
@@ -700,9 +689,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertSelectionRowsZeroToFifteen:
+.routine out A,carry,zero clobbers HL
+AssertSelectionRowsZeroToFifteen:
         LD      A,(EditorBlockSelectionActive)
         CP      1
         JP      NZ,AssertFail
@@ -728,9 +716,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertGutterRowsZeroOneQueued:
+.routine out A,carry,zero clobbers HL
+AssertGutterRowsZeroOneQueued:
         LD      A,(GlcdTileDirtyCellRowsLo)
         AND     0x03
         CP      0x03
@@ -754,9 +741,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertPageSelectionDown:
+.routine out A,carry,zero clobbers HL
+AssertPageSelectionDown:
         LD      A,(EditorNavCurrentPage)
         CP      1
         JP      NZ,AssertFail
@@ -782,9 +768,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertPageSelectionUp:
+.routine out A,carry,zero clobbers HL
+AssertPageSelectionUp:
         LD      A,(EditorNavCurrentPage)
         OR      A
         JP      NZ,AssertFail
@@ -798,9 +783,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertViewportSelectionScroll:
+.routine out A,carry,zero clobbers HL
+AssertViewportSelectionScroll:
         LD      A,(EditorNavViewportTopRow)
         CP      1
         JP      NZ,AssertFail
@@ -821,9 +805,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertPendingCopyRowsZeroToTwo:
+.routine out A,carry,zero clobbers HL
+AssertPendingCopyRowsZeroToTwo:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -847,9 +830,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertPendingCopyWithDestination:
+.routine out A,carry,zero clobbers HL
+AssertPendingCopyWithDestination:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -883,9 +865,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,HL
-@AssertPendingMoveRowsZeroToTwo:
+.routine out A,carry,zero clobbers HL
+AssertPendingMoveRowsZeroToTwo:
         LD      A,(EditorPendingBlockMode)
         CP      2
         JP      NZ,AssertFail
@@ -906,9 +887,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A
-@AssertCursorRenderedAtRowTwo:
+.routine out A,carry,zero
+AssertCursorRenderedAtRowTwo:
         LD      A,(EditorCursorRendered)
         CP      1
         JP      NZ,AssertFail
@@ -921,9 +901,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A
-@AssertPendingSourceRowsZeroToTwo:
+.routine out A,carry,zero
+AssertPendingSourceRowsZeroToTwo:
         LD      A,(EditorPendingBlockStartLo)
         OR      A
         JP      NZ,AssertFail
@@ -939,9 +918,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertCopyPasteInsertRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertCopyPasteInsertRows:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -960,9 +938,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertCopyPasteBeforeSourceAdjustsPending:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertCopyPasteBeforeSourceAdjustsPending:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -981,9 +958,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertCopyPasteBeforeTailSourceNoop:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertCopyPasteBeforeTailSourceNoop:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -1008,9 +984,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertRepeatedCopyPasteSingleRow:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertRepeatedCopyPasteSingleRow:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -1035,9 +1010,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertRepeatedCopyPasteSingleRowPageOne:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertRepeatedCopyPasteSingleRowPageOne:
         LD      A,(EditorNavCurrentPage)
         CP      1
         JP      NZ,AssertFail
@@ -1068,9 +1042,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertPasteNoopPendingCopyRowsZeroToOne:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertPasteNoopPendingCopyRowsZeroToOne:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -1086,9 +1059,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertMovePasteInsertRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertMovePasteInsertRows:
         LD      A,(EditorPendingBlockMode)
         OR      A
         JP      NZ,AssertFail
@@ -1107,9 +1079,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertCopyPasteReplaceRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertCopyPasteReplaceRows:
         LD      A,(EditorPendingBlockMode)
         CP      1
         JP      NZ,AssertFail
@@ -1128,9 +1099,8 @@ ProofFailedDone:
         XOR     A
         RET
 
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL
-@AssertMovePasteReplaceRows:
+.routine out A,carry,zero clobbers BC,DE,HL
+AssertMovePasteReplaceRows:
         LD      A,(EditorPendingBlockMode)
         OR      A
         JP      NZ,AssertFail
@@ -1154,10 +1124,8 @@ AssertFail:
         RET
 
 ; Stub LoadProjectConfig for shell-to-editor proof.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,ExpectedMain
         LD      C,B
 

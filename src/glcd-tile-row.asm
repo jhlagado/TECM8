@@ -6,10 +6,8 @@
 ; GlcdTileClearTextRow -
 ; Clear all 20 text cells on one display row.
 ; Input: B = row (0-9)
-;! in B
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileClearTextRow:
+.routine in B out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileClearTextRow:
         LD      A,B
         CP      TECM8_GLCD_TILE_ROWS
         JP      NC,GlcdTileRangeError

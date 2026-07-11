@@ -298,8 +298,8 @@ When implementing the plan:
 1. **Prefer one parameterized loop over N copy-pasted loops** — especially for 32-byte record shifts and TM8 catalog walks.
 2. **Prefer `.include` of equ-only headers** over duplicating constants — Z80 has no linker; shared equates cost zero bytes if in a header included once.
 3. **Do not inline for bytes until measured** — docs correctly say clarity first; dedup shared loops is the exception because it reduces bytes *and* bugs.
-4. **Keep public `@` entry points stable** — proofs and TS tests grep for symbol names; deprecate by wrapper, don’t rename without updating tests.
-5. **New modules need AZM `;!` contracts** on every public entry — match [AZM Style Guide](azm-style-guide.md).
+4. **Keep public callable entry points stable** — proofs and TS tests grep for symbol names; deprecate by wrapper, don’t rename without updating tests.
+5. **New modules need AZM `.routine` contracts** on every public entry — match [AZM Style Guide](azm-style-guide.md).
 6. **Banking prep:** new modules should avoid hidden cross-module statics; pass buffer pointers in HL/DE. This matches the overlay plan in [Memory and Code Quality Manifest](memory-and-code-quality.md).
 
 ---

@@ -94,7 +94,7 @@ For the fastest orientation, read these files first:
 ## Z80 Source Tree
 
 The `src/` tree is the TEC-side implementation. Files ending in `.asm` contain
-code, state, labels, and AZMDoc `;!` register contracts for routines TECM8
+code, state, labels, and AZM `.routine` register contracts for routines TECM8
 owns. Files ending in `.asmi` are only for external code that is not available
 as annotated source; currently `src/mon3.asmi` documents the MON3 ROM entry
 points called by the TECM8 BIOS wrappers.
@@ -102,10 +102,10 @@ points called by the TECM8 BIOS wrappers.
 The current assembly style follows `docs/azm-style-guide.md`: callable routine
 entries and ordinary labels are PascalCase, while `.equ` constants use
 uppercase names with underscores. The TECM8 modules should not create duplicate
-`.asmi` manifests for code in this repository; AZM can read the local `;!`
-contract blocks from the included source. Public `@Label` entry points in
-`src/` and `roms/` now also carry short prose comment blocks above the `;!`
-contracts so host checks can keep exported symbols documented in place.
+`.asmi` manifests for code in this repository; AZM can read the local `.routine`
+contract blocks from the included source. Public callable labels in `src/` and
+`roms/` now also carry short prose comment blocks above the `.routine` contracts
+so host checks can keep exported symbols documented in place.
 
 ### `src/tecm8-equates.asm`
 
@@ -344,7 +344,7 @@ the tile renderer redraws the screen.
 
 `src/mon3.asmi` documents the external MON3 symbols that are not implemented in
 this repository. The TECM8 wrapper routines themselves live in
-`src/tecm8-bios.asm` and carry their contracts in local `;!` blocks.
+`src/tecm8-bios.asm` and carry their contracts in local `.routine` directives.
 The previous local-module interface files have been removed; `mon3.asmi` is the
 only interface file currently expected under `src/`.
 
@@ -1348,7 +1348,7 @@ calls the monitor bridge with `SHL_ENTRY`, then checks the bank 0 shell
 parameter block, feature bits, splash buffer, and TMS9918 cursor side effects.
 
 The proof runners run AZM register-contract checking in strict mode. They pass
-`src/mon3.asmi` for MON3 ROM calls and rely on the `;!` comments in included
+`src/mon3.asmi` for MON3 ROM calls and rely on the `.routine` directives in included
 TECM8 source for routines implemented in this repository.
 
 `tools/run-display-proof.ts` is the shared GLCD proof runner for
@@ -1460,9 +1460,9 @@ coverage:
 - generated MON3 report freshness
 - direct GLCD tile-layer contracts
 - static checks that assembly modules expose expected entry points
-- static checks that local entry points carry `;!` contract comments
-- static checks that public `@` symbols in `src/` and `roms/` carry adjacent
-  prose comment blocks
+- static checks that local entry points carry `.routine` contract directives
+- static checks that public callable labels in `src/` and `roms/` carry
+  adjacent prose comment blocks
 - static checks that `debug80.json` keeps the `tecm8` profile, ROM source
   roots, and ROM artifact declarations aligned with the tracked files
 - static checks that the checked banked-service ABI document matches the live
@@ -1480,10 +1480,9 @@ verifies the `tecm8` profile selection, target source roots, active monitor and
 expansion artifact wiring, the current local MON-3 monitor source tree, the
 absence of the old `monitor.main.asm` include path, ROM build npm scripts, and
 tracked fixed-size ROM images.
-`tools/public-symbol-comments.test.ts` is the symbol-comment coverage check. It
-walks the `src/` and `roms/` assembly trees with `rg --files` and fails when a
-public `@Symbol` label is missing the adjacent two-line prose comment block
-that now sits above the `;!` register-contract lines.
+The source-pattern tests walk the `src/` and `roms/` assembly trees and check
+that callable plain labels remain documented through adjacent prose and
+`.routine` register-contract directives.
 
 `tools/bank-abi-proof.test.ts`, `tools/tms9918-bank-proof.test.ts`,
 `tools/tecfs-bank-proof.test.ts`, `tools/input-bank-proof.test.ts`,

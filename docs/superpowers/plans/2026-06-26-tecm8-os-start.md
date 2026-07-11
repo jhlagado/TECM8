@@ -131,7 +131,7 @@ Use this shape in `roms/tec1g/tecm8/expansion/expansion.asm`:
 
         .org    TECM8_BANK_ORIGIN
 
-@Tecm8BankManifest:
+Tecm8BankManifest:
         .db     TECM8_BANK_SIGNATURE_0
         .db     TECM8_BANK_SIGNATURE_1
         .db     TECM8_BANK_SIGNATURE_2
@@ -143,10 +143,10 @@ Use this shape in `roms/tec1g/tecm8/expansion/expansion.asm`:
         .dw     Tecm8ExpansionEntry
         .dw     Tecm8ExpansionName
 
-@Tecm8ExpansionEntry:
+Tecm8ExpansionEntry:
         RET
 
-@Tecm8ExpansionName:
+Tecm8ExpansionName:
         .db     "TECM8 BANK 0",0
 ```
 
@@ -341,19 +341,19 @@ Create `roms/tec1g/tecm8/expansion/vdu_services.asm`:
 ; These routines are the first expansion-ROM display profile. They deliberately
 ; expose intent before binding the code to final TMS9918 port details.
 
-@Tecm8VduInit:
+Tecm8VduInit:
         RET
 
-@Tecm8VduClear:
+Tecm8VduClear:
         RET
 
-@Tecm8VduSetCursor:
+Tecm8VduSetCursor:
         RET
 
-@Tecm8VduWriteChar:
+Tecm8VduWriteChar:
         RET
 
-@Tecm8VduWriteString:
+Tecm8VduWriteString:
         RET
 ```
 
@@ -422,16 +422,16 @@ TECM8_TECFS_IMAGE_SECTORS      .equ    0x40000
 TECM8_TECFS_USER_VOLUME_COUNT  .equ    30
 TECM8_TECFS_WORK_VOLUME        .equ    30
 
-@Tecm8TecfsInit:
+Tecm8TecfsInit:
         RET
 
-@Tecm8TecfsSelectVolume:
+Tecm8TecfsSelectVolume:
         RET
 
-@Tecm8TecfsReadSector:
+Tecm8TecfsReadSector:
         RET
 
-@Tecm8TecfsWriteSector:
+Tecm8TecfsWriteSector:
         RET
 ```
 

@@ -29,10 +29,8 @@ PROJECT_CFG_TEXT_BUF    .equ 0x0A00
 ; Output:
 ;   carry clear, A=PROJECT_LOAD_OK, destination is NUL-terminated main path
 ;   carry set, A=PROJECT_LOAD_ERR_* or PROJECT_CFG_ERR_*
-;! in B,DE
-;! out A,C,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@LoadProjectConfig:
+.routine in B,DE out A,C,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+LoadProjectConfig:
         LD      (ProjectLoadMainDest),DE
         LD      A,B
         LD      (ProjectLoadMainCap),A
@@ -67,9 +65,8 @@ ProjectLoadOpenErr:
 
 ; ProjectLoadReadSuperblock —
 ; Read sector 0 of VOLUME.TM8 and validate the fixed v1 fields needed here.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,DE,HL
-@ProjectLoadReadSuperblock:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,DE,HL
+ProjectLoadReadSuperblock:
         LD      HL,0
         LD      DE,0
         CALL    BiosFileReadSector
@@ -93,9 +90,8 @@ ProjectLoadReadErr:
 
 ; ProjectLoadFindConfig —
 ; Scan the v1 file catalog for root file tecm8.prj.
-;! out HL,A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE
-@ProjectLoadFindConfig:
+.routine out HL,A,carry,zero clobbers sign,parity,halfCarry,BC,DE
+ProjectLoadFindConfig:
         LD      DE,TM8_CATALOG_SECTOR * TM8_SECTOR_BYTES
         LD      A,TM8_CATALOG_SECTORS
         LD      (ProjectLoadCatalogLeft),A
@@ -137,10 +133,8 @@ ProjectLoadCatalogEntry:
 ; ProjectLoadMatchCatalogEntry —
 ; Check one 64-byte catalog entry at HL for root tecm8.prj.
 ; Output: carry clear on match and ProjectLoadFirstBlock/Size set.
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,DE,HL
-@ProjectLoadMatchCatalogEntry:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,DE,HL
+ProjectLoadMatchCatalogEntry:
         LD      (ProjectLoadEntryBase),HL
         LD      A,(HL)
         CP      TM8_ENTRY_ACTIVE
@@ -223,9 +217,8 @@ ProjectLoadBlockErr:
 ; ProjectLoadReadConfigText —
 ; Read the first sector of the config file's first block and NUL-terminate the
 ; exact byte count in PROJECT_CFG_TEXT_BUF.
-;! out carry,zero,A
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@ProjectLoadReadConfigText:
+.routine out carry,zero,A clobbers sign,parity,halfCarry,BC,DE,HL
+ProjectLoadReadConfigText:
         LD      HL,(ProjectLoadFirstBlock)
         CALL    Tecm8StorageBlockToOffset
         CALL    BiosFileReadSector

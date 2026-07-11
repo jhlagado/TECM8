@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JP      C,ProofFailed
 
@@ -318,9 +317,8 @@ ProofFailed:
 ProofFailedDone:
         JP      ProofDone
 
-;! out A,carry,zero
-;! clobbers A
-@ResetRenderCounters:
+.routine out A,carry,zero
+ResetRenderCounters:
         XOR     A
         LD      (DisplayRenderScreenCount),A
         LD      (EditorRenderPageBufferCount),A
@@ -337,10 +335,8 @@ ProofFailedDone:
         RET
 
 ; Stub LoadProjectConfig for shell-to-editor proof.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,ExpectedMain
         LD      C,B
 

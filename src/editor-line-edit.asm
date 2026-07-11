@@ -3,10 +3,8 @@
 ; EditorInsertChar -
 ; Insert printable A into the current fixed-width source record.
 ; Returns A=1 when the buffer changed, A=0 when insertion was a no-op.
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorInsertChar:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorInsertChar:
         LD      (EditorPendingChar),A
         CALL    EditorKeyCurrentRecord
         CALL    EditorKeyReadRecordLength
@@ -57,9 +55,8 @@ EditorInsertDone:
 ; EditorBackspaceChar -
 ; Delete the character before the cursor in the current source record.
 ; Returns A=1 when the buffer changed, A=0 when backspace was a no-op.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorBackspaceChar:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorBackspaceChar:
         LD      A,(EditorCursorCol)
         OR      A
         JP      Z,EditorJoinPreviousLine
@@ -76,9 +73,8 @@ EditorBackspaceDone:
 ; Split the current fixed-width source record at the cursor. The split is a
 ; no-op when the cursor is on the final page row or the final record is in use.
 ; Returns A=1 when the buffer changed, A=0 when the split was a no-op.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSplitLine:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSplitLine:
         LD      A,(EditorCursorRow)
         CP      15
         JP      Z,EditorSplitFinalRow
@@ -86,7 +82,7 @@ EditorBackspaceDone:
 
         LD      A,15
         CALL    EditorKeyRecordAtRow
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         OR      A
         JR      Z,EditorSplitTailAvailable
@@ -96,10 +92,10 @@ EditorBackspaceDone:
 
 EditorSplitTailAvailable:
 
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyCurrentRecord
         LD      (EditorRecordBase),HL
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLineLength),A
         LD      B,A
@@ -121,7 +117,7 @@ EditorSplitCursorReady:
         CALL    EditorKeyRecordAtRow
         LD      (EditorLineSrc),HL
         LD      A,15
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyRecordAtRow
         LD      (EditorLineDest),HL
 
@@ -191,9 +187,8 @@ EditorSplitDone:
 ; EditorSplitFinalRow -
 ; Split active row 15 into adjacent next-sector row 0, shifting the adjacent
 ; sector down first. The next sector must be resident and have a free tail row.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSplitFinalRow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSplitFinalRow:
         LD      A,(EditorNavNextPageValid)
         OR      A
         JP      Z,EditorSplitFinalDone
@@ -202,10 +197,10 @@ EditorSplitDone:
         OR      A
         JP      NZ,EditorSplitFinalDone
 
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyCurrentRecord
         LD      (EditorRecordBase),HL
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLineLength),A
         LD      B,A
@@ -316,9 +311,8 @@ EditorSplitFinalDone:
 ; Move current sector row 15 into next sector row 0, shifting the next sector
 ; down one record. Returns A=1 on success, A=0 when the next sector cannot
 ; accept the pushed record.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorSplitPushLastRecordToNextPage:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorSplitPushLastRecordToNextPage:
         LD      A,(EditorNavNextPageValid)
         OR      A
         JR      Z,EditorSplitPushNextDone
@@ -361,9 +355,8 @@ EditorSplitPushNextDone:
 ; Join the current record into the previous one when the cursor is at column 0.
 ; The join is a no-op on row 0 or when the combined text would exceed 31 bytes.
 ; Returns A=1 when the buffer changed, A=0 when the join was a no-op.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorJoinPreviousLine:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorJoinPreviousLine:
         LD      A,(EditorCursorCol)
         OR      A
         JP      NZ,EditorJoinDone
@@ -371,7 +364,7 @@ EditorSplitPushNextDone:
         OR      A
         JP      Z,EditorJoinPreviousPageLine
         LD      (EditorLineCurrentRow),A
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyCurrentRecord
         LD      (EditorLineCurrentBase),HL
         CALL    EditorKeyReadRecordLength
@@ -380,7 +373,7 @@ EditorSplitPushNextDone:
         DEC     A
         CALL    EditorKeyRecordAtRow
         LD      (EditorLinePrevBase),HL
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLinePrevLength),A
         LD      B,A
@@ -435,7 +428,7 @@ EditorJoinShiftRows:
 
 EditorJoinClearLast:
         LD      A,15
-        ; expects out HL
+        .expectout HL
         CALL    EditorKeyRecordAtRow
         CALL    EditorKeyClearRecord
         LD      A,(EditorCursorRow)
@@ -454,9 +447,8 @@ EditorJoinDone:
 ; Join current row 0 into cached previous-page row 15, then make the previous
 ; page active. Returns A=1 on success, A=0 when the cached previous page cannot
 ; accept the join.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorJoinPreviousPageLine:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorJoinPreviousPageLine:
         LD      A,(EditorNavCacheValid)
         OR      A
         JP      Z,EditorJoinDone
@@ -470,12 +462,12 @@ EditorJoinDone:
 
         LD      HL,EditorNavPageBuffer
         LD      (EditorLineCurrentBase),HL
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLineCurrentLength),A
         LD      HL,EditorNavCachePageBuffer + (15 * TECM8_EDITOR_EDIT_RECORD_BYTES)
         LD      (EditorLinePrevBase),HL
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLinePrevLength),A
         LD      B,A
@@ -565,11 +557,10 @@ EditorJoinPreviousPageClearLast:
 ; EditorDeleteChar -
 ; Delete the character at the cursor in the current source record.
 ; Returns A=1 when the buffer changed, A=0 when delete was a no-op.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@EditorDeleteChar:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+EditorDeleteChar:
         CALL    EditorKeyCurrentRecord
-        ; expects out A
+        .expectout A
         CALL    EditorKeyReadRecordLength
         LD      (EditorLineLength),A
         LD      B,A

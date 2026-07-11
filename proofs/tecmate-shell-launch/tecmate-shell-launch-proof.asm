@@ -14,9 +14,8 @@ PROOF_FAIL_SPLASH           .equ    0xE3
 PROOF_TRACE_BASE            .equ    0x3BC0
 PROOF_RESULT                .equ    0x3BD0
 
-;! out carry,zero
-;! clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
-@Start:
+.routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
+Start:
         ld hl,SHL_PARAM_BASE
         ld b,16
 ClearShellParams:

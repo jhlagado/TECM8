@@ -46,7 +46,7 @@ Physical bank 0 is the supervisor bank. Its `8000h` bytes are header data, not
 a routine entry point:
 
 ```asm
-@Tecm8ExpansionHeader:
+Tecm8ExpansionHeader:
         .db     EXP_MAGIC_0,EXP_MAGIC_1
         .db     EXP_MAGIC_2,EXP_MAGIC_3
         .db     EXP_HEADER_VERSION
@@ -61,7 +61,7 @@ The install routine writes the menu and service vectors into monitor RAM. The
 menu vector currently points at the TecMate bootstrap scaffold:
 
 ```asm
-@Tecm8ExpansionBank0Entry:
+Tecm8ExpansionBank0Entry:
         ld a,EXP_BANK
         ld (DBG_TRACE_0),a
         call Tecm8BootstrapVdu

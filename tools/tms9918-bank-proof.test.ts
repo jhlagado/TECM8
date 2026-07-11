@@ -15,7 +15,7 @@ test('TMS9918 bank proof covers VDU cursor and put-char behavior', () => {
   const proof = readFileSync(resolve(root, 'proofs/tms9918-bank/tms9918-bank-proof.asm'), 'utf8');
   const runner = readFileSync(resolve(root, 'tools/run-tms9918-bank-proof.ts'), 'utf8');
 
-  assert.match(bank1, /@vduServiceCall:/);
+  assert.match(bank1, /vduServiceCall:/);
   assert.match(bank1, /Tecm8VduServiceTable:/);
   assert.match(bank1, /cp VDU_SVC_PUT_STRING_N\+1/);
   assert.match(bank1, /Tecm8VduServiceTable:[\s\S]*jp\s+vduSetCursorImpl[\s\S]*jp\s+vduPutCharImpl[\s\S]*jp\s+vduPutStringImpl[\s\S]*jp\s+vduNewlineImpl[\s\S]*jp\s+vduSetRowColImpl[\s\S]*jp\s+vduScrollUpImpl[\s\S]*jp\s+vduStatusLineImpl[\s\S]*jp\s+vduPutStringNImpl/);

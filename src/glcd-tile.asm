@@ -26,10 +26,8 @@ TECM8_GLCD_TILE_ERR_RANGE           .equ    0x01
 ; GlcdTileClearCell -
 ; Clear one 6x6 text cell in the GLCD backing bitmap.
 ; Input: B = row (0-9), C = column (0-19)
-;! in BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileClearCell:
+.routine in BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileClearCell:
         CALL    GlcdTilePrepareCell
         RET     C
         LD      A,(GlcdTileClearCellCount)
@@ -85,10 +83,8 @@ GlcdTileClearPixelNext:
 ; GlcdTileDrawCell -
 ; Overwrite one 6x6 text cell with a MON3 font glyph.
 ; Input: A = ASCII/codepoint, B = row (0-9), C = column (0-19)
-;! in A,BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileDrawCell:
+.routine in A,BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileDrawCell:
         LD      (GlcdTileGlyphCode),A
         CALL    GlcdTileClearCell
         RET     C
@@ -166,10 +162,8 @@ GlcdTileDrawPixelNext:
 ; GlcdTileDrawTextRun -
 ; Draw a NUL-terminated string starting at one cell. Stops at screen edge.
 ; Input: HL = text, B = row (0-9), C = start column (0-19)
-;! in BC,HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileDrawTextRun:
+.routine in BC,HL out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileDrawTextRun:
         LD      (GlcdTileTextPtr),HL
         LD      A,B
         LD      (GlcdTileTextRow),A
@@ -206,9 +200,8 @@ GlcdTileTextRunDone:
 
 ; GlcdTileFlushFull -
 ; Push the current GLCD backing bitmap through the active BIOS display backend.
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@GlcdTileFlushFull:
+.routine out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+GlcdTileFlushFull:
         LD      A,(GlcdTileFlushFullCount)
         INC     A
         LD      (GlcdTileFlushFullCount),A
@@ -227,10 +220,8 @@ GlcdTileTextRunDone:
 ; GlcdTileFlushRow -
 ; Push one dirty 6-pixel text row directly to the ST7920 graphic buffer.
 ; Input: A = row (0-9)
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileFlushRow:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileFlushRow:
         CALL    GlcdTileQueueRow
         RET     C
 
@@ -245,10 +236,8 @@ GlcdTileFlushRowDrainLoop:
 ; GlcdTileQueueRow -
 ; Queue one dirty 6-pixel text row for bounded GLCD transfer steps.
 ; Input: A = row (0-9)
-;! in A
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@GlcdTileQueueRow:
+.routine in A out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+GlcdTileQueueRow:
         CP      TECM8_GLCD_TILE_ROWS
         JP      NC,GlcdTileRangeError
         LD      (GlcdTileFlushRowLast),A
@@ -265,10 +254,8 @@ GlcdTileFlushRowDrainLoop:
 ; GlcdTileMarkRowDirty -
 ; Mark one text row for later cooperative transfer by GlcdTileStep.
 ; Input: A = row (0-9)
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileMarkRowDirty:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileMarkRowDirty:
         CP      TECM8_GLCD_TILE_ROWS
         JP      NC,GlcdTileRangeError
         LD      (GlcdTileDirtyRowTemp),A
@@ -305,10 +292,8 @@ GlcdTileMarkMaskReady:
 ; GlcdTileMarkCellDirty -
 ; Mark one text cell for later cooperative byte-range transfer.
 ; Input: B = row (0-9), C = column (0-19)
-;! in BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileMarkCellDirty:
+.routine in BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileMarkCellDirty:
         CALL    GlcdTilePrepareCell
         RET     C
         LD      A,(GlcdTileCellRow)
@@ -397,10 +382,8 @@ GlcdTileDirtyCellMaxDone:
 ; GlcdTileMarkGutterDirty -
 ; Mark the gutter byte pair for one text row for later cooperative transfer.
 ; Input: A = row (0-9)
-;! in A
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@GlcdTileMarkGutterDirty:
+.routine in A out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+GlcdTileMarkGutterDirty:
         CP      TECM8_GLCD_TILE_ROWS
         JP      NC,GlcdTileRangeError
         LD      (GlcdTileDirtyCellRowTemp),A
@@ -418,10 +401,8 @@ GlcdTileDirtyCellMaxDone:
 ; GlcdTileRowDirtyQueued -
 ; Return NZ when a full dirty-row transfer already covers this text row.
 ; Input: A = row (0-9)
-;! in A
-;! out A,zero
-;! clobbers carry,sign,parity,halfCarry,DE,HL
-@GlcdTileRowDirtyQueued:
+.routine in A out A,zero clobbers carry,sign,parity,halfCarry,DE,HL
+GlcdTileRowDirtyQueued:
         CP      8
         JR      NC,GlcdTileRowDirtyQueuedHigh
         LD      HL,GlcdTileDirtyRowsLo
@@ -445,10 +426,8 @@ GlcdTileRowDirtyQueuedMaskReady:
 ; GlcdTileClearDirtyCellRow -
 ; Drop queued cell-range work that is superseded by a full dirty-row transfer.
 ; Input: A = row (0-9)
-;! in A
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,DE,HL
-@GlcdTileClearDirtyCellRow:
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,DE,HL
+GlcdTileClearDirtyCellRow:
         LD      (GlcdTileDirtyCellRowTemp),A
         CP      8
         JR      NC,GlcdTileClearDirtyCellHigh
@@ -486,9 +465,8 @@ GlcdTileClearDirtyCellMaskReady:
 
 ; GlcdTileStartQueuedRow -
 ; Start transfer state for GlcdTileFlushRowLast without changing queue counts.
-;! out carry
-;! clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
-@GlcdTileStartQueuedRow:
+.routine out carry clobbers zero,sign,parity,halfCarry,A,BC,DE,HL
+GlcdTileStartQueuedRow:
         XOR     A
         LD      (GlcdTileFlushByteX),A
         LD      (GlcdTileFlushMode),A
@@ -501,9 +479,8 @@ GlcdTileClearDirtyCellMaskReady:
 ; Start row-transfer state for GlcdTileFlushRowLast and current byte range.
 ; Precondition: DisplayInit has placed the GLCD in bitmap/graphics mode and no
 ; MON3 text-mode terminal routine has changed that mode since.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileStartQueuedTransfer:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileStartQueuedTransfer:
         LD      HL,TECM8_GLCD_TILE_TGBUF + (TECM8_GLCD_TILE_Y_ORIGIN * TECM8_GLCD_TILE_ROW_BYTES)
         LD      A,(GlcdTileFlushRowLast)
         LD      DE,TECM8_GLCD_TILE_ROW_STRIDE
@@ -538,9 +515,8 @@ GlcdTileFlushRowPtrReady:
 ; GlcdTileStep -
 ; Transfer at most one physical GLCD row from the queued row flush.
 ; Output: A = 1 when more queued work remains, 0 when idle/done.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileStep:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileStep:
         LD      A,(GlcdTileFlushPending)
         OR      A
         JR      NZ,GlcdTileStepPending
@@ -597,9 +573,8 @@ GlcdTileStepMoreDirty:
 
 ; GlcdTileDrainPending -
 ; Drain any already pending or marked row work before a synchronous row starts.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileDrainPending:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileDrainPending:
         CALL    GlcdTileStep
         RET     C
         OR      A
@@ -610,9 +585,8 @@ GlcdTileStepMoreDirty:
 ; GlcdTileStartDirtyRow -
 ; Start the lowest marked dirty row without transferring it yet.
 ; Output: A = 1 when a row was started, 0 when no dirty rows are queued.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileStartDirtyRow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileStartDirtyRow:
         LD      A,(GlcdTileDirtyRowsLo)
         OR      A
         JR      NZ,GlcdTileStartDirtyLow
@@ -667,9 +641,8 @@ GlcdTileStartDirtyMaskIndexReady:
 ; GlcdTileStartDirtyCellRow -
 ; Start the lowest marked dirty cell byte range without transferring it yet.
 ; Output: A = 1 when a range was started, 0 when no cell ranges are queued.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTileStartDirtyCellRow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTileStartDirtyCellRow:
         LD      A,(GlcdTileDirtyCellRowsLo)
         OR      A
         JR      NZ,GlcdTileStartDirtyCellLow
@@ -756,10 +729,8 @@ GlcdTileStartDirtyCellMaskIndexReady:
 
 ; GlcdTilePrepareCell -
 ; Validate B/C and compute the first row byte address plus start bit.
-;! in BC
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@GlcdTilePrepareCell:
+.routine in BC out A,carry,zero clobbers sign,parity,halfCarry,BC,DE,HL
+GlcdTilePrepareCell:
         LD      A,B
         CP      TECM8_GLCD_TILE_ROWS
         JP      NC,GlcdTileRangeError
@@ -824,9 +795,8 @@ GlcdTileCellPtrReady:
 
 ; GlcdTileFlushPhysicalRow -
 ; Push the selected backing-byte range for the selected physical GLCD row.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@GlcdTileFlushPhysicalRow:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+GlcdTileFlushPhysicalRow:
         CALL    GlcdTileSetGraphicAddress
         LD      HL,(GlcdTileFlushRowPtr)
         LD      A,(GlcdTileFlushBytesPerRow)
@@ -863,9 +833,8 @@ GlcdTileFlushByteNext:
 
 ; GlcdTileSetGraphicAddress -
 ; Set ST7920 graphic row and banked horizontal address for one physical row.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE
-@GlcdTileSetGraphicAddress:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,DE
+GlcdTileSetGraphicAddress:
         LD      A,(GlcdTileFlushPhysicalY)
         CP      TECM8_GLCD_TILE_ROW_BANK
         JR      C,GlcdTileSetGraphicAddressUpper
@@ -890,9 +859,8 @@ GlcdTileSetGraphicAddressRowReady:
 
 ; GlcdTileFlushDelay -
 ; Local copy of MON3's small GLCD write delay, kept near the direct port path.
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,DE
-@GlcdTileFlushDelay:
+.routine out A,carry,zero clobbers sign,parity,halfCarry,DE
+GlcdTileFlushDelay:
         LD      DE,TECM8_GLCD_TILE_DELAY_COUNT
 
 GlcdTileFlushDelayLoop:

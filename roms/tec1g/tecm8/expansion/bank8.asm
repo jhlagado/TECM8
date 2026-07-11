@@ -7,7 +7,7 @@
 EXP_BANK          .equ    0x08
 EXP_VERSION       .equ    0x01
 
-@Tecm8ExpansionBank8Entry:
+Tecm8ExpansionBank8Entry:
         cp RUN_SVC_RUN
         jp z,runUnsupported
         ld a,RUN_ERR_UNKNOWN
@@ -30,5 +30,5 @@ runUnsupported:
         scf
         ret
 
-@Tecm8ExpansionBank8Info:
+Tecm8ExpansionBank8Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

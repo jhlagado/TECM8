@@ -15,7 +15,7 @@
 RTCAPI:
         ld a,b
         cp DSAPIFnMax           ; Valid API Number?
-        jr c,APIOk
+        jr c,APIok
 APIErr: scf                     ; set C flag = Error
         ret
 
@@ -221,8 +221,8 @@ dayloop:
         ld a,(HL)
         inc hl
         cp 0
-        jr nz,dayLoop
-        djnz dayLoop
+        jr nz,dayloop
+        djnz dayloop
 
 foundDay:
         or a

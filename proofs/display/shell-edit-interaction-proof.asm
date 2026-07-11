@@ -10,9 +10,8 @@
 PROOF_PASS       .equ     0x42
 PROOF_FAIL       .equ     0xE0
 
-;! out carry,zero
-;! clobbers A,BC,DE,HL
-@Start:
+.routine out carry,zero clobbers A,BC,DE,HL
+Start:
         CALL    DisplayInit
         JR      C,ProofFailed
 
@@ -79,10 +78,8 @@ ProofFailedDone:
         JP      ProofDone
 
 ; Stub LoadProjectConfig for shell-to-editor interaction proof.
-;! in B,DE
-;! out DE,HL,A,C,carry,zero
-;! clobbers B
-@LoadProjectConfig:
+.routine in B,DE out DE,HL,A,C,carry,zero clobbers B
+LoadProjectConfig:
         LD      HL,ExpectedMain
         LD      C,B
 
@@ -106,9 +103,8 @@ LoadProjectStubOk:
 ; DrainDisplayWork -
 ; Scripted proofs do not run the live idle loop, so drain queued GLCD rows
 ; before host-side visible-pixel assertions.
-;! out A,carry,zero
-;! clobbers A,BC,DE,HL,zero,sign,parity,halfCarry
-@DrainDisplayWork:
+.routine out A,carry,zero clobbers BC,DE,HL,sign,parity,halfCarry
+DrainDisplayWork:
         CALL    GlcdTileStep
         RET     C
         OR      A

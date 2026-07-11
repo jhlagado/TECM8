@@ -15,8 +15,8 @@ test('editor file listing exposes visible files and hides leading-dot names', ()
   const runner = readRepoFile('tools/run-editor-viewport-storage-proof.ts');
   const packageJson = readRepoFile('package.json');
 
-  assert.match(source, /^@EditorListVisibleFiles:/m);
-  assert.match(source, /^@EditorListMaybeCopyEntry:/m);
+  assert.match(source, /^EditorListVisibleFiles:/m);
+  assert.match(source, /^EditorListMaybeCopyEntry:/m);
   assert.match(source, /CP\s+"\."/);
   assert.match(source, /JR\s+Z,EditorListEntryDone/);
   assert.match(source, /LD\s+C,A\n\s+INC\s+B/);

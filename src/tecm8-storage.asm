@@ -36,10 +36,8 @@ TM8_PREFIX_TEXT_BYTES   .equ    121
 ; Output:
 ;   carry clear if the core fields match the fixed v1 layout
 ;   carry set if any checked field is invalid
-;! in HL
-;! out A,carry,zero
-;! clobbers sign,parity,halfCarry,B,DE,HL
-@Tecm8StorageValidateCoreSuperblock:
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,DE,HL
+Tecm8StorageValidateCoreSuperblock:
         PUSH    HL
         LD      DE,Tecm8StorageMagic
         LD      B,8
@@ -95,10 +93,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageAdvanceSectorOffset -
 ; Advance a MON3 byte offset in DE by one TM8 sector.
-;! in DE
-;! out DE
-;! clobbers B,C,H,L,F
-@Tecm8StorageAdvanceSectorOffset:
+.routine in DE out DE clobbers B,C,H,L,F
+Tecm8StorageAdvanceSectorOffset:
         EX      DE,HL
         LD      BC,TM8_SECTOR_BYTES
         ADD     HL,BC
@@ -107,10 +103,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageReadSectorPreserveOffset -
 ; Read the current MON3 file sector at byte offset DE, preserving DE for scans.
-;! in DE
-;! out DE,carry
-;! clobbers A,B,C,H,L,F
-@Tecm8StorageReadSectorPreserveOffset:
+.routine in DE out DE,carry clobbers A,B,C,H,L,zero,sign,parity,halfCarry
+Tecm8StorageReadSectorPreserveOffset:
         PUSH    DE
         LD      HL,0
         CALL    BiosFileReadSector
@@ -119,10 +113,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageClearSectorBuffer -
 ; Clear one TM8 sector-sized RAM buffer.
-;! in HL
-;! out A,carry,zero,HL
-;! clobbers sign,parity,halfCarry,BC,DE,HL
-@Tecm8StorageClearSectorBuffer:
+.routine in HL out A,carry,zero,HL clobbers sign,parity,halfCarry,BC,DE
+Tecm8StorageClearSectorBuffer:
         LD      D,H
         LD      E,L
         INC     DE
@@ -134,10 +126,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageAdvancePrefixEntryPtr -
 ; Advance a prefix-entry pointer in HL while preserving the scan offset in DE.
-;! in DE,HL
-;! out DE,HL
-;! clobbers F
-@Tecm8StorageAdvancePrefixEntryPtr:
+.routine in DE,HL out DE,HL clobbers F
+Tecm8StorageAdvancePrefixEntryPtr:
         PUSH    DE
         LD      DE,TM8_PREFIX_ENTRY
         ADD     HL,DE
@@ -146,10 +136,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageAdvanceCatalogEntryPtr -
 ; Advance a catalog-entry pointer in HL while preserving the scan offset in DE.
-;! in DE,HL
-;! out DE,HL
-;! clobbers F
-@Tecm8StorageAdvanceCatalogEntryPtr:
+.routine in DE,HL out DE,HL clobbers F
+Tecm8StorageAdvanceCatalogEntryPtr:
         PUSH    DE
         LD      DE,TM8_CATALOG_ENTRY
         ADD     HL,DE
@@ -158,10 +146,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageBlockSectorToOffset -
 ; Convert a 4K TM8 block plus sector-in-block to MON3 HLDE byte offset.
-;! in A,HL
-;! out A,DE,HL
-;! clobbers F
-@Tecm8StorageBlockSectorToOffset:
+.routine in A,HL out A,DE,HL clobbers F
+Tecm8StorageBlockSectorToOffset:
         PUSH    AF
         CALL    Tecm8StorageBlockToOffset
         POP     AF
@@ -172,10 +158,8 @@ Tecm8StorageCoreSuperErr:
 
 ; Tecm8StorageBlockToOffset —
 ; Convert a 4K TM8 block number in HL to MON3 HLDE byte offset.
-;! in HL
-;! out DE,HL
-;! clobbers A,F
-@Tecm8StorageBlockToOffset:
+.routine in HL out DE,HL clobbers A,F
+Tecm8StorageBlockToOffset:
         LD      A,L
         AND     0x0F
         RLCA
