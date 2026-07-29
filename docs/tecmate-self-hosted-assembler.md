@@ -38,21 +38,33 @@ Bank 7 now contains the first useful two-pass implementation. It reads the
 resident bank-4 editor workspace as 32-byte source records and accepts:
 
 - global labels up to eight characters, with forward and backward references
-- decimal integers and `0x` hexadecimal integers
+- constants declared as either `NAME .EQU expression` or
+  `NAME: .EQU expression`; a constant must resolve in pass one
+- 16-bit decimal and `0x` hexadecimal integers
+- simple left-to-right `+` and `-` expressions, unary `+` and `-`,
+  parentheses, symbols, constants, and `$` for the current program counter
 - comments, `.org`, `.db`, and `.dw`
-- `NOP`, `RET`, `HALT`, and `XOR A`
-- `LD A,n`, `LD A,(nn)`, `LD (nn),A`, and 16-bit immediate loads into
-  `HL`, `DE`, `BC`, or `SP`
-- `JP`, `CALL`, `JR`, `CP n`, and `ADD A,n`
-- `INC` and `DEC` for `A`, `B`, `C`, `D`, `E`, `H`, or `L`
+- `NOP`, `HALT`, `DI`, `EI`, `SCF`, `CCF`, and `CPL`
+- unconditional and conditional `RET`, `JP`, and `CALL`
+- unconditional `JR`, `JR NZ/Z/NC/C`, and `DJNZ`
+- `LD r,r`, `LD r,n`, `LD r,(HL)`, `LD (HL),r`, `LD (HL),n`,
+  `LD A,(nn)`, `LD (nn),A`, and 16-bit immediate loads into `HL`, `DE`,
+  `BC`, or `SP`
+- register, `(HL)`, and eight-bit immediate forms of `XOR`, `AND`, `OR`,
+  `SUB`, and `CP`
+- `ADD A`, `ADC A`, and `SBC A` with a register, `(HL)`, or eight-bit
+  immediate operand
+- `INC` and `DEC` for every eight-bit register and `(HL)`
+- `PUSH` and `POP` for `BC`, `DE`, `HL`, or `AF`
 - `OUT (n),A` and `IN A,(n)`
 
 The implementation is case-insensitive, supports at most 16 symbols, and emits
 at most 512 bytes. The origin and every emitted byte must remain in the runner's
-`4000h-4FFFh` window. `.equ`, general arithmetic expressions, includes, macros,
+`4000h-4FFFh` window. Multiplication, division, bitwise expression operators,
+forward references between constants, includes, macros, indexed instructions,
 the complete Z80 instruction set, and contract analysis remain later work.
-Those omissions distinguish the implemented ROM subset from the broader Phase
-1 direction below.
+Those omissions distinguish the implemented ROM subset from the broader
+direction below.
 
 On an error, bank 7 publishes a zero-based source record, column, and diagnostic
 code. Reopening `edit` after a failed build positions the editor on that record
@@ -63,7 +75,8 @@ boundary.
 The binary is accompanied by a fixed-record `TMAP` artifact. Its eight-byte
 header is `TMAP`, version `1`, record size `12`, symbol count, and one reserved
 byte. Each symbol record contains an eight-byte zero-padded name, a little-endian
-address, a zero-based source line, and flags.
+value, a zero-based source line, and a kind byte: `1` for an address label and
+`2` for a constant.
 
 Bank 8 loads and validates the executable metadata and binary through bank 2.
 It rejects ranges outside `4000h-4FFFh` or an entry point outside the artifact,

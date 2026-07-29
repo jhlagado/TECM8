@@ -55,7 +55,9 @@ test('self-hosted assembler doc records the exact implemented ROM subset', () =>
   assert.match(doc, /at most 16 symbols/);
   assert.match(doc, /at most 512 bytes/);
   assert.match(doc, /`4000h-4FFFh`/);
-  assert.match(doc, /`.equ`, general arithmetic expressions, includes, macros/);
+  assert.match(doc, /constants declared as either `NAME \.EQU expression`/);
+  assert.match(doc, /simple left-to-right `\+` and `-` expressions/);
+  assert.match(doc, /forward references between constants, includes, macros, indexed instructions/);
   assert.match(doc, /zero-based source record, column, and diagnostic\s+code/);
   assert.match(doc, /fixed-record `TMAP` artifact/);
   assert.match(doc, /program must finish\s+with `RET`/);

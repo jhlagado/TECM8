@@ -155,8 +155,8 @@ The expansion ROM still has ample room:
 
 ```text
 144K total expansion image
-9244 occupied bytes currently
-9313 bytes total high-water span across all banks
+15217 occupied bytes currently
+15703 bytes total high-water span across all banks
 ```
 
 The self-hosted build-and-run milestone keeps the expansion footprint bounded:
@@ -190,6 +190,9 @@ The latest implementation loop completed the self-hosted build-and-run path:
   stubbed/reserved services, and deferred filesystem work
 - bank 7 assembles the resident source records in two passes, emits a bounded
   binary and fixed-record `TMAP`, and reports line/column diagnostics
+- bank 7 accepts pass-one `.equ` constants, simple 16-bit expressions, forward
+  labels, a broad eight-bit load/ALU subset, stack operations, and conditional
+  control flow; its 48-record proof builds and executes a 59-byte program
 - bank 4 reopens at the assembler diagnostic so a failed record can be fixed
 - bank 2 writes separate binary/map data and metadata artifacts through the
   installed sector-driver ABI
@@ -202,16 +205,16 @@ Current size checkpoint:
 
 ```text
 fixed monitor span: 16384/16384 bytes
-bank 0 span: 1320 bytes, softFree=728
+bank 0 span: 1745 bytes, softFree=303
 bank 1 span: 568 bytes, softFree=3528
-bank 2 span: 2025 bytes, softFree=2071
+bank 2 span: 3640 bytes, softFree=456
 bank 3 span: 95 bytes, softFree=929
-bank 4 span: 2231 bytes, softFree=1865
-bank 5 span: 425 bytes, softFree=599
+bank 4 span: 2332 bytes, softFree=1764
+bank 5 span: 3673 bytes, softFree=423
 bank 6 span: 220 bytes, softFree=804
-bank 7 span: 2173 bytes, softFree=6019
+bank 7 span: 3174 bytes, softFree=5018
 bank 8 span: 256 bytes, softFree=3840
-expansion total span: 9313 bytes, softFree=23455
+expansion total span: 15703 bytes, softFree=17065
 ```
 
 Manual checkpoint:

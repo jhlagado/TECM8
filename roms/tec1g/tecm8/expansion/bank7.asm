@@ -179,6 +179,10 @@ asmParseLine:
         ret z
         cp ";"
         ret z
+        call asmTryEquDefinition
+        ret c
+        or a
+        ret nz
         call asmConsumeLabel
         ret c
         call asmSkipSpaces
@@ -205,9 +209,33 @@ asmParseLine:
         ld de,asmKwHalt
         call asmTryKeyword
         jp c,asmInstructionHalt
+        ld de,asmKwDi
+        call asmTryKeyword
+        jp c,asmInstructionDi
+        ld de,asmKwEi
+        call asmTryKeyword
+        jp c,asmInstructionEi
+        ld de,asmKwScf
+        call asmTryKeyword
+        jp c,asmInstructionScf
+        ld de,asmKwCcf
+        call asmTryKeyword
+        jp c,asmInstructionCcf
+        ld de,asmKwCpl
+        call asmTryKeyword
+        jp c,asmInstructionCpl
         ld de,asmKwXor
         call asmTryKeyword
         jp c,asmInstructionXor
+        ld de,asmKwAnd
+        call asmTryKeyword
+        jp c,asmInstructionAnd
+        ld de,asmKwOr
+        call asmTryKeyword
+        jp c,asmInstructionOr
+        ld de,asmKwSub
+        call asmTryKeyword
+        jp c,asmInstructionSub
         ld de,asmKwLd
         call asmTryKeyword
         jp c,asmInstructionLd
@@ -220,12 +248,21 @@ asmParseLine:
         ld de,asmKwJr
         call asmTryKeyword
         jp c,asmInstructionJr
+        ld de,asmKwDjnz
+        call asmTryKeyword
+        jp c,asmInstructionDjnz
         ld de,asmKwCp
         call asmTryKeyword
         jp c,asmInstructionCp
         ld de,asmKwAdd
         call asmTryKeyword
         jp c,asmInstructionAdd
+        ld de,asmKwAdc
+        call asmTryKeyword
+        jp c,asmInstructionAdc
+        ld de,asmKwSbc
+        call asmTryKeyword
+        jp c,asmInstructionSbc
         ld de,asmKwInc
         call asmTryKeyword
         jp c,asmInstructionInc
@@ -238,7 +275,81 @@ asmParseLine:
         ld de,asmKwIn
         call asmTryKeyword
         jp c,asmInstructionIn
+        ld de,asmKwPush
+        call asmTryKeyword
+        jp c,asmInstructionPush
+        ld de,asmKwPop
+        call asmTryKeyword
+        jp c,asmInstructionPop
         jp asmSyntaxError
+
+; Accept NAME .EQU expression and NAME: .EQU expression before ordinary
+; label consumption. Constants must resolve during pass one; this keeps the
+; bounded symbol table deterministic without a third fix-up pass.
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry,B,C,D,E
+asmTryEquDefinition:
+        ld (ASM_STATE_EQU_START_LO),hl
+        ld (ASM_STATE_TOKEN_LO),hl
+        ld b,0x00
+asmTryEquName:
+        ld a,(hl)
+        cp ":"
+        jr z,asmTryEquAfterColon
+        cp " "
+        jr z,asmTryEquAfterName
+        cp 0x09
+        jr z,asmTryEquAfterName
+        or a
+        jr z,asmTryEquNoMatch
+        cp ";"
+        jr z,asmTryEquNoMatch
+        inc b
+        ld a,b
+        cp 0x09
+        jr nc,asmTryEquNoMatch
+        inc hl
+        jr asmTryEquName
+asmTryEquAfterColon:
+        ld a,b
+        or a
+        jr z,asmTryEquNoMatch
+        inc hl
+        call asmSkipSpaces
+        jr asmTryEquKeyword
+asmTryEquAfterName:
+        ld a,b
+        or a
+        jr z,asmTryEquNoMatch
+        call asmSkipSpaces
+asmTryEquKeyword:
+        ld a,b
+        ld (ASM_STATE_FLAGS),a
+        ld de,asmKwEqu
+        call asmTryKeyword
+        jr nc,asmTryEquNoMatch
+        xor a
+        ld (ASM_STATE_UNRESOLVED),a
+        call asmParseExpression
+        jp c,asmExpressionError
+        call asmExpectEnd
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_PASS)
+        cp 0x01
+        jr nz,asmTryEquMatched
+        ld a,(ASM_STATE_UNRESOLVED)
+        or a
+        jp nz,asmExpressionError
+        ld (ASM_STATE_VALUE_LO),de
+        call asmAddEquSymbol
+        ret c
+asmTryEquMatched:
+        ld a,0x01
+        or a
+        ret
+asmTryEquNoMatch:
+        ld hl,(ASM_STATE_EQU_START_LO)
+        xor a
+        ret
 
 ; Consume NAME: at the start of a line. Names are 1..8 uppercase bytes.
 .routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry,B,C,D,E
@@ -412,8 +523,24 @@ asmInstructionNop:
         jp asmEmitByte
 
 asmInstructionRet:
+        call asmSkipSpaces
+        ld a,(hl)
+        or a
+        jr z,asmInstructionRetPlain
+        cp ";"
+        jr z,asmInstructionRetPlain
+        call asmParseCondition
+        jp c,asmSyntaxError
+        ld (ASM_STATE_OPERAND),a
         call asmExpectEnd
         jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,0xC0
+        jp asmEmitByte
+asmInstructionRetPlain:
         ld a,0xC9
         jp asmEmitByte
 
@@ -423,20 +550,98 @@ asmInstructionHalt:
         ld a,0x76
         jp asmEmitByte
 
-asmInstructionXor:
-        ld a,(hl)
-        cp "A"
-        jp nz,asmSyntaxError
-        inc hl
+asmInstructionDi:
+        ld a,0xF3
+        jr asmInstructionSingleByte
+asmInstructionEi:
+        ld a,0xFB
+        jr asmInstructionSingleByte
+asmInstructionScf:
+        ld a,0x37
+        jr asmInstructionSingleByte
+asmInstructionCcf:
+        ld a,0x3F
+        jr asmInstructionSingleByte
+asmInstructionCpl:
+        ld a,0x2F
+asmInstructionSingleByte:
+        push af
         call asmExpectEnd
-        jp c,asmSyntaxError
-        ld a,0xAF
+        jr c,asmInstructionSingleByteBad
+        pop af
         jp asmEmitByte
+asmInstructionSingleByteBad:
+        pop af
+        jp asmSyntaxError
+
+asmInstructionXor:
+        ld a,0xA8
+        ld e,0xEE
+        jp asmInstructionAlu
+asmInstructionAnd:
+        ld a,0xA0
+        ld e,0xE6
+        jp asmInstructionAlu
+asmInstructionOr:
+        ld a,0xB0
+        ld e,0xF6
+        jp asmInstructionAlu
+asmInstructionSub:
+        ld a,0x90
+        ld e,0xD6
+        jp asmInstructionAlu
 
 asmInstructionLd:
+        call asmParseRegister8
+        jr c,asmLdNonRegister
+        ld (ASM_STATE_OPERAND),a
+        call asmExpectComma
+        jp c,asmSyntaxError
+        call asmParseRegister8
+        jr nc,asmLdRegisterToRegister
+        ld a,(ASM_STATE_OPERAND)
+        cp 0x07
+        jr nz,asmLdRegisterImmediate
         ld a,(hl)
-        cp "A"
-        jp z,asmLdA
+        cp "("
+        jr z,asmLdAFromMemory
+asmLdRegisterImmediate:
+        call asmParseExpression
+        jp c,asmExpressionError
+        ld a,d
+        or a
+        jp nz,asmExpressionError
+        call asmExpectEnd
+        jp c,asmSyntaxError
+        push de
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,0x06
+        call asmEmitByte
+        jr c,asmLdRegisterImmediateBad
+        pop de
+        ld a,e
+        jp asmEmitByte
+asmLdRegisterImmediateBad:
+        pop de
+        ret
+asmLdRegisterToRegister:
+        ld e,a
+        call asmExpectEnd
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,e
+        add a,0x40
+        cp 0x76
+        jp z,asmSyntaxError
+        jp asmEmitByte
+asmLdNonRegister:
+        ld a,(hl)
         cp "("
         jp z,asmLdMemoryA
         ld de,asmKwHl
@@ -452,30 +657,6 @@ asmInstructionLd:
         call asmTryKeyword
         jp c,asmLdSp
         jp asmSyntaxError
-asmLdA:
-        inc hl
-        call asmExpectComma
-        jp c,asmSyntaxError
-        ld a,(hl)
-        cp "("
-        jr z,asmLdAFromMemory
-        call asmParseExpression
-        jp c,asmExpressionError
-        ld a,d
-        or a
-        jp nz,asmExpressionError
-        call asmExpectEnd
-        jp c,asmSyntaxError
-        push de
-        ld a,0x3E
-        call asmEmitByte
-        jr c,asmLdAImmediateBad
-        pop de
-        ld a,e
-        jp asmEmitByte
-asmLdAImmediateBad:
-        pop de
-        ret
 asmLdAFromMemory:
         call asmParseParenExpression
         jp c,asmExpressionError
@@ -544,9 +725,33 @@ asmLdWordBad:
         jp asmExpressionError
 
 asmInstructionJp:
+        call asmParseCondition
+        jr c,asmInstructionJpPlain
+        ld (ASM_STATE_OPERAND),a
+        call asmExpectComma
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,0xC2
+        jr asmInstructionWordTarget
+asmInstructionJpPlain:
         ld a,0xC3
         jr asmInstructionWordTarget
 asmInstructionCall:
+        call asmParseCondition
+        jr c,asmInstructionCallPlain
+        ld (ASM_STATE_OPERAND),a
+        call asmExpectComma
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,0xC4
+        jr asmInstructionWordTarget
+asmInstructionCallPlain:
         ld a,0xCD
 asmInstructionWordTarget:
         push af
@@ -568,12 +773,32 @@ asmInstructionWordBad:
         jp asmExpressionError
 
 asmInstructionJr:
+        call asmParseCondition
+        jr c,asmInstructionJrPlain
+        cp 0x04
+        jp nc,asmSyntaxError
+        ld (ASM_STATE_OPERAND),a
+        call asmExpectComma
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,a
+        add a,a
+        add a,a
+        add a,0x20
+        jr asmInstructionRelativeTarget
+asmInstructionJrPlain:
+        ld a,0x18
+        jr asmInstructionRelativeTarget
+asmInstructionDjnz:
+        ld a,0x10
+asmInstructionRelativeTarget:
+        ld (ASM_STATE_OPCODE),a
         call asmParseExpression
         jp c,asmExpressionError
         call asmExpectEnd
         jp c,asmSyntaxError
         push de
-        ld a,0x18
+        ld a,(ASM_STATE_OPCODE)
         call asmEmitByte
         jr c,asmInstructionJrBad
         ld a,(ASM_STATE_PASS)
@@ -609,47 +834,86 @@ asmInstructionJrBad:
         ret
 
 asmInstructionCp:
-        ld a,0xFE
-        jr asmInstructionByteImmediate
+        ld a,0xB8
+        ld e,0xFE
+        jr asmInstructionAlu
 asmInstructionAdd:
-        ld a,(hl)
-        cp "A"
-        jp nz,asmSyntaxError
-        inc hl
-        call asmExpectComma
+        call asmExpectAccumulatorComma
         jp c,asmSyntaxError
-        ld a,0xC6
-asmInstructionByteImmediate:
-        push af
+        ld a,0x80
+        ld e,0xC6
+        jr asmInstructionAlu
+asmInstructionAdc:
+        call asmExpectAccumulatorComma
+        jp c,asmSyntaxError
+        ld a,0x88
+        ld e,0xCE
+        jr asmInstructionAlu
+asmInstructionSbc:
+        call asmExpectAccumulatorComma
+        jp c,asmSyntaxError
+        ld a,0x98
+        ld e,0xDE
+asmInstructionAlu:
+        ld (ASM_STATE_OPERAND),a
+        ld a,e
+        ld (ASM_STATE_OPCODE),a
+        call asmParseRegister8
+        jr c,asmInstructionAluImmediate
+        ld e,a
+        call asmExpectEnd
+        jp c,asmSyntaxError
+        ld a,(ASM_STATE_OPERAND)
+        add a,e
+        jp asmEmitByte
+asmInstructionAluImmediate:
         call asmParseExpression
-        jr c,asmInstructionByteBad
+        jp c,asmExpressionError
         ld a,d
         or a
-        jr nz,asmInstructionByteBad
+        jp nz,asmExpressionError
         call asmExpectEnd
-        jr c,asmInstructionByteBad
-        pop af
+        jp c,asmSyntaxError
         push de
+        ld a,(ASM_STATE_OPCODE)
         call asmEmitByte
-        jr c,asmInstructionByteEmitBad
+        jr c,asmInstructionAluImmediateBad
         pop de
         ld a,e
         jp asmEmitByte
-asmInstructionByteEmitBad:
+asmInstructionAluImmediateBad:
         pop de
         ret
-asmInstructionByteBad:
-        pop af
-        jp asmExpressionError
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry
+asmExpectAccumulatorComma:
+        ld a,(hl)
+        cp "A"
+        scf
+        ret nz
+        inc hl
+        jp asmExpectComma
 
 asmInstructionInc:
-        call asmRegisterOpcodeInc
-        jp c,asmSyntaxError
-        jp asmEmitByte
+        ld a,0x04
+        jr asmInstructionIncDec
 
 asmInstructionDec:
-        call asmRegisterOpcodeDec
+        ld a,0x05
+asmInstructionIncDec:
+        ld (ASM_STATE_OPCODE),a
+        call asmParseRegister8
         jp c,asmSyntaxError
+        ld e,a
+        call asmExpectEnd
+        jp c,asmSyntaxError
+        ld a,e
+        add a,a
+        add a,a
+        add a,a
+        ld e,a
+        ld a,(ASM_STATE_OPCODE)
+        add a,e
         jp asmEmitByte
 
 asmInstructionOut:
@@ -703,111 +967,273 @@ asmInstructionInBad:
         pop de
         ret
 
-.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry,B
-asmRegisterOpcodeInc:
-        ld a,(hl)
-        ld b,a
-        inc hl
+asmInstructionPush:
+        ld a,0xC5
+        jr asmInstructionStack
+asmInstructionPop:
+        ld a,0xC1
+asmInstructionStack:
+        ld (ASM_STATE_OPCODE),a
+        call asmParseStackPair
+        jp c,asmSyntaxError
+        ld e,a
         call asmExpectEnd
-        scf
-        ret c
-        ld a,b
-        cp "A"
-        jr z,asmRegisterIncA
-        cp "B"
-        jr z,asmRegisterIncB
+        jp c,asmSyntaxError
+        ld a,e
+        add a,a
+        add a,a
+        add a,a
+        add a,a
+        ld e,a
+        ld a,(ASM_STATE_OPCODE)
+        add a,e
+        jp asmEmitByte
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry
+asmParseCondition:
+        ld (ASM_STATE_MATCH_LO),hl
+        ld a,(hl)
+        cp "N"
+        jr z,asmParseConditionN
+        cp "Z"
+        jr z,asmParseConditionZ
         cp "C"
-        jr z,asmRegisterIncC
-        cp "D"
-        jr z,asmRegisterIncD
-        cp "E"
-        jr z,asmRegisterIncE
-        cp "H"
-        jr z,asmRegisterIncH
-        cp "L"
-        jr z,asmRegisterIncL
-        scf
+        jr z,asmParseConditionC
+        cp "P"
+        jr z,asmParseConditionP
+        cp "M"
+        jr z,asmParseConditionM
+        jr asmParseConditionBad
+asmParseConditionN:
+        inc hl
+        ld a,(hl)
+        cp "Z"
+        jr z,asmParseConditionNz
+        cp "C"
+        jr z,asmParseConditionNc
+        jr asmParseConditionBad
+asmParseConditionNz:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        xor a
         ret
-asmRegisterIncA:
-        ld a,0x3C
+asmParseConditionNc:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        ld a,0x02
         or a
         ret
-asmRegisterIncB:
+asmParseConditionZ:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        ld a,0x01
+        or a
+        ret
+asmParseConditionC:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        ld a,0x03
+        or a
+        ret
+asmParseConditionP:
+        inc hl
+        ld a,(hl)
+        cp "O"
+        jr z,asmParseConditionPo
+        cp "E"
+        jr z,asmParseConditionPe
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        ld a,0x06
+        or a
+        ret
+asmParseConditionPo:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
         ld a,0x04
         or a
         ret
-asmRegisterIncC:
-        ld a,0x0C
-        or a
-        ret
-asmRegisterIncD:
-        ld a,0x14
-        or a
-        ret
-asmRegisterIncE:
-        ld a,0x1C
-        or a
-        ret
-asmRegisterIncH:
-        ld a,0x24
-        or a
-        ret
-asmRegisterIncL:
-        ld a,0x2C
-        or a
-        ret
-
-.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry,B
-asmRegisterOpcodeDec:
-        ld a,(hl)
-        ld b,a
+asmParseConditionPe:
         inc hl
-        call asmExpectEnd
-        scf
-        ret c
-        ld a,b
-        cp "A"
-        jr z,asmRegisterDecA
-        cp "B"
-        jr z,asmRegisterDecB
-        cp "C"
-        jr z,asmRegisterDecC
-        cp "D"
-        jr z,asmRegisterDecD
-        cp "E"
-        jr z,asmRegisterDecE
-        cp "H"
-        jr z,asmRegisterDecH
-        cp "L"
-        jr z,asmRegisterDecL
-        scf
-        ret
-asmRegisterDecA:
-        ld a,0x3D
-        or a
-        ret
-asmRegisterDecB:
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
         ld a,0x05
         or a
         ret
-asmRegisterDecC:
-        ld a,0x0D
+asmParseConditionM:
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseConditionBad
+        ld a,0x07
         or a
         ret
-asmRegisterDecD:
-        ld a,0x15
+asmParseConditionBad:
+        ld hl,(ASM_STATE_MATCH_LO)
+        scf
+        ret
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry
+asmParseStackPair:
+        ld (ASM_STATE_MATCH_LO),hl
+        ld a,(hl)
+        cp "B"
+        jr z,asmParseStackPairBc
+        cp "D"
+        jr z,asmParseStackPairDe
+        cp "H"
+        jr z,asmParseStackPairHl
+        cp "A"
+        jr z,asmParseStackPairAf
+        jr asmParseStackPairBad
+asmParseStackPairBc:
+        inc hl
+        ld a,(hl)
+        cp "C"
+        jr nz,asmParseStackPairBad
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseStackPairBad
+        xor a
+        ret
+asmParseStackPairDe:
+        inc hl
+        ld a,(hl)
+        cp "E"
+        jr nz,asmParseStackPairBad
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseStackPairBad
+        ld a,0x01
         or a
         ret
-asmRegisterDecE:
-        ld a,0x1D
+asmParseStackPairHl:
+        inc hl
+        ld a,(hl)
+        cp "L"
+        jr nz,asmParseStackPairBad
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseStackPairBad
+        ld a,0x02
         or a
         ret
-asmRegisterDecH:
-        ld a,0x25
+asmParseStackPairAf:
+        inc hl
+        ld a,(hl)
+        cp "F"
+        jr nz,asmParseStackPairBad
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseStackPairBad
+        ld a,0x03
         or a
         ret
-asmRegisterDecL:
-        ld a,0x2D
+asmParseStackPairBad:
+        ld hl,(ASM_STATE_MATCH_LO)
+        scf
+        ret
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry
+asmParseRegister8:
+        ld (ASM_STATE_MATCH_LO),hl
+        ld a,(hl)
+        cp "("
+        jr z,asmParseRegister8Indirect
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseRegister8Bad
+        dec hl
+        ld a,(hl)
+        inc hl
+        cp "B"
+        jr z,asmParseRegister8B
+        cp "C"
+        jr z,asmParseRegister8C
+        cp "D"
+        jr z,asmParseRegister8D
+        cp "E"
+        jr z,asmParseRegister8E
+        cp "H"
+        jr z,asmParseRegister8H
+        cp "L"
+        jr z,asmParseRegister8L
+        cp "A"
+        jr z,asmParseRegister8A
+        jr asmParseRegister8Bad
+asmParseRegister8Indirect:
+        inc hl
+        ld a,(hl)
+        cp "H"
+        jr nz,asmParseRegister8Bad
+        inc hl
+        ld a,(hl)
+        cp "L"
+        jr nz,asmParseRegister8Bad
+        inc hl
+        ld a,(hl)
+        cp ")"
+        jr nz,asmParseRegister8Bad
+        inc hl
+        call asmRegisterTokenBoundary
+        jr c,asmParseRegister8Bad
+        ld a,0x06
+        or a
+        ret
+asmParseRegister8B:
+        xor a
+        ret
+asmParseRegister8C:
+        ld a,0x01
+        or a
+        ret
+asmParseRegister8D:
+        ld a,0x02
+        or a
+        ret
+asmParseRegister8E:
+        ld a,0x03
+        or a
+        ret
+asmParseRegister8H:
+        ld a,0x04
+        or a
+        ret
+asmParseRegister8L:
+        ld a,0x05
+        or a
+        ret
+asmParseRegister8A:
+        ld a,0x07
+        or a
+        ret
+asmParseRegister8Bad:
+        ld hl,(ASM_STATE_MATCH_LO)
+        scf
+        ret
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry
+asmRegisterTokenBoundary:
+        ld a,(hl)
+        or a
+        ret z
+        cp " "
+        jr z,asmRegisterTokenBoundaryGood
+        cp 0x09
+        jr z,asmRegisterTokenBoundaryGood
+        cp ","
+        jr z,asmRegisterTokenBoundaryGood
+        cp ";"
+        jr z,asmRegisterTokenBoundaryGood
+        cp ")"
+        jr z,asmRegisterTokenBoundaryGood
+        scf
+        ret
+asmRegisterTokenBoundaryGood:
         or a
         ret
 
@@ -833,11 +1259,82 @@ asmParseParenExpression:
 .routine in H,L out A,carry,zero,D,E,H,L clobbers sign,parity,halfCarry,B,C
 asmParseExpression:
         call asmSkipSpaces
+        call asmParseUnary
+        ret c
+        ld (ASM_STATE_VALUE_LO),de
+asmParseExpressionNext:
+        call asmSkipSpaces
         ld a,(hl)
+        cp "+"
+        jr z,asmParseExpressionOperator
+        cp "-"
+        jr z,asmParseExpressionOperator
+        ld de,(ASM_STATE_VALUE_LO)
+        or a
+        ret
+asmParseExpressionOperator:
+        inc hl
+        push af
+        call asmParseUnary
+        jr c,asmParseExpressionBad
+        ld (ASM_STATE_RHS_LO),de
+        ld (ASM_STATE_MATCH_LO),hl
+        ld hl,(ASM_STATE_VALUE_LO)
+        ld de,(ASM_STATE_RHS_LO)
+        pop af
+        cp "+"
+        jr nz,asmParseExpressionSubtract
+        add hl,de
+        jr asmParseExpressionStore
+asmParseExpressionSubtract:
+        or a
+        sbc hl,de
+asmParseExpressionStore:
+        ld (ASM_STATE_VALUE_LO),hl
+        ld hl,(ASM_STATE_MATCH_LO)
+        jr asmParseExpressionNext
+asmParseExpressionBad:
+        pop af
+        scf
+        ret
+
+.routine in H,L out A,carry,zero,D,E,H,L clobbers sign,parity,halfCarry,B,C
+asmParseUnary:
+        call asmSkipSpaces
+        ld a,(hl)
+        cp "+"
+        jr z,asmParseUnaryPositive
+        cp "-"
+        jr z,asmParseUnaryNegative
+        jp asmParseAtom
+asmParseUnaryPositive:
+        inc hl
+        jp asmParseUnary
+asmParseUnaryNegative:
+        inc hl
+        call asmParseUnary
+        ret c
+        push hl
+        ld hl,0x0000
+        or a
+        sbc hl,de
+        ex de,hl
+        pop hl
+        or a
+        ret
+
+.routine in H,L out A,carry,zero,D,E,H,L clobbers sign,parity,halfCarry,B,C
+asmParseAtom:
+        call asmSkipSpaces
+        ld a,(hl)
+        cp "("
+        jr z,asmParseGrouped
+        cp "$"
+        jr z,asmParseCurrentPc
         cp "0"
-        jr c,asmParseSymbol
+        jp c,asmParseSymbol
         cp "9"+1
-        jr nc,asmParseSymbol
+        jp nc,asmParseSymbol
         cp "0"
         jr nz,asmParseDecimal
         inc hl
@@ -881,6 +1378,23 @@ asmParseDecimalDone:
         or a
         scf
         ret z
+        or a
+        ret
+asmParseGrouped:
+        inc hl
+        call asmParseExpression
+        ret c
+        call asmSkipSpaces
+        ld a,(hl)
+        cp ")"
+        scf
+        ret nz
+        inc hl
+        or a
+        ret
+asmParseCurrentPc:
+        inc hl
+        ld de,(ASM_STATE_PC_LO)
         or a
         ret
 asmParseHexAfterPrefix:
@@ -935,6 +1449,10 @@ asmParseSymbolScan:
         jr z,asmParseSymbolReady
         cp ")"
         jr z,asmParseSymbolReady
+        cp "+"
+        jr z,asmParseSymbolReady
+        cp "-"
+        jr z,asmParseSymbolReady
         cp ";"
         jr z,asmParseSymbolReady
         inc hl
@@ -950,12 +1468,16 @@ asmParseSymbolReady:
         scf
         ret z
         ld (ASM_STATE_FLAGS),a
+        ld (ASM_STATE_RHS_LO),hl
         call asmFindSymbol
         jr c,asmParseSymbolFound
+        ld hl,(ASM_STATE_RHS_LO)
         ld a,(ASM_STATE_PASS)
         cp 0x01
         scf
         ret nz
+        ld a,0x01
+        ld (ASM_STATE_UNRESOLVED),a
         ld de,0x0000
         or a
         ret
@@ -1033,6 +1555,19 @@ asmFindSymbolMissing:
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 asmAddSymbol:
+        ld de,(ASM_STATE_PC_LO)
+        ld (ASM_STATE_VALUE_LO),de
+        ld a,0x01
+        ld (ASM_STATE_SYMBOL_KIND),a
+        jr asmAddSymbolValue
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+asmAddEquSymbol:
+        ld a,0x02
+        ld (ASM_STATE_SYMBOL_KIND),a
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+asmAddSymbolValue:
         call asmFindSymbol
         jp c,asmDuplicateSymbol
         ld a,(ASM_STATE_SYMBOL_COUNT)
@@ -1064,7 +1599,7 @@ asmAddSymbolCopy:
         pop hl
         ld de,0x0008
         add hl,de
-        ld de,(ASM_STATE_PC_LO)
+        ld de,(ASM_STATE_VALUE_LO)
         ld (hl),e
         inc hl
         ld (hl),d
@@ -1072,7 +1607,7 @@ asmAddSymbolCopy:
         ld a,(ASM_STATE_LINE)
         ld (hl),a
         inc hl
-        ld a,0x01
+        ld a,(ASM_STATE_SYMBOL_KIND)
         ld (hl),a
         ld a,c
         inc a
@@ -1292,22 +1827,36 @@ asmRecordDiagnostic:
         ret
 
 asmKwOrg:      .db ".ORG",0
+asmKwEqu:      .db ".EQU",0
 asmKwDb:       .db ".DB",0
 asmKwDw:       .db ".DW",0
 asmKwNop:      .db "NOP",0
 asmKwRet:      .db "RET",0
 asmKwHalt:     .db "HALT",0
+asmKwDi:       .db "DI",0
+asmKwEi:       .db "EI",0
+asmKwScf:      .db "SCF",0
+asmKwCcf:      .db "CCF",0
+asmKwCpl:      .db "CPL",0
 asmKwXor:      .db "XOR",0
+asmKwAnd:      .db "AND",0
+asmKwOr:       .db "OR",0
+asmKwSub:      .db "SUB",0
 asmKwLd:       .db "LD",0
 asmKwJp:       .db "JP",0
 asmKwCall:     .db "CALL",0
 asmKwJr:       .db "JR",0
+asmKwDjnz:     .db "DJNZ",0
 asmKwCp:       .db "CP",0
 asmKwAdd:      .db "ADD",0
+asmKwAdc:      .db "ADC",0
+asmKwSbc:      .db "SBC",0
 asmKwInc:      .db "INC",0
 asmKwDec:      .db "DEC",0
 asmKwOut:      .db "OUT",0
 asmKwIn:       .db "IN",0
+asmKwPush:     .db "PUSH",0
+asmKwPop:      .db "POP",0
 asmKwHl:       .db "HL",0
 asmKwDe:       .db "DE",0
 asmKwBc:       .db "BC",0

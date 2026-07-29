@@ -67,12 +67,12 @@ Terms:
 | 4 | Editor and optional GLCD boundary | `2314` | `2332` | `891Ch` | `14052` |
 | 5 | TEC-FS monitor-sector bridge | `3205` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
-| 7 | Phase-one self-hosted assembler | `2173` | `2173` | `887Dh` | `14211` |
+| 7 | Phase-one self-hosted assembler | `3174` | `3174` | `8C66h` | `13210` |
 | 8 | Validated loader and runner | `256` | `256` | `8100h` | `16128` |
 
-Expansion occupied bytes: `14216`
+Expansion occupied bytes: `15217`
 
-Expansion high-water span total: `14702`
+Expansion high-water span total: `15703`
 
 Latest self-hosted build-and-run delta:
 
@@ -113,6 +113,14 @@ Latest real SD source-creation delta:
 bank 2 span: 2857 -> 3640 bytes
 bank 4 span: 2291 -> 2332 bytes
 expansion total span: 13878 -> 14702 bytes
+fixed monitor span: unchanged at 16384 bytes
+```
+
+Latest expressions and broader Z80 subset delta:
+
+```text
+bank 7 span: 2173 -> 3174 bytes
+expansion total span: 14702 -> 15703 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

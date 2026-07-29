@@ -198,7 +198,8 @@ async function main(): Promise<void> {
       runParams,
       asmState: readTrace(runtime, 0x3c80, 32),
       shellState: readTrace(runtime, 0x3ba0, 16),
-      output: readTrace(runtime, 0x5000, 16),
+      output: readTrace(runtime, 0x5000, 64),
+      map: readTrace(runtime, 0x5200, 96),
     });
   }
   assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');

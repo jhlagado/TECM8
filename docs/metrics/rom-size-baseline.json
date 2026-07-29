@@ -79,12 +79,12 @@
     {
       "bank": 7,
       "role": "Phase-one self-hosted assembler",
-      "occupied": 2173,
-      "span": 2173,
+      "occupied": 3174,
+      "span": 3174,
       "softSpan": 8192,
       "hardSpan": 12288,
-      "highWaterEnd": 34941,
-      "freeAfterHighWater": 14211
+      "highWaterEnd": 35942,
+      "freeAfterHighWater": 13210
     },
     {
       "bank": 8,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 14216,
-    "span": 14702,
+    "occupied": 15217,
+    "span": 15703,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 132754
+    "freeAfterHighWater": 131753
   }
 }
