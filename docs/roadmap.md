@@ -23,8 +23,9 @@ The proof-backed ROM path now includes:
   catalogue-summary boundaries
 - the input snapshot boundary
 - shell classification for exact `edit`, `asm`, `run`, and `dir` commands
-- assembler and runner target handoff skeletons that deliberately return
-  `UNSUP`
+- a two-pass phase-one assembler with source-record diagnostics and TEC-FS
+  binary/source-map artifacts
+- a validated bounded runner that executes the artifact and returns to the shell
 - monitor-menu launch, shell return, far-call, and bank restoration contracts
 
 `npm run checkpoint:tecmate-rom` is the focused manual checkpoint.
@@ -34,39 +35,62 @@ The Debug80 integration uses the current sibling monorepo layout through the
 single resolver in `tools/debug80-integration.ts`; setup is documented in the
 root `README.md`.
 
-The RAM-loaded GLCD editor remains the mature editor implementation. The ROM
-shell does not yet contain a complete interactive editor, assembler, or runner.
-In particular, `dir` still summarizes two explicit catalogue slots rather than
-walking a complete on-card catalogue.
+The ROM shell now contains the complete bounded interactive editor workflow,
+self-hosted assembler, and runner. GLCD remains optional. `dir` still summarizes
+two explicit catalogue slots rather than walking a complete on-card catalogue.
 
-## Next Implementation Milestone: ROM Editor File-Buffer Vertical Slice
+## Completed Implementation Milestone: Persistent Interactive ROM Editor
 
-The next user-visible milestone is the smallest read-only ROM editor route:
+The persistent ROM editor route is now proof-backed:
 
 ```text
 shell `edit`
   -> project-main target descriptor
-  -> TEC-FS target and metadata lookup
-  -> editor file-buffer service
-  -> VDU/TMS9918 32-byte-record source window
-  -> return to shell
+  -> bank-4 editor and bank-6 translated key loop
+  -> VDU/TMS9918 32-byte records and blinking block cursor
+  -> bank-2 data-sector writes and metadata commit
+  -> return to shell and reopen
 ```
 
-The acceptance boundary is intentionally narrow:
+The completed acceptance boundary is:
 
 1. `edit` resolves the project main source without adding path parsing to bank 0.
-2. TEC-FS loads one bounded source buffer and publishes its metadata and length.
-3. The editor service renders one source window, a cursor position, and a clear
-   dirty flag through bank-1 VDU services.
-4. Exit returns through the documented shell/monitor contract.
-5. A Debug80 proof verifies the target descriptor, loaded record bytes, visible
-   TMS9918 text, clean state, and return path.
+2. TEC-FS loads up to three pages and publishes the source length and allocation.
+3. The editor navigates across pages and supports insert, delete, split, join,
+   live dirty status, and a blinking solid-block character cursor.
+4. Explicit save writes resident source pages before committing catalogue
+   metadata; dirty exit requires confirmation.
+5. A Debug80 proof saves a grown two-page source, returns to the shell, reopens
+   it, and proves the saved text persisted while a later discarded suffix did not.
 6. ROM size and register-contract gates remain green.
 
-Save, insertion/deletion, scrolling, GLCD rendering, assembler diagnostics, and
-full catalogue allocation are follow-on slices. The assembler bank remains a
-handoff skeleton until the file-buffer input and TEC-FS binary/map output paths
-exist.
+## Completed Implementation Milestone: Self-Hosted Build And Run
+
+The broad self-hosted vertical slice is now proof-backed:
+
+```text
+edit and save
+  -> asm reports BUILD at a source record
+  -> edit reopens at the diagnostic and fixes it
+  -> asm emits executable and TMAP data/metadata through bank 2
+  -> run validates, loads, executes, and returns safely to the shell
+```
+
+Bank 7 implements a deliberately bounded two-pass Z80 subset rather than
+claiming full AZM compatibility. Bank 8 accepts only executable artifacts wholly
+inside `4000h-4FFFh`, and phase-one programs return with `RET`. Bank 0 remains
+the compact classifier/dispatcher and did not grow for the tool implementation.
+The monitor-launch proof covers both actionable failures and the complete
+successful path.
+
+The next ambitious milestone should turn the single resident source buffer into
+a practical multi-file project toolchain: add include resolution and constants,
+broaden the Z80 instruction/operand subset enough to build a substantial
+TecMate program, add listing/symbol inspection and a debugger-oriented
+breakpoint/step workflow, and persist projects and derived artifacts through a
+real bounded catalogue walk rather than proof-only fixed slots. It should be
+delivered as one shell-visible edit/build/debug loop while preserving the
+current simple single-file path.
 
 Code-quality work should support this vertical slice when it removes a measured
 obstacle. Broad editor decomposition is not the active milestone by itself.

@@ -56,11 +56,11 @@ test('TecMate ROM space map records current monitor and expansion measurements',
     'VDU/TMS9918 boundary',
     'TEC-FS boundary and block mapper',
     'RTC boundary',
-    'GLCD boundary',
+    'Editor and optional GLCD boundary',
     'TEC-FS monitor-sector bridge',
     'Input snapshot boundary',
-    'Assembler skeleton',
-    'Run skeleton',
+    'Phase-one self-hosted assembler',
+    'Validated loader and runner',
   ];
   let totalOccupied = 0;
   let totalSpan = 0;
@@ -75,10 +75,14 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /Latest shell\/TEC-FS `dir` delta/);
-  assert.match(doc, /bank 0 span: 1229 -> 1284 bytes/);
-  assert.match(doc, /bank 2 span: 1008 -> 1042 bytes/);
-  assert.match(doc, /expansion total span: 3145 -> 3234 bytes/);
+  assert.match(doc, /Latest self-hosted build-and-run delta/);
+  assert.match(doc, /bank 0 span: unchanged at 1320 bytes/);
+  assert.match(doc, /bank 2 span: 1531 -> 2025 bytes/);
+  assert.match(doc, /bank 4 span: 2180 -> 2231 bytes/);
+  assert.match(doc, /bank 5 span: 279 -> 425 bytes/);
+  assert.match(doc, /bank 7 span: 45 -> 2173 bytes/);
+  assert.match(doc, /bank 8 span: 45 -> 256 bytes/);
+  assert.match(doc, /expansion total span: 6283 -> 9313 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

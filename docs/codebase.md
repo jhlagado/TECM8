@@ -303,9 +303,9 @@ session now expect:
   current proofs. Bank 3 owns the RTC descriptor boundary, bank 4 owns the
   GLCD containment boundary, bank 5 carries the TEC-FS monitor-sector bridge
   simulation, bank 6 exposes the input snapshot boundary with neutral joystick
-  and modifier defaults, bank 7 publishes the assembler skeleton boundary that
-  currently returns an unsupported result through the shared shell result block,
-  and bank 8 does the same for the run skeleton boundary.
+  and modifier defaults, bank 7 owns the two-pass phase-one assembler,
+  diagnostics, binary staging, and `TMAP` emission, and bank 8 owns the
+  validated bounded loader/runner and safe-return trampoline.
 
 The tracked `roms/tec1g/tecm8/*/*.bin` files are project-owned reference
 images. The host ROM builders regenerate them and also write matching build
@@ -394,9 +394,9 @@ text and is not a general TM8 filesystem implementation.
 
 ### `src/shell-resolver.asm`
 
-This is the current shell resolver and executor-stub layer. It does not yet
-launch a real assembler or runner. It does enough to prove the shell command
-contract without pulling in the interactive prompt program:
+This is the older RAM-path shell resolver and executor-stub layer. It does not
+launch the ROM assembler or runner. It remains useful for isolated shell
+command proofs without pulling in the interactive prompt program:
 
 - `edit`, `asm`, and `run` are recognized
 - default commands load the cached project main path from `/tecm8.prj`
@@ -1320,9 +1320,10 @@ reset contract, and the bank 6 input snapshot entry published through the
 service registry. `tools/run-input-bank-proof.ts` isolates that bank 6 path and
 checks the neutral key, joystick, and modifier snapshot plus the preserved
 status bytes on unknown selectors. `tools/run-assembler-bank-proof.ts` drives
-the bank 0 `asm` and `run` shell paths through banks 7 and 8, checking the
-published target descriptor and the current unsupported result contract for both
-skeleton services. The TMS9918 runner checks the bank 1 VDU and TMS9918 entry
+the bank 0 `asm` and `run` paths through banks 7 and 8. It proves a
+source-record diagnostic, fixes the source, checks binary and `TMAP` artifacts
+persisted through bank 2, executes the binary, and verifies safe return. The
+TMS9918 runner checks the bank 1 VDU and TMS9918 entry
 points including text clear, row/column cursor placement, scroll-up copying,
 status-line rendering with cursor restore, bounded string writes, and VRAM
 reads. The TEC-FS runner checks bank 2 volume selection, logical-sector
@@ -1653,9 +1654,8 @@ What exists now:
 
 What is still missing or intentionally skeletal:
 
-- `asm` and `run` now route through banked shell request blocks into proof-backed
-  assembler and run skeleton services that publish target descriptors and
-  unsupported result codes without launching a real tool yet.
+- The older RAM shell resolver retains assembler/runner executor stubs; the
+  working self-hosted build-and-run path is the banked ROM shell.
 - The editor has no search behavior yet.
 - The current rolling source window is fixed at four 512-byte sectors and still
   uses page-based navigation rules. Wider windows or a different RAM tradeoff

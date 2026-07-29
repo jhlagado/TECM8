@@ -60,26 +60,30 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `1284` | `1284` | `8504h` | `15100` |
+| 0 | Shell, launcher, registry | `1320` | `1320` | `8528h` | `15064` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `1042` | `1042` | `8412h` | `15342` |
+| 2 | TEC-FS boundary and block mapper | `2025` | `2025` | `87E9h` | `14359` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
-| 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
-| 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
-| 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
-| 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
-| 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
+| 4 | Editor and optional GLCD boundary | `2213` | `2231` | `88B7h` | `14153` |
+| 5 | TEC-FS monitor-sector bridge | `374` | `425` | `81A9h` | `15959` |
+| 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
+| 7 | Phase-one self-hosted assembler | `2173` | `2173` | `887Dh` | `14211` |
+| 8 | Validated loader and runner | `256` | `256` | `8100h` | `16128` |
 
-Expansion occupied bytes: `3234`
+Expansion occupied bytes: `9244`
 
-Expansion high-water span total: `3234`
+Expansion high-water span total: `9313`
 
-Latest shell/TEC-FS `dir` delta:
+Latest self-hosted build-and-run delta:
 
 ```text
-bank 0 span: 1229 -> 1284 bytes
-bank 2 span: 1008 -> 1042 bytes
-expansion total span: 3145 -> 3234 bytes
+bank 0 span: unchanged at 1320 bytes
+bank 2 span: 1531 -> 2025 bytes
+bank 4 span: 2180 -> 2231 bytes
+bank 5 span: 279 -> 425 bytes
+bank 7 span: 45 -> 2173 bytes
+bank 8 span: 45 -> 256 bytes
+expansion total span: 6283 -> 9313 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
@@ -100,17 +104,17 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `805Eh` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `84D1h` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 service registry | `84F5h` | Private service ID to bank/address/target-`A` table. |
 | Bank 0 shell entry | `809Ch` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
 | Bank 0 shell command boundary | `80EFh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 shell status renderer | `82ABh` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
-| Bank 0 shell result renderer | `82EBh` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
-| Bank 0 info marker | `84CCh` | Private marker, not a fixed ABI location. |
+| Bank 0 shell status renderer | `82CFh` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
+| Bank 0 shell result renderer | `830Fh` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
+| Bank 0 info marker | `84F0h` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |
 | Bank 3 RTC entry | `8000h` | RTC boundary descriptor. |
-| Bank 4 GLCD entry | `8000h` | GLCD boundary descriptor. |
+| Bank 4 editor/GLCD entry | `8000h` | Dispatches interactive editor open/run/step/blink services and the optional GLCD boundary. |
 | Bank 6 input snapshot dispatcher | `8000h` | Dispatches bank-local input service IDs in `A`. |
 | Bank 7 assembler dispatcher | `8000h` | Dispatches bank-local assembler service IDs in `A`. |
 | Bank 8 run dispatcher | `8000h` | Dispatches bank-local run service IDs in `A`. |
@@ -119,7 +123,7 @@ registry, and marker labels are current private bank-0 layout.
 
 - The immediate pressure is still in fixed monitor ROM, not the expansion ROM.
 - Banked services are cheap at this stage; the total occupied expansion code is
-  just over 3K, even after adding the first TEC-FS-backed `dir` command path.
+  compact after adding the TEC-FS-backed persistent interactive editor path.
 - Bank 0 layout now needs active care because it contains both the registry and
   shell launcher boundary. Private labels may move; callers should enter through
   discovery-installed vectors and service IDs, not internal marker addresses.

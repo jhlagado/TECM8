@@ -59,3 +59,16 @@ in C
 out A,carry
 clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
 end
+extern MON3_MATRIX_SCAN
+out D,E,zero
+clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
+end
+extern MON3_PARSE_MATRIX_SCAN
+in D,E,zero
+out A,carry
+clobbers A,BC,HL,carry,zero,sign,parity,halfCarry
+end
+extern RUN_TRAMPOLINE_BASE
+out A,carry,zero
+clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
+end

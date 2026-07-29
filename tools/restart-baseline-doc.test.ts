@@ -20,16 +20,21 @@ test('README documents the current Debug80 monorepo development dependency', () 
   assert.match(readme, /npm run check/);
 });
 
-test('roadmap records the ROM shell checkpoint and the next editor slice', () => {
+test('roadmap records the ROM shell checkpoint and completed toolchain slices', () => {
   const roadmap = readRepoFile('docs/roadmap.md');
   assert.match(roadmap, /## Current Checkpoint: ROM Shell And Banked Services/);
   assert.match(roadmap, /Debug80 TecMate ROM demo milestone is complete/);
   assert.match(roadmap, /shell classification for exact `edit`, `asm`, `run`, and `dir`/);
-  assert.match(roadmap, /## Next Implementation Milestone: ROM Editor File-Buffer Vertical Slice/);
+  assert.match(roadmap, /## Completed Implementation Milestone: Persistent Interactive ROM Editor/);
   assert.match(
     roadmap,
-    /shell `edit`[\s\S]*TEC-FS target and metadata lookup[\s\S]*editor file-buffer service[\s\S]*VDU\/TMS9918 32-byte-record source window/,
+    /shell `edit`[\s\S]*bank-4 editor and bank-6 translated key loop[\s\S]*VDU\/TMS9918 32-byte records and blinking block cursor[\s\S]*bank-2 data-sector writes and metadata commit[\s\S]*return to shell and reopen/,
   );
-  assert.match(roadmap, /A Debug80 proof verifies the target descriptor/);
+  assert.match(roadmap, /A Debug80 proof saves a grown two-page source/);
   assert.match(roadmap, /ROM size and register-contract gates remain green/);
+  assert.match(roadmap, /## Completed Implementation Milestone: Self-Hosted Build And Run/);
+  assert.match(roadmap, /asm reports BUILD at a source record/);
+  assert.match(roadmap, /emits executable and TMAP data\/metadata through bank 2/);
+  assert.match(roadmap, /validates, loads, executes, and returns safely to the shell/);
+  assert.match(roadmap, /next ambitious milestone should turn the single resident source buffer into\s+a practical multi-file project toolchain/);
 });

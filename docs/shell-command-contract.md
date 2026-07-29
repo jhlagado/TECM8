@@ -150,15 +150,15 @@ iterator are still absent.
 
 | Command | Route | Status | Result | Meaning |
 | --- | --- | --- | --- | --- |
-| `edit` | bank 0 shell | `EDIT` | n/a | Resolves the project main target. |
-| `asm` | bank 7 skeleton | `ASM` | `UNSUP` | Assembler target handoff exists; assembler is not linked yet. |
-| `run` | bank 8 skeleton | `RUN` | `UNSUP` | Output target handoff exists; runner is not linked yet. |
+| `edit` | banks 0/4/6/2/5/1 | `EDIT` | `OK` | Runs the interactive multi-page editor, explicit save/discard flow, and returns safely to the shell. |
+| `asm` | banks 7/2/5 | `ASM` | `BUILD`, then `OK` | Reports a source-record diagnostic, then emits binary/map data and metadata after the proof fixes the source. |
+| `run` | banks 8/2/5 | `RUN` | `FILE`, then `OK` | Rejects a missing artifact, then validates, loads, executes, and returns after the successful build. |
 | `dir` | bank 2 TEC-FS | `DIR` | `OK` | Reads two explicit catalogue slots and returns count 2. |
 | unknown | bank 0 shell | `ERRCMD` | `NONE` | Rejects the command and keeps target/result fields clear. |
 | `dir` bad buffer | bank 2 TEC-FS | n/a | `FILE` | Bad catalogue buffer pointer is reported as a file/storage error. |
 
-This matrix is the MVP shell contract until the editor buffer and real TEC-FS
-reader are present. New commands should not be added just to improve the demo;
+This matrix is the MVP shell contract with the persistent bounded editor and
+TEC-FS source read/write path present. New commands should not be added just to improve the demo;
 they should map to a real banked service boundary and keep the bank-0 parser
 small.
 
@@ -342,7 +342,7 @@ The expected v1 result meanings are:
 SHL_RESULT_OK          assembly completed and wrote .bin/.map outputs
 SHL_RESULT_BUILD_ERROR source parsed but did not assemble; detail may be line
 SHL_RESULT_FILE_ERROR  source, output, map, or project file could not be used
-SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
+SHL_RESULT_UNSUPPORTED a recognized tool slot has no implementation
 ```
 
 `SHL_RENDER_RESULT` turns the low result byte into a short VDU status label:
@@ -350,11 +350,12 @@ SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
 not a diagnostic formatter. Detailed messages, line numbers, and filenames
 belong in later tool views, not in the eight-character shell status slot.
 
-Until project parsing and the assembler are linked behind the shell,
 `SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal
-`SHL_TARGET_DESC`, marks that descriptor as the project-main default, calls the
-bank-7 assembler skeleton, and publishes the skeleton's
-`SHL_RESULT_UNSUPPORTED` result.
+`SHL_TARGET_DESC`, marks that descriptor as the project-main default, and calls
+the bank-7 two-pass assembler. Bank 7 consumes the resident editor records,
+publishes `BUILD` with a zero-based source record on a parse/assembly error, or
+publishes `OK` after writing binary and `TMAP` data/metadata through bank 2.
+The editor reads bank 7's diagnostic line and column on its next launch.
 
 ## `run`
 
@@ -377,11 +378,13 @@ run /build/test.bin
 The shell runs that one-off target and does not change project config. The
 no-argument form remains the primary workflow.
 
-Until project parsing and a real launcher/debugger are linked behind the shell,
 `SHL_RUN_COMMAND` classifies `run`, points the target slot at the minimal
 `SHL_TARGET_DESC`, marks that descriptor as the derived project output default,
-calls the bank-8 run skeleton, and publishes the skeleton's
-`SHL_RESULT_UNSUPPORTED` result.
+and calls bank 8. The runner asks bank 2 to load executable metadata and data,
+requires the artifact and entry point to stay inside `4000h-4FFFh`, and invokes
+the entry through a RAM trampoline. A phase-one program returns with `RET`, so
+bank 8 can publish `OK` and return through the shell gateway. Missing or invalid
+artifacts publish `FILE`.
 
 ## Errors
 

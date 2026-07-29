@@ -32,9 +32,50 @@ there is a measured reason. Any syntax accepted by the self-hosted assembler
 should either be AZM-compatible or explicitly documented as a TecMate-only
 extension.
 
+## Implemented ROM Subset
+
+Bank 7 now contains the first useful two-pass implementation. It reads the
+resident bank-4 editor workspace as 32-byte source records and accepts:
+
+- global labels up to eight characters, with forward and backward references
+- decimal integers and `0x` hexadecimal integers
+- comments, `.org`, `.db`, and `.dw`
+- `NOP`, `RET`, `HALT`, and `XOR A`
+- `LD A,n`, `LD A,(nn)`, `LD (nn),A`, and 16-bit immediate loads into
+  `HL`, `DE`, `BC`, or `SP`
+- `JP`, `CALL`, `JR`, `CP n`, and `ADD A,n`
+- `INC` and `DEC` for `A`, `B`, `C`, `D`, `E`, `H`, or `L`
+- `OUT (n),A` and `IN A,(n)`
+
+The implementation is case-insensitive, supports at most 16 symbols, and emits
+at most 512 bytes. The origin and every emitted byte must remain in the runner's
+`4000h-4FFFh` window. `.equ`, general arithmetic expressions, includes, macros,
+the complete Z80 instruction set, and contract analysis remain later work.
+Those omissions distinguish the implemented ROM subset from the broader Phase
+1 direction below.
+
+On an error, bank 7 publishes a zero-based source record, column, and diagnostic
+code. Reopening `edit` after a failed build positions the editor on that record
+and column. On success, bank 7 writes binary data and metadata plus a source-map
+data and metadata record through bank 2's installed TEC-FS sector-driver
+boundary.
+
+The binary is accompanied by a fixed-record `TMAP` artifact. Its eight-byte
+header is `TMAP`, version `1`, record size `12`, symbol count, and one reserved
+byte. Each symbol record contains an eight-byte zero-padded name, a little-endian
+address, a zero-based source line, and flags.
+
+Bank 8 loads and validates the executable metadata and binary through bank 2.
+It rejects ranges outside `4000h-4FFFh` or an entry point outside the artifact,
+then calls the entry through a RAM trampoline. A phase-one program must finish
+with `RET`; control then returns through bank 8 and the bank-call gateway to the
+shell. This is a bounded loader, not a sandbox, timeout mechanism, or relocating
+linker.
+
 ## Phase 1: Core Subset
 
-Phase 1 should assemble normal source files without clever language features.
+The complete Phase 1 direction should assemble normal source files without
+clever language features.
 
 Required:
 
@@ -67,20 +108,18 @@ This gives TecMate a practical assembler before it tries to become AZM.
 
 ## MVP Readiness Gates
 
-The assembler should not move beyond the bank-7 skeleton until the smaller
-file path exists:
+The readiness path is now implemented:
 
 ```text
 editor opens 32-byte-record source buffer
   -> assembler reads that buffer or a TEC-FS source stream
   -> assembler emits binary and map records through TEC-FS
-  -> shell `asm` reports `OK`, `BUILD`, `FILE`, or `UNSUP`
+  -> shell `asm` reports `OK`, `BUILD`, or `FILE`
 ```
 
-That means the first useful assembler is gated by the editor file-buffer ABI
-and by TEC-FS source/binary/map record writes. Before those exist, bank 7 should
-remain a compact handoff skeleton that proves target passing and result
-reporting only.
+The first useful assembler was gated by the editor file-buffer ABI and TEC-FS
+source/binary/map writes. Those dependencies now exist and the monitor-launch
+proof exercises them as one edit, diagnose, fix, rebuild, run, and return loop.
 
 Phase 1 source input should therefore be one loaded source buffer or a simple
 sequential TEC-FS source stream. It should not require a general project graph,
@@ -179,7 +218,8 @@ fields with `TFS_PATCH_META_RECORD`. The assembler receives the resolved target
 descriptor and writes source, binary, and map records through the same metadata
 vocabulary.
 
-The map artifact is deliberately simpler than host D8/D8M at first. Phase 1
+The map artifact is deliberately simpler than host D8/D8M. The current ROM
+implementation uses the fixed `TMAP` header and records described above. Phase 1
 only needs enough information for `run`, simple debugger lookup, and editor
 jump-to-error:
 
@@ -286,8 +326,8 @@ projects, and optional game runtime APIs.
 
 ## Near-Term Consequence
 
-The next TecMate implementation work should continue to build general services,
-but prefer decisions that help the self-hosted assembler path:
+Further TecMate work should continue to build general services, while extending
+the self-hosted toolchain deliberately:
 
 - stable shell command boundaries
 - VDU text output for diagnostics and assembler errors

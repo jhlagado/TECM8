@@ -9,12 +9,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 1284,
-      "span": 1284,
+      "occupied": 1320,
+      "span": 1320,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 34052,
-      "freeAfterHighWater": 15100
+      "highWaterEnd": 34088,
+      "freeAfterHighWater": 15064
     },
     {
       "bank": 1,
@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 1042,
-      "span": 1042,
+      "occupied": 2025,
+      "span": 2025,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33810,
-      "freeAfterHighWater": 15342
+      "highWaterEnd": 34793,
+      "freeAfterHighWater": 14359
     },
     {
       "bank": 3,
@@ -48,60 +48,60 @@
     },
     {
       "bank": 4,
-      "role": "GLCD boundary",
-      "occupied": 68,
-      "span": 68,
-      "softSpan": 1024,
-      "hardSpan": 2048,
-      "highWaterEnd": 32836,
-      "freeAfterHighWater": 16316
+      "role": "Editor and optional GLCD boundary",
+      "occupied": 2213,
+      "span": 2231,
+      "softSpan": 4096,
+      "hardSpan": 8192,
+      "highWaterEnd": 34999,
+      "freeAfterHighWater": 14153
     },
     {
       "bank": 5,
       "role": "TEC-FS monitor-sector bridge",
-      "occupied": 40,
-      "span": 40,
+      "occupied": 374,
+      "span": 425,
       "softSpan": 1024,
       "hardSpan": 2048,
-      "highWaterEnd": 32808,
-      "freeAfterHighWater": 16344
+      "highWaterEnd": 33193,
+      "freeAfterHighWater": 15959
     },
     {
       "bank": 6,
       "role": "Input snapshot boundary",
-      "occupied": 47,
-      "span": 47,
+      "occupied": 220,
+      "span": 220,
       "softSpan": 1024,
       "hardSpan": 2048,
-      "highWaterEnd": 32815,
-      "freeAfterHighWater": 16337
+      "highWaterEnd": 32988,
+      "freeAfterHighWater": 16164
     },
     {
       "bank": 7,
-      "role": "Assembler skeleton",
-      "occupied": 45,
-      "span": 45,
+      "role": "Phase-one self-hosted assembler",
+      "occupied": 2173,
+      "span": 2173,
       "softSpan": 8192,
       "hardSpan": 12288,
-      "highWaterEnd": 32813,
-      "freeAfterHighWater": 16339
+      "highWaterEnd": 34941,
+      "freeAfterHighWater": 14211
     },
     {
       "bank": 8,
-      "role": "Run skeleton",
-      "occupied": 45,
-      "span": 45,
+      "role": "Validated loader and runner",
+      "occupied": 256,
+      "span": 256,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 32813,
-      "freeAfterHighWater": 16339
+      "highWaterEnd": 33024,
+      "freeAfterHighWater": 16128
     }
   ],
   "expansionTotal": {
-    "occupied": 3234,
-    "span": 3234,
+    "occupied": 9244,
+    "span": 9313,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 144222
+    "freeAfterHighWater": 138143
   }
 }

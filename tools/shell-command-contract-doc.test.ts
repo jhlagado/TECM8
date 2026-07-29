@@ -27,13 +27,13 @@ test('shell command contract keeps v1 short commands small', () => {
 test('shell command contract pins the proved ROM checkpoint matrix', () => {
   assert.match(doc, /## Proved ROM Checkpoint Matrix/);
   assert.match(doc, /`npm run checkpoint:tecmate-rom` currently proves this compact command surface/);
-  assert.match(doc, /\| `edit` \| bank 0 shell \| `EDIT` \| n\/a \| Resolves the project main target\. \|/);
-  assert.match(doc, /\| `asm` \| bank 7 skeleton \| `ASM` \| `UNSUP` \| Assembler target handoff exists; assembler is not linked yet\. \|/);
-  assert.match(doc, /\| `run` \| bank 8 skeleton \| `RUN` \| `UNSUP` \| Output target handoff exists; runner is not linked yet\. \|/);
+  assert.match(doc, /\| `edit` \| banks 0\/4\/6\/2\/5\/1 \| `EDIT` \| `OK` \| Runs the interactive multi-page editor, explicit save\/discard flow, and returns safely to the shell\. \|/);
+  assert.match(doc, /\| `asm` \| banks 7\/2\/5 \| `ASM` \| `BUILD`, then `OK` \| Reports a source-record diagnostic, then emits binary\/map data and metadata after the proof fixes the source\. \|/);
+  assert.match(doc, /\| `run` \| banks 8\/2\/5 \| `RUN` \| `FILE`, then `OK` \| Rejects a missing artifact, then validates, loads, executes, and returns after the successful build\. \|/);
   assert.match(doc, /\| `dir` \| bank 2 TEC-FS \| `DIR` \| `OK` \| Reads two explicit catalogue slots and returns count 2\. \|/);
   assert.match(doc, /\| unknown \| bank 0 shell \| `ERRCMD` \| `NONE` \| Rejects the command and keeps target\/result fields clear\. \|/);
   assert.match(doc, /\| `dir` bad buffer \| bank 2 TEC-FS \| n\/a \| `FILE` \| Bad catalogue buffer pointer is reported as a file\/storage error\. \|/);
-  assert.match(doc, /This matrix is the MVP shell contract until the editor buffer and real TEC-FS\s+reader are present/);
+  assert.match(doc, /This matrix is the MVP shell contract with the persistent bounded editor and\s+TEC-FS source read\/write path present/);
   assert.match(doc, /New commands should not be added just to improve the demo/);
   assert.match(doc, /keep the bank-0 parser\s+small/);
 });
@@ -77,13 +77,14 @@ test('shell command contract reserves assembler result semantics', () => {
   assert.match(doc, /SHL_RESULT_OK\s+assembly completed and wrote \.bin\/\.map outputs/);
   assert.match(doc, /SHL_RESULT_BUILD_ERROR source parsed but did not assemble/);
   assert.match(doc, /SHL_RESULT_FILE_ERROR\s+source, output, map, or project file could not be used/);
-  assert.match(doc, /SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked/);
+  assert.match(doc, /SHL_RESULT_UNSUPPORTED a recognized tool slot has no implementation/);
   assert.match(doc, /`SHL_RENDER_RESULT` turns the low result byte into a short VDU status label/);
   assert.match(doc, /not a diagnostic formatter/);
   assert.match(doc, /`SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal\s+`SHL_TARGET_DESC`/);
   assert.match(doc, /marks that descriptor as the project-main default/);
-  assert.match(doc, /calls the\s+bank-7 assembler skeleton/);
-  assert.match(doc, /publishes the skeleton's\s+`SHL_RESULT_UNSUPPORTED` result/);
+  assert.match(doc, /calls\s+the bank-7 two-pass assembler/);
+  assert.match(doc, /publishes `BUILD` with a zero-based source record/);
+  assert.match(doc, /writing binary and `TMAP` data\/metadata through bank 2/);
 });
 
 test('shell command contract reserves run result semantics', () => {
@@ -92,8 +93,10 @@ test('shell command contract reserves run result semantics', () => {
   assert.match(doc, /The shell runs `\/build\/<main-stem>\.bin`, derived from `main`/);
   assert.match(doc, /`SHL_RUN_COMMAND` classifies `run`, points the target slot at the minimal\s+`SHL_TARGET_DESC`/);
   assert.match(doc, /marks that descriptor as the derived project output default/);
-  assert.match(doc, /calls the\s+bank-8 run skeleton/);
-  assert.match(doc, /publishes the skeleton's\s+`SHL_RESULT_UNSUPPORTED` result/);
+  assert.match(doc, /calls bank 8/);
+  assert.match(doc, /requires the artifact and entry point to stay inside `4000h-4FFFh`/);
+  assert.match(doc, /phase-one program returns with `RET`/);
+  assert.match(doc, /Missing or invalid\s+artifacts publish `FILE`/);
 });
 
 test('shell command contract reserves game command namespace without enabling it in bank0 yet', () => {

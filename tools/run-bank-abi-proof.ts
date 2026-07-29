@@ -274,7 +274,7 @@ async function main(): Promise<void> {
   assertEqual(trace[34], 0x01, 'shell command loop reported profile namespace unknown');
   assertEqual(trace[35], 0xAB, 'shell command loop published target descriptor low byte');
   assertEqual(trace[36], 0x3B, 'shell command loop published target descriptor high byte');
-  assertEqual(trace[37], 0x04, 'shell asm command published unsupported result');
+  assertEqual(trace[37], 0x03, 'shell asm command reports missing source buffer');
   assertEqual(trace[38], 0x00, 'shell command loop cleared result high byte');
   assertEqual(trace[39], 0x86, 'service registry dispatched input read');
   assertEqual(trace[40], 0x00, 'input read reports neutral joystick state');
@@ -286,8 +286,8 @@ async function main(): Promise<void> {
   assertEqual(trace[46], 0x00, 'shell target descriptor leaves path pointer high byte clear');
   assertEqual(trace[47], 0x80, 'shell command loop dispatched edit command');
   assertEqual(trace[48], 0x01, 'shell command loop classified edit action');
-  assertEqual(trace[49], 0x00, 'shell edit leaves result low byte at none');
-  assertEqual(trace[50], 0x00, 'shell edit leaves result high byte clear');
+  assertEqual(trace[49], 0x03, 'shell edit reports file error without a catalogue buffer');
+  assertEqual(trace[50], 0x0E, 'shell edit reports the TEC-FS bad-buffer detail');
   assertEqual(trace[51], 0x80, 'shell command loop dispatched run command');
   assertEqual(trace[52], 0x03, 'shell command loop classified run action');
   assertEqual(trace[53], 0x02, 'shell run descriptor records project output target');

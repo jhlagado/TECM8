@@ -118,36 +118,63 @@ confidence, not as the only release gate.
    `TecMate ROM Shell` title, `TFS:30+1 128M 4K` TEC-FS geometry line,
    `KEY:0000 JOY:00` input echo, `>` prompt, and `POLL` status text after the
    first input/update/render loop slice.
-7. In the printed checkpoint output, expect the shell command matrix to show:
-   `edit -> EDIT`, `asm -> ASM/UNSUP`, `run -> RUN/UNSUP`, `dir -> DIR/OK`,
-   and `dir bad-buffer -> FILE`.
-8. If the manual screen differs, compare it with the automated evidence in
+7. In the printed checkpoint output, expect the initial command matrix to show:
+   `edit -> EDIT/OK`, `asm -> ASM/BUILD`, `run -> RUN/FILE`,
+   `dir -> DIR/OK`, and `dir bad-buffer -> FILE`. The `BUILD` fixture predates
+   the later source fix, and `FILE` proves that run rejects a missing artifact.
+8. Inspect `installed.editorWindow` for `/src/main.asm`, `ORG 0`, `LD A,1`,
+   `RET`, `Ln 01 Col 01 CLEAN Pg 1/1`, loaded line count 3, and cursor address
+   `0020h`.
+9. If the manual screen differs, compare it with the automated evidence in
    `proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json`.
 
-## Next Manual Milestone
+## Completed Persistent Editor Workflow
 
-The next thing to make visible should be the smallest editor-facing path:
+The first editor-facing path is now visible and proof-backed:
 
 ```text
 shell `edit`
   -> project-main target descriptor
   -> TEC-FS target/metadata lookup boundary
-  -> editor file-buffer service
-  -> VDU/TMS9918 shows a loaded 32-byte-record source window
+  -> interactive bank-4 editor and bank-6 key service
+  -> VDU/TMS9918 shows a multi-page 32-byte-record source workspace
+  -> bank-2 data-sector writes followed by a metadata-sector commit
+  -> shell return and reopen
 ```
 
-This is not a complete editor loop. The manual success condition is one loaded
-source window, a cursor position, a dirty flag shown as clear, and a return path
-to the shell. Save, insert/delete, scrolling, assembler diagnostics, and GLCD
-rendering can follow after that route is visible and measured.
+The monitor-launch proof now drives the complete workflow. It observes the
+solid-block character cursor, printable insertion and live dirty status, moves
+from page one to page two, exercises character delete and record split/join,
+grows the persisted source from one sector-page to two, saves two data sectors
+and one metadata sector, cancels and then confirms discard, returns to the
+shell, and reopens to prove the saved `PAGEY` record persisted while the
+discarded `!` suffix did not.
+
+## Completed Self-Hosted Build-And-Run Workflow
+
+The same monitor-launch proof now continues beyond editor persistence:
+
+```text
+edit and save invalid source
+  -> asm reports BUILD at source record 4
+  -> edit reopens at record 4, column 2
+  -> fix REX to RET and save
+  -> asm emits 3E 5A 32 F0 4F C9 and TMAP
+  -> bank 2 records two artifact data writes and two metadata writes
+  -> run loads at 4000h, executes the marker write, and returns to the shell
+```
+
+This proves the useful bank-7 two-pass subset, source-record diagnostics,
+editor handoff, bank-2 artifact contracts, bounded bank-8 loader, program
+execution, and safe far-call return as one Debug80 path.
 
 ## Non-Goals
 
 This milestone must stay small. It does not require:
 
-- full TEC-FS catalogue, allocator, file load, or file save
-- a real assembler
-- a complete editor loop
+- full TEC-FS catalogue allocator beyond the bounded editor source workflow
+- the complete Z80/AZM language beyond the documented phase-one subset
+- unbounded files larger than the three-page ROM workspace
 - a game runtime
 - GLCD feature work
 - direct boot into TecMate as the final product policy

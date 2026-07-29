@@ -244,7 +244,19 @@ Tecm8ShellRunCheckFour:
 Tecm8ShellRunEdit:
         ld a,SHL_ACTION_EDIT
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
-        jp Tecm8ShellRunOk
+        call Tecm8ShellPublishTarget
+        ld hl,SHL_TARGET_DESC
+        ld (EDT_PARAM_TARGET_LO),hl
+        or a
+        .expectout A,carry
+        callBankService EDT_BANK,EDT_ENTRY,EDT_SVC_RUN
+        ld a,(EDT_PARAM_RESULT)
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,(EDT_PARAM_LAST_ERROR)
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,0x80
+        or a
+        ret
 Tecm8ShellRunAsm:
         ld a,SHL_ACTION_ASM
         ld b,SHL_TARGET_KIND_PROJECT_MAIN

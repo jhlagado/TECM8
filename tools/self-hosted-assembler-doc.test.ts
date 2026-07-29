@@ -48,6 +48,20 @@ test('self-hosted assembler doc defines phase 1 core subset boundaries', () => {
   ]);
 });
 
+test('self-hosted assembler doc records the exact implemented ROM subset', () => {
+  assert.match(doc, /## Implemented ROM Subset/);
+  assert.match(doc, /resident bank-4 editor workspace as 32-byte source records/);
+  assert.match(doc, /global labels up to eight characters/);
+  assert.match(doc, /at most 16 symbols/);
+  assert.match(doc, /at most 512 bytes/);
+  assert.match(doc, /`4000h-4FFFh`/);
+  assert.match(doc, /`.equ`, general arithmetic expressions, includes, macros/);
+  assert.match(doc, /zero-based source record, column, and diagnostic\s+code/);
+  assert.match(doc, /fixed-record `TMAP` artifact/);
+  assert.match(doc, /program must finish\s+with `RET`/);
+  assert.match(doc, /not a sandbox, timeout mechanism, or relocating\s+linker/);
+});
+
 test('self-hosted assembler doc phases project usability before contracts', () => {
   assert.match(doc, /## Phase 2: Project Usability/);
   assert.match(doc, /## Phase 3: Contract-Aware Assembly/);
@@ -67,13 +81,13 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /If the checker cannot prove a path,\s+it should say so clearly/);
 });
 
-test('self-hosted assembler doc gates MVP work on editor buffer and TEC-FS output', () => {
+test('self-hosted assembler doc records the completed editor-buffer and TEC-FS gate', () => {
   assert.match(doc, /## MVP Readiness Gates/);
-  assert.match(doc, /should not move beyond the bank-7 skeleton until the smaller\s+file path exists/);
+  assert.match(doc, /readiness path is now implemented/);
   assert.match(doc, /editor opens 32-byte-record source buffer[\s\S]*assembler reads that buffer or a TEC-FS source stream[\s\S]*assembler emits binary and map records through TEC-FS/);
-  assert.match(doc, /shell `asm` reports `OK`, `BUILD`, `FILE`, or `UNSUP`/);
-  assert.match(doc, /gated by the editor file-buffer ABI\s+and by TEC-FS source\/binary\/map record writes/);
-  assert.match(doc, /bank 7 should\s+remain a compact handoff skeleton/);
+  assert.match(doc, /shell `asm` reports `OK`, `BUILD`, or `FILE`/);
+  assert.match(doc, /was gated by the editor file-buffer ABI and TEC-FS\s+source\/binary\/map writes/);
+  assert.match(doc, /edit, diagnose, fix, rebuild, run, and return loop/);
   assert.match(doc, /one loaded source buffer or a simple\s+sequential TEC-FS source stream/);
   assert.match(doc, /should not require a general project graph,\s+directory scan, recursive include resolver, host-style build directory, or\s+profile preprocessor/);
   assert.match(doc, /one binary record plus a\s+minimal map record/);

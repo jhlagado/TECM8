@@ -46,13 +46,15 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(runner, /service registry dispatched GLCD boundary entry/);
   assert.match(runner, /service registry dispatched shell entry/);
   assert.match(runner, /shell command loop classified asm action/);
+  assert.match(runner, /shell asm command reports missing source buffer/);
   assert.match(runner, /shell command loop rejected profile namespace/);
   assert.match(runner, /shell command loop accepted blank command/);
   assert.match(runner, /shell blank command cleared stale target low byte/);
   assert.match(runner, /shell blank command cleared result low byte/);
   assert.match(runner, /shell blank command cleared descriptor kind/);
   assert.match(runner, /shell blank command cleared descriptor path low byte/);
-  assert.match(runner, /shell edit leaves result low byte at none/);
+  assert.match(runner, /shell edit reports file error without a catalogue buffer/);
+  assert.match(runner, /shell edit reports the TEC-FS bad-buffer detail/);
   assert.match(runner, /shell status buffer third byte/);
   assert.match(runner, /shell status buffer leaves previous fifth byte clear/);
   assert.match(runner, /farJump did not return to caller/);

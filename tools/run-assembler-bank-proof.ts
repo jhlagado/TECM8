@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Assemble and run the TecMate bank-7 assembler service skeleton proof in Debug80.
+ * Assemble and run the TecMate self-hosted assembler and bounded runner proof in Debug80.
  */
 
 const { readFileSync, writeFileSync } = require('node:fs');
@@ -13,7 +13,7 @@ const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-p
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-proof-last-run.json');
 const MONITOR_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const EXPANSION_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
-const APP_START = 0x4000;
+const APP_START = 0x2000;
 const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
@@ -191,22 +191,32 @@ async function main(): Promise<void> {
   const params = readTrace(runtime, paramBase, 8);
   const runParams = readTrace(runtime, runParamBase, 8);
 
+  if (result !== PROOF_PASS) {
+    console.error({
+      result,
+      params,
+      runParams,
+      asmState: readTrace(runtime, 0x3c80, 32),
+      shellState: readTrace(runtime, 0x3ba0, 16),
+      output: readTrace(runtime, 0x5000, 16),
+    });
+  }
   assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');
-  assertEqual(params[0], 0x5a, 'assembler status preserved after unknown selector');
-  assertEqual(params[1], 0xa5, 'assembler last error preserved after unknown selector');
+  assertEqual(params[0], 0x00, 'assembler final status');
+  assertEqual(params[1], 0x00, 'assembler final error');
   assertEqual(params[2], 0x07, 'assembler service bank');
   assertEqual(params[3], 0x01, 'assembler service version');
   assertEqual(params[4], 0xab, 'assembler target descriptor low byte');
   assertEqual(params[5], 0x3b, 'assembler shell target descriptor high byte');
-  assertEqual(params[6], 0x04, 'assembler shell result low byte');
+  assertEqual(params[6], 0x01, 'assembler shell result low byte');
   assertEqual(params[7], 0x00, 'assembler shell result high byte');
-  assertEqual(runParams[0], 0x5a, 'run status preserved after unknown selector');
-  assertEqual(runParams[1], 0xa5, 'run last error preserved after unknown selector');
+  assertEqual(runParams[0], 0x00, 'run final status');
+  assertEqual(runParams[1], 0x00, 'run final error');
   assertEqual(runParams[2], 0x08, 'run service bank');
   assertEqual(runParams[3], 0x01, 'run service version');
   assertEqual(runParams[4], 0xab, 'run shell target descriptor low byte');
   assertEqual(runParams[5], 0x3b, 'run shell target descriptor high byte');
-  assertEqual(runParams[6], 0x04, 'run shell result low byte');
+  assertEqual(runParams[6], 0x01, 'run shell result low byte');
   assertEqual(runParams[7], 0x00, 'run shell result high byte');
 
   writeFileSync(

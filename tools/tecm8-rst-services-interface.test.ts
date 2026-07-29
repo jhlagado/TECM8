@@ -140,7 +140,7 @@ test('TECM8 exact RST contracts are unique and intentionally scoped', () => {
 });
 
 test('TECM8 bank-local service selector families are unique and byte-sized', () => {
-  for (const prefix of ['VDU_SVC_', 'TMS_SVC_', 'TFS_SVC_', 'RTC_SVC_', 'GLC_SVC_', 'INP_SVC_', 'ASM_SVC_', 'RUN_SVC_']) {
+  for (const prefix of ['VDU_SVC_', 'TMS_SVC_', 'TFS_SVC_', 'RTC_SVC_', 'GLC_SVC_', 'EDT_SVC_', 'INP_SVC_', 'ASM_SVC_', 'RUN_SVC_']) {
     const entries = equatesWithPrefix(prefix);
     assert.ok(entries.length > 0, `${prefix} should define bank-local selectors`);
     assertUniqueSelectors(entries, prefix);
@@ -190,6 +190,9 @@ test('TECM8 bank-local dispatchers mention every selector they expose', () => {
     assertAdjacentDispatch(bank3, name, 'bank3');
   }
   for (const name of equatesWithPrefix('GLC_SVC_').map((entry) => entry.name)) {
+    assertAdjacentDispatch(bank4, name, 'bank4');
+  }
+  for (const name of equatesWithPrefix('EDT_SVC_').map((entry) => entry.name)) {
     assertAdjacentDispatch(bank4, name, 'bank4');
   }
   for (const name of equatesWithPrefix('INP_SVC_').map((entry) => entry.name)) {
