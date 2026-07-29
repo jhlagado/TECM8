@@ -252,12 +252,13 @@ first shell verbs: `edit`, `asm`, `run`, and `dir`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
 at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
-target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`,
-leaves the target pointer and flags clear, calls the bank-2
-`TFS_SVC_SUMMARIZE_CATALOG`, `TFS_SVC_NEXT_CATALOG`, and
-`TFS_SVC_SUMMARIZE_CATALOG` services, restores the original catalogue pointer,
-and publishes `SHL_RESULT_OK` with the two-slot count in
-`SHL_PARAM_COMMAND_RESULT_HI`. A blank command is a successful no-op: it leaves
+target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`.
+With the normal SD driver installed, bare `dir` lists `/src`, while
+`dir /prefix` lists an explicit bounded prefix through `TFS_SVC_LIST_PATH`.
+The newline-separated visible names are placed in the editor workspace and the
+count is published in `SHL_PARAM_COMMAND_RESULT_HI`; leading-dot backup names
+are hidden. The RAM proof bridge retains the original two-resident-slot
+summary path for compatibility. A blank command is a successful no-op: it leaves
 `SHL_ACTION_NONE`, records length zero, keeps status OK, returns `A=80h`, and
 clears carry. `asm` calls the bank-7 two-pass assembler, `run` calls the bank-8
 validated loader/runner, and both commands copy the
@@ -278,8 +279,9 @@ the v1 shell command input slot.
 different UI questions. `SHL_RENDER_STATUS` maps the current command action to
 short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`. `SHL_RENDER_RESULT` maps
 `SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,
-`FILE`, `UNSUP`, or `NONE`. The monitor proof uses this to show that `dir` can
-both report the action `DIR` and then render the TEC-FS-backed result `OK`.
+`FILE`, `UNSUP`, or `NONE`. For a successful real-driver `dir`,
+`SHL_RENDER_RESULT` also writes up to sixteen returned filenames to TMS9918
+rows 5–20 before publishing `OK`.
 
 For the future assembler path, `SHL_PARAM_COMMAND_TARGET_LO/HI` is reserved for
 a pointer to the resolved command target or artifact descriptor, and
@@ -440,6 +442,8 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_COMMIT_SOURCE_META` (`13h`) | Implemented catalogue-size update and metadata-sector write. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_SAVE_ARTIFACT` (`14h`) | Implemented binary/map data and `TFM1` metadata writes. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_ARTIFACT` (`15h`) | Implemented executable metadata validation and binary load. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_FIND_PATH` (`16h`) | Implemented bounded prefix/catalogue path resolution. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LIST_PATH` (`17h`) | Implemented bounded visible-file listing for `/` or `/prefix`. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -479,6 +483,8 @@ TEC-FS routine.
 | `TFS_SVC_COMMIT_SOURCE_META` | `13h` | Updates the catalogue byte size and writes the metadata sector. |
 | `TFS_SVC_SAVE_ARTIFACT` | `14h` | Writes one bounded binary or map artifact and its metadata. |
 | `TFS_SVC_LOAD_ARTIFACT` | `15h` | Validates binary metadata and loads the executable into its declared range. |
+| `TFS_SVC_FIND_PATH` | `16h` | Resolves `/name` or `/prefix/name` through the real TM8 prefix/catalogue sectors. |
+| `TFS_SVC_LIST_PATH` | `17h` | Produces a bounded newline-separated list of visible local names in `/` or `/prefix`. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -489,9 +495,9 @@ TEC-FS implementation state:
 
 | State | Services | Meaning |
 | --- | --- | --- |
-| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
+| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
 | Stubbed/reserved services | `LOAD_RANGE`, `SAVE_RANGE` | Service numbers are reserved and return unsupported. |
-| Deferred filesystem work | allocator, multi-sector catalogue scan, filename/prefix lookup, long-name storage, file create/delete/rename, transaction commit, PC repair/import utility | Not part of the current ROM proof and must not be implied by `dir`. |
+| Deferred filesystem work | allocator, long-name storage, file create/delete/rename, general transaction journal, PC repair/import utility | Not part of the current ROM directory proof. |
 
 Current TEC-FS geometry:
 
@@ -844,6 +850,22 @@ regions for `TFS_PARAM_PATH_LO/HI`, accepting `/name` and `/prefix/name`. A
 successful lookup copies the 64-byte entry to `TFS_CATALOG_BUFFER` at `3D00h`
 and remembers its sector and slot. Source saves write data pages before
 read-modify-writing that exact catalogue sector.
+
+`TFS_SVC_LIST_PATH` (`17h`) accepts `/` or `/prefix` through
+`TFS_PARAM_PATH_LO/HI`; a null path pointer selects `/src`. It scans the real
+catalogue, skips leading-dot names, and writes whole local names separated by
+newlines followed by a NUL. It never emits a partial name. If another name
+would exceed the destination capacity, it returns success with
+`TFS_LIST_FLAG_TRUNCATED` set.
+
+| List parameter | Direction | Meaning |
+| --- | --- | --- |
+| `TFS_PARAM_PATH_LO/HI` | in | NUL-terminated root or prefix path; zero selects `/src`. |
+| `TFS_PARAM_LIST_DEST_LO/HI` | in | Destination for the newline-separated, NUL-terminated list. |
+| `TFS_PARAM_LIST_CAP_LO/HI` | in | Total destination capacity including the final NUL. |
+| `TFS_PARAM_LIST_USED_LO/HI` | out | Bytes written including the final NUL. |
+| `TFS_PARAM_LIST_COUNT` | out | Number of complete visible names returned. |
+| `TFS_PARAM_LIST_FLAGS` | out | `TFS_LIST_FLAG_TRUNCATED` when more complete names existed than fitted. |
 
 TEC-FS status codes:
 

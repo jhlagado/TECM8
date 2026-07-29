@@ -130,19 +130,12 @@ A blank command line is a successful no-op. Pressing Enter at the prompt should
 clear stale command state and return to the prompt without reporting an unknown
 command.
 
-`dir` is the first storage-backed shell command. In the current ROM increment it
-does not walk a full directory yet. It calls the bank-2 TEC-FS one-slot summary
-primitive, advances once with `TFS_SVC_NEXT_CATALOG`, summarizes the second
-slot, restores the original catalogue pointer, leaves the target descriptor
-clear, returns `SHL_RESULT_OK` on success, and stores the two-slot count in
-`SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS handoff before
-the real multi-entry catalogue reader is linked in.
-
-The current catalogue buffer is deliberately explicit: before `dir` is called,
-`TFS_PARAM_BUFFER_LO/HI` must point at two adjacent 64-byte TM8 v1 catalogue
-slots in RAM. Inactive slots contribute zero to the count and are not file
-errors. This keeps the ROM path tiny while the later sector reader and real
-iterator are still absent.
+`dir` is the first storage-backed shell command. With the normal SD driver
+installed, `dir` defaults to `/src`; `dir /prefix` selects another bounded
+prefix. Bank 2 scans the real TM8 prefix and catalogue
+sectors, hides leading-dot backup names, and returns newline-separated local
+names for the shell to render. The deterministic RAM proof bridge preserves
+the earlier two-adjacent-slot summary behavior so old ABI proofs remain useful.
 
 ## Proved ROM Checkpoint Matrix
 
@@ -153,7 +146,7 @@ iterator are still absent.
 | `edit` | banks 0/4/6/2/5/1 | `EDIT` | `OK` | Runs the interactive multi-page editor, explicit save/discard flow, and returns safely to the shell. |
 | `asm` | banks 7/2/5 | `ASM` | `BUILD`, then `OK` | Reports a source-record diagnostic, then emits binary/map data and metadata after the proof fixes the source. |
 | `run` | banks 8/2/5 | `RUN` | `FILE`, then `OK` | Rejects a missing artifact, then validates, loads, executes, and returns after the successful build. |
-| `dir` | bank 2 TEC-FS | `DIR` | `OK` | Reads two explicit catalogue slots and returns count 2. |
+| `dir` | banks 0/2/5/1 | `DIR` | `OK` | Walks `/src` on the real SD image, hides a dot backup, returns two names, and renders them on TMS9918 rows. |
 | unknown | bank 0 shell | `ERRCMD` | `NONE` | Rejects the command and keeps target/result fields clear. |
 | `dir` bad buffer | bank 2 TEC-FS | n/a | `FILE` | Bad catalogue buffer pointer is reported as a file/storage error. |
 
@@ -184,9 +177,10 @@ should not replace the general `edit`, `asm`, and `run` commands. Instead, they
 should layer on the same project, assembler, runner, VDU, input, TEC-FS, and
 debugger services once those services exist.
 
-The current bank-0 `SHL_RUN_COMMAND` boundary still classifies only exact
-single-word `edit`, `asm`, `run`, and `dir`. It should reject `game` until a real
-multi-word shell parser and game tool dispatcher are implemented.
+The current bank-0 `SHL_RUN_COMMAND` boundary recognises the short `edit`,
+`asm`, `run`, and `dir` commands plus bounded absolute arguments for `edit` and
+`dir`. It still rejects `game` and `profile` until a real multi-word shell
+parser and tool dispatcher are implemented.
 
 ## Future Profile Command Surface
 
@@ -259,13 +253,15 @@ For the ROM MVP, bank 0 only decides these shapes:
 edit -> project-main target descriptor
 asm  -> project-main target descriptor, then bank 7
 run  -> project-output target descriptor, then bank 8
-dir  -> bank 2 catalogue summary service
+dir [absolute-prefix] -> bank 2 bounded catalogue-list service
 ```
 
-Path arguments, project defaults loaded from `/tecm8.prj`, long names, virtual
-folders, and catalogue scanning belong to the editor, TEC-FS, project loader, or
-future profile tools. If a feature needs more than exact word classification,
-it should move behind a banked service instead of expanding the bank-0 parser.
+Bank 0 only recognises the optional argument shape and copies its bounded bytes;
+bank 2 owns prefix/path validation and catalogue scanning. Project defaults
+loaded from `/tecm8.prj`, long names, virtual folders, and semantic filename
+resolution belong to the editor, TEC-FS, project loader, or future profile
+tools. If a feature needs more than this bounded dispatch shape, it should move
+behind a banked service instead of expanding the bank-0 parser.
 
 ## `edit`
 

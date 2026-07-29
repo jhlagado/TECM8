@@ -157,10 +157,12 @@ npm run proof:tecfs-mon3-file
 ```
 
 It builds a FAT32 Debug80 image containing a formatted `VOLUME.TM8`, resolves
-the source through bank 2, edits and saves through the bank-4 TMS9918 editor,
-reopens it through the ROM services, and checks the changed record directly in
-the host-side image. Normal boot selects the real bank-5 driver; the RAM bridge
-is retained when a fast proof explicitly selects `8000h`.
+two visible `/src` files through bank 2, hides a dot-prefixed backup, and proves
+that `DIR /src` renders both names on TMS9918 rows. It then edits and saves
+through the bank-4 TMS9918 editor, reopens through the ROM services, and checks
+the changed record directly in the host-side image. Normal boot selects the
+real bank-5 driver; the RAM bridge is retained when a fast proof explicitly
+selects `8000h`.
 
 ## Completed Self-Hosted Build-And-Run Workflow
 

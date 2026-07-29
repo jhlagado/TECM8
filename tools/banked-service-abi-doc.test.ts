@@ -259,13 +259,14 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, `run`, and `dir`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC` for commands with resolved targets/);
   assert.match(doc, /`dir` records `SHL_ACTION_DIR`/);
-  assert.match(doc, /calls the bank-2\s+`TFS_SVC_SUMMARIZE_CATALOG`, `TFS_SVC_NEXT_CATALOG`, and\s+`TFS_SVC_SUMMARIZE_CATALOG` services/);
-  assert.match(doc, /restores the original catalogue pointer/);
-  assert.match(doc, /two-slot count in\s+`SHL_PARAM_COMMAND_RESULT_HI`/);
+  assert.match(doc, /bare `dir` lists `\/src`/);
+  assert.match(doc, /`dir \/prefix` lists an explicit bounded prefix through `TFS_SVC_LIST_PATH`/);
+  assert.match(doc, /leading-dot backup names\s+are hidden/);
+  assert.match(doc, /RAM proof bridge retains the original two-resident-slot\s+summary path/);
   assert.match(doc, /`SHL_RENDER_STATUS` and `SHL_RENDER_RESULT` are separate/);
   assert.match(doc, /maps the current command action to\s+short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`/);
   assert.match(doc, /maps\s+`SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,\s+`FILE`, `UNSUP`, or `NONE`/);
-  assert.match(doc, /leaves the target pointer and flags clear/);
+  assert.match(doc, /writes up to sixteen returned filenames to TMS9918\s+rows 5–20/);
   assert.match(doc, /blank command is a\s+successful no-op/);
   assert.match(doc, /leaves\s+`SHL_ACTION_NONE`, records length zero, keeps status OK/);
   assert.match(doc, /`asm` calls the bank-7 two-pass assembler/);
@@ -311,11 +312,24 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_NEXT_CATALOG` \(`0Fh`\) \| Implemented one-slot caller pointer advance/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_SOURCE` \(`10h`\) \| Implemented catalogue-to-bounded-source-page load/);
   assert.match(doc, /TEC-FS implementation state/);
-  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT` \|/);
+  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH` \|/);
   assert.match(doc, /Sector-backed calls still require an installed sector driver/);
   assert.match(doc, /\| Stubbed\/reserved services \| `LOAD_RANGE`, `SAVE_RANGE` \| Service numbers are reserved and return unsupported\. \|/);
-  assert.match(doc, /\| Deferred filesystem work \| allocator, multi-sector catalogue scan, filename\/prefix lookup, long-name storage, file create\/delete\/rename, transaction commit, PC repair\/import utility \|/);
-  assert.match(doc, /Not part of the current ROM proof and must not be implied by `dir`/);
+  assert.match(doc, /\| Deferred filesystem work \| allocator, long-name storage, file create\/delete\/rename, general transaction journal, PC repair\/import utility \|/);
+  assert.match(doc, /Not part of the current ROM directory proof/);
+  assert.match(doc, /`TFS_SVC_LIST_PATH` \(`17h`\) accepts `\/` or `\/prefix`/);
+  assert.match(doc, /a null path pointer selects `\/src`/);
+  assert.match(doc, /It never emits a partial name/);
+  for (const name of [
+    'TFS_PARAM_LIST_DEST_LO/HI',
+    'TFS_PARAM_LIST_CAP_LO/HI',
+    'TFS_PARAM_LIST_USED_LO/HI',
+    'TFS_PARAM_LIST_COUNT',
+    'TFS_PARAM_LIST_FLAGS',
+    'TFS_LIST_FLAG_TRUNCATED',
+  ]) {
+    assert.match(doc, new RegExp(name.replace('/', '\\/')));
+  }
 
   for (const name of [
     'TFS_ENTRY',

@@ -184,8 +184,8 @@ Tecm8ShellRunCommand:
         jp z,Tecm8ShellRunCheckThree
         cp 0x04
         jp z,Tecm8ShellRunCheckFour
-        cp 0x06
-        jp nc,Tecm8ShellRunCheckEditPath
+        cp 0x05
+        jp nc,Tecm8ShellRunCheckPathCommand
         jp Tecm8ShellRunUnknown
 
 Tecm8ShellRunCheckThree:
@@ -216,7 +216,7 @@ Tecm8ShellRunCheckDir:
         ld a,(SHL_COMMAND_BUFFER+2)
         and 0xDF
         cp "R"
-        jp z,Tecm8ShellRunDir
+        jp z,Tecm8ShellRunDirDefault
         jp Tecm8ShellRunUnknown
 Tecm8ShellRunCheckRun:
         ld a,(SHL_COMMAND_BUFFER+1)
@@ -253,6 +253,15 @@ Tecm8ShellRunEdit:
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
         call Tecm8ShellPublishTarget
         jp Tecm8ShellLaunchEditor
+
+Tecm8ShellRunCheckPathCommand:
+        ld a,(SHL_COMMAND_BUFFER)
+        and 0xDF
+        cp "D"
+        jp z,Tecm8ShellRunCheckDirPath
+        cp "E"
+        jp z,Tecm8ShellRunCheckEditPath
+        jp Tecm8ShellRunUnknown
 
 Tecm8ShellRunCheckEditPath:
         ld a,(SHL_COMMAND_BUFFER)
@@ -312,6 +321,41 @@ Tecm8ShellLaunchEditor:
         ld a,0x80
         or a
         ret
+
+Tecm8ShellRunCheckDirPath:
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "I"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "R"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+3)
+        cp " "
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+4)
+        cp "/"
+        jp nz,Tecm8ShellRunUnknown
+        ld hl,SHL_COMMAND_BUFFER+4
+        ld de,SHL_TARGET_PATH_BUFFER
+        ld b,SHL_TARGET_PATH_CAPACITY-1
+Tecm8ShellCopyDirPath:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jp z,Tecm8ShellDirPathReady
+        dec b
+        jp nz,Tecm8ShellCopyDirPath
+        xor a
+        ld (de),a
+Tecm8ShellDirPathReady:
+        ld hl,SHL_TARGET_PATH_BUFFER
+        ld (TFS_PARAM_PATH_LO),hl
+        jp Tecm8ShellRunDir
+
 Tecm8ShellRunAsm:
         ld a,SHL_ACTION_ASM
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
@@ -338,10 +382,37 @@ Tecm8ShellRunRun:
         ld a,0x80
         or a
         ret
+Tecm8ShellRunDirDefault:
+        xor a
+        ld (TFS_PARAM_PATH_LO),a
+        ld (TFS_PARAM_PATH_HI),a
 Tecm8ShellRunDir:
         ld a,SHL_ACTION_DIR
         ld (SHL_PARAM_COMMAND_ACTION),a
         ld (SHL_TARGET_ACTION),a
+        ld hl,(TFS_PARAM_DRIVER_ADDR_LO)
+        ld a,h
+        cp TFS_MON3_FILE_DRIVER / 256
+        jp nz,Tecm8ShellRunDirResident
+        ld a,l
+        cp TFS_MON3_FILE_DRIVER & 0xFF
+        jp nz,Tecm8ShellRunDirResident
+        ld hl,EDT_BUFFER_BASE
+        ld (TFS_PARAM_LIST_DEST_LO),hl
+        ld hl,EDT_BUFFER_BYTES
+        ld (TFS_PARAM_LIST_CAP_LO),hl
+        or a
+        .expectout A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_LIST_PATH
+        jp c,Tecm8ShellPublishDirError
+        ld a,(TFS_PARAM_LIST_COUNT)
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,SHL_RESULT_OK
+        ld (SHL_PARAM_COMMAND_RESULT_LO),a
+        ld a,0x80
+        or a
+        ret
+Tecm8ShellRunDirResident:
         ld hl,(TFS_PARAM_BUFFER_LO)
         push hl
         .expectout A,carry
@@ -459,6 +530,9 @@ Tecm8ShellPublishDirStatus:
         jp Tecm8ShellPublishStatusFromHl
 
 Tecm8ShellRenderCommandResult:
+        ld a,(SHL_PARAM_COMMAND_ACTION)
+        cp SHL_ACTION_DIR
+        jp z,Tecm8ShellRenderDirResult
         ld a,(SHL_PARAM_COMMAND_RESULT_LO)
         cp SHL_RESULT_OK
         jp z,Tecm8ShellPublishOkResult
@@ -485,6 +559,87 @@ Tecm8ShellPublishUnsupportedResult:
 Tecm8ShellPublishNoneResult:
         ld hl,Tecm8ShellNoneResultText
         jp Tecm8ShellPublishStatusFromHl
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellRenderDirResult:
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_OK
+        jp nz,Tecm8ShellPublishFileResult
+        call Tecm8ShellRenderDirRows
+        ret c
+        jp Tecm8ShellPublishOkResult
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellRenderDirRows:
+        ld hl,EDT_BUFFER_BASE
+        ld (TFS_LIST_WORK_PTR_LO),hl
+        ld a,0x05
+        ld (TFS_LIST_ROW),a
+        ld a,(TFS_PARAM_LIST_COUNT)
+        or a
+        jp z,Tecm8ShellRenderDirEmpty
+        cp 0x11
+        jp c,Tecm8ShellRenderDirCountReady
+        ld a,0x10
+Tecm8ShellRenderDirCountReady:
+        ld (TFS_LIST_ROWS_LEFT),a
+Tecm8ShellRenderDirNext:
+        call Tecm8ShellCopyDirLine
+        ld a,(TFS_LIST_ROW)
+        ld hl,SHL_LINE_BUFFER
+        call Tecm8ShellWriteHomeLine
+        ret c
+        ld a,(TFS_LIST_ROW)
+        inc a
+        ld (TFS_LIST_ROW),a
+        ld a,(TFS_LIST_ROWS_LEFT)
+        dec a
+        ld (TFS_LIST_ROWS_LEFT),a
+        jp nz,Tecm8ShellRenderDirNext
+        xor a
+        ret
+Tecm8ShellRenderDirEmpty:
+        ld a,0x05
+        ld hl,Tecm8ShellEmptyDirText
+        jp Tecm8ShellWriteHomeLine
+
+.routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellCopyDirLine:
+        ld hl,SHL_LINE_BUFFER
+        ld de,SHL_LINE_BUFFER+1
+        ld bc,SHL_LINE_CAPACITY-2
+        ld a," "
+        ld (hl),a
+        ldir
+        xor a
+        ld (de),a
+        ld hl,(TFS_LIST_WORK_PTR_LO)
+        ld de,SHL_LINE_BUFFER
+        ld b,SHL_LINE_CAPACITY-1
+Tecm8ShellCopyDirLineNext:
+        ld a,(hl)
+        or a
+        jp z,Tecm8ShellCopyDirLineDone
+        cp 0x0A
+        jp z,Tecm8ShellCopyDirLineNewline
+        ld (de),a
+        inc hl
+        inc de
+        dec b
+        jp nz,Tecm8ShellCopyDirLineNext
+Tecm8ShellCopyDirLineDiscard:
+        ld a,(hl)
+        or a
+        jp z,Tecm8ShellCopyDirLineDone
+        inc hl
+        cp 0x0A
+        jp nz,Tecm8ShellCopyDirLineDiscard
+        jp Tecm8ShellCopyDirLineDone
+Tecm8ShellCopyDirLineNewline:
+        inc hl
+Tecm8ShellCopyDirLineDone:
+        ld (TFS_LIST_WORK_PTR_LO),hl
+        ret
 
 .routine in HL out A,B,zero clobbers sign,parity,halfCarry,C,H,L
 Tecm8ShellCommandLength:
@@ -666,6 +821,8 @@ Tecm8ShellInputEchoText:
         .db     "KEY:0000 JOY:00",0
 Tecm8ShellPromptText:
         .db     "> ",0
+Tecm8ShellEmptyDirText:
+        .db     "(empty)",0
 Tecm8ShellReadyStatusText:
         .db     "READY",0
 Tecm8ShellPollStatusText:

@@ -60,6 +60,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsLoadArtifactImpl
         cp TFS_SVC_FIND_PATH
         jp z,tecfsFindPathImpl
+        cp TFS_SVC_LIST_PATH
+        jp z,tecfsListPathImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -111,6 +113,9 @@ tecfsNextCatalog:
 
 tecfsFindPath:
         jp tecfsFindPathImpl
+
+tecfsListPath:
+        jp tecfsListPathImpl
 
 tecfsLoadSource:
         jp tecfsLoadSourceImpl
@@ -631,6 +636,186 @@ tecfsFindPathCatalog:
         ld (TFS_PARAM_LAST_ERROR),a
         ld a,0x82
         or a
+        ret
+
+; List visible local filenames in one bounded TM8 v1 prefix.
+; Input:
+;   TFS_PARAM_PATH_LO/HI      -> "/" or "/prefix"
+;   TFS_PARAM_LIST_DEST_LO/HI -> output buffer
+;   TFS_PARAM_LIST_CAP_LO/HI  -> capacity including the final NUL
+; Output:
+;   newline-separated local filenames, final NUL, count/used fields
+;   TFS_LIST_FLAG_TRUNCATED when another complete name would not fit
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsListPathImpl:
+        call tecfsListInitialize
+        ret c
+        call tecfsParseListPath
+        ret c
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        or a
+        jr z,tecfsListPathRoot
+        call tecfsFindPrefix
+        ret c
+        jr tecfsListPathCatalog
+tecfsListPathRoot:
+        ld (TFS_SCAN_PREFIX_ID),a
+tecfsListPathCatalog:
+        ld a,TFS_CATALOG_SECTOR
+        ld (TFS_SCAN_SECTOR),a
+        ld a,TFS_CATALOG_SECTORS
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsListPathSector:
+        call tecfsReadScanSector
+        ret c
+        xor a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+tecfsListPathEntry:
+        call tecfsCatalogEntryAddress
+        call tecfsListMaybeAppendEntry
+        jr c,tecfsListPathDone
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        inc a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+        cp TFS_CATALOG_ENTRIES_SECTOR
+        jr nz,tecfsListPathEntry
+        call tecfsAdvanceScanSector
+        jr nz,tecfsListPathSector
+tecfsListPathDone:
+        xor a
+        call tecfsListAppendByte
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,H,L
+tecfsListInitialize:
+        xor a
+        ld (TFS_PARAM_LIST_USED_LO),a
+        ld (TFS_PARAM_LIST_USED_HI),a
+        ld (TFS_PARAM_LIST_COUNT),a
+        ld (TFS_PARAM_LIST_FLAGS),a
+        ld hl,(TFS_PARAM_LIST_DEST_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld (TFS_LIST_WORK_PTR_LO),hl
+        ld hl,(TFS_PARAM_LIST_CAP_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadBuffer
+        ld (TFS_LIST_REMAINING_LO),hl
+        ld hl,(TFS_LIST_WORK_PTR_LO)
+        xor a
+        ld (hl),a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L
+tecfsParseListPath:
+        ld hl,(TFS_PARAM_PATH_LO)
+        ld a,h
+        or l
+        jr nz,tecfsParseListPathHavePath
+        ld hl,TecfsDefaultListPath
+tecfsParseListPathHavePath:
+        ld a,(hl)
+        cp "/"
+        jp nz,tecfsBadPath
+        inc hl
+        ld (TFS_SCAN_PREFIX_PTR),hl
+        ld b,0
+tecfsParseListPathNext:
+        ld a,(hl)
+        or a
+        jr z,tecfsParseListPathDone
+        cp "/"
+        jp z,tecfsBadPath
+        inc b
+        ld a,b
+        cp TFS_PREFIX_NAME_BYTES+1
+        jp nc,tecfsBadPath
+        inc hl
+        jr tecfsParseListPathNext
+tecfsParseListPathDone:
+        ld a,b
+        ld (TFS_SCAN_PREFIX_LEN),a
+        xor a
+        ret
+
+TecfsDefaultListPath:
+        .db     "/src",0
+
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsListMaybeAppendEntry:
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jr nz,tecfsListEntrySkipped
+        inc hl
+        inc hl
+        ld a,(TFS_SCAN_PREFIX_ID)
+        cp (hl)
+        jr nz,tecfsListEntrySkipped
+        inc hl
+        ld a,(hl)
+        or a
+        jr z,tecfsListEntrySkipped
+        cp TFS_CATALOG_NAME_BYTES+1
+        jr nc,tecfsListEntrySkipped
+        ld b,a
+        inc hl
+        ld a,(hl)
+        cp "."
+        jr z,tecfsListEntrySkipped
+        push hl
+        call tecfsListHasRoomForName
+        pop hl
+        jr c,tecfsListEntryTruncated
+tecfsListCopyName:
+        ld a,(hl)
+        push hl
+        call tecfsListAppendByte
+        pop hl
+        inc hl
+        djnz tecfsListCopyName
+        ld a,0x0A
+        call tecfsListAppendByte
+        ld a,(TFS_PARAM_LIST_COUNT)
+        inc a
+        ld (TFS_PARAM_LIST_COUNT),a
+tecfsListEntrySkipped:
+        or a
+        ret
+tecfsListEntryTruncated:
+        ld a,TFS_LIST_FLAG_TRUNCATED
+        ld (TFS_PARAM_LIST_FLAGS),a
+        scf
+        ret
+
+.routine in B out A,carry,zero clobbers sign,parity,halfCarry,D,E,H,L
+tecfsListHasRoomForName:
+        ld hl,(TFS_LIST_REMAINING_LO)
+        ld d,0
+        ld e,b
+        inc de
+        inc de
+        or a
+        sbc hl,de
+        ret
+
+.routine in A out A,zero clobbers sign,parity,halfCarry,D,E,H,L
+tecfsListAppendByte:
+        ld de,(TFS_LIST_WORK_PTR_LO)
+        ld (de),a
+        inc de
+        ld (TFS_LIST_WORK_PTR_LO),de
+        ld hl,(TFS_LIST_REMAINING_LO)
+        dec hl
+        ld (TFS_LIST_REMAINING_LO),hl
+        ld hl,(TFS_PARAM_LIST_USED_LO)
+        inc hl
+        ld (TFS_PARAM_LIST_USED_LO),hl
         ret
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L

@@ -15,8 +15,10 @@ PROOF_FAIL_CONTENT  .equ    0xE3
 PROOF_FAIL_SAVE     .equ    0xE4
 PROOF_FAIL_COMMIT   .equ    0xE5
 PROOF_FAIL_REOPEN   .equ    0xE6
+PROOF_FAIL_LIST     .equ    0xE8
 PROOF_RESULT        .equ    0x3A10
 PROOF_PHASE         .equ    0x3A11
+PROOF_LIST_BUFFER   .equ    0x5800
 
 .routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 Start:
@@ -31,6 +33,13 @@ Start:
 
         ld a,1
         ld (PROOF_PHASE),a
+        call ProofListDirectory
+        jp c,FailList
+
+        ld hl,ProofPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,2
+        ld (PROOF_PHASE),a
         ld a,TFS_SVC_FIND_PATH
         farCall TFS_BANK,TFS_ENTRY
         jp c,FailFind
@@ -39,7 +48,7 @@ Start:
         ld (TFS_PARAM_LOAD_DEST_LO),hl
         ld hl,EDT_BUFFER_BYTES
         ld (TFS_PARAM_LOAD_BYTES_LO),hl
-        ld a,2
+        ld a,3
         ld (PROOF_PHASE),a
         ld a,TFS_SVC_LOAD_SOURCE
         farCall TFS_BANK,TFS_ENTRY
@@ -58,12 +67,12 @@ Start:
         ld (TFS_PARAM_SOURCE_PAGE),a
         ld hl,EDT_BUFFER_BASE
         ld (TFS_PARAM_LOAD_DEST_LO),hl
-        ld a,3
+        ld a,4
         ld (PROOF_PHASE),a
         ld a,TFS_SVC_SAVE_SOURCE_PAGE
         farCall TFS_BANK,TFS_ENTRY
         jp c,FailSave
-        ld a,4
+        ld a,5
         ld (PROOF_PHASE),a
         ld a,TFS_SVC_COMMIT_SOURCE_META
         farCall TFS_BANK,TFS_ENTRY
@@ -73,7 +82,7 @@ Start:
         ld (EDT_BUFFER_BASE+1),a
         ld hl,ProofPath
         ld (TFS_PARAM_PATH_LO),hl
-        ld a,5
+        ld a,6
         ld (PROOF_PHASE),a
         ld a,TFS_SVC_FIND_PATH
         farCall TFS_BANK,TFS_ENTRY
@@ -82,7 +91,7 @@ Start:
         ld (TFS_PARAM_LOAD_DEST_LO),hl
         ld hl,EDT_BUFFER_BYTES
         ld (TFS_PARAM_LOAD_BYTES_LO),hl
-        ld a,6
+        ld a,7
         ld (PROOF_PHASE),a
         ld a,TFS_SVC_LOAD_SOURCE
         farCall TFS_BANK,TFS_ENTRY
@@ -137,11 +146,107 @@ Start:
         cp "X"
         jp nz,FailEditor
 
+        call ProofShellDirectory
+        jp c,FailList
+
         ld a,PROOF_PASS
         ld (PROOF_RESULT),a
-        ld a,7
+        ld a,8
         ld (PROOF_PHASE),a
         halt
+
+ProofListDirectory:
+        ld hl,ProofDirPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld hl,PROOF_LIST_BUFFER
+        ld (TFS_PARAM_LIST_DEST_LO),hl
+        ld hl,0x0100
+        ld (TFS_PARAM_LIST_CAP_LO),hl
+        ld a,TFS_SVC_LIST_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        ret c
+        ld a,(TFS_PARAM_LIST_COUNT)
+        cp 2
+        scf
+        ret nz
+        ld hl,PROOF_LIST_BUFFER
+        ld de,ProofExpectedList
+ProofCheckList:
+        ld a,(de)
+        cp (hl)
+        scf
+        ret nz
+        inc de
+        inc hl
+        or a
+        jr nz,ProofCheckList
+        ld hl,(TFS_PARAM_LIST_USED_LO)
+        ld de,19
+        or a
+        sbc hl,de
+        scf
+        ret nz
+
+        ; A short destination must report truncation without copying a
+        ; partial first name or touching the next byte.
+        ld a,0xA5
+        ld (PROOF_LIST_BUFFER+1),a
+        ld hl,ProofDirPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld hl,PROOF_LIST_BUFFER
+        ld (TFS_PARAM_LIST_DEST_LO),hl
+        ld hl,5
+        ld (TFS_PARAM_LIST_CAP_LO),hl
+        ld a,TFS_SVC_LIST_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        ret c
+        ld a,(TFS_PARAM_LIST_COUNT)
+        or a
+        scf
+        ret nz
+        ld a,(TFS_PARAM_LIST_FLAGS)
+        cp TFS_LIST_FLAG_TRUNCATED
+        scf
+        ret nz
+        ld hl,(TFS_PARAM_LIST_USED_LO)
+        ld de,1
+        or a
+        sbc hl,de
+        scf
+        ret nz
+        ld a,(PROOF_LIST_BUFFER)
+        or a
+        scf
+        ret nz
+        ld a,(PROOF_LIST_BUFFER+1)
+        cp 0xA5
+        scf
+        ret nz
+        or a
+        ret
+
+ProofShellDirectory:
+        ld a,SHL_BANK
+        farCall SHL_BANK,EXP_BANK0_INSTALL
+        ld hl,ProofDirCommand
+        ld de,SHL_COMMAND_BUFFER
+        ld bc,ProofDirCommandEnd-ProofDirCommand
+        ldir
+        callService SHL_RUN_COMMAND
+        ret c
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_OK
+        scf
+        ret nz
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        cp 2
+        scf
+        ret nz
+        ld a,VDU_SVC_INIT
+        farCall VDU_BANK,VDU_ENTRY
+        ret c
+        callService SHL_RENDER_RESULT
+        ret
 
 FailFind:
         ld a,PROOF_FAIL_FIND
@@ -161,6 +266,9 @@ FailCommit:
 FailReopen:
         ld a,PROOF_FAIL_REOPEN
         jr Fail
+FailList:
+        ld a,PROOF_FAIL_LIST
+        jr Fail
 FailEditor:
         ld a,0xE7
 Fail:
@@ -169,6 +277,13 @@ Fail:
 
 ProofPath:
         .db     "/src/main.asm",0
+ProofDirPath:
+        .db     "/src",0
+ProofExpectedList:
+        .db     "main.asm",0x0A,"util.asm",0x0A,0
+ProofDirCommand:
+        .db     "DIR /src",0
+ProofDirCommandEnd:
 
 ProofTarget:
         .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH

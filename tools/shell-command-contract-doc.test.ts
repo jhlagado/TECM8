@@ -19,9 +19,10 @@ test('shell command contract keeps v1 short commands small', () => {
   assert.match(doc, /They are not stored in `\/tecm8\.prj`/);
   assert.match(doc, /A blank command line is a successful no-op/);
   assert.match(doc, /return to the prompt without reporting an unknown\s+command/);
-  assert.match(doc, /`TFS_PARAM_BUFFER_LO\/HI` must point at two adjacent 64-byte TM8 v1 catalogue\s+slots in RAM/);
-  assert.match(doc, /Inactive slots contribute zero to the count and are not file\s+errors/);
-  assert.match(doc, /keeps the\s+ROM path tiny/);
+  assert.match(doc, /`dir` defaults to `\/src`; `dir \/prefix`\s+selects another bounded\s+prefix/);
+  assert.match(doc, /scans the real TM8 prefix and catalogue\s+sectors/);
+  assert.match(doc, /hides leading-dot backup names/);
+  assert.match(doc, /RAM proof bridge preserves\s+the earlier two-adjacent-slot summary behavior/);
 });
 
 test('shell command contract pins the proved ROM checkpoint matrix', () => {
@@ -30,7 +31,7 @@ test('shell command contract pins the proved ROM checkpoint matrix', () => {
   assert.match(doc, /\| `edit` \| banks 0\/4\/6\/2\/5\/1 \| `EDIT` \| `OK` \| Runs the interactive multi-page editor, explicit save\/discard flow, and returns safely to the shell\. \|/);
   assert.match(doc, /\| `asm` \| banks 7\/2\/5 \| `ASM` \| `BUILD`, then `OK` \| Reports a source-record diagnostic, then emits binary\/map data and metadata after the proof fixes the source\. \|/);
   assert.match(doc, /\| `run` \| banks 8\/2\/5 \| `RUN` \| `FILE`, then `OK` \| Rejects a missing artifact, then validates, loads, executes, and returns after the successful build\. \|/);
-  assert.match(doc, /\| `dir` \| bank 2 TEC-FS \| `DIR` \| `OK` \| Reads two explicit catalogue slots and returns count 2\. \|/);
+  assert.match(doc, /\| `dir` \| banks 0\/2\/5\/1 \| `DIR` \| `OK` \| Walks `\/src` on the real SD image, hides a dot backup, returns two names, and renders them on TMS9918 rows\. \|/);
   assert.match(doc, /\| unknown \| bank 0 shell \| `ERRCMD` \| `NONE` \| Rejects the command and keeps target\/result fields clear\. \|/);
   assert.match(doc, /\| `dir` bad buffer \| bank 2 TEC-FS \| n\/a \| `FILE` \| Bad catalogue buffer pointer is reported as a file\/storage error\. \|/);
   assert.match(doc, /This matrix is the MVP shell contract with the persistent bounded editor and\s+TEC-FS source read\/write path present/);
@@ -56,9 +57,10 @@ test('shell command contract keeps bank 0 as a compact classifier', () => {
   assert.match(doc, /edit -> project-main target descriptor/);
   assert.match(doc, /asm\s+-> project-main target descriptor, then bank 7/);
   assert.match(doc, /run\s+-> project-output target descriptor, then bank 8/);
-  assert.match(doc, /dir\s+-> bank 2 catalogue summary service/);
-  assert.match(doc, /Path arguments, project defaults loaded from `\/tecm8\.prj`, long names, virtual\s+folders, and catalogue scanning belong to the editor, TEC-FS, project loader, or\s+future profile tools/);
-  assert.match(doc, /move behind a banked service instead of expanding the bank-0 parser/);
+  assert.match(doc, /dir \[absolute-prefix\] -> bank 2 bounded catalogue-list service/);
+  assert.match(doc, /Bank 0 only recognises the optional argument shape and copies its bounded bytes/);
+  assert.match(doc, /bank 2 owns prefix\/path validation and catalogue scanning/);
+  assert.match(doc, /should move\s+behind a banked service instead of expanding the bank-0 parser/);
 
   assert.match(bank0, /cp 0x03[\s\S]*jp z,Tecm8ShellRunCheckThree/);
   assert.match(bank0, /cp 0x04[\s\S]*jp z,Tecm8ShellRunCheckFour/);
@@ -66,6 +68,7 @@ test('shell command contract keeps bank 0 as a compact classifier', () => {
   assert.match(bank0, /callBankService RUN_BANK,RUN_ENTRY,RUN_SVC_RUN/);
   assert.match(bank0, /callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SUMMARIZE_CATALOG/);
   assert.match(bank0, /callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_NEXT_CATALOG/);
+  assert.match(bank0, /callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_LIST_PATH/);
   assert.doesNotMatch(bank0, /tecm8\.prj|\.asm\b|\.bin\b|\/src|\/build|PATH_SEPARATOR|CATALOG_SCAN/i);
   assert.doesNotMatch(bank0, /TFS_SVC_READ|TFS_SVC_WRITE|TFS_SVC_FORMAT_META_RECORD|TFS_SVC_PATCH_META_RECORD/);
 });
@@ -110,12 +113,8 @@ test('shell command contract reserves game command namespace without enabling it
   assert.match(doc, /profile clean/);
   assert.match(doc, /placeholders for the later game runtime\/tool profile/);
   assert.match(doc, /should not replace the general `edit`, `asm`, and `run` commands/);
-  assert.match(doc, /`SHL_RUN_COMMAND` boundary still classifies only exact\s+single-word `edit`, `asm`, `run`, and `dir`/);
-  assert.match(doc, /dir\s+-> current volume catalogue summary/);
-  assert.match(doc, /calls the bank-2 TEC-FS one-slot summary\s+primitive/);
-  assert.match(doc, /advances once with `TFS_SVC_NEXT_CATALOG`/);
-  assert.match(doc, /stores the two-slot count in\s+`SHL_PARAM_COMMAND_RESULT_HI`/);
-  assert.match(doc, /It should reject `game` until a real\s+multi-word shell parser and game tool dispatcher are implemented/);
+  assert.match(doc, /recognises the short `edit`,\s+`asm`, `run`, and `dir` commands plus bounded absolute arguments for `edit` and\s+`dir`/);
+  assert.match(doc, /It still rejects `game` and `profile` until a real multi-word shell\s+parser and tool dispatcher are implemented/);
   assert.doesNotMatch(ops, /SHL_ACTION_GAME/);
   assert.doesNotMatch(ops, /SHL_ACTION_PROFILE/);
   assert.match(proof, /ld hl,ProfileCommand[\s\S]*ld de,SHL_COMMAND_BUFFER[\s\S]*ld bc,8[\s\S]*ldir/);

@@ -59,6 +59,16 @@ function prepareImage(): void {
     '/src/main.asm',
     encodeSource(['ORG 0', 'LD A,1', 'RET']),
   );
+  volume = importFileIntoVolumeImage(
+    volume,
+    '/src/util.asm',
+    encodeSource(['Utility:', 'RET']),
+  );
+  volume = importFileIntoVolumeImage(
+    volume,
+    '/src/.main.bak',
+    encodeSource(['hidden backup']),
+  );
   const manifest = JSON.parse(readFileSync(IMAGE.replace(/\.[^.]*$/, '.json'), 'utf8'));
   const image = Buffer.from(readFileSync(IMAGE));
   volume.copy(image, manifest.volume_start_byte_offset);
@@ -111,6 +121,7 @@ async function loadRuntime(bytes: Uint8Array) {
     matrixMode: false,
     protectOnReset: false,
     rtcEnabled: false,
+    tms9918Active: true,
     sdEnabled: true,
     sdHighCapacity: true,
     sdImagePath: IMAGE,
@@ -146,7 +157,7 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   fatError: number;
 } {
   let fatError = 0;
-  for (let i = 0; i < 80_000_000; i += 1) {
+  for (let i = 0; i < 220_000_000; i += 1) {
     if (runtime.cpu.pc >= 0xf255 && runtime.cpu.pc <= 0xf291) {
       fatError = runtime.cpu.pc;
     }
@@ -184,13 +195,22 @@ async function main(): Promise<void> {
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
     throw new Error(
-      `proof failed with marker 0x${marker.toString(16)}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
+      `proof failed with marker 0x${marker.toString(16)}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
     );
+  }
+  const tms9918 = (platform as any).state.display?.tms9918?.snapshot();
+  if (!tms9918) {
+    throw new Error('TMS9918 snapshot unavailable after shell directory render');
+  }
+  const renderedDirectory = Buffer.from(tms9918.vram.subarray(0x00a0, 0x00a0 + 64))
+    .toString('ascii');
+  if (!renderedDirectory.startsWith('main.asm') || !renderedDirectory.slice(32).startsWith('util.asm')) {
+    throw new Error(`shell directory rows were ${JSON.stringify(renderedDirectory)}`);
   }
   const firstLine = verifyHostFile();
   writeFileSync(
     LAST_RUN,
-    `${JSON.stringify({ result: 'ok', instructions, firstLine, finalPc: runtime.cpu.pc }, null, 2)}\n`,
+    `${JSON.stringify({ result: 'ok', instructions, firstLine, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
   );
   console.log(`TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine})`);
 }

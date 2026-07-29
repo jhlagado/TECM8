@@ -17,10 +17,14 @@ test('ROM editor has a real SD backend and bounded path lookup', () => {
   assert.match(bank0, /ld hl,TFS_MON3_FILE_DRIVER[\s\S]*ld \(TFS_PARAM_DRIVER_ADDR_LO\),hl/);
   assert.match(bank0, /Tecm8ShellRunCheckEditPath:[\s\S]*SHL_TARGET_KIND_SOURCE_PATH/);
   assert.match(bank2, /tecfsFindPathImpl:[\s\S]*tecfsFindPrefix[\s\S]*tecfsFindCatalog/);
+  assert.match(bank2, /tecfsListPathImpl:[\s\S]*tecfsListMaybeAppendEntry/);
   assert.match(bank2, /tecfsCommitSourceMetaMon3:[\s\S]*call tecfsReadSectorImpl[\s\S]*call tecfsWriteSectorImpl/);
   assert.match(bank4, /TFS_SVC_FIND_PATH/);
   assert.match(bank5, /\.org\s+TFS_MON3_FILE_DRIVER[\s\S]*Tecm8Mon3FileDriverEntry:/);
   assert.match(bank5, /\.include "\.\.\/monitor\/pata_fat32\.asm"/);
+  assert.match(proof, /TFS_SVC_LIST_PATH[\s\S]*SHL_RUN_COMMAND[\s\S]*SHL_RENDER_RESULT/);
+  assert.match(proof, /ld hl,5[\s\S]*TFS_SVC_LIST_PATH[\s\S]*TFS_LIST_FLAG_TRUNCATED/);
+  assert.match(proof, /TFS_PARAM_LIST_USED_LO[\s\S]*ld de,1/);
   assert.match(proof, /EDT_SVC_RUN[\s\S]*EDT_STATE_SAVE_COUNT[\s\S]*EDT_SVC_RUN/);
   assert.equal(
     packageJson.scripts['proof:tecfs-mon3-file'],
