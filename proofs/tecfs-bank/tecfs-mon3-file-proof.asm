@@ -19,9 +19,12 @@ PROOF_FAIL_LIST     .equ    0xE8
 PROOF_FAIL_CREATE   .equ    0xE9
 PROOF_FAIL_BUILD    .equ    0xEA
 PROOF_FAIL_RUN      .equ    0xEB
+PROOF_FAIL_DEBUG    .equ    0xEC
 PROOF_RESULT        .equ    0x3A10
 PROOF_PHASE         .equ    0x3A11
+PROOF_DEBUG_STAGE   .equ    0x3A12
 PROOF_LIST_BUFFER   .equ    0x5800
+PROOF_SHELL_STAGE   .equ    0x5D70
 PROGRAM_MARKER      .equ    0x4FF0
 
 .routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
@@ -158,6 +161,9 @@ Start:
 
         call ProofBuildAndRun
         jp c,FailBuildOrRun
+        ; Re-enter and render the shell after the debugger has finished.
+        call ProofShellDirectory
+        jp c,FailList
 
         ld a,PROOF_PASS
         ld (PROOF_RESULT),a
@@ -342,9 +348,70 @@ ProofBuildAndRun:
         scf
         ret nz
         ld a,(TFS_PARAM_LOAD_LINES_LO)
-        cp 6
+        cp 7
         scf
         ret nz
+        ld (EDT_STATE_TOTAL_LINES),a
+
+        ; The first multi-file build must fail inside the include and identify
+        ; both its file ordinal and local line before the editor fixes it.
+        ld hl,ProofBuildTarget
+        ld (ASM_PARAM_TARGET_LO),hl
+        ld a,ASM_SVC_ASSEMBLE
+        farCall ASM_BANK,ASM_ENTRY
+        jp nc,ProofBuildFailed
+        ld a,(ASM_PARAM_RESULT_LO)
+        cp SHL_RESULT_BUILD_ERROR
+        jp nz,ProofBuildFailed
+        ld a,(ASM_PARAM_DIAG_FILE)
+        cp 1
+        jp nz,ProofBuildFailed
+        ld a,(ASM_PARAM_DIAG_LINE)
+        cp 1
+        jp nz,ProofBuildFailed
+        ld a,(ASM_PARAM_DIAG_CODE)
+        cp ASM_ERR_EXPRESSION
+        jp nz,ProofBuildFailed
+
+        ld hl,ProofLibFixEvents
+        ld de,INP_QUEUE_BASE
+        ld bc,ProofLibFixEventsEnd-ProofLibFixEvents
+        ldir
+        xor a
+        ld (INP_QUEUE_HEAD),a
+        ld a,11
+        ld (INP_QUEUE_COUNT),a
+        ld hl,ProofLibTarget
+        ld (EDT_PARAM_TARGET_LO),hl
+        ld a,EDT_SVC_RUN
+        farCall EDT_BANK,EDT_ENTRY
+        jp c,ProofBuildFailed
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_OK
+        jp nz,ProofBuildFailed
+        ld a,(EDT_STATE_SAVE_COUNT)
+        cp 1
+        jp nz,ProofBuildFailed
+        ld hl,EDT_BUFFER_BASE
+        ld de,0x5D00
+        ld bc,0x0060
+        ldir
+
+        ; Reload the main file, proving the edit was committed to the include
+        ; rather than merely retained in the resident editor buffer.
+        ld hl,ProofBuildPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_FIND_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        jp c,ProofBuildFailed
+        ld hl,EDT_BUFFER_BASE
+        ld (TFS_PARAM_LOAD_DEST_LO),hl
+        ld hl,EDT_BUFFER_BYTES
+        ld (TFS_PARAM_LOAD_BYTES_LO),hl
+        ld a,TFS_SVC_LOAD_SOURCE
+        farCall TFS_BANK,TFS_ENTRY
+        jp c,ProofBuildFailed
+        ld a,(TFS_PARAM_LOAD_LINES_LO)
         ld (EDT_STATE_TOTAL_LINES),a
 
         ld hl,ProofBuildTarget
@@ -387,6 +454,12 @@ ProofBuildAndRun:
         ld a,(RUN_PARAM_RETURN_COUNT)
         cp 1
         jr nz,ProofRunFailed
+        call ProofDebugWorkflow
+        jr c,ProofDebugFailed
+        call ProofRebuildAndRerun
+        jr c,ProofBuildFailed
+        call ProofShellDebugWorkflow
+        jr c,ProofDebugFailed
         or a
         ret
 ProofBuildFailed:
@@ -395,6 +468,318 @@ ProofBuildFailed:
         ret
 ProofRunFailed:
         ld a,PROOF_FAIL_RUN
+        scf
+        ret
+ProofDebugFailed:
+        ld a,PROOF_FAIL_DEBUG
+        scf
+        ret
+
+ProofDebugWorkflow:
+        ld a,1
+        ld (PROOF_DEBUG_STAGE),a
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_LISTING
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_PARAM_OUTPUT_COUNT)
+        cp 3
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE)
+        cp "0"
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE+5)
+        cp "F"
+        scf
+        ret nz
+
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_SYMBOLS
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_PARAM_OUTPUT_COUNT)
+        cp 3
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE)
+        cp "V"
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE+5)
+        cp "="
+        scf
+        ret nz
+
+        ld a,2
+        ld (PROOF_DEBUG_STAGE),a
+        xor a
+        ld (PROGRAM_MARKER),a
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_DEBUG_START
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_ENTRY
+        scf
+        ret nz
+        ld hl,(DBG_STATE_PC_LO)
+        ld de,0x4E00
+        or a
+        sbc hl,de
+        scf
+        ret nz
+
+        ld a,3
+        ld (PROOF_DEBUG_STAGE),a
+        ld a,RUN_SVC_DEBUG_STEP
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_STEP
+        scf
+        ret nz
+        ld hl,(DBG_STATE_PC_LO)
+        ld de,0x4E07
+        or a
+        sbc hl,de
+        scf
+        ret nz
+
+        ld a,4
+        ld (PROOF_DEBUG_STAGE),a
+        ld a,RUN_SVC_DEBUG_STEP
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld hl,(DBG_STATE_PC_LO)
+        ld de,0x4E09
+        or a
+        sbc hl,de
+        scf
+        ret nz
+        ld a,(DBG_STATE_AF_HI)
+        cp 0x5A
+        scf
+        ret nz
+
+        ld a,5
+        ld (PROOF_DEBUG_STAGE),a
+        ld hl,ProofStoreSymbol
+        ld (DBG_PARAM_SYMBOL_LO),hl
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_BREAK_SYMBOL
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld hl,(DBG_STATE_BP_ADDR_LO)
+        ld de,0x4E03
+        or a
+        sbc hl,de
+        scf
+        ret nz
+
+        ld a,6
+        ld (PROOF_DEBUG_STAGE),a
+        ld a,RUN_SVC_DEBUG_CONTINUE
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_BREAKPOINT
+        scf
+        ret nz
+        ld a,(DBG_STATE_SYMBOL_FILE)
+        or a
+        scf
+        ret nz
+        ld a,(DBG_STATE_SYMBOL_LINE)
+        cp 3
+        scf
+        ret nz
+
+        ld a,7
+        ld (PROOF_DEBUG_STAGE),a
+        ld a,RUN_SVC_DEBUG_STEP
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_STEP
+        scf
+        ret nz
+        ld a,(PROGRAM_MARKER)
+        cp 0x5A
+        scf
+        ret nz
+        ld a,(DBG_STATE_BP_ARMED)
+        cp 1
+        scf
+        ret nz
+
+        ld a,8
+        ld (PROOF_DEBUG_STAGE),a
+        ld a,RUN_SVC_DEBUG_CONTINUE
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_FINISHED
+        scf
+        ret nz
+        ld a,(DBG_STATE_ACTIVE)
+        or a
+        scf
+        ret nz
+        ld a,9
+        ld (PROOF_DEBUG_STAGE),a
+        or a
+        ret
+
+ProofRebuildAndRerun:
+        ld hl,ProofRebuildEvents
+        ld de,INP_QUEUE_BASE
+        ld bc,ProofRebuildEventsEnd-ProofRebuildEvents
+        ldir
+        xor a
+        ld (INP_QUEUE_HEAD),a
+        ld a,19
+        ld (INP_QUEUE_COUNT),a
+        ld hl,ProofBuildEditTarget
+        ld (EDT_PARAM_TARGET_LO),hl
+        ld a,EDT_SVC_RUN
+        farCall EDT_BANK,EDT_ENTRY
+        ret c
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_OK
+        scf
+        ret nz
+        ld hl,ProofBuildTarget
+        ld (ASM_PARAM_TARGET_LO),hl
+        ld a,ASM_SVC_ASSEMBLE
+        farCall ASM_BANK,ASM_ENTRY
+        ret c
+        ld a,(ASM_PARAM_RESULT_LO)
+        cp SHL_RESULT_OK
+        scf
+        ret nz
+        xor a
+        ld (PROGRAM_MARKER),a
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_RUN
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        ld a,(PROGRAM_MARKER)
+        cp 0x5B
+        scf
+        ret nz
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,RUN_SVC_SYMBOLS
+        farCall RUN_BANK,RUN_ENTRY
+        ret c
+        or a
+        ret
+
+ProofShellDebugWorkflow:
+        ld a,1
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofSymCommand
+        ld b,ProofSymCommandEnd-ProofSymCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(TFS_PARAM_LIST_COUNT)
+        cp 3
+        scf
+        ret nz
+        ld a,2
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofListCommand
+        ld b,ProofListCommandEnd-ProofListCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(EDT_BUFFER_BASE)
+        cp "0"
+        scf
+        ret nz
+        ld a,3
+        ld (PROOF_SHELL_STAGE),a
+        xor a
+        ld (PROGRAM_MARKER),a
+        ld hl,ProofDebugCommand
+        ld b,ProofDebugCommandEnd-ProofDebugCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_ENTRY
+        scf
+        ret nz
+        ld a,4
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofBreakCommand
+        ld b,ProofBreakCommandEnd-ProofBreakCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,5
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofContCommand
+        ld b,ProofContCommandEnd-ProofContCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_BREAKPOINT
+        scf
+        ret nz
+        ld a,6
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofStepCommand
+        ld b,ProofStepCommandEnd-ProofStepCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(PROGRAM_MARKER)
+        cp 0x5B
+        scf
+        ret nz
+        ld a,7
+        ld (PROOF_SHELL_STAGE),a
+        ld hl,ProofContCommand
+        ld b,ProofContCommandEnd-ProofContCommand
+        call ProofRunShellCommand
+        ret c
+        ld a,(DBG_STATE_STOP_REASON)
+        cp DBG_STOP_FINISHED
+        scf
+        ret nz
+        ld a,8
+        ld (PROOF_SHELL_STAGE),a
+        ld a,(DBG_STATE_ACTIVE)
+        or a
+        scf
+        ret nz
+        or a
+        ret
+
+ProofRunShellCommand:
+        ld c,b
+        ld b,0x00
+        ld de,SHL_COMMAND_BUFFER
+        ldir
+        callService SHL_RUN_COMMAND
+        jr c,ProofRunShellCommandCarry
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_OK
+        jr nz,ProofRunShellCommandResult
+        or a
+        ret
+ProofRunShellCommandCarry:
+        ld a,0xE1
+        ld (PROOF_SHELL_STAGE),a
+        scf
+        ret
+ProofRunShellCommandResult:
+        ld a,(RUN_PARAM_LAST_ERROR)
+        ld (PROOF_SHELL_STAGE),a
         scf
         ret
 
@@ -440,14 +825,36 @@ ProofExpectedList:
 ProofDirCommand:
         .db     "DIR /src",0
 ProofDirCommandEnd:
+ProofSymCommand:
+        .db     "SYM",0
+ProofSymCommandEnd:
+ProofListCommand:
+        .db     "LIST",0
+ProofListCommandEnd:
+ProofDebugCommand:
+        .db     "DEBUG",0
+ProofDebugCommandEnd:
+ProofBreakCommand:
+        .db     "BREAK STORE",0
+ProofBreakCommandEnd:
+ProofStepCommand:
+        .db     "STEP",0
+ProofStepCommandEnd:
+ProofContCommand:
+        .db     "CONT",0
+ProofContCommandEnd:
 ProofNewPath:
         .db     "/src/new.asm",0
 ProofBadCreatePath:
         .db     "/src/BAD.asm",0
 ProofBuildPath:
-        .db     "/project/build.asm",0
+        .db     "/project/main.asm",0
+ProofLibPath:
+        .db     "/project/lib.asm",0
 ProofOutputPath:
-        .db     "/build/build.bin",0
+        .db     "/build/main.bin",0
+ProofStoreSymbol:
+        .db     "STORE",0
 
 ProofTarget:
         .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
@@ -460,6 +867,14 @@ ProofNewTarget:
 ProofBuildTarget:
         .db     SHL_ACTION_ASM,SHL_TARGET_KIND_PROJECT_MAIN
         .dw     ProofBuildPath
+        .db     0
+ProofBuildEditTarget:
+        .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
+        .dw     ProofBuildPath
+        .db     0
+ProofLibTarget:
+        .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
+        .dw     ProofLibPath
         .db     0
 ProofRunTarget:
         .db     SHL_ACTION_RUN,SHL_TARGET_KIND_PROJECT_OUTPUT
@@ -475,3 +890,24 @@ ProofCreateEvents:
         .db     "N",0
         .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
         .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofLibFixEvents:
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0
+        .db     EDT_KEY_DELETE,0
+        .db     "E",0
+        .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
+        .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofLibFixEventsEnd:
+ProofRebuildEvents:
+        .db     EDT_KEY_DOWN,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
+        .db     EDT_KEY_DELETE,0
+        .db     "B",0
+        .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
+        .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofRebuildEventsEnd:

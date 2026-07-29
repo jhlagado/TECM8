@@ -185,6 +185,7 @@ Tecm8ShellRunCommand:
         cp 0x04
         jp z,Tecm8ShellRunCheckFour
         cp 0x05
+        jp z,Tecm8ShellRunCheckFive
         jp nc,Tecm8ShellRunCheckPathCommand
         jp Tecm8ShellRunUnknown
 
@@ -197,6 +198,8 @@ Tecm8ShellRunCheckThree:
         jp z,Tecm8ShellRunCheckDir
         cp "R"
         jp z,Tecm8ShellRunCheckRun
+        cp "S"
+        jp z,Tecm8ShellRunCheckSym
         jp Tecm8ShellRunUnknown
 Tecm8ShellRunCheckAsm:
         ld a,(SHL_COMMAND_BUFFER+1)
@@ -228,25 +231,37 @@ Tecm8ShellRunCheckRun:
         cp "N"
         jp z,Tecm8ShellRunRun
         jp Tecm8ShellRunUnknown
-
-Tecm8ShellRunCheckFour:
-        ld a,(SHL_COMMAND_BUFFER)
-        and 0xDF
-        cp "E"
-        jp nz,Tecm8ShellRunUnknown
+Tecm8ShellRunCheckSym:
         ld a,(SHL_COMMAND_BUFFER+1)
         and 0xDF
-        cp "D"
+        cp "Y"
         jp nz,Tecm8ShellRunUnknown
         ld a,(SHL_COMMAND_BUFFER+2)
         and 0xDF
-        cp "I"
-        jp nz,Tecm8ShellRunUnknown
-        ld a,(SHL_COMMAND_BUFFER+3)
-        and 0xDF
-        cp "T"
-        jp z,Tecm8ShellRunEdit
+        cp "M"
+        jp z,Tecm8ShellRunSymbols
         jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunCheckFour:
+        ld hl,Tecm8ShellCommandEdit
+        call Tecm8ShellMatchUpper
+        jp z,Tecm8ShellRunEdit
+        ld hl,Tecm8ShellCommandStep
+        call Tecm8ShellMatchUpper
+        jp z,Tecm8ShellRunDebugStep
+        ld hl,Tecm8ShellCommandCont
+        call Tecm8ShellMatchUpper
+        jp z,Tecm8ShellRunDebugContinue
+        ld hl,Tecm8ShellCommandList
+        call Tecm8ShellMatchUpper
+        jp z,Tecm8ShellRunListing
+        jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunCheckFive:
+        ld hl,Tecm8ShellCommandDebug
+        call Tecm8ShellMatchUpper
+        jp z,Tecm8ShellRunDebugStart
+        jp Tecm8ShellRunCheckPathCommand
 
 Tecm8ShellRunEdit:
         ld a,SHL_ACTION_EDIT
@@ -261,7 +276,20 @@ Tecm8ShellRunCheckPathCommand:
         jp z,Tecm8ShellRunCheckDirPath
         cp "E"
         jp z,Tecm8ShellRunCheckEditPath
+        cp "B"
+        jp z,Tecm8ShellRunCheckBreak
         jp Tecm8ShellRunUnknown
+
+Tecm8ShellRunCheckBreak:
+        ld hl,Tecm8ShellCommandBreak
+        call Tecm8ShellMatchUpper
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+6)
+        or a
+        jp z,Tecm8ShellRunUnknown
+        ld hl,SHL_COMMAND_BUFFER+6
+        ld (DBG_PARAM_SYMBOL_LO),hl
+        jp Tecm8ShellRunDebugBreak
 
 Tecm8ShellRunCheckEditPath:
         ld a,(SHL_COMMAND_BUFFER)
@@ -381,6 +409,58 @@ Tecm8ShellRunRun:
         call Tecm8ShellPublishRunResult
         ld a,0x80
         or a
+        ret
+Tecm8ShellRunSymbols:
+        ld a,0x01
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,RUN_SVC_SYMBOLS
+        jp Tecm8ShellCallDebug
+Tecm8ShellRunListing:
+        ld a,0x01
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        ld a,RUN_SVC_LISTING
+        jp Tecm8ShellCallDebug
+Tecm8ShellRunDebugStart:
+        ld a,RUN_SVC_DEBUG_START
+        jp Tecm8ShellCallDebugControl
+Tecm8ShellRunDebugBreak:
+        ld a,RUN_SVC_BREAK_SYMBOL
+        jp Tecm8ShellCallDebugControl
+Tecm8ShellRunDebugStep:
+        ld a,RUN_SVC_DEBUG_STEP
+        jp Tecm8ShellCallDebugControl
+Tecm8ShellRunDebugContinue:
+        ld a,RUN_SVC_DEBUG_CONTINUE
+Tecm8ShellCallDebugControl:
+        push af
+        xor a
+        ld (SHL_PARAM_COMMAND_RESULT_HI),a
+        pop af
+Tecm8ShellCallDebug:
+        push af
+        call Tecm8ShellPrepareDebug
+        pop af
+        .expectout A,carry
+        farCall RUN_BANK,RUN_ENTRY
+        ld a,(SHL_PARAM_COMMAND_RESULT_HI)
+        or a
+        jp z,Tecm8ShellPublishDebugResult
+        ld a,(DBG_PARAM_OUTPUT_COUNT)
+        ld (TFS_PARAM_LIST_COUNT),a
+Tecm8ShellPublishDebugResult:
+        call Tecm8ShellPublishRunResult
+        ld a,0x80
+        or a
+        ret
+.routine out A,H,L clobbers sign,parity,halfCarry,B
+Tecm8ShellPrepareDebug:
+        ld a,SHL_ACTION_DEBUG
+        ld b,SHL_TARGET_KIND_PROJECT_OUTPUT
+        call Tecm8ShellPublishTarget
+        ld hl,(SHL_PARAM_COMMAND_TARGET_LO)
+        ld (RUN_PARAM_TARGET_LO),hl
+        xor a
+        ld (TFS_PARAM_LIST_COUNT),a
         ret
 Tecm8ShellRunDirDefault:
         xor a
@@ -511,6 +591,8 @@ Tecm8ShellRenderCommandStatus:
         jp z,Tecm8ShellPublishRunStatus
         cp SHL_ACTION_DIR
         jp z,Tecm8ShellPublishDirStatus
+        cp SHL_ACTION_DEBUG
+        jp z,Tecm8ShellPublishDebugStatus
         jp Tecm8ShellPublishReadyStatus
 
 Tecm8ShellPublishCommandErrorStatus:
@@ -528,11 +610,16 @@ Tecm8ShellPublishRunStatus:
 Tecm8ShellPublishDirStatus:
         ld hl,Tecm8ShellDirStatusText
         jp Tecm8ShellPublishStatusFromHl
+Tecm8ShellPublishDebugStatus:
+        ld hl,Tecm8ShellDebugStatusText
+        jp Tecm8ShellPublishStatusFromHl
 
 Tecm8ShellRenderCommandResult:
         ld a,(SHL_PARAM_COMMAND_ACTION)
         cp SHL_ACTION_DIR
         jp z,Tecm8ShellRenderDirResult
+        cp SHL_ACTION_DEBUG
+        jp z,Tecm8ShellRenderDebugResult
         ld a,(SHL_PARAM_COMMAND_RESULT_LO)
         cp SHL_RESULT_OK
         jp z,Tecm8ShellPublishOkResult
@@ -565,6 +652,18 @@ Tecm8ShellRenderDirResult:
         ld a,(SHL_PARAM_COMMAND_RESULT_LO)
         cp SHL_RESULT_OK
         jp nz,Tecm8ShellPublishFileResult
+        call Tecm8ShellRenderDirRows
+        ret c
+        jp Tecm8ShellPublishOkResult
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+Tecm8ShellRenderDebugResult:
+        ld a,(SHL_PARAM_COMMAND_RESULT_LO)
+        cp SHL_RESULT_OK
+        jp nz,Tecm8ShellPublishFileResult
+        ld a,(TFS_PARAM_LIST_COUNT)
+        or a
+        jp z,Tecm8ShellPublishOkResult
         call Tecm8ShellRenderDirRows
         ret c
         jp Tecm8ShellPublishOkResult
@@ -658,6 +757,27 @@ Tecm8ShellCommandLengthDone:
         ld a,b
         ld (SHL_PARAM_COMMAND_LENGTH),a
         ret
+
+.routine in H,L out A,zero clobbers sign,parity,halfCarry,C,D,E,H,L
+Tecm8ShellMatchUpper:
+        ld de,SHL_COMMAND_BUFFER
+Tecm8ShellMatchUpperNext:
+        ld a,(hl)
+        or a
+        ret z
+        ld c,a
+        ld a,(de)
+        cp "a"
+        jp c,Tecm8ShellMatchUpperReady
+        cp "z"+1
+        jp nc,Tecm8ShellMatchUpperReady
+        and 0xDF
+Tecm8ShellMatchUpperReady:
+        cp c
+        ret nz
+        inc hl
+        inc de
+        jp Tecm8ShellMatchUpperNext
 
 .routine out A,zero clobbers sign,parity,halfCarry,D,E,H,L
 Tecm8ShellCopySplash:
@@ -821,6 +941,18 @@ Tecm8ShellInputEchoText:
         .db     "KEY:0000 JOY:00",0
 Tecm8ShellPromptText:
         .db     "> ",0
+Tecm8ShellCommandEdit:
+        .db     "EDIT",0
+Tecm8ShellCommandStep:
+        .db     "STEP",0
+Tecm8ShellCommandCont:
+        .db     "CONT",0
+Tecm8ShellCommandList:
+        .db     "LIST",0
+Tecm8ShellCommandDebug:
+        .db     "DEBUG",0
+Tecm8ShellCommandBreak:
+        .db     "BREAK ",0
 Tecm8ShellEmptyDirText:
         .db     "(empty)",0
 Tecm8ShellReadyStatusText:
@@ -835,6 +967,8 @@ Tecm8ShellRunStatusText:
         .db     "RUN",0
 Tecm8ShellDirStatusText:
         .db     "DIR",0
+Tecm8ShellDebugStatusText:
+        .db     "DEBUG",0
 Tecm8ShellCommandErrorStatusText:
         .db     "ERRCMD",0
 Tecm8ShellOkResultText:

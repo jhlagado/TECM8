@@ -120,6 +120,12 @@ edit -> main
 asm  -> main
 run  -> derived output
 dir  -> current volume catalogue summary
+list -> source-aware address listing
+sym  -> symbol table
+debug -> stop at executable entry
+break SYMBOL -> source-aware breakpoint
+step -> one architectural instruction
+cont -> continue to breakpoint or return
 ```
 
 They are not stored in `/tecm8.prj`. This keeps the Z80 parser and project
@@ -147,6 +153,8 @@ the earlier two-adjacent-slot summary behavior so old ABI proofs remain useful.
 | `asm` | banks 7/2/5 | `ASM` | `BUILD`, then `OK` | Reports a source-record diagnostic, then emits binary/map data and metadata after the proof fixes the source. |
 | `run` | banks 8/2/5 | `RUN` | `FILE`, then `OK` | Rejects a missing artifact, then validates, loads, executes, and returns after the successful build. |
 | `dir` | banks 0/2/5/1 | `DIR` | `OK` | Walks `/src` on the real SD image, hides a dot backup, returns two names, and renders them on TMS9918 rows. |
+| `list` / `sym` | banks 0/8/2/5/1 | `DEBUG` | `OK` | Loads the real `.map` artifact and renders bounded source-map or symbol rows. |
+| `debug` / `break` / `step` / `cont` | banks 0/8/2/5 | `DEBUG` | `OK` | Stops at entry, resolves a symbol breakpoint, steps across files, continues, and returns safely after `RET`. |
 | unknown | bank 0 shell | `ERRCMD` | `NONE` | Rejects the command and keeps target/result fields clear. |
 | `dir` bad buffer | bank 2 TEC-FS | n/a | `FILE` | Bad catalogue buffer pointer is reported as a file/storage error. |
 
@@ -177,10 +185,10 @@ should not replace the general `edit`, `asm`, and `run` commands. Instead, they
 should layer on the same project, assembler, runner, VDU, input, TEC-FS, and
 debugger services once those services exist.
 
-The current bank-0 `SHL_RUN_COMMAND` boundary recognises the short `edit`,
-`asm`, `run`, and `dir` commands plus bounded absolute arguments for `edit` and
-`dir`. It still rejects `game` and `profile` until a real multi-word shell
-parser and tool dispatcher are implemented.
+The current bank-0 `SHL_RUN_COMMAND` boundary recognises `edit`, `asm`, `run`,
+`dir`, `list`, `sym`, `debug`, `break SYMBOL`, `step`, and `cont`, plus bounded
+absolute arguments for `edit` and `dir`. It still rejects `game` and `profile`
+until a real multi-word shell parser and tool dispatcher are implemented.
 
 ## Future Profile Command Surface
 
@@ -234,6 +242,9 @@ For the default config, no-argument commands resolve to:
 edit -> main   -> /src/main.asm
 asm  -> main   -> /src/main.asm
 run  -> output -> /build/main.bin
+list -> output map -> /build/main.map
+sym  -> output map -> /build/main.map
+debug/break/step/cont -> output and map
 ```
 
 The map path is not directly targeted by a short command in shell v1. `asm`
@@ -254,6 +265,11 @@ edit -> project-main target descriptor
 asm  -> project-main target descriptor, then bank 7
 run  -> project-output target descriptor, then bank 8
 dir [absolute-prefix] -> bank 2 bounded catalogue-list service
+list -> source-map listing through bank 8
+sym -> symbol inspection through bank 8
+debug -> load the project output and stop at its entry
+break SYMBOL -> arm a source-aware software breakpoint
+step / cont -> execute from the current stop and return to the shell
 ```
 
 Bank 0 only recognises the optional argument shape and copies its bounded bytes;
@@ -262,6 +278,11 @@ loaded from `/tecm8.prj`, long names, virtual folders, and semantic filename
 resolution belong to the editor, TEC-FS, project loader, or future profile
 tools. If a feature needs more than this bounded dispatch shape, it should move
 behind a banked service instead of expanding the bank-0 parser.
+
+The debugger verbs are exact and bounded. `break` accepts one zero-terminated
+symbol with at most eight significant characters. `list` emits
+`AAAA F#:L## NAME`, while `sym` emits `NAME=AAAA F#:L##`. Both consume the
+derived `TMAP` sidecar and render through the shell's 16-row list view.
 
 ## `edit`
 

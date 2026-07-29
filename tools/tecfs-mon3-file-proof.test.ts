@@ -11,6 +11,7 @@ test('ROM editor has a real SD backend and bounded path lookup', () => {
   const bank2 = read('roms/tec1g/tecm8/expansion/bank2.asm');
   const bank4 = read('roms/tec1g/tecm8/expansion/bank4.asm');
   const bank5 = read('roms/tec1g/tecm8/expansion/bank5.asm');
+  const bank8 = read('roms/tec1g/tecm8/expansion/bank8.asm');
   const proof = read('proofs/tecfs-bank/tecfs-mon3-file-proof.asm');
   const packageJson = JSON.parse(read('package.json'));
 
@@ -35,6 +36,12 @@ test('ROM editor has a real SD backend and bounded path lookup', () => {
   assert.match(proof, /ProofCreateSource:[\s\S]*ProofNewTarget[\s\S]*EDT_SVC_RUN[\s\S]*EDT_SVC_OPEN/);
   assert.match(proof, /TFS_SVC_CREATE_SOURCE[\s\S]*TFS_ERR_EXISTS[\s\S]*TFS_ERR_BAD_PATH/);
   assert.match(proof, /ProofBuildAndRun:[\s\S]*ProofBuildPath[\s\S]*ASM_SVC_ASSEMBLE[\s\S]*ProofRunTarget[\s\S]*RUN_SVC_RUN/);
+  assert.match(proof, /ASM_PARAM_DIAG_FILE[\s\S]*ProofLibTarget[\s\S]*EDT_SVC_RUN[\s\S]*ASM_SVC_ASSEMBLE/);
+  assert.match(proof, /RUN_SVC_LISTING[\s\S]*RUN_SVC_SYMBOLS[\s\S]*RUN_SVC_DEBUG_START[\s\S]*RUN_SVC_BREAK_SYMBOL[\s\S]*RUN_SVC_DEBUG_STEP[\s\S]*RUN_SVC_DEBUG_CONTINUE/);
+  assert.match(proof, /ProofRebuildAndRerun:[\s\S]*ProofRebuildEvents[\s\S]*ASM_SVC_ASSEMBLE[\s\S]*RUN_SVC_RUN/);
+  assert.match(bank8, /debugFormatSourceMap:[\s\S]*debugFormatSymbols:/);
+  assert.match(bank8, /debugPrepareSingleStep:[\s\S]*debugSequentialFallback:[\s\S]*debugBaseLengthTable:/);
+  assert.match(bank8, /debugTrap:[\s\S]*debugProgramFinished:[\s\S]*debugPublishStopped:/);
   assert.equal(
     packageJson.scripts['proof:tecfs-mon3-file'],
     'node --experimental-strip-types tools/run-tecfs-mon3-file-proof.ts',

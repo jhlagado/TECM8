@@ -222,6 +222,7 @@ Shell status and feature values:
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
 | `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
 | `SHL_ACTION_DIR` | `04h` | Command classified as TEC-FS directory/catalogue listing. |
+| `SHL_ACTION_DEBUG` | `05h` | Command classified as listing, symbol inspection, or debugger control. |
 | `SHL_TARGET_KIND_NONE` | `00h` | No target has been resolved. |
 | `SHL_TARGET_KIND_PROJECT_MAIN` | `01h` | Target is the project main source. |
 | `SHL_TARGET_KIND_PROJECT_OUTPUT` | `02h` | Target is the derived project output. |
@@ -248,7 +249,8 @@ poll/update/render model without becoming a game runtime or full shell loop.
 parameter block. This is not the full interactive shell. It is the ROM-facing
 boundary that lets the monitor or proofs enter the future shell command loop
 through the expansion service registry. The current boundary classifies the
-first shell verbs: `edit`, `asm`, `run`, and `dir`. It stores the corresponding
+first shell verbs: `edit`, `asm`, `run`, `dir`, `list`, `sym`, `debug`,
+`break SYMBOL`, `step`, and `cont`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
 at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
@@ -1178,6 +1180,12 @@ Physical bank 8 owns the bounded loader/runner for the derived executable.
 | `RUN_ENTRY` | `8000h` | Bank-origin dispatcher for run-local service IDs. |
 | `RUN_BANK` | `08h` | Physical runner bank. |
 | `RUN_SVC_RUN` | `01h` | Load, validate, call, and regain control. |
+| `RUN_SVC_SYMBOLS` | `02h` | Format `TMAP` symbols as `NAME=AAAA F#:L##`. |
+| `RUN_SVC_DEBUG_START` | `03h` | Load the executable and return stopped at its entry. |
+| `RUN_SVC_BREAK_SYMBOL` | `04h` | Resolve a symbol and arm a software breakpoint. |
+| `RUN_SVC_DEBUG_STEP` | `05h` | Execute one architectural instruction and return stopped. |
+| `RUN_SVC_DEBUG_CONTINUE` | `06h` | Resume until a breakpoint or normal program return. |
+| `RUN_SVC_LISTING` | `07h` | Format source-map rows as `AAAA F#:L## NAME`. |
 | `RUN_PARAM_BASE` | `3BF8h` | Base of the shell-facing runner parameter block. |
 | `RUN_PARAM_STATUS` | `3BF8h` | Last runner status. |
 | `RUN_PARAM_LAST_ERROR` | `3BF9h` | Last runner error. |
@@ -1201,6 +1209,10 @@ Physical bank 8 owns the bounded loader/runner for the derived executable.
 | `RUN_ERR_BAD_META` | `32h` | Invalid or non-executable `TFM1` metadata. |
 | `RUN_ERR_BAD_RANGE` | `33h` | Load/end/entry lies outside the safe range. |
 | `RUN_ERR_STORAGE` | `34h` | Bank-2 load failed. |
+| `RUN_ERR_BAD_MAP` | `35h` | Missing or malformed `TMAP` data. |
+| `RUN_ERR_NO_SYMBOL` | `36h` | Requested breakpoint symbol is absent. |
+| `RUN_ERR_NOT_STOPPED` | `37h` | Step/continue was requested without an active stop. |
+| `RUN_ERR_STEP` | `38h` | No safe bounded successor could be selected. |
 | `RUN_ERR_UNKNOWN` | `EEh` | Unknown run-local selector. |
 
 Bank 8 calls `TFS_SVC_LOAD_ARTIFACT`, validates the returned range again, builds
@@ -1208,6 +1220,20 @@ the RAM trampoline, and calls it. The phase-one executable contract requires
 the program to finish with `RET`; control then returns to bank 8 and through the
 far-call gateway to bank 0. This is not relocation, a timeout, or a sandbox.
 Missing, malformed, or unsafe artifacts publish `SHL_RESULT_FILE_ERROR`.
+
+Debugger execution uses a private RAM stack ending at `7E00h` and a reversible
+`RST 38h` trap through MON3's `USER_INT` vector. Each stop snapshots the
+primary and alternate registers, program PC/SP, and stop reason at
+`DBG_STATE_BASE` (`3F00h`), restores the replaced byte, and unwinds to the
+shell-facing bank call. A normal `RET` reaches a private finish sentinel,
+restores the previous interrupt vector, clears the active flag, and returns
+`DBG_STOP_FINISHED`.
+
+Single-step decodes sequential lengths for base, CB, ED, DD, and FD forms and
+selects actual successors for bounded JP, JR, DJNZ, CALL, RET, conditional,
+RST, and `JP (HL)` cases. A breakpoint is temporarily removed while stepping
+over it and rearmed at the successor. `HALT`, out-of-range targets, and control
+flow that cannot be represented by one safe successor return `RUN_ERR_STEP`.
 
 `SHL_RUN_COMMAND` copies the shell target pointer into the relevant bank-local
 parameter block, calls bank 7 or bank 8, and copies the result bytes back into

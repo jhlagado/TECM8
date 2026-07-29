@@ -166,6 +166,16 @@ rejects duplicate and malformed create requests, and checks both changed files
 directly in the host-side image. Normal boot selects the real bank-5 driver;
 the RAM bridge is retained when a fast proof explicitly selects `8000h`.
 
+The real-SD acceptance now includes the full multi-file loop. Its first build
+fails on `VALUQ` in `/project/lib.asm` and reports source ordinal 1, record 1,
+column 2. Opening that include places the blinking block cursor at the
+diagnostic; the editor changes it to `VALUE`, saves it to SD, and a fresh
+main-file load rebuilds `/build/main.bin` and `.map`. The proof renders both
+listing formats, steps from the main file into the include, sets
+`break STORE`, continues to main-file record 3, steps the marker write,
+finishes through `RET`, and re-enters the shell. Finally it edits `5A` to `5B`,
+rebuilds, reruns, and verifies the changed marker.
+
 ## Completed Self-Hosted Build-And-Run Workflow
 
 The same monitor-launch proof now continues beyond editor persistence:

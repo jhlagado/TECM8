@@ -70,10 +70,10 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /## Phase 2: Project Usability/);
   assert.match(doc, /## Phase 3: Contract-Aware Assembly/);
   assertMentionsAll([
-    'listing output',
     'included-file editor jump-to-error',
-    'shell-visible symbol inspection',
-    'source-aware breakpoint, step, and continue controls',
+    '`list` shows',
+    '`sym` shows',
+    '`debug`, `break SYMBOL`, `step`, and `cont`',
   ]);
   assert.match(doc, /edit source -> asm -> run -> inspect\/debug -> edit source/);
   assert.match(doc, /register contracts are an advanced feature/i);

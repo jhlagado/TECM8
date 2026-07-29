@@ -263,20 +263,22 @@ information to inspect it, and preserve the TEC-specific load/run metadata.
 
 ## Phase 2: Project Usability
 
-Phase 2 is now partly implemented. Include files, stable shell integration,
-catalogue build products, cross-file source ordinals, and debugger-readable
-symbols exist. The remaining user-facing work is:
-
-- listing output
-- included-file editor jump-to-error
-- shell-visible symbol inspection
-- source-aware breakpoint, step, and continue controls
+Phase 2 is implemented. Include files, catalogue build products, cross-file
+source ordinals, and included-file editor jump-to-error are joined by two
+shell inspection views: `list` shows address/source/name rows and `sym` shows
+name/address/source rows. `debug`, `break SYMBOL`, `step`, and `cont` consume
+the same `TMAP` records and return to the shell at every stop.
 
 At this point TecMate should be able to support the ordinary loop:
 
 ```text
 edit source -> asm -> run -> inspect/debug -> edit source
 ```
+
+The bounded limits are intentional: one include level, four includes, sixteen
+global eight-character symbols, a 512-byte binary, a 512-byte map, and a load
+range of `4000h..4FFFh`. Software stepping rejects unsafe successors rather
+than executing outside that range.
 
 This phase is still about ordinary assembly. It should not depend on a game
 runtime, but it should be good enough for game routines.

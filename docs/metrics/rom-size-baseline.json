@@ -9,12 +9,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 1745,
-      "span": 1745,
+      "occupied": 2015,
+      "span": 2015,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 34513,
-      "freeAfterHighWater": 14639
+      "highWaterEnd": 34783,
+      "freeAfterHighWater": 14369
     },
     {
       "bank": 1,
@@ -89,19 +89,19 @@
     {
       "bank": 8,
       "role": "Validated loader and runner",
-      "occupied": 327,
-      "span": 327,
+      "occupied": 2435,
+      "span": 2435,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33095,
-      "freeAfterHighWater": 16057
+      "highWaterEnd": 35203,
+      "freeAfterHighWater": 13949
     }
   ],
   "expansionTotal": {
-    "occupied": 16463,
-    "span": 16748,
+    "occupied": 18841,
+    "span": 19126,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 130708
+    "freeAfterHighWater": 128330
   }
 }

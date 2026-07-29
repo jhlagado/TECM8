@@ -71,11 +71,12 @@ function prepareImage(): void {
   );
   volume = importFileIntoVolumeImage(
     volume,
-    '/project/build.asm',
+    '/project/main.asm',
     encodeSource([
       '.ORG 0x4E00',
       'VALUE .EQU 0x5A',
       'CALL HELPER',
+      'STORE:',
       'LD (0x4FF0),A',
       'RET',
       '.INCLUDE "lib.asm"',
@@ -84,7 +85,7 @@ function prepareImage(): void {
   volume = importFileIntoVolumeImage(
     volume,
     '/project/lib.asm',
-    encodeSource(['HELPER:', 'LD A,VALUE', 'RET']),
+    encodeSource(['HELPER:', 'LD A,VALUQ', 'RET']),
   );
   // TEC-FS creates files inside existing prefixes. This seed establishes the
   // build prefix while leaving build.bin and build.map for the ROM to create.
@@ -217,28 +218,31 @@ function verifyHostFiles(): {
       `host-side created source is ${created.byteLength} bytes with line ${JSON.stringify(createdLine)}, expected 32 bytes and "N"`,
     );
   }
-  const binary = readFileFromVolumeImage(volume, '/build/build.bin') as Buffer;
+  const binary = readFileFromVolumeImage(volume, '/build/main.bin') as Buffer;
   const expectedBinary = Buffer.from([
     0xcd, 0x07, 0x4e,
     0x32, 0xf0, 0x4f,
     0xc9,
-    0x3e, 0x5a, 0xc9,
+    0x3e, 0x5b, 0xc9,
   ]);
   if (!binary.equals(expectedBinary)) {
     throw new Error(
       `host-side build binary was ${binary.toString('hex')}, expected ${expectedBinary.toString('hex')}`,
     );
   }
-  const map = readFileFromVolumeImage(volume, '/build/build.map') as Buffer;
+  const map = readFileFromVolumeImage(volume, '/build/main.map') as Buffer;
   if (
-    map.byteLength !== 32 ||
+    map.byteLength !== 44 ||
     map.subarray(0, 4).toString('ascii') !== 'TMAP' ||
     map[4] !== 1 ||
-    map[6] !== 2 ||
+    map[6] !== 3 ||
     map[19] !== 0x02 ||
-    map[28] !== 0x07 ||
+    map[28] !== 0x03 ||
     map[29] !== 0x4e ||
-    map[31] !== 0x11
+    map[31] !== 0x01 ||
+    map[40] !== 0x07 ||
+    map[41] !== 0x4e ||
+    map[43] !== 0x11
   ) {
     throw new Error(`host-side build map was ${map.toString('hex')}`);
   }
@@ -253,7 +257,7 @@ async function main(): Promise<void> {
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
     throw new Error(
-      `proof failed with marker 0x${marker.toString(16)}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} scan=${Array.from(runtime.hardware.memory.subarray(0x3ce0, 0x3d00)).join(',')} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
+      `proof failed with marker 0x${marker.toString(16)} phase=${runtime.hardware.memory[0x3a11]} debug-stage=${runtime.hardware.memory[0x3a12]} shell-stage=${runtime.hardware.memory[0x5d70]} program-marker=${runtime.hardware.memory[0x4ff0]}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} asm=${Array.from(runtime.hardware.memory.subarray(0x3c80, 0x3cb0)).join(',')} editor=${Array.from(runtime.hardware.memory.subarray(0x3b80, 0x3bc0)).join(',')} edited=${Array.from(runtime.hardware.memory.subarray(0x5d00, 0x5d60)).join(',')} debug=${Array.from(runtime.hardware.memory.subarray(0x3f00, 0x3f29)).join(',')} dbg-param=${Array.from(runtime.hardware.memory.subarray(0x3c20, 0x3c25)).join(',')} run=${Array.from(runtime.hardware.memory.subarray(0x3c40, 0x3c60)).join(',')} scan=${Array.from(runtime.hardware.memory.subarray(0x3ce0, 0x3d00)).join(',')} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
     );
   }
   const tms9918 = (platform as any).state.display?.tms9918?.snapshot();

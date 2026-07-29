@@ -205,16 +205,16 @@ Current size checkpoint:
 
 ```text
 fixed monitor span: 16384/16384 bytes
-bank 0 span: 1745 bytes, softFree=303
+bank 0 span: 2015 bytes, softFree=33
 bank 1 span: 568 bytes, softFree=3528
-bank 2 span: 3640 bytes, softFree=456
+bank 2 span: 4064 bytes, softFree=32
 bank 3 span: 95 bytes, softFree=929
 bank 4 span: 2332 bytes, softFree=1764
 bank 5 span: 3673 bytes, softFree=423
 bank 6 span: 220 bytes, softFree=804
-bank 7 span: 3174 bytes, softFree=5018
-bank 8 span: 256 bytes, softFree=3840
-expansion total span: 15703 bytes, softFree=17065
+bank 7 span: 3724 bytes, softFree=4468
+bank 8 span: 2435 bytes, softFree=1661
+expansion total span: 19126 bytes, softFree=13642
 ```
 
 Manual checkpoint:

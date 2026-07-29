@@ -48,10 +48,11 @@ test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /bank 8 validates a `4000h-4FFFh` executable/);
   assert.match(doc, /integrated Debug80 proof performs edit, save, diagnose, fix, rebuild/);
   assert.match(doc, /fixed monitor span: 16384\/16384 bytes/);
-  assert.match(doc, /bank 0 span: 1745 bytes, softFree=303/);
-  assert.match(doc, /bank 2 span: 3640 bytes, softFree=456/);
-  assert.match(doc, /bank 7 span: 3174 bytes, softFree=5018/);
-  assert.match(doc, /expansion total span: 15703 bytes, softFree=17065/);
+  assert.match(doc, /bank 0 span: 2015 bytes, softFree=33/);
+  assert.match(doc, /bank 2 span: 4064 bytes, softFree=32/);
+  assert.match(doc, /bank 7 span: 3724 bytes, softFree=4468/);
+  assert.match(doc, /bank 8 span: 2435 bytes, softFree=1661/);
+  assert.match(doc, /expansion total span: 19126 bytes, softFree=13642/);
   assert.match(doc, /npm run checkpoint:tecmate-rom/);
   assert.match(doc, /shell command matrix/);
   assert.match(doc, /aggregate two-slot\s+`dir` count/);

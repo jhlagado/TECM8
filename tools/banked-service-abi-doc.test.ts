@@ -226,6 +226,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_ACTION_EDIT',
     'SHL_ACTION_ASM',
     'SHL_ACTION_RUN',
+    'SHL_ACTION_DIR',
+    'SHL_ACTION_DEBUG',
     'SHL_TARGET_KIND_NONE',
     'SHL_TARGET_KIND_PROJECT_MAIN',
     'SHL_TARGET_KIND_PROJECT_OUTPUT',
@@ -256,7 +258,7 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /without becoming a game runtime or full shell loop/);
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
-  assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, `run`, and `dir`/);
+  assert.match(doc, /first shell verbs: `edit`, `asm`, `run`, `dir`, `list`, `sym`, `debug`,\s+`break SYMBOL`, `step`, and `cont`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC` for commands with resolved targets/);
   assert.match(doc, /`dir` records `SHL_ACTION_DIR`/);
   assert.match(doc, /bare `dir` lists `\/src`/);
@@ -685,6 +687,12 @@ test('banked service ABI doc covers the bank 8 validated loader and runner', () 
     'RUN_ENTRY',
     'RUN_BANK',
     'RUN_SVC_RUN',
+    'RUN_SVC_SYMBOLS',
+    'RUN_SVC_DEBUG_START',
+    'RUN_SVC_BREAK_SYMBOL',
+    'RUN_SVC_DEBUG_STEP',
+    'RUN_SVC_DEBUG_CONTINUE',
+    'RUN_SVC_LISTING',
     'RUN_PARAM_BASE',
     'RUN_PARAM_STATUS',
     'RUN_PARAM_LAST_ERROR',
@@ -709,6 +717,10 @@ test('banked service ABI doc covers the bank 8 validated loader and runner', () 
     'RUN_ERR_BAD_META',
     'RUN_ERR_BAD_RANGE',
     'RUN_ERR_STORAGE',
+    'RUN_ERR_BAD_MAP',
+    'RUN_ERR_NO_SYMBOL',
+    'RUN_ERR_NOT_STOPPED',
+    'RUN_ERR_STEP',
   ]) {
     assertDocRow(name);
   }

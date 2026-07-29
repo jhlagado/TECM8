@@ -60,7 +60,7 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `1745` | `1745` | `86D1h` | `14639` |
+| 0 | Shell, launcher, registry | `2015` | `2015` | `87DFh` | `14369` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
 | 2 | TEC-FS boundary and block mapper | `4064` | `4064` | `8FE0h` | `12320` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
@@ -68,11 +68,11 @@ Terms:
 | 5 | TEC-FS monitor-sector bridge | `3406` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
 | 7 | Phase-one self-hosted assembler | `3724` | `3724` | `8E8Ch` | `12660` |
-| 8 | Validated loader and runner | `327` | `327` | `8147h` | `16057` |
+| 8 | Validated loader and runner | `2435` | `2435` | `8983h` | `13949` |
 
-Expansion occupied bytes: `16463`
+Expansion occupied bytes: `18841`
 
-Expansion high-water span total: `16748`
+Expansion high-water span total: `19126`
 
 Latest self-hosted build-and-run delta:
 
@@ -152,12 +152,12 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
 | Bank 0 service dispatcher | `806Ah` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `869Eh` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 service registry | `87ACh` | Private service ID to bank/address/target-`A` table. |
 | Bank 0 shell entry | `80A8h` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
 | Bank 0 shell command boundary | `80FBh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 shell status renderer | `83D9h` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
-| Bank 0 shell result renderer | `8419h` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
-| Bank 0 info marker | `8699h` | Private marker, not a fixed ABI location. |
+| Bank 0 shell status renderer | `847Fh` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
+| Bank 0 shell result renderer | `84CAh` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
+| Bank 0 info marker | `87A7h` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |
