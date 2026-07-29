@@ -62,17 +62,17 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `1745` | `1745` | `86D1h` | `14639` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `2857` | `2857` | `8B29h` | `13527` |
+| 2 | TEC-FS boundary and block mapper | `3640` | `3640` | `8E38h` | `12744` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
-| 4 | Editor and optional GLCD boundary | `2273` | `2291` | `88F3h` | `14093` |
+| 4 | Editor and optional GLCD boundary | `2314` | `2332` | `891Ch` | `14052` |
 | 5 | TEC-FS monitor-sector bridge | `3205` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
 | 7 | Phase-one self-hosted assembler | `2173` | `2173` | `887Dh` | `14211` |
 | 8 | Validated loader and runner | `256` | `256` | `8100h` | `16128` |
 
-Expansion occupied bytes: `13392`
+Expansion occupied bytes: `14216`
 
-Expansion high-water span total: `13878`
+Expansion high-water span total: `14702`
 
 Latest self-hosted build-and-run delta:
 
@@ -104,6 +104,15 @@ Latest real SD directory delta:
 bank 0 span: 1435 -> 1745 bytes
 bank 2 span: 2574 -> 2857 bytes
 expansion total span: 13285 -> 13878 bytes
+fixed monitor span: unchanged at 16384 bytes
+```
+
+Latest real SD source-creation delta:
+
+```text
+bank 2 span: 2857 -> 3640 bytes
+bank 4 span: 2291 -> 2332 bytes
+expansion total span: 13878 -> 14702 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

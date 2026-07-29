@@ -444,6 +444,7 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_ARTIFACT` (`15h`) | Implemented executable metadata validation and binary load. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_FIND_PATH` (`16h`) | Implemented bounded prefix/catalogue path resolution. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_LIST_PATH` (`17h`) | Implemented bounded visible-file listing for `/` or `/prefix`. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_CREATE_SOURCE` (`18h`) | Implemented bounded empty-source creation in an existing prefix. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -485,6 +486,7 @@ TEC-FS routine.
 | `TFS_SVC_LOAD_ARTIFACT` | `15h` | Validates binary metadata and loads the executable into its declared range. |
 | `TFS_SVC_FIND_PATH` | `16h` | Resolves `/name` or `/prefix/name` through the real TM8 prefix/catalogue sectors. |
 | `TFS_SVC_LIST_PATH` | `17h` | Produces a bounded newline-separated list of visible local names in `/` or `/prefix`. |
+| `TFS_SVC_CREATE_SOURCE` | `18h` | Allocates and publishes one empty source file in an existing prefix. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -495,9 +497,9 @@ TEC-FS implementation state:
 
 | State | Services | Meaning |
 | --- | --- | --- |
-| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
+| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
 | Stubbed/reserved services | `LOAD_RANGE`, `SAVE_RANGE` | Service numbers are reserved and return unsupported. |
-| Deferred filesystem work | allocator, long-name storage, file create/delete/rename, general transaction journal, PC repair/import utility | Not part of the current ROM directory proof. |
+| Deferred filesystem work | general file create/delete/rename, new-prefix allocation, long-name storage, general transaction journal, PC repair/import utility | Not part of the bounded ROM source-creation proof. |
 
 Current TEC-FS geometry:
 
@@ -777,6 +779,7 @@ TEC-FS card locator constants:
 | `TFS_META_OFFSET_REQUIRED_HW` | `0Eh` | Metadata required-hardware bitfield offset. |
 | `TFS_META_OFFSET_NAME_REF` | `10h` | Metadata long-name reference/prefix offset. |
 | `TFS_FILE_PROJECT` | `01h` | TecMate project metadata file type. |
+| `TFS_FILE_SOURCE_V1` | `01h` | TM8 v1 catalogue source-record file type. |
 | `TFS_FILE_SOURCE` | `02h` | Source text file type. |
 | `TFS_FILE_BINARY` | `03h` | Binary memory-range file type. |
 | `TFS_FILE_GAME` | `04h` | Game/application package file type. |
@@ -817,15 +820,14 @@ the record magic, version, and byte-count header. This gives the shell,
 assembler, and runner a small service for turning a blank metadata record into a
 source, binary, game, or asset record without duplicating field offsets.
 
-The next metadata update boundary should stay in bank 2 and keep the same
-caller-buffer model. The compact path is: format or read a catalogue/metadata
-buffer in RAM, patch the `TFM1` fields there, write new data blocks first, write
-and verify the updated metadata sector, then commit by updating the catalogue or
-locator generation/checksum. The monitor should not regain FAT32, PATA, or
-high-level file-record update code for this; it should only provide the stable
-bank-call route and any eventual low-level SD sector hook. Until the sector
-writer is real, `TFS_PATCH_META_RECORD` is the only metadata mutation service
-and it must not allocate blocks, choose filenames, or scan directories.
+Metadata mutation stays in bank 2 and keeps the same caller-buffer model.
+Source save writes data blocks first and commits the catalogue size last.
+`TFS_SVC_CREATE_SOURCE` adds the narrow allocator needed by the editor while
+leaving FAT32 and PATA policy in bank 5: it validates the fixed TM8 header,
+finds a free catalogue slot and file id, clears one free data block, marks that
+block allocated, updates the superblock free count/checksum, and publishes the
+catalogue entry last. It does not create prefixes, delete or rename files, or
+provide a general transaction journal.
 
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
@@ -867,6 +869,15 @@ would exceed the destination capacity, it returns success with
 | `TFS_PARAM_LIST_COUNT` | out | Number of complete visible names returned. |
 | `TFS_PARAM_LIST_FLAGS` | out | `TFS_LIST_FLAG_TRUNCATED` when more complete names existed than fitted. |
 
+`TFS_SVC_CREATE_SOURCE` (`18h`) accepts the same bounded `/name` or
+`/prefix/name` path as `FIND_PATH`. The prefix must already exist, and the local
+name is limited to lowercase letters, digits, `.`, `_`, and `-`. A successful
+call creates an empty `TFS_FILE_SOURCE_V1` entry backed by one cleared 4 KiB
+block. The editor treats `TFS_ERR_NOT_FOUND` from `FIND_PATH` as the create
+case, calls this service, resolves the new entry, and then follows the ordinary
+load/edit/save path. Duplicate creation returns `TFS_ERR_EXISTS` without
+allocating another block.
+
 TEC-FS status codes:
 
 | Constant | Value | Meaning |
@@ -880,6 +891,9 @@ TEC-FS status codes:
 | `TFS_ERR_DRIVER_IO` | `11h` | The bank-5 SD/FAT32 backend failed an open, read, or write. |
 | `TFS_ERR_NOT_FOUND` | `12h` | No matching bounded prefix/catalogue entry was found. |
 | `TFS_ERR_BAD_PATH` | `13h` | The path is malformed or exceeds TM8 v1 bounds. |
+| `TFS_ERR_NO_SPACE` | `14h` | No free data block, catalogue slot, or file id is available. |
+| `TFS_ERR_EXISTS` | `15h` | The requested source path already exists. |
+| `TFS_ERR_BAD_VOLUME_FORMAT` | `16h` | The fixed TM8 v1 superblock fields do not match. |
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 

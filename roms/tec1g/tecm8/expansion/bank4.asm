@@ -77,6 +77,19 @@ editorOpenImpl:
         ld (TFS_PARAM_PATH_LO),de
         or a
         .expectout A,carry
+        .rcignore definite_contract_violation "The source path is published through TFS parameter RAM; no caller DE/HL value is live after the bank call."
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_FIND_PATH
+        jr nc,editorOpenResidentCatalog
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NOT_FOUND
+        jp nz,editorFileError
+        or a
+        .expectout A,carry
+        .rcignore definite_contract_violation "Create consumes the source path from TFS parameter RAM; no caller DE/HL value is live after the bank call."
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_CREATE_SOURCE
+        jp c,editorFileError
+        or a
+        .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_FIND_PATH
         jp c,editorFileError
 editorOpenResidentCatalog:

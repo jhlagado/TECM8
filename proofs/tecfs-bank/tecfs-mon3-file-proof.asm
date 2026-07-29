@@ -16,6 +16,7 @@ PROOF_FAIL_SAVE     .equ    0xE4
 PROOF_FAIL_COMMIT   .equ    0xE5
 PROOF_FAIL_REOPEN   .equ    0xE6
 PROOF_FAIL_LIST     .equ    0xE8
+PROOF_FAIL_CREATE   .equ    0xE9
 PROOF_RESULT        .equ    0x3A10
 PROOF_PHASE         .equ    0x3A11
 PROOF_LIST_BUFFER   .equ    0x5800
@@ -146,12 +147,15 @@ Start:
         cp "X"
         jp nz,FailEditor
 
+        call ProofCreateSource
+        jp c,FailCreate
+
         call ProofShellDirectory
         jp c,FailList
 
         ld a,PROOF_PASS
         ld (PROOF_RESULT),a
-        ld a,8
+        ld a,9
         ld (PROOF_PHASE),a
         halt
 
@@ -239,13 +243,77 @@ ProofShellDirectory:
         scf
         ret nz
         ld a,(SHL_PARAM_COMMAND_RESULT_HI)
-        cp 2
+        cp 3
         scf
         ret nz
         ld a,VDU_SVC_INIT
         farCall VDU_BANK,VDU_ENTRY
         ret c
         callService SHL_RENDER_RESULT
+        ret
+
+ProofCreateSource:
+        ld hl,ProofCreateEvents
+        ld de,INP_QUEUE_BASE
+        ld bc,6
+        ldir
+        xor a
+        ld (INP_QUEUE_HEAD),a
+        ld a,3
+        ld (INP_QUEUE_COUNT),a
+        ld hl,ProofNewTarget
+        ld (EDT_PARAM_TARGET_LO),hl
+        ld a,8
+        ld (PROOF_PHASE),a
+        ld a,EDT_SVC_RUN
+        farCall EDT_BANK,EDT_ENTRY
+        ret c
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_OK
+        scf
+        ret nz
+        xor a
+        ld (EDT_BUFFER_BASE),a
+        ld (EDT_BUFFER_BASE+1),a
+        ld hl,ProofNewTarget
+        ld (EDT_PARAM_TARGET_LO),hl
+        ld a,EDT_SVC_OPEN
+        farCall EDT_BANK,EDT_ENTRY
+        ret c
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_OK
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_BUFFER_BASE+1)
+        cp "N"
+        scf
+        ret nz
+        ld hl,ProofNewPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_CREATE_SOURCE
+        farCall TFS_BANK,TFS_ENTRY
+        jr nc,ProofCreateUnexpectedSuccess
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_EXISTS
+        scf
+        ret nz
+        ld hl,ProofBadCreatePath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_CREATE_SOURCE
+        farCall TFS_BANK,TFS_ENTRY
+        jr nc,ProofCreateUnexpectedSuccess
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_BAD_PATH
+        scf
+        ret nz
+        or a
+        ret
+ProofCreateUnexpectedSuccess:
+        scf
         ret
 
 FailFind:
@@ -269,6 +337,9 @@ FailReopen:
 FailList:
         ld a,PROOF_FAIL_LIST
         jr Fail
+FailCreate:
+        ld a,PROOF_FAIL_CREATE
+        jr Fail
 FailEditor:
         ld a,0xE7
 Fail:
@@ -284,14 +355,26 @@ ProofExpectedList:
 ProofDirCommand:
         .db     "DIR /src",0
 ProofDirCommandEnd:
+ProofNewPath:
+        .db     "/src/new.asm",0
+ProofBadCreatePath:
+        .db     "/src/BAD.asm",0
 
 ProofTarget:
         .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
         .dw     ProofPath
+        .db     0
+ProofNewTarget:
+        .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
+        .dw     ProofNewPath
         .db     0
 
 ProofEditorEvents:
         .db     "E",0
         .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
 ProofQuitEvent:
+        .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofCreateEvents:
+        .db     "N",0
+        .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
         .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL

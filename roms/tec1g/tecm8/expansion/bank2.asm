@@ -62,6 +62,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsFindPathImpl
         cp TFS_SVC_LIST_PATH
         jp z,tecfsListPathImpl
+        cp TFS_SVC_CREATE_SOURCE
+        jp z,tecfsCreateSourceImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -116,6 +118,9 @@ tecfsFindPath:
 
 tecfsListPath:
         jp tecfsListPathImpl
+
+tecfsCreateSource:
+        jp tecfsCreateSourceImpl
 
 tecfsLoadSource:
         jp tecfsLoadSourceImpl
@@ -817,6 +822,482 @@ tecfsListAppendByte:
         inc hl
         ld (TFS_PARAM_LIST_USED_LO),hl
         ret
+
+; Create one empty, one-block source file in an existing TM8 prefix.
+; The data block is cleared and allocated before the catalogue entry is
+; published, so an interrupted create cannot expose uninitialised source data.
+; Input: TFS_PARAM_PATH_LO/HI -> "/name" or "/prefix/name".
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateSourceImpl:
+        call tecfsParsePath
+        ret c
+        call tecfsCreateValidateName
+        ret c
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        or a
+        jr z,tecfsCreateSourceRoot
+        call tecfsFindPrefix
+        ret c
+        jr tecfsCreateSourcePrefixReady
+tecfsCreateSourceRoot:
+        ld (TFS_SCAN_PREFIX_ID),a
+tecfsCreateSourcePrefixReady:
+        call tecfsCreateScanCatalog
+        ret c
+        call tecfsCreateFindFreeBlock
+        ret c
+        call tecfsCreateClearDataBlock
+        ret c
+        call tecfsCreateMarkAllocated
+        ret c
+        call tecfsCreateUpdateSuperblock
+        ret c
+        call tecfsCreateWriteCatalog
+        ret c
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L
+tecfsCreateValidateName:
+        ld hl,(TFS_SCAN_NAME_PTR)
+        ld a,(TFS_SCAN_NAME_LEN)
+        ld b,a
+tecfsCreateValidateNameNext:
+        ld a,(hl)
+        cp "a"
+        jr c,tecfsCreateValidateNameDigit
+        cp "z"+1
+        jr c,tecfsCreateValidateNameOk
+tecfsCreateValidateNameDigit:
+        cp "0"
+        jr c,tecfsCreateValidateNamePunctuation
+        cp "9"+1
+        jr c,tecfsCreateValidateNameOk
+tecfsCreateValidateNamePunctuation:
+        cp "."
+        jr z,tecfsCreateValidateNameOk
+        cp "_"
+        jr z,tecfsCreateValidateNameOk
+        cp "-"
+        jp nz,tecfsBadPath
+tecfsCreateValidateNameOk:
+        inc hl
+        djnz tecfsCreateValidateNameNext
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateScanCatalog:
+        ld hl,TFS_CREATE_ID_BITMAP
+        ld de,TFS_CREATE_ID_BITMAP+1
+        ld bc,TFS_CREATE_ID_BITMAP_BYTES-1
+        xor a
+        ld (hl),a
+        ldir
+        dec a
+        ld (TFS_CREATE_CATALOG_SECTOR),a
+        ld a,TFS_CATALOG_SECTOR
+        ld (TFS_SCAN_SECTOR),a
+        ld a,TFS_CATALOG_SECTORS
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsCreateCatalogSector:
+        call tecfsReadScanSector
+        ret c
+        xor a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+tecfsCreateCatalogEntry:
+        call tecfsCatalogEntryAddress
+        ld a,(hl)
+        or a
+        jr z,tecfsCreateCatalogFree
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jp nz,tecfsCreateBadCatalog
+        push hl
+        call tecfsCreateMarkFileId
+        pop hl
+        push hl
+        call tecfsMatchCatalogEntry
+        pop hl
+        jp nc,tecfsCreateExists
+        jr tecfsCreateCatalogAdvance
+tecfsCreateCatalogFree:
+        ld a,(TFS_CREATE_CATALOG_SECTOR)
+        inc a
+        jr nz,tecfsCreateCatalogAdvance
+        push hl
+        call tecfsCreateFreeEntryClean
+        pop hl
+        ret c
+        ld a,(TFS_SCAN_SECTOR)
+        ld (TFS_CREATE_CATALOG_SECTOR),a
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        ld (TFS_CREATE_CATALOG_INDEX),a
+tecfsCreateCatalogAdvance:
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        inc a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+        cp TFS_CATALOG_ENTRIES_SECTOR
+        jr nz,tecfsCreateCatalogEntry
+        call tecfsAdvanceScanSector
+        jr nz,tecfsCreateCatalogSector
+        ld a,(TFS_CREATE_CATALOG_SECTOR)
+        inc a
+        jp z,tecfsCreateNoSpace
+        jp tecfsCreateChooseFileId
+
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,H,L
+tecfsCreateFreeEntryClean:
+        ld b,TFS_CATALOG_ENTRY_BYTES
+tecfsCreateFreeEntryCleanNext:
+        ld a,(hl)
+        or a
+        jp nz,tecfsCreateBadCatalog
+        inc hl
+        djnz tecfsCreateFreeEntryCleanNext
+        or a
+        ret
+
+.routine in HL out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateMarkFileId:
+        inc hl
+        ld a,(hl)
+        ld c,a
+        and 0x07
+        ld b,a
+        ld d,0x01
+        jr z,tecfsCreateFileIdMaskReady
+tecfsCreateFileIdMask:
+        rlc d
+        djnz tecfsCreateFileIdMask
+tecfsCreateFileIdMaskReady:
+        ld b,d
+        ld a,c
+        srl a
+        srl a
+        srl a
+        ld l,a
+        ld h,0x00
+        ld de,TFS_CREATE_ID_BITMAP
+        add hl,de
+        ld a,(hl)
+        or b
+        ld (hl),a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateChooseFileId:
+        ld hl,TFS_CREATE_ID_BITMAP
+        ld c,0x00
+tecfsCreateChooseFileIdByte:
+        ld a,(hl)
+        cp 0xFF
+        jr nz,tecfsCreateChooseFileIdBit
+        inc hl
+        ld a,c
+        add a,0x08
+        ld c,a
+        jr nz,tecfsCreateChooseFileIdByte
+        jp tecfsCreateNoSpace
+tecfsCreateChooseFileIdBit:
+        ld b,0x08
+        ld d,0x01
+tecfsCreateChooseFileIdBitNext:
+        ld a,(hl)
+        and d
+        jr z,tecfsCreateChooseFileIdFound
+        rlc d
+        inc c
+        djnz tecfsCreateChooseFileIdBitNext
+        jp tecfsCreateNoSpace
+tecfsCreateChooseFileIdFound:
+        ld a,c
+        ld (TFS_CREATE_FILE_ID),a
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateFindFreeBlock:
+        ld hl,TFS_DATA_START_BLOCK
+        ld (TFS_CREATE_CANDIDATE_LO),hl
+        ld a,TFS_ALLOCATION_SECTOR
+        ld (TFS_SCAN_SECTOR),a
+        ld a,TFS_ALLOCATION_USED_SECTORS
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsCreateAllocSector:
+        call tecfsReadScanSector
+        ret c
+        ld a,(TFS_SCAN_SECTOR)
+        cp TFS_ALLOCATION_SECTOR
+        jr nz,tecfsCreateAllocWholeSector
+        ld hl,TFS_CATALOG_BUFFER+(TFS_DATA_START_BLOCK*2)
+        ld de,TFS_DATA_START_BLOCK
+        ld b,0x100-TFS_DATA_START_BLOCK
+        jr tecfsCreateAllocLoop
+tecfsCreateAllocWholeSector:
+        ld hl,TFS_CATALOG_BUFFER
+        ld de,(TFS_CREATE_CANDIDATE_LO)
+        ld b,0x00
+tecfsCreateAllocLoop:
+        ld a,(hl)
+        inc hl
+        or (hl)
+        jr z,tecfsCreateAllocFound
+        inc hl
+        inc de
+        djnz tecfsCreateAllocLoop
+        ld (TFS_CREATE_CANDIDATE_LO),de
+        call tecfsAdvanceScanSector
+        jr nz,tecfsCreateAllocSector
+        jp tecfsCreateNoSpace
+tecfsCreateAllocFound:
+        ld (TFS_CREATE_FREE_BLOCK_LO),de
+        ld a,(TFS_SCAN_SECTOR)
+        ld (TFS_CREATE_ALLOC_SECTOR),a
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateClearDataBlock:
+        ld hl,TFS_CATALOG_BUFFER
+        ld de,TFS_CATALOG_BUFFER+1
+        ld bc,0x01FF
+        xor a
+        ld (hl),a
+        ldir
+        ld hl,(TFS_CREATE_FREE_BLOCK_LO)
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld (TFS_CREATE_DATA_SECTOR_LO),hl
+        ld a,TFS_SECTORS_PER_BLOCK
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsCreateClearDataSector:
+        ld hl,(TFS_CREATE_DATA_SECTOR_LO)
+        call tecfsCreateSetSector
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsWriteSectorImpl
+        ret c
+        ld hl,(TFS_CREATE_DATA_SECTOR_LO)
+        inc hl
+        ld (TFS_CREATE_DATA_SECTOR_LO),hl
+        ld hl,TFS_SCAN_SECTORS_LEFT
+        dec (hl)
+        jr nz,tecfsCreateClearDataSector
+        or a
+        ret
+
+.routine in HL out A,zero clobbers sign,parity,halfCarry,H,L
+tecfsCreateSetSector:
+        ld (TFS_PARAM_SECTOR_0),hl
+        xor a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateMarkAllocated:
+        ld a,(TFS_CREATE_ALLOC_SECTOR)
+        ld (TFS_SCAN_SECTOR),a
+        call tecfsReadScanSector
+        ret c
+        ld a,(TFS_CREATE_FREE_BLOCK_LO)
+        add a,a
+        ld l,a
+        ld h,0x00
+        jr nc,tecfsCreateAllocOffsetReady
+        inc h
+tecfsCreateAllocOffsetReady:
+        ld de,TFS_CATALOG_BUFFER
+        add hl,de
+        ld (hl),0xFF
+        inc hl
+        ld (hl),0xFF
+        jp tecfsWriteScanSector
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateUpdateSuperblock:
+        xor a
+        ld (TFS_SCAN_SECTOR),a
+        call tecfsReadScanSector
+        ret c
+        ld hl,TFS_CATALOG_BUFFER
+        ld de,TecfsCreateSuperblockHeader
+        ld b,TecfsCreateSuperblockHeaderEnd-TecfsCreateSuperblockHeader
+        call tecfsMatchScanBytes
+        jp c,tecfsCreateBadVolume
+        call tecfsCreateValidateChecksum
+        ret c
+        ld hl,TFS_CATALOG_BUFFER+42
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        ld a,d
+        or e
+        jp z,tecfsCreateNoSpace
+        dec de
+        ld (hl),d
+        dec hl
+        ld (hl),e
+        call tecfsCreateRecomputeChecksum
+        jp tecfsWriteScanSector
+
+TecfsCreateSuperblockHeader:
+        .db     "TECM8VOL"
+        .db     0x01,0x00
+        .db     0x00,0x02
+        .db     0x00,0x10
+        .db     0x00,0x04
+        .db     0x00,0x00,0x40,0x00
+        .db     0x01,0x00
+        .db     0x01,0x00
+        .db     0x02,0x00
+        .db     0x04,0x00
+        .db     0x80,0x00
+        .db     0x80,0x00
+        .db     0x06,0x00
+        .db     0x04,0x00
+        .db     0x40,0x00
+        .db     0x00,0x01
+        .db     0x0A,0x00
+TecfsCreateSuperblockHeaderEnd:
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateValidateChecksum:
+        ld hl,TFS_CATALOG_BUFFER+72
+        ld a,(hl)
+        ld (TFS_CREATE_CHECKSUM_LO),a
+        inc hl
+        ld a,(hl)
+        ld (TFS_CREATE_CHECKSUM_HI),a
+        inc hl
+        ld a,(hl)
+        or a
+        jp nz,tecfsCreateBadVolume
+        inc hl
+        ld a,(hl)
+        or a
+        jp nz,tecfsCreateBadVolume
+        call tecfsCreateRecomputeChecksum
+        ld hl,TFS_CATALOG_BUFFER+72
+        ld a,(TFS_CREATE_CHECKSUM_LO)
+        cp (hl)
+        jp nz,tecfsCreateBadVolume
+        inc hl
+        ld a,(TFS_CREATE_CHECKSUM_HI)
+        cp (hl)
+        jp nz,tecfsCreateBadVolume
+        or a
+        ret
+
+.routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateRecomputeChecksum:
+        ld hl,TFS_CATALOG_BUFFER+72
+        xor a
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld bc,0x0200
+        ld de,0x0000
+tecfsCreateChecksumNext:
+        ld a,e
+        add a,(hl)
+        ld e,a
+        jr nc,tecfsCreateChecksumNoCarry
+        inc d
+tecfsCreateChecksumNoCarry:
+        inc hl
+        dec bc
+        ld a,b
+        or c
+        jr nz,tecfsCreateChecksumNext
+        ld hl,TFS_CATALOG_BUFFER+72
+        ld (hl),e
+        inc hl
+        ld (hl),d
+        inc hl
+        xor a
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateWriteCatalog:
+        ld a,(TFS_CREATE_CATALOG_SECTOR)
+        ld (TFS_SCAN_SECTOR),a
+        call tecfsReadScanSector
+        ret c
+        ld a,(TFS_CREATE_CATALOG_INDEX)
+        ld (TFS_SCAN_ENTRY_INDEX),a
+        call tecfsCatalogEntryAddress
+        push hl
+        call tecfsCreateFreeEntryClean
+        pop hl
+        ret c
+        ld a,TFS_ENTRY_STATUS_ACTIVE
+        ld (hl),a
+        inc hl
+        ld a,(TFS_CREATE_FILE_ID)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_SCAN_PREFIX_ID)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_SCAN_NAME_LEN)
+        ld (hl),a
+        inc hl
+        ld de,(TFS_SCAN_NAME_PTR)
+        ld b,a
+tecfsCreateCopyName:
+        ld a,(de)
+        ld (hl),a
+        inc de
+        inc hl
+        djnz tecfsCreateCopyName
+        call tecfsCatalogEntryAddress
+        ld de,TFS_CATALOG_OFFSET_FIRST_BLOCK
+        add hl,de
+        ld de,(TFS_CREATE_FREE_BLOCK_LO)
+        ld (hl),e
+        inc hl
+        ld (hl),d
+        ld de,TFS_CATALOG_OFFSET_FILE_TYPE-TFS_CATALOG_OFFSET_FIRST_BLOCK-1
+        add hl,de
+        ld (hl),TFS_FILE_SOURCE_V1
+        jp tecfsWriteScanSector
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsWriteScanSector:
+        ld a,(TFS_SCAN_SECTOR)
+        ld l,a
+        ld h,0x00
+        call tecfsCreateSetSector
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        jp tecfsWriteSectorImpl
+
+tecfsCreateBadCatalog:
+        ld a,TFS_ERR_BAD_CATALOG
+        jp tecfsPublishScanError
+tecfsCreateNoSpace:
+        ld a,TFS_ERR_NO_SPACE
+        jp tecfsPublishScanError
+tecfsCreateExists:
+        ld a,TFS_ERR_EXISTS
+        jp tecfsPublishScanError
+tecfsCreateBadVolume:
+        ld a,TFS_ERR_BAD_VOLUME_FORMAT
+        jp tecfsPublishScanError
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L
 tecfsParsePath:

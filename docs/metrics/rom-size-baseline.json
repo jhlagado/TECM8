@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 2857,
-      "span": 2857,
+      "occupied": 3640,
+      "span": 3640,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 35625,
-      "freeAfterHighWater": 13527
+      "highWaterEnd": 36408,
+      "freeAfterHighWater": 12744
     },
     {
       "bank": 3,
@@ -49,12 +49,12 @@
     {
       "bank": 4,
       "role": "Editor and optional GLCD boundary",
-      "occupied": 2273,
-      "span": 2291,
+      "occupied": 2314,
+      "span": 2332,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 35059,
-      "freeAfterHighWater": 14093
+      "highWaterEnd": 35100,
+      "freeAfterHighWater": 14052
     },
     {
       "bank": 5,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 13392,
-    "span": 13878,
+    "occupied": 14216,
+    "span": 14702,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 133578
+    "freeAfterHighWater": 132754
   }
 }

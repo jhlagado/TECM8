@@ -282,11 +282,12 @@ edit draw
 edit /src/draw.asm
 ```
 
-The shell resolves the argument to a TM8 path, appending `.asm` when no
-extension is present, and opens that file. If the file does not exist, the
-editor may create it after an explicit save; the shell should not need a
-separate `new` command for ordinary source editing. Editing a named file does
-not change `main`.
+The full shell resolver resolves relative arguments and appends `.asm` when no
+extension is present. The compact ROM command currently accepts the bounded
+absolute form, such as `EDIT /src/draw.asm`. If that source does not exist,
+bank 4 asks bank 2 to allocate one cleared block and publish an empty catalogue
+entry, then opens it through the ordinary editor path. No separate `new`
+command is required. Editing a named file does not change `main`.
 
 ## `asm`
 

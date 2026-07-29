@@ -157,7 +157,7 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   fatError: number;
 } {
   let fatError = 0;
-  for (let i = 0; i < 220_000_000; i += 1) {
+  for (let i = 0; i < 360_000_000; i += 1) {
     if (runtime.cpu.pc >= 0xf255 && runtime.cpu.pc <= 0xf291) {
       fatError = runtime.cpu.pc;
     }
@@ -172,19 +172,27 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   );
 }
 
-function verifyHostFile(): string {
-  const { readFileFromVolumeImage } = require(resolve(ROOT, 'tools/tm8/format.ts'));
+function verifyHostFiles(): { firstLine: string; createdLine: string } {
+  const { parseVolumeImage, readFileFromVolumeImage } = require(resolve(ROOT, 'tools/tm8/format.ts'));
   const manifest = JSON.parse(readFileSync(IMAGE.replace(/\.[^.]*$/, '.json'), 'utf8'));
   const image = readFileSync(IMAGE);
   const volume = Buffer.from(
     image.subarray(manifest.volume_start_byte_offset, manifest.volume_start_byte_offset + 4 * 1024 * 1024),
   );
+  parseVolumeImage(volume);
   const source = readFileFromVolumeImage(volume, '/src/main.asm') as Buffer;
   const firstLine = source.subarray(1, 1 + (source[0] ?? 0)).toString('ascii');
   if (firstLine !== 'EXRG 0') {
     throw new Error(`host-side source is "${firstLine}", expected "EXRG 0"`);
   }
-  return firstLine;
+  const created = readFileFromVolumeImage(volume, '/src/new.asm') as Buffer;
+  const createdLine = created.subarray(1, 1 + (created[0] ?? 0)).toString('ascii');
+  if (created.byteLength !== 32 || createdLine !== 'N') {
+    throw new Error(
+      `host-side created source is ${created.byteLength} bytes with line ${JSON.stringify(createdLine)}, expected 32 bytes and "N"`,
+    );
+  }
+  return { firstLine, createdLine };
 }
 
 async function main(): Promise<void> {
@@ -202,17 +210,23 @@ async function main(): Promise<void> {
   if (!tms9918) {
     throw new Error('TMS9918 snapshot unavailable after shell directory render');
   }
-  const renderedDirectory = Buffer.from(tms9918.vram.subarray(0x00a0, 0x00a0 + 64))
+  const renderedDirectory = Buffer.from(tms9918.vram.subarray(0x00a0, 0x00a0 + 96))
     .toString('ascii');
-  if (!renderedDirectory.startsWith('main.asm') || !renderedDirectory.slice(32).startsWith('util.asm')) {
+  if (
+    !renderedDirectory.startsWith('main.asm') ||
+    !renderedDirectory.slice(32).startsWith('util.asm') ||
+    !renderedDirectory.slice(64).startsWith('new.asm')
+  ) {
     throw new Error(`shell directory rows were ${JSON.stringify(renderedDirectory)}`);
   }
-  const firstLine = verifyHostFile();
+  const { firstLine, createdLine } = verifyHostFiles();
   writeFileSync(
     LAST_RUN,
-    `${JSON.stringify({ result: 'ok', instructions, firstLine, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
+    `${JSON.stringify({ result: 'ok', instructions, firstLine, createdLine, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
   );
-  console.log(`TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine})`);
+  console.log(
+    `TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine}; created ${createdLine})`,
+  );
 }
 
 main().catch((error: unknown) => {
