@@ -6,6 +6,7 @@
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { debug80Root } = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
 const STATUS_TOOL = resolve(TECM8_ROOT, 'tools/check-storage-proof-status.ts');
@@ -91,7 +92,7 @@ function main(): void {
     JSON.stringify(
       {
         result: 'ok',
-        debug80Root: process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80',
+        debug80Root: debug80Root(),
         storageProof: {
           status: 'ok',
           instructions: lastRun.instructions,

@@ -6,9 +6,12 @@
 const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { resolve } = require('node:path');
+const {
+  loadDebug80RuntimeModules,
+  loadExpansionRomImage,
+} = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/tecmate-monitor-launch/tecmate-monitor-launch-last-run.json');
 const MONITOR_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const MONITOR_D8_PATH = resolve(TECM8_ROOT, 'build/roms/tec1g/tecm8/monitor/monitor.d8.json');
@@ -139,10 +142,6 @@ type D8Symbol = {
   value?: number;
 };
 
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
-
 function symbolNumber(d8Path: string, name: string): number {
   const d8 = JSON.parse(readFileSync(d8Path, 'utf8')) as { symbols?: D8Symbol[] };
   const symbol = d8.symbols?.find((entry) => entry.name === name);
@@ -180,22 +179,12 @@ function makeConfig() {
   };
 }
 
-function loadRuntime(
+async function loadRuntime(
   entryAddress: number,
   options: { expansionImage?: boolean; expansionRomPath?: string } = {},
-): { runtime: Runtime; platformRuntime: PlatformRuntime } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks, applyExpansionRomMemory } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function; applyExpansionRomMemory: Function };
-  const { loadTec1gExpansionRomImage } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-expansion-rom.js',
-  ) as { loadTec1gExpansionRomImage: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+): Promise<{ runtime: Runtime; platformRuntime: PlatformRuntime }> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, applyExpansionRomMemory, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig();
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -216,7 +205,7 @@ function loadRuntime(
     tec1gRuntime.state.system,
   );
   if (options.expansionImage !== false) {
-    const expansionImage = loadTec1gExpansionRomImage(options.expansionRomPath ?? EXPANSION_ROM_PATH);
+    const expansionImage = loadExpansionRomImage(options.expansionRomPath ?? EXPANSION_ROM_PATH);
     applyExpansionRomMemory(hooks.expandBanks, expansionImage);
   }
   runtime.hardware.memRead = hooks.memRead;
@@ -399,7 +388,7 @@ function createAlternateExpansionImage(): { path: string; dir: string } {
   return { path, dir };
 }
 
-function runInstalledExpansionCase(launchAddress: number): {
+async function runInstalledExpansionCase(launchAddress: number): Promise<{
   instructions: number;
   bridgeInstructions: number;
   expectedInstallAddress: number;
@@ -429,11 +418,11 @@ function runInstalledExpansionCase(launchAddress: number): {
     firstNameLength: number;
     flags: number;
   };
-} {
+}> {
   const expectedServiceAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ServiceCall');
   const expectedMenuAddress = symbolNumber(BANK0_D8_PATH, 'Tecm8ExpansionBank0Entry');
   const expectedInstallAddress = assertBank0Header();
-  const { runtime, platformRuntime } = loadRuntime(launchAddress);
+  const { runtime, platformRuntime } = await loadRuntime(launchAddress);
   const instructions = runUntilHalt(runtime, platformRuntime);
   const trace = readTrace(runtime, DBG_TRACE_BASE, 9);
   const menuVectorAddress = readWord(runtime, EXP_MENU_VEC_ADDR);
@@ -778,17 +767,19 @@ function runInstalledExpansionCase(launchAddress: number): {
   };
 }
 
-function runAlternateInstallCase(launchAddress: number): {
+async function runAlternateInstallCase(launchAddress: number): Promise<{
   instructions: number;
   bridgeInstructions: number;
   menuVectorAddress: number;
   serviceVectorAddress: number;
   trace: number[];
   finalSysCtrl?: number;
-} {
+}> {
   const image = createAlternateExpansionImage();
   try {
-    const { runtime, platformRuntime } = loadRuntime(launchAddress, { expansionRomPath: image.path });
+    const { runtime, platformRuntime } = await loadRuntime(launchAddress, {
+      expansionRomPath: image.path,
+    });
     const instructions = runUntilHalt(runtime, platformRuntime);
     const menuVectorAddress = readWord(runtime, EXP_MENU_VEC_ADDR);
     const serviceVectorAddress = readWord(runtime, EXP_SVC_VEC_ADDR);
@@ -828,7 +819,7 @@ function runAlternateInstallCase(launchAddress: number): {
   }
 }
 
-function runMissingExpansionCase(launchAddress: number): {
+async function runMissingExpansionCase(launchAddress: number): Promise<{
   instructions: number;
   bridgeInstructions: number;
   trace: number[];
@@ -836,8 +827,10 @@ function runMissingExpansionCase(launchAddress: number): {
   finalSp: number;
   finalSysCtrl?: number;
   finalPhysicalBank?: number;
-} {
-  const { runtime, platformRuntime } = loadRuntime(launchAddress, { expansionImage: false });
+}> {
+  const { runtime, platformRuntime } = await loadRuntime(launchAddress, {
+    expansionImage: false,
+  });
   const instructions = runUntilHalt(runtime, platformRuntime);
   const trace = readTrace(runtime, DBG_TRACE_BASE, 9);
 
@@ -893,11 +886,11 @@ function assertDemoVram(runtime: Runtime, platformRuntime: PlatformRuntime): voi
   assertEqual(runtime.hardware.memory[TFS_PARAM_VOLUME_MIB], TFS_VOLUME_MIB, 'demo TEC-FS mount side effect');
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const launchAddress = symbolNumber(MONITOR_D8_PATH, 'launchExpansion');
-  const installed = runInstalledExpansionCase(launchAddress);
-  const alternate = runAlternateInstallCase(launchAddress);
-  const missing = runMissingExpansionCase(launchAddress);
+  const installed = await runInstalledExpansionCase(launchAddress);
+  const alternate = await runAlternateInstallCase(launchAddress);
+  const missing = await runMissingExpansionCase(launchAddress);
 
   writeFileSync(
     LAST_RUN,
@@ -917,4 +910,8 @@ function main(): void {
   console.log(`TecMate monitor launch proof passed in ${installed.instructions} instructions`);
 }
 
-main();
+main().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`error: ${message}`);
+  process.exit(1);
+});

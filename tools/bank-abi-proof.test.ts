@@ -27,7 +27,7 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(proof, /callService SHL_ENTRY/);
   assert.match(proof, /callService SHL_RUN_COMMAND/);
   assert.match(proof, /callService 0x7F[\s\S]*ld \(ABI_TRACE_BASE\+21\),a[\s\S]*jp nc,BankAbiFarJumpReturnedFail/);
-  assert.match(runner, /loadTec1gExpansionRomImage/);
+  assert.match(runner, /loadExpansionRomImage/);
   assert.match(runner, /applyExpansionRomMemory/);
   assert.match(runner, /function assertProofPassed/);
   assert.match(runner, /resultAddr=0x/);

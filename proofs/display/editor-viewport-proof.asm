@@ -18,7 +18,6 @@ Start:
         CALL    EditorViewportRender
         JR      C,ProofFailed
 
-        .rcignore definite_contract_violation "A is not live after this full flush proof call."
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 
@@ -29,7 +28,6 @@ Start:
         LD      HL,EditorSourceRecords
         CALL    EditorViewportRender
         JR      C,ProofFailed
-        .rcignore definite_contract_violation "A is not live after this full flush proof call."
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 

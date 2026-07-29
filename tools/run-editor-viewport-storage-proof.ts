@@ -7,12 +7,15 @@
 const { execFileSync } = require('node:child_process');
 const { existsSync, readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const {
+  debug80Mon3BundleRoot,
+  loadDebug80RuntimeModules,
+} = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const MON3_ROM_CANDIDATES = [
-  resolve(DEBUG80_ROOT, 'resources/bundles/tec1g/mon3/v1/mon3.bin'),
+  resolve(debug80Mon3BundleRoot(), 'mon3.bin'),
   '/Users/johnhardy/projects/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
   '/Users/johnhardy/projects/2026/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
 ];
@@ -282,10 +285,6 @@ type CompileResult = {
   diagnostics: Array<{ id?: string; message?: string; severity?: string }>;
   artifacts: Array<{ kind: string; bytes?: Uint8Array; json?: { symbols?: D8Symbol[] } }>;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 async function compileProof(proofCase: ProofCase): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
   const { compile, defaultFormatWriters } = AZM_ROOT
@@ -562,16 +561,12 @@ function makeConfig(imagePath: string) {
   };
 }
 
-function loadRuntime(bytes: Uint8Array, imagePath: string): { runtime: Runtime; platformRuntime: PlatformRuntime } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+async function loadRuntime(
+  bytes: Uint8Array,
+  imagePath: string,
+): Promise<{ runtime: Runtime; platformRuntime: PlatformRuntime }> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig(imagePath);
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -2039,7 +2034,7 @@ async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof(proofCase);
   const doneAddr = symbolAddress(symbols, 'ProofDone');
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
-  const { runtime, platformRuntime } = loadRuntime(bytes, imagePath);
+  const { runtime, platformRuntime } = await loadRuntime(bytes, imagePath);
   let instructions: number;
   try {
     const maxInstructions = 'maxInstructions' in proofCase ? proofCase.maxInstructions : undefined;

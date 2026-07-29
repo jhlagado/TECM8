@@ -11,36 +11,67 @@ milestone is complete, commit and push the reviewed work, update the changelog,
 and tag the milestone. Use patch versions for coherent internal progress and
 minor versions for larger user-visible TECM8 editor/shell/tool increments.
 
-## Current Agent Roadmap Focus: Code Quality And Compactness
+## Current Checkpoint: ROM Shell And Banked Services
 
-The Debug80-testable editor milestone, Display Performance Phase 7, the
-display BIOS/profile boundary, the DS1 display-service facade, the first
-bank-readiness/code-quality pass, and Block Editing V1 automation have been
-reached. Earlier numbered editor phases are closed unless they explicitly list a
-deferred follow-up in the future backlog.
+The Debug80 TecMate ROM demo milestone is complete. The fixed monitor discovers
+the expansion image and launches bank 0 through the installed service vectors.
+The proof-backed ROM path now includes:
 
-Next agent-owned phase:
+- the named bank-0 bootstrap and service registry
+- VDU/TMS9918 initialization, text output, cursor, scrolling, and status output
+- TEC-FS geometry, volume selection, metadata, sector-driver, and compact
+  catalogue-summary boundaries
+- the input snapshot boundary
+- shell classification for exact `edit`, `asm`, `run`, and `dir` commands
+- assembler and runner target handoff skeletons that deliberately return
+  `UNSUP`
+- monitor-menu launch, shell return, far-call, and bank restoration contracts
 
-1. Implement and prove the **Debug80 TecMate Demo Milestone** described in
-   `docs/debug80-tecmate-demo-milestone.md`: a small runnable monitor-to-TecMate
-   path that demonstrates bank 0 shell/demo entry, VDU/TMS output, input
-   snapshot, and TEC-FS boundary state through Debug80.
-2. Continue the code-quality compactness plan with **Q5: Editor Interaction
-   Decomposition**, because Q3/Q4 helper extraction has already been executed
-   through the narrow TM8/storage helpers now documented in the quality plan.
-3. Execute the second-pass command/input architecture plan in
-   `docs/editor-command-policy.md`: centralize command-family policy,
-   render/loop tails, prompt setup, and normal/insert routing only in measured
-   slices with meaningful byte-saving thresholds. Do not continue with isolated
-   tiny dispatch-table experiments unless they are part of that larger shape.
-4. Finish Q5 by reducing `editor-interaction.asm` to orchestration and
-   compatibility wrappers, then run Q6/Q7 acceptance only if the code still
-   differs from the documented bank-ready boundary.
-5. After the quality pass is complete, return to user-visible editor features:
-   named block read/write, shell completion, then assembler integration.
+`npm run checkpoint:tecmate-rom` is the focused manual checkpoint.
+`npm run check` is the required repository gate and covers the ROM artifacts,
+bank contracts, storage proofs, GLCD editor proofs, and live Debug80 smokes.
+The Debug80 integration uses the current sibling monorepo layout through the
+single resolver in `tools/debug80-integration.ts`; setup is documented in the
+root `README.md`.
 
-Human validation remains useful feedback, but it is not a numbered roadmap item
-and should not block agent progress unless it reports a concrete bug.
+The RAM-loaded GLCD editor remains the mature editor implementation. The ROM
+shell does not yet contain a complete interactive editor, assembler, or runner.
+In particular, `dir` still summarizes two explicit catalogue slots rather than
+walking a complete on-card catalogue.
+
+## Next Implementation Milestone: ROM Editor File-Buffer Vertical Slice
+
+The next user-visible milestone is the smallest read-only ROM editor route:
+
+```text
+shell `edit`
+  -> project-main target descriptor
+  -> TEC-FS target and metadata lookup
+  -> editor file-buffer service
+  -> VDU/TMS9918 32-byte-record source window
+  -> return to shell
+```
+
+The acceptance boundary is intentionally narrow:
+
+1. `edit` resolves the project main source without adding path parsing to bank 0.
+2. TEC-FS loads one bounded source buffer and publishes its metadata and length.
+3. The editor service renders one source window, a cursor position, and a clear
+   dirty flag through bank-1 VDU services.
+4. Exit returns through the documented shell/monitor contract.
+5. A Debug80 proof verifies the target descriptor, loaded record bytes, visible
+   TMS9918 text, clean state, and return path.
+6. ROM size and register-contract gates remain green.
+
+Save, insertion/deletion, scrolling, GLCD rendering, assembler diagnostics, and
+full catalogue allocation are follow-on slices. The assembler bank remains a
+handoff skeleton until the file-buffer input and TEC-FS binary/map output paths
+exist.
+
+Code-quality work should support this vertical slice when it removes a measured
+obstacle. Broad editor decomposition is not the active milestone by itself.
+Human validation remains useful feedback, but it does not block repository work
+unless it reports a concrete bug.
 
 ## System Vision: TECM8 As A ROM-Based OS
 

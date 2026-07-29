@@ -7,9 +7,12 @@ const { execFileSync } = require('node:child_process');
 const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { dirname, resolve } = require('node:path');
+const {
+  debug80Mon3BundleRoot,
+  loadDebug80RuntimeModules,
+} = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const SESSION_DIR = resolve(TECM8_ROOT, 'demos/debug80');
 const IMAGE_PATH = resolve(SESSION_DIR, 'editor-session-fat32.img');
@@ -17,7 +20,7 @@ const GLCD_CAPTURE_PATH = resolve(SESSION_DIR, 'editor-session-glcd.pgm');
 const SUMMARY_PATH = resolve(SESSION_DIR, 'editor-session-last-run.json');
 const IMAGE_TOOL = resolve(TECM8_ROOT, 'tools/create-storage-proof-image.ts');
 const MON3_ROM_CANDIDATES = [
-  resolve(DEBUG80_ROOT, 'resources/bundles/tec1g/mon3/v1/mon3.bin'),
+  resolve(debug80Mon3BundleRoot(), 'mon3.bin'),
   '/Users/johnhardy/projects/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
   '/Users/johnhardy/projects/2026/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
 ];
@@ -78,10 +81,6 @@ type CompileResult = {
   diagnostics: Array<{ id?: string; message?: string; severity?: string }>;
   artifacts: Array<{ kind: string; bytes?: Uint8Array; json?: { symbols?: D8Symbol[] } }>;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 async function compileMain(sourceFile = SOURCE_FILE): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
   const { compile, defaultFormatWriters } = AZM_ROOT
@@ -264,21 +263,14 @@ function makeConfig(imagePath: string, startAddress = APP_START, matrixMode = fa
   };
 }
 
-function loadRuntime(
+async function loadRuntime(
   bytes: Uint8Array,
   imagePath: string,
   startAddress = APP_START,
   matrixMode = false,
-): { runtime: Runtime; platformRuntime: PlatformRuntime } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+): Promise<{ runtime: Runtime; platformRuntime: PlatformRuntime }> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig(imagePath, startAddress, matrixMode);
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -578,7 +570,7 @@ async function main(): Promise<void> {
     const rawPrimaryAddr = symbolAddress(symbols, 'BiosInputRawPrimary');
     const rawSecondaryAddr = symbolAddress(symbols, 'BiosInputRawSecondary');
     const modifierBitsAddr = symbolAddress(symbols, 'BiosInputModifierBits');
-    const { runtime, platformRuntime } = loadRuntime(bytes, sessionImagePath, APP_START, true);
+    const { runtime, platformRuntime } = await loadRuntime(bytes, sessionImagePath, APP_START, true);
     platformRuntime.setMatrixMode?.(true);
     const bootInstructions = runUntilPc(runtime, platformRuntime, liveLoopAddr, 60_000_000);
 
@@ -738,7 +730,8 @@ async function main(): Promise<void> {
       throw new Error(`block smoke saved rows ${JSON.stringify(savedRows)}, expected ${JSON.stringify(expectedRows)}`);
     }
 
-    const { runtime: reopenRuntime, platformRuntime: reopenPlatformRuntime } = loadRuntime(bytes, sessionImagePath, APP_START, true);
+    const { runtime: reopenRuntime, platformRuntime: reopenPlatformRuntime } =
+      await loadRuntime(bytes, sessionImagePath, APP_START, true);
     reopenPlatformRuntime.setMatrixMode?.(true);
     const reopenInstructions = runUntilPc(reopenRuntime, reopenPlatformRuntime, liveLoopAddr, 60_000_000);
     assertRuntimeSourceRecord(reopenRuntime, pageBufferAddr, 4, 'B0 LINE 00', 'block smoke reopen row 4');
@@ -792,7 +785,7 @@ async function main(): Promise<void> {
     const rawPrimaryAddr = symbolAddress(symbols, 'BiosInputRawPrimary');
     const rawSecondaryAddr = symbolAddress(symbols, 'BiosInputRawSecondary');
     const translatedKeyAddr = symbolAddress(symbols, 'BiosInputTranslatedKey');
-    const { runtime, platformRuntime } = loadRuntime(bytes, sessionImagePath, APP_START, true);
+    const { runtime, platformRuntime } = await loadRuntime(bytes, sessionImagePath, APP_START, true);
     platformRuntime.setMatrixMode?.(true);
     const tapCursorKeyAndWait = (row: number, col: number, label: string): void => {
       if (!platformRuntime.applyMatrixKey) {
@@ -1262,7 +1255,7 @@ async function main(): Promise<void> {
   const resultAddr = symbolAddress(symbols, 'MainResultMarker');
   const errorAddr = symbolAddress(symbols, 'MainErrorMarker');
   const caseAddr = symbolAddress(symbols, 'MainCaseMarker');
-  const { runtime, platformRuntime } = loadRuntime(bytes, sessionImagePath, scriptStartAddr);
+  const { runtime, platformRuntime } = await loadRuntime(bytes, sessionImagePath, scriptStartAddr);
   const instructions = runUntil(runtime, platformRuntime, doneAddr);
   const resultMarker = runtime.hardware.memory[resultAddr];
   if (resultMarker !== PASS) {

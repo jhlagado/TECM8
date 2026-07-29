@@ -5,9 +5,9 @@
 
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { loadDebug80RuntimeModules, loadExpansionRomImage } = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/bank-abi/bank-abi-proof.asm');
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/bank-abi/bank-abi-proof-last-run.json');
@@ -59,10 +59,6 @@ type CompileResult = {
   diagnostics: Array<{ id?: string; message?: string; severity?: string }>;
   artifacts: Array<{ kind: string; bytes?: Uint8Array; json?: { symbols?: D8Symbol[] } }>;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
   const { compile, defaultFormatWriters } = AZM_ROOT
@@ -138,19 +134,9 @@ function makeConfig() {
   };
 }
 
-function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: PlatformRuntime } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks, applyExpansionRomMemory } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function; applyExpansionRomMemory: Function };
-  const { loadTec1gExpansionRomImage } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-expansion-rom.js',
-  ) as { loadTec1gExpansionRomImage: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+async function loadRuntime(bytes: Uint8Array): Promise<{ runtime: Runtime; platformRuntime: PlatformRuntime }> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, applyExpansionRomMemory, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig();
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -168,7 +154,7 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
     config.romRanges,
     tec1gRuntime.state.system,
   );
-  const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
+  const expansionImage = loadExpansionRomImage(EXPANSION_ROM_PATH);
   applyExpansionRomMemory(hooks.expandBanks, expansionImage);
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
@@ -245,7 +231,7 @@ function assertProofPassed(
 
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
-  const { runtime, platformRuntime } = loadRuntime(bytes);
+  const { runtime, platformRuntime } = await loadRuntime(bytes);
   const instructions = runUntilHalt(runtime, platformRuntime);
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');

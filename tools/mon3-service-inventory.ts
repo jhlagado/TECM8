@@ -1,5 +1,6 @@
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { debug80Mon3BundleRoot } = require('./debug80-integration.ts');
 
 type Mon3InventoryOptions = {
   bundleRoot?: string;
@@ -209,10 +210,7 @@ function remove(notes: string): ClassificationRule {
 }
 
 function defaultMon3BundleRoot(): string {
-  return resolve(
-    process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80',
-    'resources/bundles/tec1g/mon3/v1',
-  );
+  return debug80Mon3BundleRoot();
 }
 
 function repoRoot(): string {

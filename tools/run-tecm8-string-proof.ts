@@ -5,9 +5,9 @@
 
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { loadDebug80Z80Runtime } = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/shared/tecm8-string-proof.asm');
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/shared/tecm8-string-last-run.json');
@@ -37,10 +37,6 @@ type CompileResult = {
   diagnostics: Array<{ id?: string; message?: string; severity?: string }>;
   artifacts: Array<{ kind: string; bytes?: Uint8Array; json?: { symbols?: D8Symbol[] } }>;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
   const { compile, defaultFormatWriters } = AZM_ROOT
@@ -82,10 +78,8 @@ function symbolAddress(symbols: D8Symbol[], name: string): number {
   return symbol.address;
 }
 
-function loadRuntime(bytes: Uint8Array): Runtime {
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+async function loadRuntime(bytes: Uint8Array): Promise<Runtime> {
+  const { createZ80Runtime } = await loadDebug80Z80Runtime();
   const memory = new Uint8Array(0x10000);
   memory.set(bytes, APP_START);
   const runtime = createZ80Runtime({ memory, startAddress: APP_START }, APP_START, {}, {
@@ -109,7 +103,7 @@ function runUntilHalt(runtime: Runtime): number {
 
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
-  const runtime = loadRuntime(bytes);
+  const runtime = await loadRuntime(bytes);
   const instructions = runUntilHalt(runtime);
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const caseAddr = symbolAddress(symbols, 'CopyCaseMarker');
