@@ -60,19 +60,19 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `1320` | `1320` | `8528h` | `15064` |
+| 0 | Shell, launcher, registry | `1435` | `1435` | `859Bh` | `14949` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `2025` | `2025` | `87E9h` | `14359` |
+| 2 | TEC-FS boundary and block mapper | `2574` | `2574` | `8A0Eh` | `13810` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
-| 4 | Editor and optional GLCD boundary | `2213` | `2231` | `88B7h` | `14153` |
-| 5 | TEC-FS monitor-sector bridge | `374` | `425` | `81A9h` | `15959` |
+| 4 | Editor and optional GLCD boundary | `2273` | `2291` | `88F3h` | `14093` |
+| 5 | TEC-FS monitor-sector bridge | `3205` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
 | 7 | Phase-one self-hosted assembler | `2173` | `2173` | `887Dh` | `14211` |
 | 8 | Validated loader and runner | `256` | `256` | `8100h` | `16128` |
 
-Expansion occupied bytes: `9244`
+Expansion occupied bytes: `12799`
 
-Expansion high-water span total: `9313`
+Expansion high-water span total: `13285`
 
 Latest self-hosted build-and-run delta:
 
@@ -84,6 +84,17 @@ bank 5 span: 279 -> 425 bytes
 bank 7 span: 45 -> 2173 bytes
 bank 8 span: 45 -> 256 bytes
 expansion total span: 6283 -> 9313 bytes
+fixed monitor span: unchanged at 16384 bytes
+```
+
+Latest real SD editor delta:
+
+```text
+bank 0 span: 1320 -> 1435 bytes
+bank 2 span: 2025 -> 2574 bytes
+bank 4 span: 2231 -> 2291 bytes
+bank 5 span: 425 -> 3673 bytes
+expansion total span: 9313 -> 13285 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
@@ -103,13 +114,13 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 header | `8000h` | `EXPR` discovery header data, not a routine entry. |
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
-| Bank 0 service dispatcher | `805Eh` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `84F5h` | Private service ID to bank/address/target-`A` table. |
-| Bank 0 shell entry | `809Ch` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
-| Bank 0 shell command boundary | `80EFh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 shell status renderer | `82CFh` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
-| Bank 0 shell result renderer | `830Fh` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
-| Bank 0 info marker | `84F0h` | Private marker, not a fixed ABI location. |
+| Bank 0 service dispatcher | `806Ah` | Private table-driven label installed into the service vector. |
+| Bank 0 service registry | `8568h` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 shell entry | `80A8h` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
+| Bank 0 shell command boundary | `80FBh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
+| Bank 0 shell status renderer | `8342h` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
+| Bank 0 shell result renderer | `8382h` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
+| Bank 0 info marker | `8563h` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |

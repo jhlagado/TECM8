@@ -14,6 +14,8 @@ roms/tec1g/mon3/
 demos/debug80/*.img
 demos/debug80/*.json
 demos/debug80/*.pgm
+proofs/tecfs-bank/tecfs-mon3-file-fat32.img
+proofs/tecfs-bank/tecfs-mon3-file-fat32.json
 # OS / editor
 .DS_Store
 Thumbs.db

@@ -831,6 +831,20 @@ address is zero, the service reports the no-driver status with carry set. A
 driver receives `A=TFS_DRIVER_OP_READ` or `A=TFS_DRIVER_OP_WRITE` and uses the
 TEC-FS parameter block for sector and buffer arguments.
 
+Normal TecMate boot installs bank 5's `TFS_MON3_FILE_DRIVER` at `8200h`. That
+entry treats the sector parameter as a 512-byte sector relative to the FAT32
+`VOLUME.TM8` container. Bank 5 owns a relocated copy of the MON3 SD/FAT32
+storage package, so MON3-lite remains compact. Each operation opens the
+container; reads copy `0600h..07FFh` into the caller buffer, and writes use the
+required read-modify-write sequence. The `8000h` entry remains the deterministic
+RAM bridge for fast proofs.
+
+`TFS_SVC_FIND_PATH` (`16h`) scans the bounded TM8 v1 prefix and catalogue
+regions for `TFS_PARAM_PATH_LO/HI`, accepting `/name` and `/prefix/name`. A
+successful lookup copies the 64-byte entry to `TFS_CATALOG_BUFFER` at `3D00h`
+and remembers its sector and slot. Source saves write data pages before
+read-modify-writing that exact catalogue sector.
+
 TEC-FS status codes:
 
 | Constant | Value | Meaning |
@@ -841,6 +855,9 @@ TEC-FS status codes:
 | `TFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
 | `TFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
 | `TFS_ERR_BAD_LOCATOR` | `0Fh` | Locator buffer has invalid magic or unsupported version. |
+| `TFS_ERR_DRIVER_IO` | `11h` | The bank-5 SD/FAT32 backend failed an open, read, or write. |
+| `TFS_ERR_NOT_FOUND` | `12h` | No matching bounded prefix/catalogue entry was found. |
+| `TFS_ERR_BAD_PATH` | `13h` | The path is malformed or exceeds TM8 v1 bounds. |
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
@@ -886,7 +903,8 @@ carry set and do not modify the RTC status fields.
 ## Bank 4: Editor And GLCD Boundary
 
 Physical bank 4 owns the interactive ROM editor alongside the optional GLCD
-containment boundary. `EDT_SVC_OPEN` resolves the compact project-main target,
+containment boundary. `EDT_SVC_OPEN` resolves the compact project-main target
+or an explicit `SHL_TARGET_KIND_SOURCE_PATH` target,
 loads a three-page/48-record workspace through `TFS_SVC_LOAD_SOURCE`, and
 renders it through the bank-1 TMS9918 VDU. `EDT_SVC_RUN` adds the bank-6 key
 loop, cursor movement and page movement, printable insertion, character delete,
@@ -898,6 +916,10 @@ Bank 4 saves the character under the caret, writes the solid block
 `EDT_CURSOR_BLOCK_CHAR`, and alternates the saved character and block from the
 idle blink path. Moving or editing always restores the saved character first.
 The status row is live, for example `Ln 01 Col 02 DIRTY Pg 1/2`.
+
+At the shell, `EDIT` opens `/src/main.asm`; `EDIT /prefix/name` opens that
+bounded catalogue entry. Both forms use the same block cursor, explicit save,
+dirty-exit prompt, and SD-backed reopen path.
 
 | Constant | Address | Meaning |
 | --- | ---: | --- |

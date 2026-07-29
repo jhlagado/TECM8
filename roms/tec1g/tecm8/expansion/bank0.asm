@@ -57,6 +57,11 @@ Tecm8BootstrapTecfs:
         .expectout A
         callService TFS_MOUNT
         ld (DBG_TRACE_5),a
+        ret c
+        ld a,TFS_BRIDGE_BANK
+        ld (TFS_PARAM_DRIVER_BANK),a
+        ld hl,TFS_MON3_FILE_DRIVER
+        ld (TFS_PARAM_DRIVER_ADDR_LO),hl
         ret
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
@@ -179,6 +184,8 @@ Tecm8ShellRunCommand:
         jp z,Tecm8ShellRunCheckThree
         cp 0x04
         jp z,Tecm8ShellRunCheckFour
+        cp 0x06
+        jp nc,Tecm8ShellRunCheckEditPath
         jp Tecm8ShellRunUnknown
 
 Tecm8ShellRunCheckThree:
@@ -245,6 +252,54 @@ Tecm8ShellRunEdit:
         ld a,SHL_ACTION_EDIT
         ld b,SHL_TARGET_KIND_PROJECT_MAIN
         call Tecm8ShellPublishTarget
+        jp Tecm8ShellLaunchEditor
+
+Tecm8ShellRunCheckEditPath:
+        ld a,(SHL_COMMAND_BUFFER)
+        and 0xDF
+        cp "E"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+1)
+        and 0xDF
+        cp "D"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+2)
+        and 0xDF
+        cp "I"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+3)
+        and 0xDF
+        cp "T"
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+4)
+        cp " "
+        jp nz,Tecm8ShellRunUnknown
+        ld a,(SHL_COMMAND_BUFFER+5)
+        cp "/"
+        jp nz,Tecm8ShellRunUnknown
+        ld hl,SHL_COMMAND_BUFFER+5
+        ld de,SHL_TARGET_PATH_BUFFER
+        ld b,SHL_TARGET_PATH_CAPACITY-1
+Tecm8ShellCopyEditPath:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jp z,Tecm8ShellEditPathReady
+        dec b
+        jp nz,Tecm8ShellCopyEditPath
+        xor a
+        ld (de),a
+Tecm8ShellEditPathReady:
+        ld a,SHL_ACTION_EDIT
+        ld b,SHL_TARGET_KIND_SOURCE_PATH
+        call Tecm8ShellPublishTarget
+        ld hl,SHL_TARGET_PATH_BUFFER
+        ld (SHL_TARGET_PATH_LO),hl
+        xor a
+        ld (SHL_TARGET_FLAGS),a
+Tecm8ShellLaunchEditor:
         ld hl,SHL_TARGET_DESC
         ld (EDT_PARAM_TARGET_LO),hl
         or a

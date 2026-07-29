@@ -57,11 +57,29 @@ glcdUnsupported:
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 editorOpenImpl:
         call editorInitializeState
-        .rcignore definite_contract_violation "Target resolution deliberately publishes the path through shared RAM; no caller DE value is live across the call."
         call editorResolveProjectMain
         jp c,editorBadTarget
         call editorValidateTarget
         jp c,editorBadTarget
+        ld hl,(TFS_PARAM_DRIVER_ADDR_LO)
+        ld a,h
+        cp TFS_MON3_FILE_DRIVER / 256
+        jr nz,editorOpenResidentCatalog
+        ld a,l
+        cp TFS_MON3_FILE_DRIVER & 0xFF
+        jr nz,editorOpenResidentCatalog
+        ld hl,(EDT_PARAM_TARGET_LO)
+        inc hl
+        inc hl
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        ld (TFS_PARAM_PATH_LO),de
+        or a
+        .expectout A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_FIND_PATH
+        jp c,editorFileError
+editorOpenResidentCatalog:
         ld hl,EDT_BUFFER_BASE
         ld (TFS_PARAM_LOAD_DEST_LO),hl
         ld hl,EDT_BUFFER_BYTES
@@ -197,8 +215,21 @@ editorResolveProjectMain:
         inc hl
         ld a,(hl)
         cp SHL_TARGET_KIND_PROJECT_MAIN
+        jr z,editorResolveDefaultMain
+        cp SHL_TARGET_KIND_SOURCE_PATH
         scf
         ret nz
+        inc hl
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        ld a,d
+        or e
+        scf
+        ret z
+        or a
+        ret
+editorResolveDefaultMain:
         inc hl
         ld de,SHL_TARGET_PATH_BUFFER
         ld (hl),e
@@ -224,8 +255,11 @@ editorValidateTarget:
         inc hl
         ld a,(hl)
         cp SHL_TARGET_KIND_PROJECT_MAIN
+        jr z,editorValidateTargetKind
+        cp SHL_TARGET_KIND_SOURCE_PATH
         scf
         ret nz
+editorValidateTargetKind:
         inc hl
         ld a,(hl)
         inc hl

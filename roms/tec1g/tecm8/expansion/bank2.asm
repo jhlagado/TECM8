@@ -58,6 +58,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsSaveArtifactImpl
         cp TFS_SVC_LOAD_ARTIFACT
         jp z,tecfsLoadArtifactImpl
+        cp TFS_SVC_FIND_PATH
+        jp z,tecfsFindPathImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -106,6 +108,9 @@ tecfsSummarizeCatalog:
 
 tecfsNextCatalog:
         jp tecfsNextCatalogImpl
+
+tecfsFindPath:
+        jp tecfsFindPathImpl
 
 tecfsLoadSource:
         jp tecfsLoadSourceImpl
@@ -596,6 +601,280 @@ tecfsNextCatalogImpl:
         or a
         ret
 
+; Resolve one bounded TM8 v1 path into a resident 64-byte catalogue entry.
+; Input: TFS_PARAM_PATH_LO/HI -> "/name" or "/prefix/name".
+; Output: TFS_PARAM_BUFFER_LO/HI and TFS_PARAM_LOAD_CATALOG_LO/HI point at
+; TFS_CATALOG_BUFFER. The catalogue sector/slot are retained for an atomic
+; metadata commit after source data pages have been saved.
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsFindPathImpl:
+        call tecfsParsePath
+        ret c
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        or a
+        jr z,tecfsFindPathRoot
+        call tecfsFindPrefix
+        ret c
+        jr tecfsFindPathCatalog
+tecfsFindPathRoot:
+        ld (TFS_SCAN_PREFIX_ID),a
+tecfsFindPathCatalog:
+        call tecfsFindCatalog
+        ret c
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld (TFS_PARAM_LOAD_CATALOG_LO),hl
+        call tecfsDecodeCatalogImpl
+        ret c
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L
+tecfsParsePath:
+        ld hl,(TFS_PARAM_PATH_LO)
+        ld a,h
+        or l
+        jr z,tecfsBadPath
+        ld a,(hl)
+        cp "/"
+        jr nz,tecfsBadPath
+        inc hl
+        ld (TFS_SCAN_PREFIX_PTR),hl
+        ld (TFS_SCAN_NAME_PTR),hl
+        ld b,0
+tecfsParsePathFirst:
+        ld a,(hl)
+        or a
+        jr z,tecfsParseRootDone
+        cp "/"
+        jr z,tecfsParsePrefixDone
+        inc b
+        ld a,b
+        cp TFS_CATALOG_NAME_BYTES+1
+        jr nc,tecfsBadPath
+        inc hl
+        jr tecfsParsePathFirst
+tecfsParseRootDone:
+        ld a,b
+        or a
+        jr z,tecfsBadPath
+        ld (TFS_SCAN_NAME_LEN),a
+        xor a
+        ld (TFS_SCAN_PREFIX_LEN),a
+        ret
+tecfsParsePrefixDone:
+        ld a,b
+        or a
+        jr z,tecfsBadPath
+        cp TFS_PREFIX_NAME_BYTES+1
+        jr nc,tecfsBadPath
+        ld (TFS_SCAN_PREFIX_LEN),a
+        inc hl
+        ld (TFS_SCAN_NAME_PTR),hl
+        ld b,0
+tecfsParsePathName:
+        ld a,(hl)
+        or a
+        jr z,tecfsParseNameDone
+        cp "/"
+        jr z,tecfsBadPath
+        inc b
+        ld a,b
+        cp TFS_CATALOG_NAME_BYTES+1
+        jr nc,tecfsBadPath
+        inc hl
+        jr tecfsParsePathName
+tecfsParseNameDone:
+        ld a,b
+        or a
+        jr z,tecfsBadPath
+        ld (TFS_SCAN_NAME_LEN),a
+        xor a
+        ret
+
+tecfsBadPath:
+        ld a,TFS_ERR_BAD_PATH
+        jp tecfsPublishScanError
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsFindPrefix:
+        ld a,TFS_PREFIX_SECTOR
+        ld (TFS_SCAN_SECTOR),a
+        ld a,TFS_PREFIX_SECTORS
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsFindPrefixSector:
+        call tecfsReadScanSector
+        ret c
+        xor a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+tecfsFindPrefixEntry:
+        call tecfsPrefixEntryAddress
+        call tecfsMatchPrefixEntry
+        ret nc
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        inc a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+        cp TFS_PREFIX_ENTRIES_SECTOR
+        jr nz,tecfsFindPrefixEntry
+        call tecfsAdvanceScanSector
+        jr nz,tecfsFindPrefixSector
+        ld a,TFS_ERR_NOT_FOUND
+        jp tecfsPublishScanError
+
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsMatchPrefixEntry:
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jp nz,tecfsScanNoMatch
+        inc hl
+        ld c,(hl)
+        inc hl
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        cp (hl)
+        jp nz,tecfsScanNoMatch
+        inc hl
+        ld de,(TFS_SCAN_PREFIX_PTR)
+        ld b,a
+        call tecfsMatchScanBytes
+        ret c
+        ld a,c
+        ld (TFS_SCAN_PREFIX_ID),a
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsFindCatalog:
+        ld a,TFS_CATALOG_SECTOR
+        ld (TFS_SCAN_SECTOR),a
+        ld a,TFS_CATALOG_SECTORS
+        ld (TFS_SCAN_SECTORS_LEFT),a
+tecfsFindCatalogSector:
+        call tecfsReadScanSector
+        ret c
+        xor a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+tecfsFindCatalogEntry:
+        call tecfsCatalogEntryAddress
+        push hl
+        call tecfsMatchCatalogEntry
+        pop hl
+        jr nc,tecfsFindCatalogFound
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        inc a
+        ld (TFS_SCAN_ENTRY_INDEX),a
+        cp TFS_CATALOG_ENTRIES_SECTOR
+        jr nz,tecfsFindCatalogEntry
+        call tecfsAdvanceScanSector
+        jr nz,tecfsFindCatalogSector
+        ld a,TFS_ERR_NOT_FOUND
+        jp tecfsPublishScanError
+tecfsFindCatalogFound:
+        ld a,(TFS_SCAN_SECTOR)
+        ld (TFS_SCAN_CATALOG_SECTOR),a
+        push hl
+        ld de,TFS_CATALOG_BUFFER
+        or a
+        sbc hl,de
+        ld (TFS_SCAN_CATALOG_OFFSET_LO),hl
+        pop hl
+        ld de,TFS_CATALOG_BUFFER
+        ld bc,TFS_CATALOG_ENTRY_BYTES
+        ldir
+        or a
+        ret
+
+.routine in HL out A,carry,zero clobbers sign,parity,halfCarry,B,D,E,H,L
+tecfsMatchCatalogEntry:
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jr nz,tecfsScanNoMatch
+        inc hl
+        inc hl
+        ld a,(TFS_SCAN_PREFIX_ID)
+        cp (hl)
+        jr nz,tecfsScanNoMatch
+        inc hl
+        ld a,(TFS_SCAN_NAME_LEN)
+        cp (hl)
+        jr nz,tecfsScanNoMatch
+        inc hl
+        ld de,(TFS_SCAN_NAME_PTR)
+        ld b,a
+        jp tecfsMatchScanBytes
+
+tecfsScanNoMatch:
+        scf
+        ret
+
+.routine in B,DE,HL out A,carry,zero clobbers sign,parity,halfCarry,B,D,E,H,L
+tecfsMatchScanBytes:
+        ld a,(de)
+        cp (hl)
+        jr nz,tecfsScanNoMatch
+        inc de
+        inc hl
+        djnz tecfsMatchScanBytes
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsReadScanSector:
+        ld a,(TFS_SCAN_SECTOR)
+        ld (TFS_PARAM_SECTOR_0),a
+        xor a
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        jp tecfsReadSectorImpl
+
+.routine out A,zero clobbers sign,parity,halfCarry,H,L
+tecfsAdvanceScanSector:
+        ld hl,TFS_SCAN_SECTOR
+        inc (hl)
+        ld hl,TFS_SCAN_SECTORS_LEFT
+        dec (hl)
+        ld a,(hl)
+        or a
+        ret
+
+.routine out A,H,L clobbers zero,sign,parity,halfCarry,B,D,E
+tecfsPrefixEntryAddress:
+        ld hl,TFS_CATALOG_BUFFER
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        or a
+        ret z
+        ld b,a
+        ld de,TFS_PREFIX_ENTRY_BYTES
+tecfsPrefixEntryAddressNext:
+        add hl,de
+        djnz tecfsPrefixEntryAddressNext
+        ret
+
+.routine out A,H,L clobbers zero,sign,parity,halfCarry,B,D,E
+tecfsCatalogEntryAddress:
+        ld hl,TFS_CATALOG_BUFFER
+        ld a,(TFS_SCAN_ENTRY_INDEX)
+        or a
+        ret z
+        ld b,a
+        ld de,TFS_CATALOG_ENTRY_BYTES
+tecfsCatalogEntryAddressNext:
+        add hl,de
+        djnz tecfsCatalogEntryAddressNext
+        ret
+
+tecfsPublishScanError:
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        scf
+        ret
+
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 tecfsLoadSourceImpl:
         ld hl,(TFS_PARAM_BUFFER_LO)
@@ -607,7 +886,10 @@ tecfsLoadSourceImpl:
         jp c,tecfsLoadSourceRestore
         ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
         cp TFS_FILE_SOURCE
+        jr z,tecfsLoadSourceTypeOk
+        cp TFS_FILE_SOURCE_V1
         jp nz,tecfsLoadSourceBadCatalog
+tecfsLoadSourceTypeOk:
         ld hl,(TFS_PARAM_ENTRY_SIZE_0)
         ld (TFS_PARAM_SOURCE_SIZE_LO),hl
         call tecfsSourcePageCount
@@ -740,6 +1022,8 @@ tecfsCommitSourceMetaImpl:
         ld (hl),a
         inc hl
         ld (hl),a
+        call tecfsUsingMon3FileDriver
+        jp z,tecfsCommitSourceMetaMon3
         ld hl,(TFS_PARAM_LOAD_CATALOG_LO)
         ld (TFS_PARAM_BUFFER_LO),hl
         ld hl,TFS_IMAGE_BASE_LBA_0 + (TFS_IMAGE_BASE_LBA_1 * 256)
@@ -757,6 +1041,60 @@ tecfsCommitSourceMetaImpl:
         ld (TFS_PARAM_SOURCE_META_WRITES),a
         ld hl,(TFS_PARAM_LOAD_CATALOG_LO)
         ld (TFS_PARAM_BUFFER_LO),hl
+        ret
+
+; Commit the size into the exact catalogue sector/slot found by
+; TFS_SVC_FIND_PATH. Data pages are written first; the catalogue sector is
+; read-modify-written last, so an interrupted save never publishes a size for
+; data which did not reach the SD image.
+tecfsCommitSourceMetaMon3:
+        ld a,(TFS_SCAN_CATALOG_SECTOR)
+        ld (TFS_PARAM_SECTOR_0),a
+        xor a
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SOURCE_IO_META
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        call tecfsReadSectorImpl
+        ret c
+        call tecfsCatalogCommitEntryAddress
+        ld de,TFS_CATALOG_OFFSET_SIZE
+        add hl,de
+        ld a,(TFS_PARAM_SOURCE_SIZE_LO)
+        ld (hl),a
+        inc hl
+        ld a,(TFS_PARAM_SOURCE_SIZE_HI)
+        ld (hl),a
+        inc hl
+        xor a
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsWriteSectorImpl
+        ret c
+        call tecfsCatalogCommitEntryAddress
+        ld de,TFS_CATALOG_BUFFER
+        ld bc,TFS_CATALOG_ENTRY_BYTES
+        ldir
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld (TFS_PARAM_LOAD_CATALOG_LO),hl
+        ld a,(TFS_PARAM_SOURCE_META_WRITES)
+        inc a
+        ld (TFS_PARAM_SOURCE_META_WRITES),a
+        xor a
+        ret
+
+.routine out H,L clobbers F,D,E
+tecfsCatalogCommitEntryAddress:
+        ld hl,TFS_CATALOG_BUFFER
+        ld de,(TFS_SCAN_CATALOG_OFFSET_LO)
+        add hl,de
         ret
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
@@ -1019,7 +1357,19 @@ tecfsSourceMapPage:
         ld hl,(TFS_PARAM_SECTOR_0)
         add hl,de
         ld (TFS_PARAM_SECTOR_0),hl
+        call tecfsUsingMon3FileDriver
+        ret z
         jp tecfsTranslateSectorImpl
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,H,L
+tecfsUsingMon3FileDriver:
+        ld hl,(TFS_PARAM_DRIVER_ADDR_LO)
+        ld a,h
+        cp TFS_MON3_FILE_DRIVER / 256
+        ret nz
+        ld a,l
+        cp TFS_MON3_FILE_DRIVER & 0xFF
+        ret
 
 .routine out A,zero clobbers sign,parity,halfCarry,H,L
 tecfsSourcePageCount:
