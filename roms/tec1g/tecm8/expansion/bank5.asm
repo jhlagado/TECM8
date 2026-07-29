@@ -21,17 +21,19 @@ tecfsSectorBridgeRead:
         ld a,(TFS_BRIDGE_READ_COUNT)
         inc a
         ld (TFS_BRIDGE_READ_COUNT),a
+        call tecfsSectorBridgeReadIncludeFixture
+        ret nc
         ld a,(TFS_PARAM_SOURCE_IO_KIND)
         cp TFS_SOURCE_IO_META
-        jr z,tecfsSectorBridgeReadMeta
+        jp z,tecfsSectorBridgeReadMeta
         cp TFS_ARTIFACT_IO_BINARY_DATA
-        jr z,tecfsSectorBridgeReadBinary
+        jp z,tecfsSectorBridgeReadBinary
         cp TFS_ARTIFACT_IO_BINARY_META
-        jr z,tecfsSectorBridgeReadBinaryMeta
+        jp z,tecfsSectorBridgeReadBinaryMeta
         cp TFS_ARTIFACT_IO_MAP_DATA
-        jr z,tecfsSectorBridgeReadMap
+        jp z,tecfsSectorBridgeReadMap
         cp TFS_ARTIFACT_IO_MAP_META
-        jr z,tecfsSectorBridgeReadMapMeta
+        jp z,tecfsSectorBridgeReadMapMeta
         call tecfsSectorBridgePageAddress
         ld de,(TFS_PARAM_BUFFER_LO)
         ld bc,EDT_PAGE_BYTES
@@ -320,6 +322,112 @@ tecfsMon3FileOk:
 
 Tecm8Mon3VolumeName:
         .db     "VOLUME.TM8",0
+
+; Deterministic include catalogue used only by the 8000h RAM bridge. Keeping
+; this behind the fixed 8200h MON3 entry prevents proof growth from shadowing
+; the real SD driver.
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsSectorBridgeReadIncludeFixture:
+        ld a,(TFS_PARAM_SECTOR_3)
+        or a
+        jr nz,tecfsSectorBridgeReadIncludeMissing
+        ld a,(TFS_PARAM_SECTOR_2)
+        or a
+        jr nz,tecfsSectorBridgeReadIncludeMissing
+        ld hl,(TFS_PARAM_SECTOR_0)
+        ld de,0x0010
+        or a
+        sbc hl,de
+        jr z,tecfsSectorBridgeReadPrefixFixture
+        ld hl,(TFS_PARAM_SECTOR_0)
+        ld de,0x0030
+        or a
+        sbc hl,de
+        jr z,tecfsSectorBridgeReadCatalogFixture
+        ld hl,(TFS_PARAM_SECTOR_0)
+        ld de,0x0102
+        or a
+        sbc hl,de
+        jr z,tecfsSectorBridgeReadSourceFixture
+tecfsSectorBridgeReadIncludeMissing:
+        scf
+        ret
+tecfsSectorBridgeReadPrefixFixture:
+        call tecfsSectorBridgeClearDestination
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld (hl),TFS_ENTRY_STATUS_ACTIVE
+        inc hl
+        ld (hl),0x01
+        inc hl
+        ld (hl),0x03
+        inc hl
+        ld (hl),"s"
+        inc hl
+        ld (hl),"r"
+        inc hl
+        ld (hl),"c"
+        jp tecfsSectorBridgeOk
+tecfsSectorBridgeReadCatalogFixture:
+        call tecfsSectorBridgeClearDestination
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld (hl),TFS_ENTRY_STATUS_ACTIVE
+        inc hl
+        ld (hl),0x02
+        inc hl
+        ld (hl),0x01
+        inc hl
+        ld (hl),0x07
+        inc hl
+        ld de,Tecm8IncludeName
+        ex de,hl
+        ld bc,0x0007
+        ldir
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld de,TFS_CATALOG_OFFSET_FIRST_BLOCK
+        add hl,de
+        ld (hl),0x20
+        inc hl
+        ld (hl),0x00
+        inc hl
+        ld (hl),Tecm8IncludeFixtureEnd-Tecm8IncludeFixture
+        inc hl
+        ld (hl),0x00
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld de,TFS_CATALOG_OFFSET_FILE_TYPE
+        add hl,de
+        ld (hl),TFS_FILE_SOURCE_V1
+        jp tecfsSectorBridgeOk
+tecfsSectorBridgeReadSourceFixture:
+        call tecfsSectorBridgeClearDestination
+        ld hl,Tecm8IncludeFixture
+        ld de,(TFS_PARAM_BUFFER_LO)
+        ld bc,Tecm8IncludeFixtureEnd-Tecm8IncludeFixture
+        ldir
+        jp tecfsSectorBridgeOk
+
+.routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsSectorBridgeClearDestination:
+        ld hl,(TFS_PARAM_BUFFER_LO)
+        ld d,h
+        ld e,l
+        inc de
+        ld bc,EDT_PAGE_BYTES-1
+        xor a
+        ld (hl),a
+        ldir
+        ret
+
+Tecm8IncludeName:
+        .db     "lib.asm"
+
+Tecm8IncludeFixture:
+        .db     0x07,"HELPER:"
+        .ds     EDT_RECORD_BYTES-8
+        .db     0x0A,"LD A,VALUE"
+        .ds     EDT_RECORD_BYTES-11
+        .db     0x03,"RET"
+        .ds     EDT_RECORD_BYTES-4
+Tecm8IncludeFixtureEnd:
 
         .org    0x8400
 

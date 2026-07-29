@@ -19,6 +19,8 @@ asmAssemble:
         call asmInitialize
         call asmValidateTarget
         jp c,asmBadTarget
+        call asmPrepareMainPath
+        jp c,asmBadTarget
         ld a,(EDT_STATE_TOTAL_LINES)
         or a
         jp z,asmNoSource
@@ -72,6 +74,11 @@ asmInitialize:
         ld bc,0x1F
         ld (hl),a
         ldir
+        ld hl,ASM_CONTEXT_BASE
+        ld de,ASM_CONTEXT_BASE+1
+        ld bc,0x0B
+        ld (hl),a
+        ldir
         ld hl,ASM_OUTPUT_BASE
         ld de,ASM_OUTPUT_BASE+1
         ld bc,ASM_OUTPUT_BYTES-1
@@ -108,10 +115,49 @@ asmValidateTarget:
         or a
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,D,E,H,L
+asmPrepareMainPath:
+        ld hl,(ASM_PARAM_TARGET_LO)
+        ld de,0x0002
+        add hl,de
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        ld a,d
+        or e
+        jr nz,asmPrepareMainPathSourceReady
+        ld de,asmDefaultMainPath
+asmPrepareMainPathSourceReady:
+        ex de,hl
+        ld de,ASM_MAIN_PATH_BUFFER
+        ld b,ASM_MAIN_PATH_CAPACITY-1
+asmPrepareMainPathCopy:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jr z,asmPrepareMainPathValidate
+        djnz asmPrepareMainPathCopy
+        xor a
+        ld (de),a
+        scf
+        ret
+asmPrepareMainPathValidate:
+        ld a,(ASM_MAIN_PATH_BUFFER)
+        cp "/"
+        scf
+        ret nz
+        or a
+        ret
+
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 asmRunPass:
         xor a
         ld (ASM_STATE_LINE),a
+        ld (ASM_CONTEXT_INCLUDE_COUNT),a
+        ld (ASM_CONTEXT_INCLUDE_DEPTH),a
+        ld (ASM_CONTEXT_CURRENT_FILE),a
 asmRunPassNext:
         ld a,(ASM_STATE_LINE)
         ld b,a
@@ -132,6 +178,11 @@ asmRunPassDone:
 .routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 asmCopySourceLine:
         ld hl,EDT_BUFFER_BASE
+        jr asmCopyLineFromBase
+.routine out A,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+asmCopyIncludeLine:
+        ld hl,ASM_INCLUDE_BASE
+asmCopyLineFromBase:
         ld a,(ASM_STATE_LINE)
         or a
         jr z,asmCopySourceAddressReady
@@ -148,6 +199,7 @@ asmCopySourceAddressReady:
         ld a,ASM_LINE_CAPACITY-1
 asmCopySourceLengthReady:
         ld b,a
+        ld c,0x00
         inc hl
         ld de,ASM_LINE_BUFFER
         ld a,b
@@ -155,11 +207,23 @@ asmCopySourceLengthReady:
         jr z,asmCopySourceTerminate
 asmCopySourceNext:
         ld a,(hl)
+        cp 0x22
+        jr z,asmCopySourceQuote
+        ld a,c
+        or a
+        ld a,(hl)
+        jr nz,asmCopySourceStore
         cp "a"
         jr c,asmCopySourceStore
         cp "z"+1
         jr nc,asmCopySourceStore
         and 0xDF
+        jr asmCopySourceStore
+asmCopySourceQuote:
+        ld a,c
+        xor 0x01
+        ld c,a
+        ld a,0x22
 asmCopySourceStore:
         ld (de),a
         inc hl
@@ -179,6 +243,9 @@ asmParseLine:
         ret z
         cp ";"
         ret z
+        ld de,asmKwInclude
+        call asmTryKeyword
+        jp c,asmDirectiveInclude
         call asmTryEquDefinition
         ret c
         or a
@@ -443,6 +510,172 @@ asmSkipSpaces:
 asmSkipSpacesNext:
         inc hl
         jr asmSkipSpaces
+
+asmDirectiveInclude:
+        ld a,(ASM_CONTEXT_INCLUDE_DEPTH)
+        or a
+        jp nz,asmIncludeError
+        ld a,(ASM_CONTEXT_INCLUDE_COUNT)
+        cp ASM_INCLUDE_MAX
+        jp nc,asmIncludeError
+        call asmParseIncludePath
+        jp c,asmIncludeError
+        ld a,(ASM_STATE_LINE)
+        ld (ASM_CONTEXT_RETURN_LINE),a
+        ld a,(ASM_CONTEXT_CURRENT_FILE)
+        ld (ASM_CONTEXT_RETURN_FILE),a
+        call asmLoadInclude
+        jp c,asmIncludeError
+        ld a,(ASM_CONTEXT_INCLUDE_COUNT)
+        inc a
+        ld (ASM_CONTEXT_INCLUDE_COUNT),a
+        ld (ASM_CONTEXT_CURRENT_FILE),a
+        ld a,0x01
+        ld (ASM_CONTEXT_INCLUDE_DEPTH),a
+        xor a
+        ld (ASM_STATE_LINE),a
+asmDirectiveIncludeNext:
+        ld a,(ASM_STATE_LINE)
+        ld b,a
+        ld a,(ASM_CONTEXT_INCLUDE_LINES)
+        cp b
+        jr z,asmDirectiveIncludeDone
+        call asmCopyIncludeLine
+        call asmParseLine
+        jr c,asmDirectiveIncludeRestoreError
+        ld a,(ASM_STATE_LINE)
+        inc a
+        ld (ASM_STATE_LINE),a
+        jr asmDirectiveIncludeNext
+asmDirectiveIncludeDone:
+        call asmRestoreMainContext
+        or a
+        ret
+asmDirectiveIncludeRestoreError:
+        call asmRestoreMainContext
+        scf
+        ret
+
+.routine out A,zero clobbers sign,parity,halfCarry
+asmRestoreMainContext:
+        ld a,(ASM_CONTEXT_RETURN_LINE)
+        ld (ASM_STATE_LINE),a
+        ld a,(ASM_CONTEXT_RETURN_FILE)
+        ld (ASM_CONTEXT_CURRENT_FILE),a
+        xor a
+        ld (ASM_CONTEXT_INCLUDE_DEPTH),a
+        ret
+
+.routine in H,L out A,carry,zero,H,L clobbers sign,parity,halfCarry,B,C,D,E
+asmParseIncludePath:
+        call asmSkipSpaces
+        ld a,(hl)
+        cp 0x22
+        scf
+        ret nz
+        inc hl
+        ld a,(hl)
+        cp "/"
+        jr z,asmParseIncludeAbsolute
+        push hl
+        call asmCopyMainDirectory
+        pop hl
+        jr asmParseIncludeCopy
+asmParseIncludeAbsolute:
+        ld de,ASM_INCLUDE_PATH_BUFFER
+asmParseIncludeCopy:
+        ld c,0x00
+asmParseIncludeCopyNext:
+        ld a,(hl)
+        or a
+        jr z,asmParseIncludeBad
+        cp 0x22
+        jr z,asmParseIncludeEnd
+        ld b,a
+        ld a,e
+        sub ASM_INCLUDE_PATH_BUFFER & 0xFF
+        cp ASM_INCLUDE_PATH_CAPACITY-1
+        jr nc,asmParseIncludeBad
+        ld a,b
+        ld (de),a
+        inc de
+        inc hl
+        inc c
+        jr asmParseIncludeCopyNext
+asmParseIncludeEnd:
+        ld a,c
+        or a
+        jr z,asmParseIncludeBad
+        xor a
+        ld (de),a
+        inc hl
+        call asmExpectEnd
+        ret
+asmParseIncludeBad:
+        scf
+        ret
+
+.routine out A,D,E clobbers zero,sign,parity,halfCarry,B,C,H,L
+asmCopyMainDirectory:
+        ld hl,ASM_MAIN_PATH_BUFFER+1
+        ld b,0x01
+asmCopyMainDirectoryScan:
+        ld a,(hl)
+        or a
+        jr z,asmCopyMainDirectoryReady
+        inc b
+        cp "/"
+        jr z,asmCopyMainDirectoryReady
+        inc hl
+        jr asmCopyMainDirectoryScan
+asmCopyMainDirectoryReady:
+        ld a,(hl)
+        or a
+        jr nz,asmCopyMainDirectoryLengthReady
+        ld b,0x01
+asmCopyMainDirectoryLengthReady:
+        ld hl,ASM_MAIN_PATH_BUFFER
+        ld de,ASM_INCLUDE_PATH_BUFFER
+        ld c,b
+        ld b,0x00
+        ldir
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+asmLoadInclude:
+        ld hl,ASM_INCLUDE_PATH_BUFFER
+        ld (TFS_PARAM_PATH_LO),hl
+        .rcignore definite_contract_violation "The include path is published in shared RAM; no caller DE or flag value is live across the bank call."
+        .expectout A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_FIND_PATH
+        ret c
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        ld (ASM_CONTEXT_INCLUDE_FILE_ID),a
+        ld hl,ASM_INCLUDE_BASE
+        ld (TFS_PARAM_LOAD_DEST_LO),hl
+        ld hl,ASM_INCLUDE_BYTES
+        ld (TFS_PARAM_LOAD_BYTES_LO),hl
+        .expectout A,carry
+        callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_LOAD_SOURCE
+        ret c
+        ld a,(TFS_PARAM_LOAD_LINES_HI)
+        or a
+        scf
+        ret nz
+        ld a,(TFS_PARAM_LOAD_LINES_LO)
+        cp EDT_BUFFER_RECORDS+1
+        ccf
+        ret c
+        ld (ASM_CONTEXT_INCLUDE_LINES),a
+        ld a,(ASM_CONTEXT_INCLUDE_COUNT)
+        ld e,a
+        ld d,0x00
+        ld hl,ASM_CONTEXT_FILE_ID_TABLE
+        add hl,de
+        ld a,(ASM_CONTEXT_INCLUDE_FILE_ID)
+        ld (hl),a
+        or a
+        ret
 
 asmDirectiveOrg:
         call asmParseExpression
@@ -1607,7 +1840,14 @@ asmAddSymbolCopy:
         ld a,(ASM_STATE_LINE)
         ld (hl),a
         inc hl
+        ld a,(ASM_CONTEXT_CURRENT_FILE)
+        add a,a
+        add a,a
+        add a,a
+        add a,a
+        ld b,a
         ld a,(ASM_STATE_SYMBOL_KIND)
+        or b
         ld (hl),a
         ld a,c
         inc a
@@ -1735,6 +1975,10 @@ asmBuildMap:
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 asmSaveArtifacts:
+        ld hl,asmArtifactExtBin
+        .rcignore definite_contract_violation "The extension pointer is consumed by path construction; no pre-call DE or flag value remains live."
+        call asmBuildArtifactPath
+        ret c
         ld a,TFS_ARTIFACT_KIND_BINARY
         ld (TFS_PARAM_ARTIFACT_KIND),a
         ld hl,ASM_OUTPUT_BASE
@@ -1745,9 +1989,12 @@ asmSaveArtifacts:
         ld (TFS_PARAM_ARTIFACT_LOAD_LO),hl
         ld hl,(ASM_STATE_RUN_LO)
         ld (TFS_PARAM_ARTIFACT_RUN_LO),hl
-        .rcignore definite_contract_violation "Artifact parameters are fully published in shared RAM; no caller DE value is live across the bank call."
         .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SAVE_ARTIFACT
+        ret c
+        ld hl,asmArtifactExtMap
+        .rcignore definite_contract_violation "The extension pointer is consumed by path construction; no pre-call DE value remains live."
+        call asmBuildArtifactPath
         ret c
         ld a,TFS_ARTIFACT_KIND_MAP
         ld (TFS_PARAM_ARTIFACT_KIND),a
@@ -1762,6 +2009,57 @@ asmSaveArtifacts:
         ld (TFS_PARAM_ARTIFACT_RUN_HI),a
         .expectout A,carry
         callBankService TFS_BANK,TFS_ENTRY,TFS_SVC_SAVE_ARTIFACT
+        ret
+
+.routine in H,L out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+asmBuildArtifactPath:
+        ld (ASM_STATE_RHS_LO),hl
+        ld hl,ASM_MAIN_PATH_BUFFER
+        ld (ASM_STATE_MATCH_LO),hl
+asmBuildArtifactFindName:
+        ld a,(hl)
+        or a
+        jr z,asmBuildArtifactNameReady
+        cp "/"
+        jr nz,asmBuildArtifactFindNext
+        inc hl
+        ld (ASM_STATE_MATCH_LO),hl
+        dec hl
+asmBuildArtifactFindNext:
+        inc hl
+        jr asmBuildArtifactFindName
+asmBuildArtifactNameReady:
+        ld hl,asmArtifactBuildPrefix
+        ld de,TFS_ARTIFACT_PATH_BUFFER
+        ld bc,0x0007
+        ldir
+        ld hl,(ASM_STATE_MATCH_LO)
+        ld b,TFS_ARTIFACT_PATH_CAPACITY-7-5
+        ld c,0x00
+asmBuildArtifactCopyStem:
+        ld a,(hl)
+        or a
+        jr z,asmBuildArtifactStemDone
+        cp "."
+        jr z,asmBuildArtifactStemDone
+        ld (de),a
+        inc de
+        inc hl
+        inc c
+        djnz asmBuildArtifactCopyStem
+        scf
+        ret
+asmBuildArtifactStemDone:
+        ld a,c
+        or a
+        scf
+        ret z
+        ld hl,(ASM_STATE_RHS_LO)
+        ld bc,0x0005
+        ldir
+        ld hl,TFS_ARTIFACT_PATH_BUFFER
+        ld (TFS_PARAM_ARTIFACT_PATH_LO),hl
+        or a
         ret
 
 asmBadTarget:
@@ -1817,10 +2115,15 @@ asmOutputFull:
         jr asmRecordDiagnostic
 asmOriginError:
         ld a,ASM_ERR_BAD_ORIGIN
+        jr asmRecordDiagnostic
+asmIncludeError:
+        ld a,ASM_ERR_INCLUDE
 asmRecordDiagnostic:
         ld (ASM_STATE_DIAG_CODE),a
         ld a,(ASM_STATE_LINE)
         ld (ASM_STATE_DIAG_LINE),a
+        ld a,(ASM_CONTEXT_CURRENT_FILE)
+        ld (ASM_CONTEXT_DIAG_FILE),a
         ld a,0x02
         ld (ASM_STATE_DIAG_COLUMN),a
         scf
@@ -1828,6 +2131,7 @@ asmRecordDiagnostic:
 
 asmKwOrg:      .db ".ORG",0
 asmKwEqu:      .db ".EQU",0
+asmKwInclude:  .db ".INCLUDE",0
 asmKwDb:       .db ".DB",0
 asmKwDw:       .db ".DW",0
 asmKwNop:      .db "NOP",0
@@ -1861,6 +2165,14 @@ asmKwHl:       .db "HL",0
 asmKwDe:       .db "DE",0
 asmKwBc:       .db "BC",0
 asmKwSp:       .db "SP",0
+asmDefaultMainPath:
+        .db "/src/main.asm",0
+asmArtifactBuildPrefix:
+        .db "/build/"
+asmArtifactExtBin:
+        .db ".bin",0
+asmArtifactExtMap:
+        .db ".map",0
 
 Tecm8ExpansionBank7Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

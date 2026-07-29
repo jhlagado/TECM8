@@ -22,6 +22,9 @@ test('ROM editor has a real SD backend and bounded path lookup', () => {
   assert.match(bank2, /tecfsCreateClearDataBlock[\s\S]*tecfsCreateMarkAllocated[\s\S]*tecfsCreateUpdateSuperblock[\s\S]*tecfsCreateWriteCatalog/);
   assert.match(bank2, /tecfsCreateUpdateSuperblock:[\s\S]*tecfsCreateValidateChecksum[\s\S]*tecfsCreateRecomputeChecksum/);
   assert.match(bank2, /tecfsCommitSourceMetaMon3:[\s\S]*call tecfsReadSectorImpl[\s\S]*call tecfsWriteSectorImpl/);
+  assert.match(bank2, /tecfsCreateFileImpl:[\s\S]*TFS_FILE_BINARY[\s\S]*TFS_FILE_ASSET/);
+  assert.match(bank2, /tecfsSaveArtifactReal:[\s\S]*tecfsArtifactResolveForSave[\s\S]*tecfsCommitArtifactCatalog/);
+  assert.match(bank2, /tecfsLoadArtifactReal:[\s\S]*tecfsArtifactFindPath[\s\S]*tecfsValidateRunnableArtifact/);
   assert.match(bank4, /TFS_SVC_FIND_PATH[\s\S]*TFS_ERR_NOT_FOUND[\s\S]*TFS_SVC_CREATE_SOURCE[\s\S]*TFS_SVC_FIND_PATH/);
   assert.match(bank5, /\.org\s+TFS_MON3_FILE_DRIVER[\s\S]*Tecm8Mon3FileDriverEntry:/);
   assert.match(bank5, /\.include "\.\.\/monitor\/pata_fat32\.asm"/);
@@ -31,6 +34,7 @@ test('ROM editor has a real SD backend and bounded path lookup', () => {
   assert.match(proof, /EDT_SVC_RUN[\s\S]*EDT_STATE_SAVE_COUNT[\s\S]*EDT_SVC_RUN/);
   assert.match(proof, /ProofCreateSource:[\s\S]*ProofNewTarget[\s\S]*EDT_SVC_RUN[\s\S]*EDT_SVC_OPEN/);
   assert.match(proof, /TFS_SVC_CREATE_SOURCE[\s\S]*TFS_ERR_EXISTS[\s\S]*TFS_ERR_BAD_PATH/);
+  assert.match(proof, /ProofBuildAndRun:[\s\S]*ProofBuildPath[\s\S]*ASM_SVC_ASSEMBLE[\s\S]*ProofRunTarget[\s\S]*RUN_SVC_RUN/);
   assert.equal(
     packageJson.scripts['proof:tecfs-mon3-file'],
     'node --experimental-strip-types tools/run-tecfs-mon3-file-proof.ts',

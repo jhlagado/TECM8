@@ -312,12 +312,13 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_NEXT_CATALOG` \(`0Fh`\) \| Implemented one-slot caller pointer advance/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_SOURCE` \(`10h`\) \| Implemented catalogue-to-bounded-source-page load/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_SOURCE` \(`18h`\) \| Implemented bounded empty-source creation in an existing prefix/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_FILE` \(`19h`\) \| Implemented bounded binary\/asset creation in an existing prefix/);
   assert.match(doc, /TEC-FS implementation state/);
-  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE` \|/);
+  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE` \|/);
   assert.match(doc, /Sector-backed calls still require an installed sector driver/);
   assert.match(doc, /\| Stubbed\/reserved services \| `LOAD_RANGE`, `SAVE_RANGE` \| Service numbers are reserved and return unsupported\. \|/);
-  assert.match(doc, /\| Deferred filesystem work \| general file create\/delete\/rename, new-prefix allocation, long-name storage, general transaction journal, PC repair\/import utility \|/);
-  assert.match(doc, /Not part of the bounded ROM source-creation proof/);
+  assert.match(doc, /\| Deferred filesystem work \| delete\/rename, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair\/import utility \|/);
+  assert.match(doc, /Not part of the bounded ROM creation proof/);
   assert.match(doc, /`TFS_SVC_LIST_PATH` \(`17h`\) accepts `\/` or `\/prefix`/);
   assert.match(doc, /a null path pointer selects `\/src`/);
   assert.match(doc, /It never emits a partial name/);
@@ -373,6 +374,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_SAVE_ARTIFACT',
     'TFS_SVC_LOAD_ARTIFACT',
     'TFS_SVC_CREATE_SOURCE',
+    'TFS_SVC_CREATE_FILE',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -607,8 +609,8 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_SUMMARY_FLAG_HAS_FIRST`/);
   assert.match(doc, /not yet a full directory walker/);
   assert.match(doc, /`TFS_SVC_SAVE_ARTIFACT` accepts a nonzero artifact of at most 512 bytes/);
-  assert.match(doc, /Data and metadata are distinct\s+driver calls/);
-  assert.match(doc, /`TFS_SVC_LOAD_ARTIFACT` reads and validates binary metadata/);
+  assert.match(doc, /writes the raw payload to sector zero, writes the\s+private `TFM1` sidecar to sector seven, then publishes catalogue size\/type last/);
+  assert.match(doc, /`TFS_SVC_LOAD_ARTIFACT` resolves the binary path, reads and validates the\s+sidecar/);
 });
 
 test('TEC-FS catalog result blocks do not collide with neighbouring ABI RAM', () => {
@@ -647,6 +649,7 @@ test('banked service ABI doc covers the bank 7 phase-one assembler', () => {
     'ASM_PARAM_DIAG_LINE',
     'ASM_PARAM_DIAG_COLUMN',
     'ASM_PARAM_DIAG_CODE',
+    'ASM_PARAM_DIAG_FILE',
     'ASM_PARAM_OUTPUT_SIZE_LO',
     'ASM_PARAM_ORIGIN_LO',
     'ASM_PARAM_RUN_LO',
@@ -665,14 +668,15 @@ test('banked service ABI doc covers the bank 7 phase-one assembler', () => {
     'ASM_ERR_OUTPUT_FULL',
     'ASM_ERR_BAD_ORIGIN',
     'ASM_ERR_STORAGE',
+    'ASM_ERR_INCLUDE',
   ]) {
     assertDocRow(name);
   }
   assert.match(doc, /Physical bank 7 owns the self-hosted two-pass assembler/);
   assert.match(doc, /reads the resident bank-4 32-byte-record\s+workspace/);
-  assert.match(doc, /emits at most\s+512 bytes plus a `TMAP` source map/);
+  assert.match(doc, /emits at most 512 bytes plus a `TMAP`\s+source map/);
   assert.match(doc, /publishes `SHL_RESULT_BUILD_ERROR`/);
-  assert.match(doc, /writes binary data\/metadata and\s+map data\/metadata through `TFS_SVC_SAVE_ARTIFACT`/);
+  assert.match(doc, /derives\s+`\/build\/<main-stem>\.bin` and `\.map`, writes both through\s+`TFS_SVC_SAVE_ARTIFACT`/);
   assert.match(doc, /Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set/);
 });
 

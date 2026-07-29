@@ -24,14 +24,15 @@ test('assembler bank proof covers diagnose, fix, build, persist, run, and return
 
   assert.match(proof, /ld hl,SourceFixture[\s\S]*ld de,EDT_BUFFER_BASE[\s\S]*ldir/);
   assert.match(proof, /call PrepareAsmCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_BUILD_ERROR/);
-  assert.match(proof, /ld a,\(ASM_PARAM_DIAG_LINE\)[\s\S]*cp 0x22[\s\S]*ld a,\(ASM_PARAM_DIAG_CODE\)[\s\S]*cp ASM_ERR_SYNTAX/);
-  assert.match(proof, /ld a,"T"[\s\S]*ld \(EDT_BUFFER_BASE\+\(EDT_RECORD_BYTES\*34\)\+3\),a/);
+  assert.match(proof, /ld a,\(ASM_PARAM_DIAG_LINE\)[\s\S]*cp 0x23[\s\S]*ld a,\(ASM_PARAM_DIAG_FILE\)[\s\S]*ld a,\(ASM_PARAM_DIAG_CODE\)[\s\S]*cp ASM_ERR_SYNTAX/);
+  assert.match(proof, /ld a,"T"[\s\S]*ld \(EDT_BUFFER_BASE\+\(EDT_RECORD_BYTES\*35\)\+3\),a/);
   assert.match(proof, /call PrepareAsmCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_OK/);
   assert.match(proof, /BASE \.EQU 0x4F00\+0xF0/);
   assert.match(proof, /VALUE: \.EQU 0x50\+10/);
   assert.match(proof, /PUSH BC[\s\S]*DJNZ LOOP[\s\S]*CALL M,STORE/);
-  assert.match(proof, /ld a,\(ASM_OUTPUT_BASE\+0\)[\s\S]*cp 0xF3[\s\S]*ld a,\(ASM_OUTPUT_BASE\+58\)[\s\S]*cp 0xD8/);
+  assert.match(proof, /ld a,\(ASM_OUTPUT_BASE\+0\)[\s\S]*cp 0xF3[\s\S]*ld a,\(ASM_OUTPUT_BASE\+62\)[\s\S]*cp 0xD8/);
   assert.match(proof, /ld a,\(ASM_MAP_BASE\+0\)[\s\S]*cp "T"[\s\S]*ld a,\(ASM_MAP_BASE\+3\)[\s\S]*cp "P"/);
+  assert.match(proof, /ASM_MAP_BASE\+91[\s\S]*cp 0x11[\s\S]*\.INCLUDE [\s\S]*lib\.asm/);
   assert.match(proof, /ld a,\(TFS_BRIDGE_ARTIFACT_DATA_WRITES\)[\s\S]*cp 0x02[\s\S]*ld a,\(TFS_BRIDGE_ARTIFACT_META_WRITES\)[\s\S]*cp 0x02/);
   assert.match(proof, /call PrepareRunCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_OK/);
   assert.match(proof, /ld a,\(PROGRAM_MARKER\)[\s\S]*cp 0x5A[\s\S]*ld a,\(RUN_PARAM_RETURN_COUNT\)[\s\S]*cp 0x01/);

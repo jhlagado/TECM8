@@ -445,6 +445,7 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_FIND_PATH` (`16h`) | Implemented bounded prefix/catalogue path resolution. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_LIST_PATH` (`17h`) | Implemented bounded visible-file listing for `/` or `/prefix`. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_CREATE_SOURCE` (`18h`) | Implemented bounded empty-source creation in an existing prefix. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_CREATE_FILE` (`19h`) | Implemented bounded binary/asset creation in an existing prefix. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -487,6 +488,7 @@ TEC-FS routine.
 | `TFS_SVC_FIND_PATH` | `16h` | Resolves `/name` or `/prefix/name` through the real TM8 prefix/catalogue sectors. |
 | `TFS_SVC_LIST_PATH` | `17h` | Produces a bounded newline-separated list of visible local names in `/` or `/prefix`. |
 | `TFS_SVC_CREATE_SOURCE` | `18h` | Allocates and publishes one empty source file in an existing prefix. |
+| `TFS_SVC_CREATE_FILE` | `19h` | Allocates and publishes one empty binary or asset file in an existing prefix. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -497,9 +499,9 @@ TEC-FS implementation state:
 
 | State | Services | Meaning |
 | --- | --- | --- |
-| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
+| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
 | Stubbed/reserved services | `LOAD_RANGE`, `SAVE_RANGE` | Service numbers are reserved and return unsupported. |
-| Deferred filesystem work | general file create/delete/rename, new-prefix allocation, long-name storage, general transaction journal, PC repair/import utility | Not part of the bounded ROM source-creation proof. |
+| Deferred filesystem work | delete/rename, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair/import utility | Not part of the bounded ROM creation proof. |
 
 Current TEC-FS geometry:
 
@@ -603,6 +605,8 @@ TEC-FS parameter block:
 | `TFS_PARAM_ARTIFACT_DATA_WRITES` | `3C69h` | Successful artifact data writes. |
 | `TFS_PARAM_ARTIFACT_META_WRITES` | `3C6Ah` | Successful artifact metadata writes. |
 | `TFS_PARAM_ARTIFACT_IO_KIND` | `3C6Bh` | Binary/map data/metadata operation discriminator. |
+| `TFS_PARAM_ARTIFACT_PATH_LO` | `3C6Ch` | Catalogue artifact path pointer low byte. |
+| `TFS_PARAM_ARTIFACT_PATH_HI` | `3C6Dh` | Catalogue artifact path pointer high byte. |
 | `TFS_ARTIFACT_KIND_BINARY` | `01h` | Executable binary artifact. |
 | `TFS_ARTIFACT_KIND_MAP` | `02h` | Source-map artifact. |
 | `TFS_ARTIFACT_MAX_BYTES` | `0200h` | Maximum data bytes in either artifact. |
@@ -624,10 +628,14 @@ growth visible in the proof counters.
 
 `TFS_SVC_SAVE_ARTIFACT` accepts a nonzero artifact of at most 512 bytes. For a
 binary it writes executable `TFM1` metadata with load, exclusive-end, and run
-addresses; for a map it writes asset metadata. Data and metadata are distinct
-driver calls. `TFS_SVC_LOAD_ARTIFACT` reads and validates binary metadata,
-requires the executable flag and binary type, checks the declared range and
-entry against the bank-8 window, then reads the data into its load address.
+addresses; for a map it writes asset metadata. With the real MON3 driver it
+resolves `TFS_PARAM_ARTIFACT_PATH_LO/HI`, creates a missing binary/asset entry
+inside an existing prefix, writes the raw payload to sector zero, writes the
+private `TFM1` sidecar to sector seven, then publishes catalogue size/type last.
+`TFS_SVC_LOAD_ARTIFACT` resolves the binary path, reads and validates the
+sidecar, requires the executable flag and binary type, checks the declared
+range and entry against the bank-8 window, then reads the raw data into its load
+address. Non-MON3 proof drivers retain the fixed resident artifact slots.
 
 The first directory/list primitive is deliberately small. `TFS_SVC_DECODE_CATALOG`
 expects `TFS_PARAM_BUFFER_LO/HI` to point at one 64-byte TM8 v1 file catalogue
@@ -1107,8 +1115,9 @@ separate monitor-facing game input API.
 
 Physical bank 7 owns the self-hosted two-pass assembler. The shell passes the
 project-main `SHL_TARGET_DESC`; bank 7 reads the resident bank-4 32-byte-record
-workspace, resolves up to 16 eight-character global symbols, and emits at most
-512 bytes plus a `TMAP` source map.
+workspace, resolves up to four one-level TEC-FS includes, resolves up to 16
+eight-character global symbols, and emits at most 512 bytes plus a `TMAP`
+source map.
 
 | Constant | Address/Value | Meaning |
 | --- | ---: | --- |
@@ -1127,6 +1136,7 @@ workspace, resolves up to 16 eight-character global symbols, and emits at most
 | `ASM_PARAM_DIAG_LINE` | `3C8Dh` | Zero-based diagnostic record. |
 | `ASM_PARAM_DIAG_COLUMN` | `3C8Eh` | Zero-based diagnostic column. |
 | `ASM_PARAM_DIAG_CODE` | `3C8Fh` | Detailed `ASM_ERR_*` code. |
+| `ASM_PARAM_DIAG_FILE` | `3CA6h` | Source ordinal: main `0`, includes `1..4`. |
 | `ASM_PARAM_OUTPUT_SIZE_LO` | `3C86h` | Emitted binary byte count low byte. |
 | `ASM_PARAM_ORIGIN_LO` | `3C84h` | Binary origin low byte. |
 | `ASM_PARAM_RUN_LO` | `3C91h` | Entry address low byte. |
@@ -1144,14 +1154,17 @@ workspace, resolves up to 16 eight-character global symbols, and emits at most
 | `ASM_ERR_OUTPUT_FULL` | `26h` | Binary or map exceeds 512 bytes. |
 | `ASM_ERR_BAD_ORIGIN` | `27h` | Origin/output falls outside the runner window. |
 | `ASM_ERR_STORAGE` | `28h` | Bank-2 artifact persistence failed. |
+| `ASM_ERR_INCLUDE` | `29h` | Include path, depth, count, type, or load failure. |
 | `ASM_ERR_UNKNOWN` | `EEh` | Unknown assembler-local selector. |
 
 The supported syntax is documented in
 `docs/tecmate-self-hosted-assembler.md`. A build error sets carry, returns its
-`ASM_ERR_*` code, publishes `SHL_RESULT_BUILD_ERROR`, and preserves the record,
-column, and code for bank 4. A successful build writes binary data/metadata and
-map data/metadata through `TFS_SVC_SAVE_ARTIFACT`, publishes sizes and
-origin/entry, and returns `SHL_RESULT_OK`.
+`ASM_ERR_*` code, publishes `SHL_RESULT_BUILD_ERROR`, and preserves the source
+ordinal, record, column, and code for bank 4. A successful build derives
+`/build/<main-stem>.bin` and `.map`, writes both through
+`TFS_SVC_SAVE_ARTIFACT`, publishes sizes and origin/entry, and returns
+`SHL_RESULT_OK`. In each `TMAP` record, the kind byte's low nibble is the symbol
+kind and its high nibble is the source ordinal.
 
 Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set
 without dispatching the build.

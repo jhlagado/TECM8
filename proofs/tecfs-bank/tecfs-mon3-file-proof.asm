@@ -17,9 +17,12 @@ PROOF_FAIL_COMMIT   .equ    0xE5
 PROOF_FAIL_REOPEN   .equ    0xE6
 PROOF_FAIL_LIST     .equ    0xE8
 PROOF_FAIL_CREATE   .equ    0xE9
+PROOF_FAIL_BUILD    .equ    0xEA
+PROOF_FAIL_RUN      .equ    0xEB
 PROOF_RESULT        .equ    0x3A10
 PROOF_PHASE         .equ    0x3A11
 PROOF_LIST_BUFFER   .equ    0x5800
+PROGRAM_MARKER      .equ    0x4FF0
 
 .routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 Start:
@@ -153,9 +156,12 @@ Start:
         call ProofShellDirectory
         jp c,FailList
 
+        call ProofBuildAndRun
+        jp c,FailBuildOrRun
+
         ld a,PROOF_PASS
         ld (PROOF_RESULT),a
-        ld a,9
+        ld a,12
         ld (PROOF_PHASE),a
         halt
 
@@ -316,6 +322,82 @@ ProofCreateUnexpectedSuccess:
         scf
         ret
 
+ProofBuildAndRun:
+        ld hl,ProofBuildPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,9
+        ld (PROOF_PHASE),a
+        ld a,TFS_SVC_FIND_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        ret c
+        ld hl,EDT_BUFFER_BASE
+        ld (TFS_PARAM_LOAD_DEST_LO),hl
+        ld hl,EDT_BUFFER_BYTES
+        ld (TFS_PARAM_LOAD_BYTES_LO),hl
+        ld a,TFS_SVC_LOAD_SOURCE
+        farCall TFS_BANK,TFS_ENTRY
+        ret c
+        ld a,(TFS_PARAM_LOAD_LINES_HI)
+        or a
+        scf
+        ret nz
+        ld a,(TFS_PARAM_LOAD_LINES_LO)
+        cp 6
+        scf
+        ret nz
+        ld (EDT_STATE_TOTAL_LINES),a
+
+        ld hl,ProofBuildTarget
+        ld (ASM_PARAM_TARGET_LO),hl
+        ld a,10
+        ld (PROOF_PHASE),a
+        ld a,ASM_SVC_ASSEMBLE
+        farCall ASM_BANK,ASM_ENTRY
+        jr c,ProofBuildFailed
+        ld a,(ASM_PARAM_RESULT_LO)
+        cp SHL_RESULT_OK
+        jr nz,ProofBuildFailed
+        ld hl,(ASM_PARAM_OUTPUT_SIZE_LO)
+        ld de,10
+        or a
+        sbc hl,de
+        jr nz,ProofBuildFailed
+        ld a,(TFS_PARAM_ARTIFACT_DATA_WRITES)
+        cp 2
+        jr nz,ProofBuildFailed
+        ld a,(TFS_PARAM_ARTIFACT_META_WRITES)
+        cp 2
+        jr nz,ProofBuildFailed
+
+        xor a
+        ld (PROGRAM_MARKER),a
+        ld hl,ProofRunTarget
+        ld (RUN_PARAM_TARGET_LO),hl
+        ld a,11
+        ld (PROOF_PHASE),a
+        ld a,RUN_SVC_RUN
+        farCall RUN_BANK,RUN_ENTRY
+        jr c,ProofRunFailed
+        ld a,(RUN_PARAM_RESULT_LO)
+        cp SHL_RESULT_OK
+        jr nz,ProofRunFailed
+        ld a,(PROGRAM_MARKER)
+        cp 0x5A
+        jr nz,ProofRunFailed
+        ld a,(RUN_PARAM_RETURN_COUNT)
+        cp 1
+        jr nz,ProofRunFailed
+        or a
+        ret
+ProofBuildFailed:
+        ld a,PROOF_FAIL_BUILD
+        scf
+        ret
+ProofRunFailed:
+        ld a,PROOF_FAIL_RUN
+        scf
+        ret
+
 FailFind:
         ld a,PROOF_FAIL_FIND
         jr Fail
@@ -340,6 +422,9 @@ FailList:
 FailCreate:
         ld a,PROOF_FAIL_CREATE
         jr Fail
+FailBuildOrRun:
+        ; ProofBuildAndRun leaves its more specific failure marker in A.
+        jr Fail
 FailEditor:
         ld a,0xE7
 Fail:
@@ -359,6 +444,10 @@ ProofNewPath:
         .db     "/src/new.asm",0
 ProofBadCreatePath:
         .db     "/src/BAD.asm",0
+ProofBuildPath:
+        .db     "/project/build.asm",0
+ProofOutputPath:
+        .db     "/build/build.bin",0
 
 ProofTarget:
         .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
@@ -367,6 +456,14 @@ ProofTarget:
 ProofNewTarget:
         .db     SHL_ACTION_EDIT,SHL_TARGET_KIND_SOURCE_PATH
         .dw     ProofNewPath
+        .db     0
+ProofBuildTarget:
+        .db     SHL_ACTION_ASM,SHL_TARGET_KIND_PROJECT_MAIN
+        .dw     ProofBuildPath
+        .db     0
+ProofRunTarget:
+        .db     SHL_ACTION_RUN,SHL_TARGET_KIND_PROJECT_OUTPUT
+        .dw     ProofOutputPath
         .db     0
 
 ProofEditorEvents:

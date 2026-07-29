@@ -16,10 +16,11 @@ Tecm8ExpansionBank8Entry:
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 runArtifact:
-        .rcignore definite_contract_violation "Initialization publishes all runner state through shared RAM; no incoming DE value remains live."
         call runInitialize
-        .rcignore definite_contract_violation "Target validation consumes the shared target pointer; no incoming HL or flag value remains live."
         call runValidateTarget
+        jp c,runBadTarget
+        .rcignore definite_contract_violation "Target validation is complete; no pre-call HL or flag value remains live while the artifact path is copied."
+        call runPrepareArtifactPath
         jp c,runBadTarget
         ld a,TFS_ARTIFACT_KIND_BINARY
         ld (TFS_PARAM_ARTIFACT_KIND),a
@@ -101,6 +102,44 @@ runValidateTarget:
         or a
         ret
 
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,D,E,H,L
+runPrepareArtifactPath:
+        ld hl,(RUN_PARAM_TARGET_LO)
+        ld de,0x0002
+        add hl,de
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        ld a,d
+        or e
+        jr nz,runPrepareArtifactPathSourceReady
+        ld de,runDefaultArtifactPath
+runPrepareArtifactPathSourceReady:
+        ex de,hl
+        ld de,TFS_ARTIFACT_PATH_BUFFER
+        ld b,TFS_ARTIFACT_PATH_CAPACITY-1
+runPrepareArtifactPathCopy:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        or a
+        jr z,runPrepareArtifactPathDone
+        djnz runPrepareArtifactPathCopy
+        xor a
+        ld (de),a
+        scf
+        ret
+runPrepareArtifactPathDone:
+        ld hl,TFS_ARTIFACT_PATH_BUFFER
+        ld (TFS_PARAM_ARTIFACT_PATH_LO),hl
+        ld a,(hl)
+        cp "/"
+        scf
+        ret nz
+        or a
+        ret
+
 .routine out A,carry,zero clobbers sign,parity,halfCarry,D,E,H,L
 runValidateLoadedRange:
         ld hl,(RUN_PARAM_LOAD_LO)
@@ -144,6 +183,9 @@ runPublishFileError:
         ld a,(RUN_PARAM_LAST_ERROR)
         scf
         ret
+
+runDefaultArtifactPath:
+        .db "/build/main.bin",0
 
 Tecm8ExpansionBank8Info:
         .db     "T","M","8",EXP_BANK,EXP_VERSION

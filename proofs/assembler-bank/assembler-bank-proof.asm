@@ -31,17 +31,20 @@ Start:
         cp SHL_RESULT_BUILD_ERROR
         jp nz,AssemblerProofFail
         ld a,(SHL_PARAM_COMMAND_RESULT_HI)
-        cp 0x22
+        cp 0x23
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_DIAG_LINE)
-        cp 0x22
+        cp 0x23
+        jp nz,AssemblerProofFail
+        ld a,(ASM_PARAM_DIAG_FILE)
+        or a
         jp nz,AssemblerProofFail
         ld a,(ASM_PARAM_DIAG_CODE)
         cp ASM_ERR_SYNTAX
         jp nz,AssemblerProofFail
 
         ld a,"T"
-        ld (EDT_BUFFER_BASE+(EDT_RECORD_BYTES*34)+3),a
+        ld (EDT_BUFFER_BASE+(EDT_RECORD_BYTES*35)+3),a
         call PrepareAsmCommand
         callService SHL_RUN_COMMAND
         jp c,AssemblerProofFail
@@ -49,7 +52,7 @@ Start:
         cp SHL_RESULT_OK
         jp nz,AssemblerProofFail
         ld hl,(ASM_PARAM_OUTPUT_SIZE_LO)
-        ld de,0x003B
+        ld de,0x003F
         or a
         sbc hl,de
         jp nz,AssemblerProofFail
@@ -83,7 +86,7 @@ Start:
         cp 0x20
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+22)
-        cp 0x0F
+        cp 0x12
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+23)
         cp 0x10
@@ -95,48 +98,60 @@ Start:
         cp 0xCD
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+26)
-        cp 0x1E
+        cp 0x2E
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+27)
         cp 0x40
         jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+30)
+        ld a,(ASM_OUTPUT_BASE+28)
+        cp 0xCD
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+29)
+        cp 0x21
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+33)
         cp 0xF5
         jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+36)
+        ld a,(ASM_OUTPUT_BASE+39)
         cp 0xF1
         jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+37)
+        ld a,(ASM_OUTPUT_BASE+40)
         cp 0xC8
         jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+43)
-        cp 0x37
-        jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+46)
-        cp 0x62
+        cp 0x3E
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+47)
-        cp 0x71
+        cp 0x5A
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+48)
-        cp 0x7E
-        jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+49)
-        cp 0x34
+        cp 0xC9
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+50)
-        cp 0x35
+        cp 0x62
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+51)
-        cp 0xA6
+        cp 0x71
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+52)
-        cp 0xEA
+        cp 0x7E
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+53)
+        cp 0x34
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+54)
+        cp 0x35
         jp nz,AssemblerProofFail
         ld a,(ASM_OUTPUT_BASE+55)
+        cp 0xA6
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+56)
+        cp 0xEA
+        jp nz,AssemblerProofFail
+        ld a,(ASM_OUTPUT_BASE+59)
         cp 0xFC
         jp nz,AssemblerProofFail
-        ld a,(ASM_OUTPUT_BASE+58)
+        ld a,(ASM_OUTPUT_BASE+62)
         cp 0xD8
         jp nz,AssemblerProofFail
         ld a,(ASM_MAP_BASE+0)
@@ -152,7 +167,7 @@ Start:
         cp "P"
         jp nz,AssemblerProofFail
         ld a,(ASM_MAP_BASE+6)
-        cp 0x07
+        cp 0x08
         jp nz,AssemblerProofFail
         ld a,(ASM_MAP_BASE+8)
         cp "B"
@@ -181,6 +196,18 @@ Start:
         ld a,(ASM_MAP_BASE+43)
         cp 0x01
         jp nz,AssemblerProofFail
+        ld a,(ASM_MAP_BASE+88)
+        cp 0x2E
+        jp nz,AssemblerProofFail
+        ld a,(ASM_MAP_BASE+89)
+        cp 0x40
+        jp nz,AssemblerProofFail
+        ld a,(ASM_MAP_BASE+91)
+        cp 0x11
+        jp nz,AssemblerProofFail
+        ld a,(ASM_CONTEXT_FILE_ID_TABLE)
+        cp 0x02
+        jp nz,AssemblerProofFail
         ld a,(TFS_BRIDGE_ARTIFACT_DATA_WRITES)
         cp 0x02
         jp nz,AssemblerProofFail
@@ -206,7 +233,7 @@ Start:
         cp RUN_LOAD_MIN >> 8
         jp nz,AssemblerProofFail
         ld a,(RUN_PARAM_BYTES_LO)
-        cp 0x3B
+        cp 0x3F
         jp nz,AssemblerProofFail
 
         ld a,PROOF_PASS
@@ -281,6 +308,8 @@ SourceFixture:
         .ds     EDT_RECORD_BYTES-6
         .db     0x09,"DJNZ LOOP"
         .ds     EDT_RECORD_BYTES-10
+        .db     0x0B,"CALL HELPER"
+        .ds     EDT_RECORD_BYTES-12
         .db     0x0A,"CALL STORE"
         .ds     EDT_RECORD_BYTES-11
         .db     0x02,"EI"
@@ -307,12 +336,10 @@ SourceFixture:
         .ds     EDT_RECORD_BYTES-12
         .db     0x03,"REX"
         .ds     EDT_RECORD_BYTES-4
+        .db     0x12,".INCLUDE ",0x22,"lib.asm",0x22
+        .ds     EDT_RECORD_BYTES-19
         .db     0x07,"UNUSED:"
         .ds     EDT_RECORD_BYTES-8
-        .db     0x03,"SCF"
-        .ds     EDT_RECORD_BYTES-4
-        .db     0x03,"CCF"
-        .ds     EDT_RECORD_BYTES-4
         .db     0x03,"CPL"
         .ds     EDT_RECORD_BYTES-4
         .db     0x06,"LD H,D"

@@ -57,8 +57,10 @@ test('self-hosted assembler doc records the exact implemented ROM subset', () =>
   assert.match(doc, /`4000h-4FFFh`/);
   assert.match(doc, /constants declared as either `NAME \.EQU expression`/);
   assert.match(doc, /simple left-to-right `\+` and `-` expressions/);
-  assert.match(doc, /forward references between constants, includes, macros, indexed instructions/);
-  assert.match(doc, /zero-based source record, column, and diagnostic\s+code/);
+  assert.match(doc, /forward references between constants,[\s\S]*macros, indexed instructions/);
+  assert.match(doc, /at most four one-level includes per\s+pass/);
+  assert.match(doc, /source-file ordinal/);
+  assert.match(doc, /zero-based source record, column, diagnostic\s+code, and source-file ordinal/);
   assert.match(doc, /fixed-record `TMAP` artifact/);
   assert.match(doc, /program must finish\s+with `RET`/);
   assert.match(doc, /not a sandbox, timeout mechanism, or relocating\s+linker/);
@@ -68,13 +70,10 @@ test('self-hosted assembler doc phases project usability before contracts', () =
   assert.match(doc, /## Phase 2: Project Usability/);
   assert.match(doc, /## Phase 3: Contract-Aware Assembly/);
   assertMentionsAll([
-    'include files',
     'listing output',
-    'source location reporting suitable for editor jump-to-error',
-    'shell command integration',
-    'build products written through TEC-FS',
-    'symbols readable by a debugger or monitor tool',
-    'a stable command contract for `asm`',
+    'included-file editor jump-to-error',
+    'shell-visible symbol inspection',
+    'source-aware breakpoint, step, and continue controls',
   ]);
   assert.match(doc, /edit source -> asm -> run -> inspect\/debug -> edit source/);
   assert.match(doc, /register contracts are an advanced feature/i);
@@ -90,10 +89,10 @@ test('self-hosted assembler doc records the completed editor-buffer and TEC-FS g
   assert.match(doc, /shell `asm` reports `OK`, `BUILD`, or `FILE`/);
   assert.match(doc, /was gated by the editor file-buffer ABI and TEC-FS\s+source\/binary\/map writes/);
   assert.match(doc, /edit, diagnose, fix, rebuild, run, and return loop/);
-  assert.match(doc, /one loaded source buffer or a simple\s+sequential TEC-FS source stream/);
-  assert.match(doc, /should not require a general project graph,\s+directory scan, recursive include resolver, host-style build directory, or\s+profile preprocessor/);
-  assert.match(doc, /one binary record plus a\s+minimal map record/);
-  assert.match(doc, /Listings, include files, register-contract checking, and\s+profile-generated source can wait/);
+  assert.match(doc, /resident main buffer can name\s+bounded TEC-FS includes/);
+  assert.match(doc, /creates `\/build\/build\.bin` and `\/build\/build\.map`/);
+  assert.match(doc, /one resident main buffer plus up to four non-recursive include streams/);
+  assert.match(doc, /Listings,\s+register-contract checking, recursive modules, and profile-generated source/);
 });
 
 test('self-hosted assembler doc keeps profile-generated source self-hostable', () => {

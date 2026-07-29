@@ -69,6 +69,26 @@ function prepareImage(): void {
     '/src/.main.bak',
     encodeSource(['hidden backup']),
   );
+  volume = importFileIntoVolumeImage(
+    volume,
+    '/project/build.asm',
+    encodeSource([
+      '.ORG 0x4E00',
+      'VALUE .EQU 0x5A',
+      'CALL HELPER',
+      'LD (0x4FF0),A',
+      'RET',
+      '.INCLUDE "lib.asm"',
+    ]),
+  );
+  volume = importFileIntoVolumeImage(
+    volume,
+    '/project/lib.asm',
+    encodeSource(['HELPER:', 'LD A,VALUE', 'RET']),
+  );
+  // TEC-FS creates files inside existing prefixes. This seed establishes the
+  // build prefix while leaving build.bin and build.map for the ROM to create.
+  volume = importFileIntoVolumeImage(volume, '/build/.keep', Buffer.alloc(0));
   const manifest = JSON.parse(readFileSync(IMAGE.replace(/\.[^.]*$/, '.json'), 'utf8'));
   const image = Buffer.from(readFileSync(IMAGE));
   volume.copy(image, manifest.volume_start_byte_offset);
@@ -157,7 +177,7 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   fatError: number;
 } {
   let fatError = 0;
-  for (let i = 0; i < 360_000_000; i += 1) {
+  for (let i = 0; i < 700_000_000; i += 1) {
     if (runtime.cpu.pc >= 0xf255 && runtime.cpu.pc <= 0xf291) {
       fatError = runtime.cpu.pc;
     }
@@ -172,7 +192,12 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   );
 }
 
-function verifyHostFiles(): { firstLine: string; createdLine: string } {
+function verifyHostFiles(): {
+  firstLine: string;
+  createdLine: string;
+  binaryBytes: number;
+  mapRecords: number;
+} {
   const { parseVolumeImage, readFileFromVolumeImage } = require(resolve(ROOT, 'tools/tm8/format.ts'));
   const manifest = JSON.parse(readFileSync(IMAGE.replace(/\.[^.]*$/, '.json'), 'utf8'));
   const image = readFileSync(IMAGE);
@@ -192,7 +217,32 @@ function verifyHostFiles(): { firstLine: string; createdLine: string } {
       `host-side created source is ${created.byteLength} bytes with line ${JSON.stringify(createdLine)}, expected 32 bytes and "N"`,
     );
   }
-  return { firstLine, createdLine };
+  const binary = readFileFromVolumeImage(volume, '/build/build.bin') as Buffer;
+  const expectedBinary = Buffer.from([
+    0xcd, 0x07, 0x4e,
+    0x32, 0xf0, 0x4f,
+    0xc9,
+    0x3e, 0x5a, 0xc9,
+  ]);
+  if (!binary.equals(expectedBinary)) {
+    throw new Error(
+      `host-side build binary was ${binary.toString('hex')}, expected ${expectedBinary.toString('hex')}`,
+    );
+  }
+  const map = readFileFromVolumeImage(volume, '/build/build.map') as Buffer;
+  if (
+    map.byteLength !== 32 ||
+    map.subarray(0, 4).toString('ascii') !== 'TMAP' ||
+    map[4] !== 1 ||
+    map[6] !== 2 ||
+    map[19] !== 0x02 ||
+    map[28] !== 0x07 ||
+    map[29] !== 0x4e ||
+    map[31] !== 0x11
+  ) {
+    throw new Error(`host-side build map was ${map.toString('hex')}`);
+  }
+  return { firstLine, createdLine, binaryBytes: binary.byteLength, mapRecords: map[6] };
 }
 
 async function main(): Promise<void> {
@@ -203,7 +253,7 @@ async function main(): Promise<void> {
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
     throw new Error(
-      `proof failed with marker 0x${marker.toString(16)}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
+      `proof failed with marker 0x${marker.toString(16)}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} scan=${Array.from(runtime.hardware.memory.subarray(0x3ce0, 0x3d00)).join(',')} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
     );
   }
   const tms9918 = (platform as any).state.display?.tms9918?.snapshot();
@@ -219,13 +269,13 @@ async function main(): Promise<void> {
   ) {
     throw new Error(`shell directory rows were ${JSON.stringify(renderedDirectory)}`);
   }
-  const { firstLine, createdLine } = verifyHostFiles();
+  const { firstLine, createdLine, binaryBytes, mapRecords } = verifyHostFiles();
   writeFileSync(
     LAST_RUN,
-    `${JSON.stringify({ result: 'ok', instructions, firstLine, createdLine, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
+    `${JSON.stringify({ result: 'ok', instructions, firstLine, createdLine, binaryBytes, mapRecords, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
   );
   console.log(
-    `TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine}; created ${createdLine})`,
+    `TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine}; created ${createdLine}; built ${binaryBytes} bytes with ${mapRecords} symbols)`,
   );
 }
 

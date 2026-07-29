@@ -64,6 +64,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsListPathImpl
         cp TFS_SVC_CREATE_SOURCE
         jp z,tecfsCreateSourceImpl
+        cp TFS_SVC_CREATE_FILE
+        jp z,tecfsCreateFileImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -829,6 +831,18 @@ tecfsListAppendByte:
 ; Input: TFS_PARAM_PATH_LO/HI -> "/name" or "/prefix/name".
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 tecfsCreateSourceImpl:
+        ld a,TFS_FILE_SOURCE_V1
+        ld (TFS_PARAM_CREATE_FILE_TYPE),a
+        jr tecfsCreateFileCommon
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCreateFileImpl:
+        ld a,(TFS_PARAM_CREATE_FILE_TYPE)
+        cp TFS_FILE_BINARY
+        jr z,tecfsCreateFileCommon
+        cp TFS_FILE_ASSET
+        jp nz,tecfsCreateBadCatalog
+tecfsCreateFileCommon:
         call tecfsParsePath
         ret c
         call tecfsCreateValidateName
@@ -1273,7 +1287,8 @@ tecfsCreateCopyName:
         ld (hl),d
         ld de,TFS_CATALOG_OFFSET_FILE_TYPE-TFS_CATALOG_OFFSET_FIRST_BLOCK-1
         add hl,de
-        ld (hl),TFS_FILE_SOURCE_V1
+        ld a,(TFS_PARAM_CREATE_FILE_TYPE)
+        ld (hl),a
         jp tecfsWriteScanSector
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
@@ -1767,6 +1782,8 @@ tecfsCatalogCommitEntryAddress:
 tecfsSaveArtifactImpl:
         call tecfsValidateArtifactParams
         ret c
+        call tecfsUsingMon3FileDriver
+        jp z,tecfsSaveArtifactReal
         call tecfsArtifactSetSector
         ld hl,(TFS_PARAM_ARTIFACT_BUFFER_LO)
         ld (TFS_PARAM_BUFFER_LO),hl
@@ -1813,6 +1830,8 @@ tecfsLoadArtifactImpl:
         ld a,(TFS_PARAM_ARTIFACT_KIND)
         cp TFS_ARTIFACT_KIND_BINARY
         jp nz,tecfsBadArtifact
+        call tecfsUsingMon3FileDriver
+        jp z,tecfsLoadArtifactReal
         call tecfsArtifactSetSector
         ld hl,TFS_ARTIFACT_META_BUFFER
         ld (TFS_PARAM_BUFFER_LO),hl
@@ -1838,6 +1857,215 @@ tecfsLoadArtifactImpl:
         ld (TFS_PARAM_LAST_ERROR),a
         ld a,0x82
         or a
+        ret
+
+; Real MON3/SD artifact path. The catalogue entry names the raw .bin/.map
+; payload stored in sector zero of its allocation block. Sector seven is a
+; private TFM1 sidecar, leaving host export of the catalogue file byte-exact.
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsSaveArtifactReal:
+        call tecfsArtifactResolveForSave
+        ret c
+        xor a
+        call tecfsArtifactMapSectorReal
+        ret c
+        ld hl,(TFS_PARAM_ARTIFACT_BUFFER_LO)
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsArtifactPublishDataKind
+        call tecfsWriteSectorImpl
+        ret c
+        ld a,(TFS_PARAM_ARTIFACT_DATA_WRITES)
+        inc a
+        ld (TFS_PARAM_ARTIFACT_DATA_WRITES),a
+        call tecfsBuildArtifactMeta
+        ret c
+        ld a,0x07
+        call tecfsArtifactMapSectorReal
+        ret c
+        ld hl,TFS_ARTIFACT_META_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsArtifactPublishMetaKind
+        call tecfsWriteSectorImpl
+        ret c
+        ld a,(TFS_PARAM_ARTIFACT_META_WRITES)
+        inc a
+        ld (TFS_PARAM_ARTIFACT_META_WRITES),a
+        call tecfsCommitArtifactCatalog
+        ret c
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsLoadArtifactReal:
+        call tecfsArtifactFindPath
+        ret c
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        cp TFS_FILE_BINARY
+        jp nz,tecfsBadArtifact
+        ld hl,(TFS_PARAM_ENTRY_SIZE_0)
+        ld a,h
+        cp 0x02
+        jp nc,tecfsBadArtifact
+        ld a,h
+        or l
+        jp z,tecfsBadArtifact
+        ld (TFS_PARAM_SOURCE_SIZE_LO),hl
+        ld a,0x07
+        call tecfsArtifactMapSectorReal
+        ret c
+        ld hl,TFS_ARTIFACT_META_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_ARTIFACT_IO_BINARY_META
+        ld (TFS_PARAM_ARTIFACT_IO_KIND),a
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        call tecfsReadSectorImpl
+        ret c
+        call tecfsReadArtifactMeta
+        ret c
+        call tecfsValidateRunnableArtifact
+        ret c
+        ld hl,(TFS_PARAM_ARTIFACT_SIZE_LO)
+        ld de,(TFS_PARAM_SOURCE_SIZE_LO)
+        or a
+        sbc hl,de
+        jp nz,tecfsBadArtifact
+        xor a
+        call tecfsArtifactMapSectorReal
+        ret c
+        ld hl,(TFS_PARAM_ARTIFACT_LOAD_LO)
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_ARTIFACT_IO_BINARY_DATA
+        ld (TFS_PARAM_ARTIFACT_IO_KIND),a
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        call tecfsReadSectorImpl
+        ret c
+        xor a
+        ld (TFS_PARAM_STATUS),a
+        ld (TFS_PARAM_LAST_ERROR),a
+        ld a,0x82
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsArtifactResolveForSave:
+        call tecfsArtifactFindPath
+        jr nc,tecfsArtifactValidateResolvedType
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NOT_FOUND
+        ret nz
+        ld a,(TFS_PARAM_ARTIFACT_KIND)
+        cp TFS_ARTIFACT_KIND_BINARY
+        ld a,TFS_FILE_BINARY
+        jr z,tecfsArtifactCreateTypeReady
+        ld a,TFS_FILE_ASSET
+tecfsArtifactCreateTypeReady:
+        ld (TFS_PARAM_CREATE_FILE_TYPE),a
+        call tecfsCreateFileImpl
+        ret c
+        call tecfsArtifactFindPath
+        ret c
+tecfsArtifactValidateResolvedType:
+        ld a,(TFS_PARAM_ARTIFACT_KIND)
+        cp TFS_ARTIFACT_KIND_BINARY
+        ld a,TFS_FILE_BINARY
+        jr z,tecfsArtifactExpectedTypeReady
+        ld a,TFS_FILE_ASSET
+tecfsArtifactExpectedTypeReady:
+        ld b,a
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        cp b
+        jp nz,tecfsBadArtifact
+        or a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsArtifactFindPath:
+        ld hl,(TFS_PARAM_ARTIFACT_PATH_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadArtifact
+        ld (TFS_PARAM_PATH_LO),hl
+        jp tecfsFindPathImpl
+
+.routine in A out A,carry,zero clobbers sign,parity,halfCarry,D,E,H,L
+tecfsArtifactMapSectorReal:
+        ld (TFS_PARAM_SOURCE_PAGE),a
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_LO)
+        ld (TFS_PARAM_BLOCK_INDEX_LO),a
+        ld a,(TFS_PARAM_ENTRY_FIRST_BLOCK_HI)
+        ld (TFS_PARAM_BLOCK_INDEX_HI),a
+        call tecfsMapBlockImpl
+        ret c
+        ld a,(TFS_PARAM_SOURCE_PAGE)
+        ld e,a
+        ld d,0x00
+        ld hl,(TFS_PARAM_SECTOR_0)
+        add hl,de
+        ld (TFS_PARAM_SECTOR_0),hl
+        or a
+        ret
+
+.routine out A,zero clobbers sign,parity,halfCarry
+tecfsArtifactPublishDataKind:
+        ld a,(TFS_PARAM_ARTIFACT_KIND)
+        cp TFS_ARTIFACT_KIND_BINARY
+        ld a,TFS_ARTIFACT_IO_BINARY_DATA
+        jr z,tecfsArtifactPublishKind
+        ld a,TFS_ARTIFACT_IO_MAP_DATA
+        jr tecfsArtifactPublishKind
+
+.routine out A,zero clobbers sign,parity,halfCarry
+tecfsArtifactPublishMetaKind:
+        ld a,(TFS_PARAM_ARTIFACT_KIND)
+        cp TFS_ARTIFACT_KIND_BINARY
+        ld a,TFS_ARTIFACT_IO_BINARY_META
+        jr z,tecfsArtifactPublishKind
+        ld a,TFS_ARTIFACT_IO_MAP_META
+tecfsArtifactPublishKind:
+        ld (TFS_PARAM_ARTIFACT_IO_KIND),a
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        ret
+
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsCommitArtifactCatalog:
+        ld a,(TFS_SCAN_CATALOG_SECTOR)
+        ld (TFS_PARAM_SECTOR_0),a
+        xor a
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsArtifactPublishMetaKind
+        call tecfsReadSectorImpl
+        ret c
+        call tecfsCatalogCommitEntryAddress
+        ld de,TFS_CATALOG_OFFSET_SIZE
+        add hl,de
+        ld de,(TFS_PARAM_ARTIFACT_SIZE_LO)
+        ld (hl),e
+        inc hl
+        ld (hl),d
+        inc hl
+        xor a
+        ld (hl),a
+        inc hl
+        ld (hl),a
+        inc hl
+        ld a,(TFS_PARAM_ARTIFACT_KIND)
+        cp TFS_ARTIFACT_KIND_BINARY
+        ld a,TFS_FILE_BINARY
+        jr z,tecfsCommitArtifactTypeReady
+        ld a,TFS_FILE_ASSET
+tecfsCommitArtifactTypeReady:
+        ld (hl),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        call tecfsWriteSectorImpl
         ret
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,H,L

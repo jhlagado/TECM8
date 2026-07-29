@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 3640,
-      "span": 3640,
+      "occupied": 4064,
+      "span": 4064,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 36408,
-      "freeAfterHighWater": 12744
+      "highWaterEnd": 36832,
+      "freeAfterHighWater": 12320
     },
     {
       "bank": 3,
@@ -59,7 +59,7 @@
     {
       "bank": 5,
       "role": "TEC-FS monitor-sector bridge",
-      "occupied": 3205,
+      "occupied": 3406,
       "span": 3673,
       "softSpan": 4096,
       "hardSpan": 8192,
@@ -79,29 +79,29 @@
     {
       "bank": 7,
       "role": "Phase-one self-hosted assembler",
-      "occupied": 3174,
-      "span": 3174,
+      "occupied": 3724,
+      "span": 3724,
       "softSpan": 8192,
       "hardSpan": 12288,
-      "highWaterEnd": 35942,
-      "freeAfterHighWater": 13210
+      "highWaterEnd": 36492,
+      "freeAfterHighWater": 12660
     },
     {
       "bank": 8,
       "role": "Validated loader and runner",
-      "occupied": 256,
-      "span": 256,
+      "occupied": 327,
+      "span": 327,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33024,
-      "freeAfterHighWater": 16128
+      "highWaterEnd": 33095,
+      "freeAfterHighWater": 16057
     }
   ],
   "expansionTotal": {
-    "occupied": 15217,
-    "span": 15703,
+    "occupied": 16463,
+    "span": 16748,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 131753
+    "freeAfterHighWater": 130708
   }
 }

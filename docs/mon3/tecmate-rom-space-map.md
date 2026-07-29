@@ -62,17 +62,17 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `1745` | `1745` | `86D1h` | `14639` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `3640` | `3640` | `8E38h` | `12744` |
+| 2 | TEC-FS boundary and block mapper | `4064` | `4064` | `8FE0h` | `12320` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | Editor and optional GLCD boundary | `2314` | `2332` | `891Ch` | `14052` |
-| 5 | TEC-FS monitor-sector bridge | `3205` | `3673` | `8E59h` | `12711` |
+| 5 | TEC-FS monitor-sector bridge | `3406` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
-| 7 | Phase-one self-hosted assembler | `3174` | `3174` | `8C66h` | `13210` |
-| 8 | Validated loader and runner | `256` | `256` | `8100h` | `16128` |
+| 7 | Phase-one self-hosted assembler | `3724` | `3724` | `8E8Ch` | `12660` |
+| 8 | Validated loader and runner | `327` | `327` | `8147h` | `16057` |
 
-Expansion occupied bytes: `15217`
+Expansion occupied bytes: `16463`
 
-Expansion high-water span total: `15703`
+Expansion high-water span total: `16748`
 
 Latest self-hosted build-and-run delta:
 
@@ -121,6 +121,17 @@ Latest expressions and broader Z80 subset delta:
 ```text
 bank 7 span: 2173 -> 3174 bytes
 expansion total span: 14702 -> 15703 bytes
+fixed monitor span: unchanged at 16384 bytes
+```
+
+Latest multi-file TEC-FS build delta:
+
+```text
+bank 2 span: 3640 -> 4064 bytes
+bank 5 span: unchanged at 3673 bytes (occupied 3205 -> 3406)
+bank 7 span: 3174 -> 3724 bytes
+bank 8 span: 256 -> 327 bytes
+expansion total span: 15703 -> 16748 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
