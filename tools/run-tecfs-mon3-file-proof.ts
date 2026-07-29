@@ -4,13 +4,16 @@
  */
 
 const { execFileSync } = require('node:child_process');
-const { readFileSync, writeFileSync } = require('node:fs');
-const { resolve } = require('node:path');
+const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
+const { dirname, resolve } = require('node:path');
 const { loadDebug80RuntimeModules, loadExpansionRomImage } = require('./debug80-integration.ts');
 
 const ROOT = resolve(__dirname, '..');
 const SOURCE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-mon3-file-proof.asm');
-const IMAGE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-mon3-file-fat32.img');
+const PREPARE_ONLY = process.argv.includes('--prepare-only');
+const IMAGE = PREPARE_ONLY
+  ? resolve(ROOT, 'demos/debug80/tecmate-workspace-fat32.img')
+  : resolve(ROOT, 'proofs/tecfs-bank/tecfs-mon3-file-fat32.img');
 const IMAGE_TOOL = resolve(ROOT, 'tools/create-storage-proof-image.ts');
 const LAST_RUN = resolve(ROOT, 'proofs/tecfs-bank/tecfs-mon3-file-proof-last-run.json');
 const MONITOR = resolve(ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
@@ -47,6 +50,7 @@ function encodeSource(lines: string[]): Buffer {
 }
 
 function prepareImage(): void {
+  mkdirSync(dirname(IMAGE), { recursive: true });
   execFileSync(process.execPath, ['--experimental-strip-types', IMAGE_TOOL, IMAGE], {
     cwd: ROOT,
     stdio: 'ignore',
@@ -178,7 +182,7 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
   fatError: number;
 } {
   let fatError = 0;
-  for (let i = 0; i < 700_000_000; i += 1) {
+  for (let i = 0; i < 3_000_000_000; i += 1) {
     if (runtime.cpu.pc >= 0xf255 && runtime.cpu.pc <= 0xf291) {
       fatError = runtime.cpu.pc;
     }
@@ -196,6 +200,8 @@ function run(runtime: Runtime, platform: { recordCycles: (cycles: number) => voi
 function verifyHostFiles(): {
   firstLine: string;
   createdLine: string;
+  renamedLine: string;
+  backupLine: string;
   binaryBytes: number;
   mapRecords: number;
 } {
@@ -211,12 +217,32 @@ function verifyHostFiles(): {
   if (firstLine !== 'EXRG 0') {
     throw new Error(`host-side source is "${firstLine}", expected "EXRG 0"`);
   }
+  const backup = readFileFromVolumeImage(volume, '/src/.main.asm.b') as Buffer;
+  const backupLine = backup.subarray(1, 1 + (backup[0] ?? 0)).toString('ascii');
+  if (backupLine !== 'EXRG 0') {
+    throw new Error(
+      `host-side recovery backup is ${JSON.stringify(backupLine)}, expected "EXRG 0"`,
+    );
+  }
   const created = readFileFromVolumeImage(volume, '/src/new.asm') as Buffer;
   const createdLine = created.subarray(1, 1 + (created[0] ?? 0)).toString('ascii');
   if (created.byteLength !== 32 || createdLine !== 'N') {
     throw new Error(
       `host-side created source is ${created.byteLength} bytes with line ${JSON.stringify(createdLine)}, expected 32 bytes and "N"`,
     );
+  }
+  const renamed = readFileFromVolumeImage(volume, '/src/tools.asm') as Buffer;
+  const renamedLine = renamed.subarray(1, 1 + (renamed[0] ?? 0)).toString('ascii');
+  if (renamedLine !== 'Utility:') {
+    throw new Error(`host-side renamed source is ${JSON.stringify(renamedLine)}, expected "Utility:"`);
+  }
+  try {
+    readFileFromVolumeImage(volume, '/src/util.asm');
+    throw new Error('host-side old /src/util.asm path still exists after rename');
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('file not found')) {
+      throw error;
+    }
   }
   const binary = readFileFromVolumeImage(volume, '/build/main.bin') as Buffer;
   const expectedBinary = Buffer.from([
@@ -246,18 +272,29 @@ function verifyHostFiles(): {
   ) {
     throw new Error(`host-side build map was ${map.toString('hex')}`);
   }
-  return { firstLine, createdLine, binaryBytes: binary.byteLength, mapRecords: map[6] };
+  return {
+    firstLine,
+    createdLine,
+    renamedLine,
+    backupLine,
+    binaryBytes: binary.byteLength,
+    mapRecords: map[6],
+  };
 }
 
 async function main(): Promise<void> {
   prepareImage();
+  if (PREPARE_ONLY) {
+    console.log(`Prepared bootable TecMate workspace image: ${IMAGE}`);
+    return;
+  }
   const bytes = await compileProof();
   const { runtime, platform } = await loadRuntime(bytes);
   const { instructions, fatError } = run(runtime, platform);
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
     throw new Error(
-      `proof failed with marker 0x${marker.toString(16)} phase=${runtime.hardware.memory[0x3a11]} debug-stage=${runtime.hardware.memory[0x3a12]} shell-stage=${runtime.hardware.memory[0x5d70]} program-marker=${runtime.hardware.memory[0x4ff0]}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} asm=${Array.from(runtime.hardware.memory.subarray(0x3c80, 0x3cb0)).join(',')} editor=${Array.from(runtime.hardware.memory.subarray(0x3b80, 0x3bc0)).join(',')} edited=${Array.from(runtime.hardware.memory.subarray(0x5d00, 0x5d60)).join(',')} debug=${Array.from(runtime.hardware.memory.subarray(0x3f00, 0x3f29)).join(',')} dbg-param=${Array.from(runtime.hardware.memory.subarray(0x3c20, 0x3c25)).join(',')} run=${Array.from(runtime.hardware.memory.subarray(0x3c40, 0x3c60)).join(',')} scan=${Array.from(runtime.hardware.memory.subarray(0x3ce0, 0x3d00)).join(',')} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
+      `proof failed with marker 0x${marker.toString(16)} phase=${runtime.hardware.memory[0x3a11]} debug-stage=${runtime.hardware.memory[0x3a12]} shell-stage=${runtime.hardware.memory[0x5d70]} program-marker=${runtime.hardware.memory[0x4ff0]}; TFS error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c59]} FAT error=0x${fatError.toString(16)} asm=${Array.from(runtime.hardware.memory.subarray(0x3c80, 0x3cb0)).join(',')} editor-param=${Array.from(runtime.hardware.memory.subarray(0x3a40, 0x3a53)).join(',')} editor-state=${Array.from(runtime.hardware.memory.subarray(0x3c00, 0x3c20)).join(',')} editor-work=${Array.from(runtime.hardware.memory.subarray(0x5e00, 0x5e58)).join(',')} editor-aux=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5c80, 0x5cc0)).toString('ascii'))} edited=${Array.from(runtime.hardware.memory.subarray(0x5d00, 0x5d60)).join(',')} debug=${Array.from(runtime.hardware.memory.subarray(0x3f00, 0x3f29)).join(',')} dbg-param=${Array.from(runtime.hardware.memory.subarray(0x3c20, 0x3c25)).join(',')} run=${Array.from(runtime.hardware.memory.subarray(0x3c40, 0x3c60)).join(',')} scan=${Array.from(runtime.hardware.memory.subarray(0x3ce0, 0x3d00)).join(',')} list-count=${runtime.hardware.memory[0x3cf5]} list=${JSON.stringify(Buffer.from(runtime.hardware.memory.subarray(0x5800, 0x5840)).toString('ascii'))} catalog=${Array.from(runtime.hardware.memory.subarray(0x3d00, 0x3d34)).join(',')}`,
     );
   }
   const tms9918 = (platform as any).state.display?.tms9918?.snapshot();
@@ -268,15 +305,16 @@ async function main(): Promise<void> {
     .toString('ascii');
   if (
     !renderedDirectory.startsWith('main.asm') ||
-    !renderedDirectory.slice(32).startsWith('util.asm') ||
+    !renderedDirectory.slice(32).startsWith('tools.asm') ||
     !renderedDirectory.slice(64).startsWith('new.asm')
   ) {
     throw new Error(`shell directory rows were ${JSON.stringify(renderedDirectory)}`);
   }
-  const { firstLine, createdLine, binaryBytes, mapRecords } = verifyHostFiles();
+  const { firstLine, createdLine, renamedLine, backupLine, binaryBytes, mapRecords } =
+    verifyHostFiles();
   writeFileSync(
     LAST_RUN,
-    `${JSON.stringify({ result: 'ok', instructions, firstLine, createdLine, binaryBytes, mapRecords, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
+    `${JSON.stringify({ result: 'ok', instructions, firstLine, createdLine, renamedLine, backupLine, injectedWriteFailures: runtime.hardware.memory[0x3c5b], binaryBytes, mapRecords, renderedDirectory, finalPc: runtime.cpu.pc }, null, 2)}\n`,
   );
   console.log(
     `TEC-FS MON3 file proof passed in ${instructions} instructions (${firstLine}; created ${createdLine}; built ${binaryBytes} bytes with ${mapRecords} symbols)`,

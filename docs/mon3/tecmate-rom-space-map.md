@@ -60,19 +60,19 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `2015` | `2015` | `87DFh` | `14369` |
+| 0 | Shell, launcher, registry | `2037` | `2037` | `87F5h` | `14347` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `4064` | `4064` | `8FE0h` | `12320` |
+| 2 | TEC-FS boundary and block mapper | `4334` | `4334` | `90EEh` | `12050` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
-| 4 | Editor and optional GLCD boundary | `2314` | `2332` | `891Ch` | `14052` |
-| 5 | TEC-FS monitor-sector bridge | `3406` | `3673` | `8E59h` | `12711` |
+| 4 | Editor and optional GLCD boundary | `5004` | `5022` | `939Eh` | `11362` |
+| 5 | TEC-FS monitor-sector bridge | `3430` | `3673` | `8E59h` | `12711` |
 | 6 | Input snapshot boundary | `220` | `220` | `80DCh` | `16164` |
 | 7 | Phase-one self-hosted assembler | `3724` | `3724` | `8E8Ch` | `12660` |
 | 8 | Validated loader and runner | `2435` | `2435` | `8983h` | `13949` |
 
-Expansion occupied bytes: `18841`
+Expansion occupied bytes: `21847`
 
-Expansion high-water span total: `19126`
+Expansion high-water span total: `22108`
 
 Latest self-hosted build-and-run delta:
 
@@ -135,6 +135,17 @@ expansion total span: 15703 -> 16748 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
+Latest SD workspace and recovery delta:
+
+```text
+bank 0 span: 2015 -> 2037 bytes
+bank 2 span: 4064 -> 4334 bytes
+bank 4 span: 2332 -> 5022 bytes
+bank 5 span: unchanged at 3673 bytes (occupied 3406 -> 3430)
+expansion total span: 19126 -> 22108 bytes
+fixed monitor span: unchanged at 16384 bytes
+```
+
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
 TecMate code a controlled path into expansion ROMs without needing to make the
@@ -151,13 +162,13 @@ registry, and marker labels are current private bank-0 layout.
 | Bank 0 header | `8000h` | `EXPR` discovery header data, not a routine entry. |
 | Bank 0 install | `800Bh` | Installs menu/service vectors into MON3 RAM. |
 | Bank 0 menu provider | `802Ah` | Demo/front-door entry installed by bank 0. |
-| Bank 0 service dispatcher | `806Ah` | Private table-driven label installed into the service vector. |
-| Bank 0 service registry | `87ACh` | Private service ID to bank/address/target-`A` table. |
-| Bank 0 shell entry | `80A8h` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
-| Bank 0 shell command boundary | `80FBh` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
-| Bank 0 shell status renderer | `847Fh` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
-| Bank 0 shell result renderer | `84CAh` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
-| Bank 0 info marker | `87A7h` | Private marker, not a fixed ABI location. |
+| Bank 0 service dispatcher | `8080h` | Private table-driven label installed into the service vector. |
+| Bank 0 service registry | `87C2h` | Private service ID to bank/address/target-`A` table. |
+| Bank 0 shell entry | `80BEh` | Private descriptor and VDU home-screen path for `SHL_ENTRY`. |
+| Bank 0 shell command boundary | `8111h` | Private one-command dispatcher reached through `SHL_RUN_COMMAND`. |
+| Bank 0 shell status renderer | `8495h` | Private VDU status-line publisher reached through `SHL_RENDER_STATUS`. |
+| Bank 0 shell result renderer | `84E0h` | Private VDU result publisher reached through `SHL_RENDER_RESULT`. |
+| Bank 0 info marker | `87BDh` | Private marker, not a fixed ABI location. |
 | Bank 1 VDU/TMS dispatcher | `8000h` | Dispatches bank-local VDU/TMS service IDs in `A`. |
 | Bank 2 TEC-FS dispatcher | `8000h` | Dispatches TEC-FS service IDs in `A`. |
 | Bank 2 TEC-FS map block | private label | Maps active volume/block to 512-byte sector. |

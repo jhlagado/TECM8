@@ -130,22 +130,75 @@ Start:
         ld a,(EDT_STATE_SAVE_COUNT)
         cp 1
         jp nz,FailEditor
+        ld hl,EDT_AUX_PATH_BUFFER
+        ld de,ProofMainBackupPath
+ProofCheckBackupPath:
+        ld a,(de)
+        cp (hl)
+        jp nz,FailEditor
+        inc de
+        inc hl
+        or a
+        jr nz,ProofCheckBackupPath
+        ld hl,ProofMainBackupPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_FIND_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        jp c,FailEditor
 
-        xor a
-        ld (EDT_BUFFER_BASE+1),a
-        ld hl,ProofQuitEvent
+        ; Fail the next save at the first source-sector write: backup data,
+        ; backup metadata, pending-session data, pending-session metadata,
+        ; then the injected source write.
+        ld a,5
+        ld (TFS_MON3_FAIL_WRITE_COUNTDOWN),a
+        ld hl,ProofFailedSaveEvents
         ld de,INP_QUEUE_BASE
-        ld bc,2
+        ld bc,ProofFailedSaveEventsEnd-ProofFailedSaveEvents
         ldir
         xor a
         ld (INP_QUEUE_HEAD),a
-        inc a
+        ld a,4
         ld (INP_QUEUE_COUNT),a
         ld hl,ProofTarget
         ld (EDT_PARAM_TARGET_LO),hl
         ld a,EDT_SVC_RUN
         farCall EDT_BANK,EDT_ENTRY
         jp c,FailEditor
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_FILE_ERROR
+        jp nz,FailEditor
+        ld a,(TFS_MON3_FAIL_WRITE_COUNT)
+        cp 1
+        jp nz,FailEditor
+
+        ; A boot-style entry must observe the pending session, offer the
+        ; committed backup, restore it, save it, and return cleanly.
+        ld hl,ProofRecoveryEvents
+        ld de,INP_QUEUE_BASE
+        ld bc,ProofRecoveryEventsEnd-ProofRecoveryEvents
+        ldir
+        xor a
+        ld (INP_QUEUE_HEAD),a
+        ld a,3
+        ld (INP_QUEUE_COUNT),a
+        ld a,EDT_SVC_BOOT
+        farCall EDT_BANK,EDT_ENTRY
+        jp c,FailEditor
+        ld a,(EDT_PARAM_RESULT)
+        cp SHL_RESULT_OK
+        jp nz,FailEditor
+        ld a,(EDT_WORK_BOOT_RESTORE_COUNT)
+        cp 1
+        jp nz,FailEditor
+        ld a,(EDT_WORK_RECOVERY_COUNT)
+        cp 1
+        jp nz,FailEditor
+        ld a,(EDT_STATE_COLUMN)
+        cp 1
+        jp nz,FailEditor
+        ld a,(EDT_STATE_SAVE_COUNT)
+        cp 1
+        jp nz,FailEditor
         ld a,(EDT_BUFFER_BASE+1)
         cp "E"
         jp nz,FailEditor
@@ -156,11 +209,16 @@ Start:
         call ProofCreateSource
         jp c,FailCreate
 
+        call ProofRenameSource
+        jp c,FailCreate
+
         call ProofShellDirectory
         jp c,FailList
 
         call ProofBuildAndRun
         jp c,FailBuildOrRun
+        call ProofColdBootEditor
+        jp c,FailEditor
         ; Re-enter and render the shell after the debugger has finished.
         call ProofShellDirectory
         jp c,FailList
@@ -264,26 +322,115 @@ ProofShellDirectory:
         callService SHL_RENDER_RESULT
         ret
 
-ProofCreateSource:
-        ld hl,ProofCreateEvents
+; Follow the same discovered expansion-menu vector used after a Debug80 reset.
+; With the MON3 SD bit set, bank 0 mounts TEC-FS, enters EDT_SVC_BOOT, restores
+; the session, consumes Ctrl-Q, and returns safely through the shell.
+ProofColdBootEditor:
+        ld hl,ProofQuitEvent
         ld de,INP_QUEUE_BASE
-        ld bc,6
+        ld bc,2
         ldir
         xor a
         ld (INP_QUEUE_HEAD),a
-        ld a,3
+        inc a
         ld (INP_QUEUE_COUNT),a
-        ld hl,ProofNewTarget
-        ld (EDT_PARAM_TARGET_LO),hl
+        farCall SHL_BANK,EXP_BANK0_INSTALL
+        push hl
+        push de
+        push af
+        ld a,(EXP_MENU_VEC_BANK)
+        ld b,a
+        ld hl,(EXP_MENU_VEC_ADDR)
+        ld c,MON_BANK_CALL
+        rst 10H
+        ret c
+        ld a,(DBG_TRACE_0)
+        or a
+        scf
+        ret nz
+        ld a,(DBG_TRACE_8)
+        cp 0x80
+        scf
+        ret nz
+        ld a,(EDT_WORK_BOOT_RESTORE_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_STATE_LINE)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_STATE_COLUMN)
+        cp 15
+        scf
+        ret nz
+        ld a,(EDT_STATE_PAGE)
+        or a
+        scf
+        ret nz
+        or a
+        ret
+
+ProofCreateSource:
+        ; Exercise the complete file-workspace UI from its boot entry:
+        ; help, new hidden scratch, save, save-as, rename visible, chooser-open
+        ; main.asm, move the cursor, and quit with a persisted session.
+        ld hl,ProofWorkspaceEvents
+        ld de,INP_QUEUE_BASE
+        ld bc,ProofWorkspaceEventsEnd-ProofWorkspaceEvents
+        ldir
+        xor a
+        ld (INP_QUEUE_HEAD),a
+        ld a,PROOF_WORKSPACE_EVENT_COUNT
+        ld (INP_QUEUE_COUNT),a
         ld a,8
         ld (PROOF_PHASE),a
-        ld a,EDT_SVC_RUN
+        ld a,EDT_SVC_BOOT
         farCall EDT_BANK,EDT_ENTRY
         ret c
         ld a,(EDT_PARAM_RESULT)
         cp SHL_RESULT_OK
         scf
         ret nz
+        ld a,(EDT_WORK_HELP_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_WORK_NEW_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_WORK_SAVE_AS_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_WORK_RENAME_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_WORK_OPEN_COUNT)
+        cp 1
+        scf
+        ret nz
+        ld a,(EDT_STATE_SAVE_COUNT)
+        cp 2
+        scf
+        ret nz
+        ld a,(EDT_STATE_COLUMN)
+        cp 1
+        scf
+        ret nz
+        ld hl,SHL_TARGET_PATH_BUFFER
+        ld de,ProofPath
+ProofCheckWorkspacePath:
+        ld a,(de)
+        cp (hl)
+        scf
+        ret nz
+        inc de
+        inc hl
+        or a
+        jr nz,ProofCheckWorkspacePath
         xor a
         ld (EDT_BUFFER_BASE),a
         ld (EDT_BUFFER_BASE+1),a
@@ -325,6 +472,33 @@ ProofCreateSource:
         or a
         ret
 ProofCreateUnexpectedSuccess:
+        scf
+        ret
+
+ProofRenameSource:
+        ld hl,ProofUtilPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld hl,ProofToolsPath
+        ld (TFS_PARAM_AUX_PATH_LO),hl
+        ld a,TFS_SVC_RENAME_SOURCE
+        farCall TFS_BANK,TFS_ENTRY
+        ret c
+        ld hl,ProofUtilPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_FIND_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        jr nc,ProofRenameFailed
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NOT_FOUND
+        jr nz,ProofRenameFailed
+        ld hl,ProofToolsPath
+        ld (TFS_PARAM_PATH_LO),hl
+        ld a,TFS_SVC_FIND_PATH
+        farCall TFS_BANK,TFS_ENTRY
+        jr c,ProofRenameFailed
+        or a
+        ret
+ProofRenameFailed:
         scf
         ret
 
@@ -845,6 +1019,12 @@ ProofContCommand:
 ProofContCommandEnd:
 ProofNewPath:
         .db     "/src/new.asm",0
+ProofMainBackupPath:
+        .db     "/src/.main.asm.b",0
+ProofUtilPath:
+        .db     "/src/util.asm",0
+ProofToolsPath:
+        .db     "/src/tools.asm",0
 ProofBadCreatePath:
         .db     "/src/BAD.asm",0
 ProofBuildPath:
@@ -886,10 +1066,37 @@ ProofEditorEvents:
         .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
 ProofQuitEvent:
         .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
-ProofCreateEvents:
-        .db     "N",0
+ProofFailedSaveEvents:
+        .db     "F",0
         .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
         .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+        .db     "Y",0
+ProofFailedSaveEventsEnd:
+ProofRecoveryEvents:
+        .db     "Y",0
+        .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
+        .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofRecoveryEventsEnd:
+ProofWorkspaceEvents:
+        .db     EDT_KEY_HELP,EDT_KEY_MOD_CTRL
+        .db     "X",0
+        .db     EDT_KEY_NEW,EDT_KEY_MOD_CTRL
+        .db     ".",0,"s",0,"c",0,"r",0,"a",0,"t",0,"c",0,"h",0
+        .db     EDT_KEY_ENTER,0
+        .db     "N",0
+        .db     EDT_KEY_SAVE,EDT_KEY_MOD_CTRL
+        .db     EDT_KEY_SAVE_AS,EDT_KEY_MOD_CTRL
+        .db     ".",0,"c",0,"o",0,"p",0,"y",0
+        .db     EDT_KEY_ENTER,0
+        .db     EDT_KEY_RENAME,EDT_KEY_MOD_CTRL
+        .db     "n",0,"e",0,"w",0,".",0,"a",0,"s",0,"m",0
+        .db     EDT_KEY_ENTER,0
+        .db     EDT_KEY_OPEN,EDT_KEY_MOD_CTRL
+        .db     EDT_KEY_ENTER,0
+        .db     EDT_KEY_RIGHT,0
+        .db     EDT_KEY_QUIT,EDT_KEY_MOD_CTRL
+ProofWorkspaceEventsEnd:
+PROOF_WORKSPACE_EVENT_COUNT .equ (ProofWorkspaceEventsEnd-ProofWorkspaceEvents)/2
 ProofLibFixEvents:
         .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0
         .db     EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0,EDT_KEY_RIGHT,0

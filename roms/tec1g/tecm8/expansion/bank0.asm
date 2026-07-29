@@ -9,6 +9,8 @@
 
 EXP_BANK          .equ    0x00
 EXP_VERSION       .equ    0x01
+MON3_MCB          .equ    0x0888
+MON3_MCB_SD_CARD  .equ    0x80
 
 Tecm8ExpansionHeader:
         .db     EXP_MAGIC_0,EXP_MAGIC_1
@@ -74,8 +76,16 @@ Tecm8BootstrapInput:
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
 Tecm8BootstrapShell:
         .expectout A
+        .rcignore definite_contract_violation "RTC publishes through its parameter block; the following boot and shell calls construct fresh bank-call frames."
         callService RTC_TOOL
         ld (DBG_TRACE_6),a
+        ld a,(MON3_MCB)
+        and MON3_MCB_SD_CARD
+        jp z,Tecm8BootstrapShellHome
+        or a
+        .expectout A,carry
+        callBankService EDT_BANK,EDT_ENTRY,EDT_SVC_BOOT
+Tecm8BootstrapShellHome:
         .expectout A
         callService SHL_ENTRY
         ld (DBG_TRACE_8),a

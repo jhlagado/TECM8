@@ -315,11 +315,12 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_SOURCE` \(`10h`\) \| Implemented catalogue-to-bounded-source-page load/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_SOURCE` \(`18h`\) \| Implemented bounded empty-source creation in an existing prefix/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_FILE` \(`19h`\) \| Implemented bounded binary\/asset creation in an existing prefix/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_RENAME_SOURCE` \(`1Ah`\) \| Implemented bounded same-prefix source rename/);
   assert.match(doc, /TEC-FS implementation state/);
-  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE` \|/);
+  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE`, `RENAME_SOURCE` \|/);
   assert.match(doc, /Sector-backed calls still require an installed sector driver/);
   assert.match(doc, /\| Stubbed\/reserved services \| `LOAD_RANGE`, `SAVE_RANGE` \| Service numbers are reserved and return unsupported\. \|/);
-  assert.match(doc, /\| Deferred filesystem work \| delete\/rename, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair\/import utility \|/);
+  assert.match(doc, /\| Deferred filesystem work \| delete, cross-prefix move, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair\/import utility \|/);
   assert.match(doc, /Not part of the bounded ROM creation proof/);
   assert.match(doc, /`TFS_SVC_LIST_PATH` \(`17h`\) accepts `\/` or `\/prefix`/);
   assert.match(doc, /a null path pointer selects `\/src`/);
@@ -327,6 +328,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_SVC_CREATE_SOURCE` \(`18h`\) accepts the same bounded `\/name` or\s+`\/prefix\/name` path as `FIND_PATH`/);
   assert.match(doc, /creates an empty `TFS_FILE_SOURCE_V1` entry backed by one cleared 4 KiB\s+block/);
   assert.match(doc, /Duplicate creation returns `TFS_ERR_EXISTS` without\s+allocating another block/);
+  assert.match(doc, /`TFS_SVC_RENAME_SOURCE` \(`1Ah`\)[\s\S]*`TFS_ERR_CROSS_PREFIX`/);
   for (const name of [
     'TFS_PARAM_LIST_DEST_LO/HI',
     'TFS_PARAM_LIST_CAP_LO/HI',
@@ -377,6 +379,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_LOAD_ARTIFACT',
     'TFS_SVC_CREATE_SOURCE',
     'TFS_SVC_CREATE_FILE',
+    'TFS_SVC_RENAME_SOURCE',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
@@ -585,7 +588,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /Source save writes data blocks first and commits the catalogue size last/);
   assert.match(doc, /finds a free catalogue slot and file id, clears one free data block/);
   assert.match(doc, /publishes the\s+catalogue entry last/);
-  assert.match(doc, /It does not create prefixes, delete or rename files, or\s+provide a general transaction journal/);
+  assert.match(doc, /It does not create prefixes, delete files, move files\s+between prefixes, or provide a general transaction journal/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /magic is `TFS1`/);
   assert.match(doc, /16-byte volume records/);

@@ -164,7 +164,7 @@
         ],
         "sdEnabled": true,
         "sdHighCapacity": true,
-        "sdImagePath": "/Users/johnhardy/projects/TECM8/demos/debug80/editor-session-fat32.img"
+        "sdImagePath": "demos/debug80/tecmate-workspace-fat32.img"
       }
     },
     "keyboard-tester.main": {
@@ -278,7 +278,7 @@
         ],
         "sdEnabled": true,
         "sdHighCapacity": true,
-        "sdImagePath": "/Users/johnhardy/projects/TECM8/demos/debug80/editor-session-fat32.img"
+        "sdImagePath": "demos/debug80/tecmate-workspace-fat32.img"
       },
       "sourceFile": "src/keyboard-tester.main.asm",
       "asm": "src/keyboard-tester.main.asm",

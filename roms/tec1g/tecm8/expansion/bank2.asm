@@ -66,6 +66,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsCreateSourceImpl
         cp TFS_SVC_CREATE_FILE
         jp z,tecfsCreateFileImpl
+        cp TFS_SVC_RENAME_SOURCE
+        jp z,tecfsRenameSourceImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -126,6 +128,9 @@ tecfsCreateSource:
 
 tecfsLoadSource:
         jp tecfsLoadSourceImpl
+
+tecfsRenameSource:
+        jp tecfsRenameSourceImpl
 
 BankAbiNestedTarget:
         ld c,MON_SYS_GET
@@ -1312,6 +1317,161 @@ tecfsCreateExists:
         jp tecfsPublishScanError
 tecfsCreateBadVolume:
         ld a,TFS_ERR_BAD_VOLUME_FORMAT
+        jp tecfsPublishScanError
+
+; Rename one source file inside its existing TM8 prefix.
+;
+; Input:
+;   TFS_PARAM_PATH_LO/HI     -> existing absolute source path
+;   TFS_PARAM_AUX_PATH_LO/HI -> new absolute source path
+;
+; The catalogue sector is rewritten once after the destination has been
+; validated and checked for collision. File data, allocation, id, type, and
+; size are preserved. V1 deliberately rejects cross-prefix moves so the
+; editor can offer a bounded rename operation without implicitly creating or
+; reclaiming virtual prefixes.
+.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+tecfsRenameSourceImpl:
+        ld hl,(TFS_PARAM_AUX_PATH_LO)
+        ld a,h
+        or l
+        jp z,tecfsBadPath
+        call tecfsFindPathImpl
+        ret c
+        ld a,(TFS_PARAM_ENTRY_FILE_TYPE)
+        cp TFS_FILE_SOURCE_V1
+        jp nz,tecfsCreateBadCatalog
+        ld a,(TFS_SCAN_CATALOG_SECTOR)
+        ld (TFS_MOVE_SOURCE_SECTOR),a
+        ld hl,(TFS_SCAN_CATALOG_OFFSET_LO)
+        ld (TFS_MOVE_SOURCE_OFFSET_LO),hl
+        ld a,(TFS_PARAM_ENTRY_PREFIX_ID)
+        ld (TFS_MOVE_SOURCE_PREFIX),a
+        ld a,(TFS_PARAM_ENTRY_FILE_ID)
+        ld (TFS_MOVE_SOURCE_FILE_ID),a
+
+        ld hl,(TFS_PARAM_AUX_PATH_LO)
+        ld (TFS_PARAM_PATH_LO),hl
+        call tecfsParsePath
+        ret c
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        or a
+        jr z,tecfsRenameDestinationRoot
+        call tecfsFindPrefix
+        ret c
+        jr tecfsRenameDestinationPrefixReady
+tecfsRenameDestinationRoot:
+        ld (TFS_SCAN_PREFIX_ID),a
+tecfsRenameDestinationPrefixReady:
+        ld a,(TFS_MOVE_SOURCE_PREFIX)
+        ld b,a
+        ld a,(TFS_SCAN_PREFIX_ID)
+        cp b
+        jp nz,tecfsRenameCrossPrefix
+
+        ; A successful lookup means the destination already exists. NOT_FOUND
+        ; is the expected result and leaves the parsed destination name ready.
+        call tecfsFindCatalog
+        jp nc,tecfsCreateExists
+        ld a,(TFS_PARAM_LAST_ERROR)
+        cp TFS_ERR_NOT_FOUND
+        jr z,tecfsRenameDestinationAvailable
+        ld a,(TFS_PARAM_LAST_ERROR)
+        scf
+        ret
+tecfsRenameDestinationAvailable:
+
+        ; Reparse after the collision scan so the destination name pointer and
+        ; length are authoritative, then fetch the original catalogue sector.
+        ld hl,(TFS_PARAM_AUX_PATH_LO)
+        ld (TFS_PARAM_PATH_LO),hl
+        call tecfsParsePath
+        ret c
+        ld a,(TFS_SCAN_PREFIX_LEN)
+        or a
+        jr z,tecfsRenameReparseRoot
+        call tecfsFindPrefix
+        ret c
+        jr tecfsRenameReadSourceSector
+tecfsRenameReparseRoot:
+        ld (TFS_SCAN_PREFIX_ID),a
+tecfsRenameReadSourceSector:
+        ld a,(TFS_MOVE_SOURCE_SECTOR)
+        ld (TFS_PARAM_SECTOR_0),a
+        xor a
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SOURCE_IO_META
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        call tecfsReadSectorImpl
+        ret c
+
+        ld hl,TFS_CATALOG_BUFFER
+        ld de,(TFS_MOVE_SOURCE_OFFSET_LO)
+        add hl,de
+        ld a,(hl)
+        cp TFS_ENTRY_STATUS_ACTIVE
+        jp nz,tecfsCreateBadCatalog
+        inc hl
+        ld a,(TFS_MOVE_SOURCE_FILE_ID)
+        cp (hl)
+        jp nz,tecfsCreateBadCatalog
+        inc hl
+        ld a,(TFS_MOVE_SOURCE_PREFIX)
+        cp (hl)
+        jp nz,tecfsCreateBadCatalog
+        inc hl
+
+        ; HL points at name length. Clear the old bounded name field, then
+        ; install the validated destination local name.
+        ld de,(TFS_SCAN_NAME_PTR)
+        push de
+        ld a,(TFS_SCAN_NAME_LEN)
+        push af
+        push hl
+        xor a
+        ld (hl),a
+        ld d,h
+        ld e,l
+        inc de
+        ld bc,TFS_CATALOG_NAME_BYTES
+        ldir
+        pop de
+        pop af
+        ld (de),a
+        inc de
+        ld b,a
+        pop hl
+tecfsRenameCopyName:
+        ld a,(hl)
+        ld (de),a
+        inc hl
+        inc de
+        djnz tecfsRenameCopyName
+
+        ld a,(TFS_MOVE_SOURCE_SECTOR)
+        ld (TFS_PARAM_SECTOR_0),a
+        xor a
+        ld (TFS_PARAM_SECTOR_1),a
+        ld (TFS_PARAM_SECTOR_2),a
+        ld (TFS_PARAM_SECTOR_3),a
+        ld hl,TFS_CATALOG_BUFFER
+        ld (TFS_PARAM_BUFFER_LO),hl
+        ld a,TFS_SOURCE_IO_META
+        ld (TFS_PARAM_SOURCE_IO_KIND),a
+        call tecfsWriteSectorImpl
+        ret c
+
+        ; Publish the renamed entry using the same result contract as FIND.
+        ld hl,(TFS_PARAM_AUX_PATH_LO)
+        ld (TFS_PARAM_PATH_LO),hl
+        jp tecfsFindPathImpl
+
+tecfsRenameCrossPrefix:
+        ld a,TFS_ERR_CROSS_PREFIX
         jp tecfsPublishScanError
 
 .routine out A,carry,zero clobbers sign,parity,halfCarry,B,H,L

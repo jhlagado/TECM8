@@ -242,6 +242,18 @@ tecfsMon3FileRead:
 tecfsMon3FileWrite:
         call tecfsMon3FilePrepare
         ret c
+        ld a,(TFS_MON3_FAIL_WRITE_COUNTDOWN)
+        or a
+        jr z,tecfsMon3FileWriteReady
+        dec a
+        ld (TFS_MON3_FAIL_WRITE_COUNTDOWN),a
+        jr nz,tecfsMon3FileWriteReady
+        ld a,(TFS_MON3_FAIL_WRITE_COUNT)
+        inc a
+        ld (TFS_MON3_FAIL_WRITE_COUNT),a
+        ld a,TFS_ERR_DRIVER_IO
+        jp tecfsMon3FilePublishError
+tecfsMon3FileWriteReady:
         ; MON3 records the target physical sector during readSector; every
         ; write must therefore be preceded by a read of the same file offset.
         ld a,2

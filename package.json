@@ -29,6 +29,7 @@
     "proof:tms9918-bank": "node --experimental-strip-types tools/run-tms9918-bank-proof.ts",
     "proof:tecfs-bank": "node --experimental-strip-types tools/run-tecfs-bank-proof.ts",
     "proof:tecfs-mon3-file": "node --experimental-strip-types tools/run-tecfs-mon3-file-proof.ts",
+    "debug80:tecmate-workspace-image": "npm run rom:check && node --experimental-strip-types tools/run-tecfs-mon3-file-proof.ts --prepare-only",
     "proof:input-bank": "node --experimental-strip-types tools/run-input-bank-proof.ts",
     "proof:assembler-bank": "node --experimental-strip-types tools/run-assembler-bank-proof.ts",
     "proof:rtc-bank": "node --experimental-strip-types tools/run-rtc-bank-proof.ts",

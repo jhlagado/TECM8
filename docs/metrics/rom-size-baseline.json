@@ -9,12 +9,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 2015,
-      "span": 2015,
+      "occupied": 2037,
+      "span": 2037,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 34783,
-      "freeAfterHighWater": 14369
+      "highWaterEnd": 34805,
+      "freeAfterHighWater": 14347
     },
     {
       "bank": 1,
@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 4064,
-      "span": 4064,
+      "occupied": 4334,
+      "span": 4334,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 36832,
-      "freeAfterHighWater": 12320
+      "highWaterEnd": 37102,
+      "freeAfterHighWater": 12050
     },
     {
       "bank": 3,
@@ -49,17 +49,17 @@
     {
       "bank": 4,
       "role": "Editor and optional GLCD boundary",
-      "occupied": 2314,
-      "span": 2332,
+      "occupied": 5004,
+      "span": 5022,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 35100,
-      "freeAfterHighWater": 14052
+      "highWaterEnd": 37790,
+      "freeAfterHighWater": 11362
     },
     {
       "bank": 5,
       "role": "TEC-FS monitor-sector bridge",
-      "occupied": 3406,
+      "occupied": 3430,
       "span": 3673,
       "softSpan": 4096,
       "hardSpan": 8192,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 18841,
-    "span": 19126,
+    "occupied": 21847,
+    "span": 22108,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 128330
+    "freeAfterHighWater": 125348
   }
 }
