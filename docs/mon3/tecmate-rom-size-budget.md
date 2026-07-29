@@ -81,10 +81,10 @@ Initial per-bank hard budgets:
 | 2 | TEC-FS boundary and block mapper | 8 KiB |
 | 3 | RTC boundary | 2 KiB |
 | 4 | GLCD boundary | 2 KiB |
-| 5 | TEC-FS monitor-sector bridge | 2 KiB |
+| 5 | TEC-FS monitor-sector bridge | 8 KiB |
 | 6 | Input snapshot boundary | 2 KiB |
-| 7 | Assembler skeleton | 12 KiB |
-| 8 | Run skeleton | 8 KiB |
+| 7 | Phase-one self-hosted assembler | 12 KiB |
+| 8 | Validated loader and runner | 8 KiB |
 
 These budgets are deliberately not final product promises. They are tripwires.
 Raising one is allowed, but it should be a conscious design decision with a

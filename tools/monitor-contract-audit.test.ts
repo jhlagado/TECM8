@@ -49,8 +49,13 @@ test('monitor register contract audit is documented and wired to package scripts
   assert.match(expansionGate, /const BANK_COUNT = 9/);
   assert.match(expansionGate, /bank < BANK_COUNT/);
   assert.match(expansionGate, /registerContracts: 'strict'/);
-  assert.match(expansionGate, /registerContractsInterfaces: \[RST_INTERFACE\]/);
+  assert.match(
+    expansionGate,
+    /registerContractsInterfaces: \[RST_INTERFACE, LEGACY_STORAGE_INTERFACE\]/
+  );
   assert.match(expansionGate, /tecm8-rst-services\.asmi/);
+  assert.match(expansionGate, /mon3-storage-legacy\.asmi/);
+  assert.match(expansionGate, /isQuarantinedLegacyStorageDiagnostic/);
   assert.match(policy, /`debug80\.json` now records the staged policy on the `main` target/);
   assert.match(policy, /Direct-child and recursive globs are both listed deliberately/);
   assert.match(policy, /`npm run rom:contracts:check` remains the release gate for the expansion ROM/);

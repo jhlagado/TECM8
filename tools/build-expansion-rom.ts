@@ -4,7 +4,7 @@
  * expansion window.
  */
 
-const { mkdirSync, writeFileSync } = require('node:fs');
+const { mkdirSync, renameSync, writeFileSync } = require('node:fs');
 const { dirname, resolve } = require('node:path');
 
 const TECM8_ROOT = resolve(__dirname, '..');
@@ -58,6 +58,12 @@ type BankBuildResult = {
 
 function toHex(value: number): string {
   return `0x${value.toString(16).toUpperCase().padStart(4, '0')}`;
+}
+
+function writeArtifactAtomic(path: string, data: string | Uint8Array): void {
+  const temporaryPath = `${path}.${process.pid}.${Math.random().toString(16).slice(2)}.tmp`;
+  writeFileSync(temporaryPath, data);
+  renameSync(temporaryPath, path);
 }
 
 function getMappedEnd(d8: D8Map): number | undefined {
@@ -135,9 +141,9 @@ async function compileBank(
 
   mkdirSync(dirname(projectBin), { recursive: true });
   mkdirSync(dirname(buildBin), { recursive: true });
-  writeFileSync(projectBin, image);
-  writeFileSync(buildBin, image);
-  writeFileSync(d8Path, `${JSON.stringify(d8, null, 2)}\n`);
+  writeArtifactAtomic(projectBin, image);
+  writeArtifactAtomic(buildBin, image);
+  writeArtifactAtomic(d8Path, `${JSON.stringify(d8, null, 2)}\n`);
 
   return {
     image,
@@ -167,8 +173,8 @@ async function main(): Promise<void> {
 
   mkdirSync(dirname(PROJECT_PACKED_BIN_PATH), { recursive: true });
   mkdirSync(dirname(BUILD_PACKED_BIN_PATH), { recursive: true });
-  writeFileSync(PROJECT_PACKED_BIN_PATH, romImage);
-  writeFileSync(BUILD_PACKED_BIN_PATH, romImage);
+  writeArtifactAtomic(PROJECT_PACKED_BIN_PATH, romImage);
+  writeArtifactAtomic(BUILD_PACKED_BIN_PATH, romImage);
 
   console.log(
     JSON.stringify(

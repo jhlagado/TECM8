@@ -41,8 +41,8 @@ const banks = [
   'GLCD boundary',
   'TEC-FS monitor-sector bridge',
   'Input snapshot boundary',
-  'Assembler skeleton',
-  'Run skeleton',
+  'Phase-one self-hosted assembler',
+  'Validated loader and runner',
 ];
 
 const proofStatuses: ProofStatus[] = [

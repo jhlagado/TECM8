@@ -42,6 +42,15 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(runner, /demo input service bank side effect/);
   assert.match(runner, /demo input neutral joystick state/);
   assert.match(runner, /demo TEC-FS mount side effect/);
+  assert.match(runner, /shell edit resolved path/);
+  assert.match(runner, /editor loaded line count/);
+  assert.match(runner, /editor first source record/);
+  assert.match(runner, /editor visible clean status/);
+  assert.match(runner, /editor visible cursor address/);
+  assert.match(runner, /editor character cursor uses solid-block glyph/);
+  assert.match(runner, /interactive editor allocation growth count/);
+  assert.match(runner, /TEC-FS source metadata write count/);
+  assert.match(runner, /reopened editor proves saved text persisted/);
   assert.match(runner, /const SHL_RENDER_RESULT = 0x83/);
   assert.match(runner, /seedInactiveCatalogSlot/);
   assert.match(runner, /shell empty dir result count/);
@@ -52,6 +61,15 @@ test('TecMate monitor launch proof exercises the fixed-ROM discovery launcher pa
   assert.match(readme, /repeats `dir` with an inactive catalogue slot/);
   assert.match(readme, /empty catalogue is not treated as a file\s+error/);
   assert.match(readme, /installed\.shellDirResultStatus/);
+  assert.match(readme, /Ctrl-S writes two source sectors followed by one metadata sector/);
+  assert.match(readme, /saved `PAGEY` persisted while the later discarded `!` did not/);
+  assert.match(runner, /build workflow diagnostic assembly/);
+  assert.match(runner, /runner regained control after program RET/);
+  assert.match(readme, /complete self-hosted tool loop/);
+  assert.match(readme, /`BUILD` at source record 4/);
+  assert.match(readme, /`3E 5A 32 F0 4F C9`/);
+  assert.match(readme, /two artifact data writes, and two\s+artifact metadata writes/);
+  assert.match(readme, /`installed\.buildWorkflow`/);
   assert.equal(
     pkg.scripts['proof:tecmate-monitor-launch'],
     'npm run rom:check && node --experimental-strip-types tools/run-tecmate-monitor-launch-proof.ts',

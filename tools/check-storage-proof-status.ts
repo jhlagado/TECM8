@@ -6,6 +6,7 @@
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { debug80Root } = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
 const IMAGE_TOOL = resolve(TECM8_ROOT, 'tools/create-storage-proof-image.ts');
@@ -55,7 +56,7 @@ function main(): void {
 
   const lastRun = JSON.parse(readFileSync(LAST_RUN, 'utf8'));
   const report = {
-    debug80Root: process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80',
+    debug80Root: debug80Root(),
     pristineImage: verifyPristine.status === 0 ? 'ok' : 'failed',
     storageProof: {
       status: 'ok',

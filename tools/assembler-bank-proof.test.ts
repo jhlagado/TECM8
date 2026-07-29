@@ -16,30 +16,28 @@ test('package check runs the assembler bank proof', () => {
   assert.match(pkg.scripts.check, /npm run proof:assembler-bank/);
 });
 
-test('assembler bank proof covers unsupported skeleton service', () => {
+test('assembler bank proof covers diagnose, fix, build, persist, run, and return', () => {
   const proof = readFileSync(resolve(root, 'proofs/assembler-bank/assembler-bank-proof.asm'), 'utf8');
   const runner = readFileSync(resolve(root, 'tools/run-assembler-bank-proof.ts'), 'utf8');
   const bank7 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank7.asm'), 'utf8');
   const bank8 = readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank8.asm'), 'utf8');
 
-  assert.match(proof, /ld a,"a"[\s\S]*ld a,"s"[\s\S]*ld a,"m"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_ASM/);
-  assert.match(proof, /ld a,0x5A[\s\S]*ld \(ASM_PARAM_STATUS\),a[\s\S]*ld a,0xA5[\s\S]*ld \(ASM_PARAM_LAST_ERROR\),a/);
-  assert.match(proof, /ld a,0x7F[\s\S]*farCall ASM_BANK,ASM_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp ASM_ERR_UNKNOWN[\s\S]*ld a,\(ASM_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(ASM_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
-  assert.doesNotMatch(proof, /ld \(ASM_PARAM_TARGET_LO\),a/);
-  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
-  assert.match(proof, /ld a,\(ASM_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
-  assert.match(proof, /ld a,\(ASM_PARAM_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED/);
-  assert.match(proof, /ld a,\(ASM_PARAM_RESULT_HI\)[\s\S]*or a[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_HI\)[\s\S]*or a/);
-  assert.match(proof, /ld a,"r"[\s\S]*ld a,"u"[\s\S]*ld a,"n"[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_ACTION_RUN/);
-  assert.match(proof, /ld a,0x5A[\s\S]*ld \(RUN_PARAM_STATUS\),a[\s\S]*ld a,0xA5[\s\S]*ld \(RUN_PARAM_LAST_ERROR\),a/);
-  assert.match(proof, /ld a,0x7F[\s\S]*farCall RUN_BANK,RUN_ENTRY[\s\S]*jp nc,AssemblerProofFail[\s\S]*cp RUN_ERR_UNKNOWN[\s\S]*ld a,\(RUN_PARAM_STATUS\)[\s\S]*cp 0x5A[\s\S]*ld a,\(RUN_PARAM_LAST_ERROR\)[\s\S]*cp 0xA5/);
-  assert.doesNotMatch(proof, /ld \(RUN_PARAM_TARGET_LO\),a/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_LO\)[\s\S]*cp SHL_TARGET_DESC & 0xFF/);
-  assert.match(proof, /ld a,\(RUN_PARAM_TARGET_HI\)[\s\S]*cp SHL_TARGET_DESC >> 8/);
-  assert.match(proof, /ld a,\(RUN_PARAM_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_LO\)[\s\S]*cp SHL_RESULT_UNSUPPORTED/);
-  assert.match(proof, /ld a,\(RUN_PARAM_RESULT_HI\)[\s\S]*or a[\s\S]*ld a,\(SHL_PARAM_COMMAND_RESULT_HI\)[\s\S]*or a/);
-  assert.match(bank7, /Tecm8ExpansionBank7Entry:[\s\S]*cp ASM_SVC_ASSEMBLE\s*\n\s*jp z,asmAssembleUnsupported/);
-  assert.match(bank8, /Tecm8ExpansionBank8Entry:[\s\S]*cp RUN_SVC_RUN\s*\n\s*jp z,runUnsupported/);
+  assert.match(proof, /ld hl,SourceFixture[\s\S]*ld de,EDT_BUFFER_BASE[\s\S]*ldir/);
+  assert.match(proof, /call PrepareAsmCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_BUILD_ERROR/);
+  assert.match(proof, /ld a,\(ASM_PARAM_DIAG_LINE\)[\s\S]*cp 0x23[\s\S]*ld a,\(ASM_PARAM_DIAG_FILE\)[\s\S]*ld a,\(ASM_PARAM_DIAG_CODE\)[\s\S]*cp ASM_ERR_SYNTAX/);
+  assert.match(proof, /ld a,"T"[\s\S]*ld \(EDT_BUFFER_BASE\+\(EDT_RECORD_BYTES\*35\)\+3\),a/);
+  assert.match(proof, /call PrepareAsmCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_OK/);
+  assert.match(proof, /BASE \.EQU 0x4F00\+0xF0/);
+  assert.match(proof, /VALUE: \.EQU 0x50\+10/);
+  assert.match(proof, /PUSH BC[\s\S]*DJNZ LOOP[\s\S]*CALL M,STORE/);
+  assert.match(proof, /ld a,\(ASM_OUTPUT_BASE\+0\)[\s\S]*cp 0xF3[\s\S]*ld a,\(ASM_OUTPUT_BASE\+62\)[\s\S]*cp 0xD8/);
+  assert.match(proof, /ld a,\(ASM_MAP_BASE\+0\)[\s\S]*cp "T"[\s\S]*ld a,\(ASM_MAP_BASE\+3\)[\s\S]*cp "P"/);
+  assert.match(proof, /ASM_MAP_BASE\+91[\s\S]*cp 0x11[\s\S]*\.INCLUDE [\s\S]*lib\.asm/);
+  assert.match(proof, /ld a,\(TFS_BRIDGE_ARTIFACT_DATA_WRITES\)[\s\S]*cp 0x02[\s\S]*ld a,\(TFS_BRIDGE_ARTIFACT_META_WRITES\)[\s\S]*cp 0x02/);
+  assert.match(proof, /call PrepareRunCommand[\s\S]*callService SHL_RUN_COMMAND[\s\S]*cp SHL_RESULT_OK/);
+  assert.match(proof, /ld a,\(PROGRAM_MARKER\)[\s\S]*cp 0x5A[\s\S]*ld a,\(RUN_PARAM_RETURN_COUNT\)[\s\S]*cp 0x01/);
+  assert.match(bank7, /Tecm8ExpansionBank7Entry:[\s\S]*cp ASM_SVC_ASSEMBLE\s*\n\s*jp z,asmAssemble/);
+  assert.match(bank8, /Tecm8ExpansionBank8Entry:[\s\S]*cp RUN_SVC_RUN\s*\n\s*jp z,runArtifact/);
   assert.match(
     readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank0.asm'), 'utf8'),
     /Tecm8ShellRunAsm:[\s\S]*ld \(ASM_PARAM_TARGET_LO\),hl[\s\S]*callBankService ASM_BANK,ASM_ENTRY,ASM_SVC_ASSEMBLE[\s\S]*call Tecm8ShellPublishAsmResult/,
@@ -48,12 +46,10 @@ test('assembler bank proof covers unsupported skeleton service', () => {
     readFileSync(resolve(root, 'roms/tec1g/tecm8/expansion/bank0.asm'), 'utf8'),
     /Tecm8ShellRunRun:[\s\S]*ld \(RUN_PARAM_TARGET_LO\),hl[\s\S]*callBankService RUN_BANK,RUN_ENTRY,RUN_SVC_RUN[\s\S]*call Tecm8ShellPublishRunResult/,
   );
-  assert.match(runner, /assembler status preserved after unknown selector/);
-  assert.match(runner, /assertEqual\(params\[6\], 0x04, 'assembler shell result low byte'\)/);
+  assert.match(runner, /assertEqual\(params\[6\], 0x01, 'assembler shell result low byte'\)/);
   assert.match(runner, /assembler shell target descriptor high byte/);
-  assert.match(runner, /run status preserved after unknown selector/);
-  assert.match(runner, /assertEqual\(runParams\[6\], 0x04, 'run shell result low byte'\)/);
+  assert.match(runner, /assertEqual\(runParams\[6\], 0x01, 'run shell result low byte'\)/);
   assert.match(runner, /run shell target descriptor high byte/);
-  assert.match(bank7, /asmAssembleUnsupported:[\s\S]*ld \(ASM_PARAM_BANK\),a[\s\S]*ld \(ASM_PARAM_STATUS\),a[\s\S]*ld \(ASM_PARAM_RESULT_LO\),a[\s\S]*scf[\s\S]*ret/);
-  assert.match(bank8, /runUnsupported:[\s\S]*ld \(RUN_PARAM_BANK\),a[\s\S]*ld \(RUN_PARAM_STATUS\),a[\s\S]*ld \(RUN_PARAM_RESULT_LO\),a[\s\S]*scf[\s\S]*ret/);
+  assert.match(bank7, /asmSaveArtifacts:[\s\S]*TFS_ARTIFACT_KIND_BINARY[\s\S]*TFS_ARTIFACT_KIND_MAP/);
+  assert.match(bank8, /ld hl,RUN_TRAMPOLINE_BASE[\s\S]*ld \(hl\),0xCD[\s\S]*call RUN_TRAMPOLINE_BASE/);
 });

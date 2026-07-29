@@ -73,6 +73,37 @@ npm install
 npm run check
 ```
 
+### Debug80 Development Dependency
+
+The proof and live-editor runners use Debug80's headless TEC-1G runtime and its
+bundled MON3 image. By default TECM8 expects the current Debug80 monorepo in a
+sibling checkout:
+
+```text
+projects/
+  debug80/
+  TECM8/
+```
+
+Build the Debug80 runtime before running the full TECM8 gate:
+
+```text
+cd ../debug80
+npm install
+npm run build
+
+cd ../TECM8
+npm install
+npm run check
+```
+
+The shared resolver in `tools/debug80-integration.ts` reads the ESM runtime
+from `packages/debug80-runtime/dist` and the MON3 bundle from
+`apps/debug80-vscode/resources/bundles/tec1g/mon3/v1`. Set `DEBUG80_ROOT` when
+the checkout is not a sibling. Advanced setups can override the two resolved
+locations independently with `DEBUG80_RUNTIME_ROOT` and
+`DEBUG80_MON3_BUNDLE_ROOT`.
+
 Manual Debug80 diagnostics:
 
 ```text

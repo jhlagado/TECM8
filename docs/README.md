@@ -69,6 +69,7 @@ Start here:
 - [Editor Block Operations](block-operations.md)
 - [Display Service Extraction Plan](display-service-extraction.md)
 - [Debug80 Editor Session](debug80-editor-session.md)
+- [TecMate SD Workspace Demo](debug80-tecmate-workspace.md)
 - [Memory and Code Quality Manifest](memory-and-code-quality.md)
 - [Code Quality Execution Plan](code-quality-remediation-plan.md)
 - [TypeScript Code Quality Report](typescript-code-quality.md)

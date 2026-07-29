@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Assemble and run the TecMate bank-7 assembler service skeleton proof in Debug80.
+ * Assemble and run the TecMate self-hosted assembler and bounded runner proof in Debug80.
  */
 
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { loadDebug80RuntimeModules, loadExpansionRomImage } = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const PROOF_SOURCE = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-proof.asm');
 const LAST_RUN = resolve(TECM8_ROOT, 'proofs/assembler-bank/assembler-bank-proof-last-run.json');
 const MONITOR_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const EXPANSION_ROM_PATH = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
-const APP_START = 0x4000;
+const APP_START = 0x2000;
 const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
@@ -56,10 +56,6 @@ type CompileResult = {
   diagnostics: Array<{ id?: string; message?: string; severity?: string }>;
   artifacts: Array<{ kind: string; bytes?: Uint8Array; json?: { symbols?: D8Symbol[] } }>;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
   const { compile, defaultFormatWriters } = AZM_ROOT
@@ -127,19 +123,9 @@ function makeConfig() {
   };
 }
 
-function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: PlatformRuntime } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks, applyExpansionRomMemory } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function; applyExpansionRomMemory: Function };
-  const { loadTec1gExpansionRomImage } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-expansion-rom.js',
-  ) as { loadTec1gExpansionRomImage: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+async function loadRuntime(bytes: Uint8Array): Promise<{ runtime: Runtime; platformRuntime: PlatformRuntime }> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, applyExpansionRomMemory, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig();
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -157,7 +143,7 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
     config.romRanges,
     tec1gRuntime.state.system,
   );
-  const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
+  const expansionImage = loadExpansionRomImage(EXPANSION_ROM_PATH);
   applyExpansionRomMemory(hooks.expandBanks, expansionImage);
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
@@ -196,7 +182,7 @@ function assertEqual(actual: number, expected: number, name: string): void {
 
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
-  const { runtime, platformRuntime } = loadRuntime(bytes);
+  const { runtime, platformRuntime } = await loadRuntime(bytes);
   const instructions = runUntilHalt(runtime, platformRuntime);
   const resultAddr = symbolNumber(symbols, 'ASM_PROOF_RESULT');
   const paramBase = symbolNumber(symbols, 'ASM_PARAM_BASE');
@@ -205,22 +191,33 @@ async function main(): Promise<void> {
   const params = readTrace(runtime, paramBase, 8);
   const runParams = readTrace(runtime, runParamBase, 8);
 
+  if (result !== PROOF_PASS) {
+    console.error({
+      result,
+      params,
+      runParams,
+      asmState: readTrace(runtime, 0x3c80, 32),
+      shellState: readTrace(runtime, 0x3ba0, 16),
+      output: readTrace(runtime, 0x5000, 64),
+      map: readTrace(runtime, 0x5200, 96),
+    });
+  }
   assertEqual(result, PROOF_PASS, 'assembler bank proof result marker');
-  assertEqual(params[0], 0x5a, 'assembler status preserved after unknown selector');
-  assertEqual(params[1], 0xa5, 'assembler last error preserved after unknown selector');
+  assertEqual(params[0], 0x00, 'assembler final status');
+  assertEqual(params[1], 0x00, 'assembler final error');
   assertEqual(params[2], 0x07, 'assembler service bank');
   assertEqual(params[3], 0x01, 'assembler service version');
   assertEqual(params[4], 0xab, 'assembler target descriptor low byte');
   assertEqual(params[5], 0x3b, 'assembler shell target descriptor high byte');
-  assertEqual(params[6], 0x04, 'assembler shell result low byte');
+  assertEqual(params[6], 0x01, 'assembler shell result low byte');
   assertEqual(params[7], 0x00, 'assembler shell result high byte');
-  assertEqual(runParams[0], 0x5a, 'run status preserved after unknown selector');
-  assertEqual(runParams[1], 0xa5, 'run last error preserved after unknown selector');
+  assertEqual(runParams[0], 0x00, 'run final status');
+  assertEqual(runParams[1], 0x00, 'run final error');
   assertEqual(runParams[2], 0x08, 'run service bank');
   assertEqual(runParams[3], 0x01, 'run service version');
   assertEqual(runParams[4], 0xab, 'run shell target descriptor low byte');
   assertEqual(runParams[5], 0x3b, 'run shell target descriptor high byte');
-  assertEqual(runParams[6], 0x04, 'run shell result low byte');
+  assertEqual(runParams[6], 0x01, 'run shell result low byte');
   assertEqual(runParams[7], 0x00, 'run shell result high byte');
 
   writeFileSync(

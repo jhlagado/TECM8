@@ -187,9 +187,11 @@ Shell parameter block:
 | `SHL_TARGET_DESC` | `3BABh` | Five-byte v1 command target descriptor. |
 | `SHL_TARGET_ACTION` | `3BABh` | Descriptor action copied from `SHL_PARAM_COMMAND_ACTION`. |
 | `SHL_TARGET_KIND` | `3BACh` | Descriptor target kind. |
-| `SHL_TARGET_PATH_LO` | `3BADh` | Low byte of resolved path pointer, currently zero. |
-| `SHL_TARGET_PATH_HI` | `3BAEh` | High byte of resolved path pointer, currently zero. |
+| `SHL_TARGET_PATH_LO` | `3BADh` | Low byte of resolved path pointer. |
+| `SHL_TARGET_PATH_HI` | `3BAEh` | High byte of resolved path pointer. |
 | `SHL_TARGET_FLAGS` | `3BAFh` | Descriptor flags. |
+| `SHL_TARGET_PATH_BUFFER` | `3A20h` | Stable RAM buffer receiving the resolved editor path. |
+| `SHL_TARGET_PATH_CAPACITY` | `20h` | Bytes reserved for the resolved path, including terminator. |
 | `SHL_STATUS_BUFFER` | `3B98h` | Short zero-terminated shell status-line buffer. |
 | `SHL_STATUS_CAPACITY` | `08h` | Bytes reserved for the shell status-line buffer. |
 | `SHL_LINE_BUFFER` | `3AA0h` | RAM transfer buffer for home-screen lines rendered by the VDU bank. |
@@ -220,6 +222,7 @@ Shell status and feature values:
 | `SHL_ACTION_ASM` | `02h` | Command classified as assembler launch. |
 | `SHL_ACTION_RUN` | `03h` | Command classified as program launch. |
 | `SHL_ACTION_DIR` | `04h` | Command classified as TEC-FS directory/catalogue listing. |
+| `SHL_ACTION_DEBUG` | `05h` | Command classified as listing, symbol inspection, or debugger control. |
 | `SHL_TARGET_KIND_NONE` | `00h` | No target has been resolved. |
 | `SHL_TARGET_KIND_PROJECT_MAIN` | `01h` | Target is the project main source. |
 | `SHL_TARGET_KIND_PROJECT_OUTPUT` | `02h` | Target is the derived project output. |
@@ -246,19 +249,21 @@ poll/update/render model without becoming a game runtime or full shell loop.
 parameter block. This is not the full interactive shell. It is the ROM-facing
 boundary that lets the monitor or proofs enter the future shell command loop
 through the expansion service registry. The current boundary classifies the
-first shell verbs: `edit`, `asm`, `run`, and `dir`. It stores the corresponding
+first shell verbs: `edit`, `asm`, `run`, `dir`, `list`, `sym`, `debug`,
+`break SYMBOL`, `step`, and `cont`. It stores the corresponding
 `SHL_ACTION_*` value in `SHL_PARAM_COMMAND_ACTION`, stores the command length
 in `SHL_PARAM_COMMAND_LENGTH`, writes `SHL_PARAM_COMMAND_TARGET_LO/HI` to point
 at `SHL_TARGET_DESC` for commands with resolved targets, and writes a default
-target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`,
-leaves the target pointer and flags clear, calls the bank-2
-`TFS_SVC_SUMMARIZE_CATALOG`, `TFS_SVC_NEXT_CATALOG`, and
-`TFS_SVC_SUMMARIZE_CATALOG` services, restores the original catalogue pointer,
-and publishes `SHL_RESULT_OK` with the two-slot count in
-`SHL_PARAM_COMMAND_RESULT_HI`. A blank command is a successful no-op: it leaves
+target kind for those target-bearing commands. `dir` records `SHL_ACTION_DIR`.
+With the normal SD driver installed, bare `dir` lists `/src`, while
+`dir /prefix` lists an explicit bounded prefix through `TFS_SVC_LIST_PATH`.
+The newline-separated visible names are placed in the editor workspace and the
+count is published in `SHL_PARAM_COMMAND_RESULT_HI`; leading-dot backup names
+are hidden. The RAM proof bridge retains the original two-resident-slot
+summary path for compatibility. A blank command is a successful no-op: it leaves
 `SHL_ACTION_NONE`, records length zero, keeps status OK, returns `A=80h`, and
-clears carry. `asm` calls the bank-7 assembler
-skeleton, `run` calls the bank-8 run skeleton, and both commands copy the
+clears carry. `asm` calls the bank-7 two-pass assembler, `run` calls the bank-8
+validated loader/runner, and both commands copy the
 bank-local tool result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI` before
 returning `A=80h` with carry clear. Unknown non-empty commands store
 `SHL_STATUS_UNKNOWN_COMMAND` in `SHL_PARAM_STATUS` and `SHL_PARAM_LAST_ERROR`,
@@ -276,22 +281,27 @@ the v1 shell command input slot.
 different UI questions. `SHL_RENDER_STATUS` maps the current command action to
 short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`. `SHL_RENDER_RESULT` maps
 `SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,
-`FILE`, `UNSUP`, or `NONE`. The monitor proof uses this to show that `dir` can
-both report the action `DIR` and then render the TEC-FS-backed result `OK`.
+`FILE`, `UNSUP`, or `NONE`. For a successful real-driver `dir`,
+`SHL_RENDER_RESULT` also writes up to sixteen returned filenames to TMS9918
+rows 5–20 before publishing `OK`.
 
 For the future assembler path, `SHL_PARAM_COMMAND_TARGET_LO/HI` is reserved for
 a pointer to the resolved command target or artifact descriptor, and
 `SHL_PARAM_COMMAND_RESULT_LO/HI` is reserved for tool result reporting. The low
 result byte should use `SHL_RESULT_*`; the high result byte is command-specific
 detail, such as an assembler diagnostic line or zero when no detail applies.
-The current `SHL_RUN_COMMAND` classifier creates only a minimal target
-descriptor: `edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
-`SHL_TARGET_KIND_PROJECT_OUTPUT`; the path pointer remains zero until project
-config parsing and path resolution are linked behind the shell. `edit` does not
-yet call a banked editor service, so it leaves `SHL_RESULT_NONE` in the result
-slots. The bank-7 assembler skeleton and bank-8 run skeleton currently publish
-`SHL_RESULT_UNSUPPORTED`, so callers can distinguish recognized tool commands
-from unknown shell commands while the real tools are still absent.
+The current `SHL_RUN_COMMAND` classifier creates a minimal target descriptor:
+`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`; `run` uses
+`SHL_TARGET_KIND_PROJECT_OUTPUT`. For `edit`, bank 0 transfers the descriptor
+to the bank-4 editor service. That service resolves the current fixed project
+main to `/src/main.asm` in `SHL_TARGET_PATH_BUFFER`, asks bank 2 to load the
+catalogue-described source page, renders it through bank 1, and publishes an
+editor result. The assembler and run paths still leave their path pointers zero
+until the project loader is linked. Bank 7 consumes the resident editor records
+and publishes either a source-record `SHL_RESULT_BUILD_ERROR` or
+`SHL_RESULT_OK` after binary/map persistence. Bank 8 publishes
+`SHL_RESULT_FILE_ERROR` for a missing or invalid artifact and
+`SHL_RESULT_OK` after a validated program returns.
 
 ## Bank 1: VDU/TMS9918
 
@@ -428,6 +438,17 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_DECODE_CATALOG` (`0Dh`) | Implemented single-entry catalogue decoder. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_SUMMARIZE_CATALOG` (`0Eh`) | Implemented one-slot catalogue summary. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_NEXT_CATALOG` (`0Fh`) | Implemented one-slot caller pointer advance. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_SOURCE` (`10h`) | Implemented catalogue-to-bounded-source-page load. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_SOURCE_PAGE` (`11h`) | Implemented indexed source-sector read. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_SAVE_SOURCE_PAGE` (`12h`) | Implemented indexed source-sector write. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_COMMIT_SOURCE_META` (`13h`) | Implemented catalogue-size update and metadata-sector write. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_SAVE_ARTIFACT` (`14h`) | Implemented binary/map data and `TFM1` metadata writes. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LOAD_ARTIFACT` (`15h`) | Implemented executable metadata validation and binary load. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_FIND_PATH` (`16h`) | Implemented bounded prefix/catalogue path resolution. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_LIST_PATH` (`17h`) | Implemented bounded visible-file listing for `/` or `/prefix`. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_CREATE_SOURCE` (`18h`) | Implemented bounded empty-source creation in an existing prefix. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_CREATE_FILE` (`19h`) | Implemented bounded binary/asset creation in an existing prefix. |
+| direct bank call | `02h` | `8000h` | `TFS_SVC_RENAME_SOURCE` (`1Ah`) | Implemented bounded same-prefix source rename. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -461,6 +482,17 @@ TEC-FS routine.
 | `TFS_SVC_DECODE_CATALOG` | `0Dh` | Decodes one active 64-byte TM8 catalogue entry from the caller buffer. |
 | `TFS_SVC_SUMMARIZE_CATALOG` | `0Eh` | Summarizes one catalogue slot for the shell `dir` path. |
 | `TFS_SVC_NEXT_CATALOG` | `0Fh` | Advances `TFS_PARAM_BUFFER_LO/HI` by one 64-byte catalogue slot. |
+| `TFS_SVC_LOAD_SOURCE` | `10h` | Decodes a source catalogue entry and loads up to three 512-byte pages. |
+| `TFS_SVC_LOAD_SOURCE_PAGE` | `11h` | Reads the indexed 512-byte source page through the installed sector driver. |
+| `TFS_SVC_SAVE_SOURCE_PAGE` | `12h` | Writes the indexed 512-byte source page through the installed sector driver. |
+| `TFS_SVC_COMMIT_SOURCE_META` | `13h` | Updates the catalogue byte size and writes the metadata sector. |
+| `TFS_SVC_SAVE_ARTIFACT` | `14h` | Writes one bounded binary or map artifact and its metadata. |
+| `TFS_SVC_LOAD_ARTIFACT` | `15h` | Validates binary metadata and loads the executable into its declared range. |
+| `TFS_SVC_FIND_PATH` | `16h` | Resolves `/name` or `/prefix/name` through the real TM8 prefix/catalogue sectors. |
+| `TFS_SVC_LIST_PATH` | `17h` | Produces a bounded newline-separated list of visible local names in `/` or `/prefix`. |
+| `TFS_SVC_CREATE_SOURCE` | `18h` | Allocates and publishes one empty source file in an existing prefix. |
+| `TFS_SVC_CREATE_FILE` | `19h` | Allocates and publishes one empty binary or asset file in an existing prefix. |
+| `TFS_SVC_RENAME_SOURCE` | `1Ah` | Renames one source entry within its existing prefix without moving its data. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -471,9 +503,9 @@ TEC-FS implementation state:
 
 | State | Services | Meaning |
 | --- | --- | --- |
-| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG` | ABI and parameter behaviour exist today. `READ`/`WRITE` still require an installed sector driver. |
+| Implemented proof services | `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE`, `RENAME_SOURCE` | ABI and parameter behaviour exist today. Sector-backed calls still require an installed sector driver. |
 | Stubbed/reserved services | `LOAD_RANGE`, `SAVE_RANGE` | Service numbers are reserved and return unsupported. |
-| Deferred filesystem work | allocator, multi-sector catalogue scan, filename/prefix lookup, long-name storage, file create/delete/rename, transaction commit, PC repair/import utility | Not part of the current ROM proof and must not be implied by `dir`. |
+| Deferred filesystem work | delete, cross-prefix move, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair/import utility | Not part of the bounded ROM creation proof. |
 
 Current TEC-FS geometry:
 
@@ -546,6 +578,68 @@ TEC-FS parameter block:
 | `TFS_PARAM_DRIVER_BANK` | `3B5Dh` | Installed sector driver physical bank, used only when the driver address is nonzero. |
 | `TFS_PARAM_DRIVER_ADDR_LO` | `3B5Eh` | Installed sector driver entry address low byte. |
 | `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
+| `TFS_LOAD_PARAM_BASE` | `3A58h` | Base of the bounded source-load parameter block. |
+| `TFS_PARAM_LOAD_DEST_LO` | `3A58h` | Source-page destination address low byte. |
+| `TFS_PARAM_LOAD_DEST_HI` | `3A59h` | Source-page destination address high byte. |
+| `TFS_PARAM_LOAD_BYTES_LO` | `3A5Ah` | Caller buffer capacity low byte. |
+| `TFS_PARAM_LOAD_BYTES_HI` | `3A5Bh` | Caller buffer capacity high byte. |
+| `TFS_PARAM_LOAD_LINES_LO` | `3A5Ch` | Bounded loaded line count low byte. |
+| `TFS_PARAM_LOAD_LINES_HI` | `3A5Dh` | Bounded loaded line count high byte. |
+| `TFS_PARAM_LOAD_CATALOG_LO` | `3A5Eh` | Saved caller catalogue pointer low byte. |
+| `TFS_PARAM_LOAD_CATALOG_HI` | `3A5Fh` | Saved caller catalogue pointer high byte. |
+| `TFS_SOURCE_PARAM_BASE` | `3C40h` | Base of the source paging/save parameter block. |
+| `TFS_PARAM_SOURCE_PAGE` | `3C40h` | Zero-based source sector-page index. |
+| `TFS_PARAM_SOURCE_PAGE_COUNT` | `3C41h` | Resident source page count. |
+| `TFS_PARAM_SOURCE_ALLOCATED_PAGES` | `3C42h` | Persisted source page allocation. |
+| `TFS_PARAM_SOURCE_SIZE_LO` | `3C43h` | Committed source byte size low byte. |
+| `TFS_PARAM_SOURCE_SIZE_HI` | `3C44h` | Committed source byte size high byte. |
+| `TFS_PARAM_SOURCE_DATA_WRITES` | `3C45h` | Successful source data-sector writes. |
+| `TFS_PARAM_SOURCE_META_WRITES` | `3C46h` | Successful source metadata writes. |
+| `TFS_PARAM_SOURCE_IO_KIND` | `3C47h` | Distinguishes source data-sector I/O from metadata-sector I/O for the installed bridge. |
+| `TFS_ARTIFACT_PARAM_BASE` | `3C60h` | Base of the binary/map artifact parameter block. |
+| `TFS_PARAM_ARTIFACT_KIND` | `3C60h` | `TFS_ARTIFACT_KIND_BINARY` or `TFS_ARTIFACT_KIND_MAP`. |
+| `TFS_PARAM_ARTIFACT_BUFFER_LO` | `3C61h` | Artifact buffer address low byte. |
+| `TFS_PARAM_ARTIFACT_BUFFER_HI` | `3C62h` | Artifact buffer address high byte. |
+| `TFS_PARAM_ARTIFACT_SIZE_LO` | `3C63h` | Artifact size low byte. |
+| `TFS_PARAM_ARTIFACT_SIZE_HI` | `3C64h` | Artifact size high byte. |
+| `TFS_PARAM_ARTIFACT_LOAD_LO` | `3C65h` | Executable load address low byte. |
+| `TFS_PARAM_ARTIFACT_LOAD_HI` | `3C66h` | Executable load address high byte. |
+| `TFS_PARAM_ARTIFACT_RUN_LO` | `3C67h` | Executable entry address low byte. |
+| `TFS_PARAM_ARTIFACT_RUN_HI` | `3C68h` | Executable entry address high byte. |
+| `TFS_PARAM_ARTIFACT_DATA_WRITES` | `3C69h` | Successful artifact data writes. |
+| `TFS_PARAM_ARTIFACT_META_WRITES` | `3C6Ah` | Successful artifact metadata writes. |
+| `TFS_PARAM_ARTIFACT_IO_KIND` | `3C6Bh` | Binary/map data/metadata operation discriminator. |
+| `TFS_PARAM_ARTIFACT_PATH_LO` | `3C6Ch` | Catalogue artifact path pointer low byte. |
+| `TFS_PARAM_ARTIFACT_PATH_HI` | `3C6Dh` | Catalogue artifact path pointer high byte. |
+| `TFS_ARTIFACT_KIND_BINARY` | `01h` | Executable binary artifact. |
+| `TFS_ARTIFACT_KIND_MAP` | `02h` | Source-map artifact. |
+| `TFS_ARTIFACT_MAX_BYTES` | `0200h` | Maximum data bytes in either artifact. |
+
+`TFS_SVC_LOAD_SOURCE` takes a caller-loaded catalogue slot through
+`TFS_PARAM_BUFFER_LO/HI`, validates it as an active source entry, computes the
+bounded page count from its byte size, then maps, translates, and reads up to
+three sectors through the installed driver into `TFS_PARAM_LOAD_DEST_LO/HI`.
+The destination must advertise the full 1536-byte workspace. The service
+restores the original catalogue pointer and reports at most 48 source records
+through `TFS_PARAM_LOAD_LINES_LO/HI`.
+
+The editor saves explicitly. `TFS_SVC_SAVE_SOURCE_PAGE` maps the first file
+block plus `TFS_PARAM_SOURCE_PAGE` and performs a data-sector write.
+`TFS_SVC_COMMIT_SOURCE_META` then updates the 32-bit catalogue size and performs
+a distinct metadata-sector write. Keeping these calls separate lets the editor
+write every resident page before publishing the new length and makes allocation
+growth visible in the proof counters.
+
+`TFS_SVC_SAVE_ARTIFACT` accepts a nonzero artifact of at most 512 bytes. For a
+binary it writes executable `TFM1` metadata with load, exclusive-end, and run
+addresses; for a map it writes asset metadata. With the real MON3 driver it
+resolves `TFS_PARAM_ARTIFACT_PATH_LO/HI`, creates a missing binary/asset entry
+inside an existing prefix, writes the raw payload to sector zero, writes the
+private `TFM1` sidecar to sector seven, then publishes catalogue size/type last.
+`TFS_SVC_LOAD_ARTIFACT` resolves the binary path, reads and validates the
+sidecar, requires the executable flag and binary type, checks the declared
+range and entry against the bank-8 window, then reads the raw data into its load
+address. Non-MON3 proof drivers retain the fixed resident artifact slots.
 
 The first directory/list primitive is deliberately small. `TFS_SVC_DECODE_CATALOG`
 expects `TFS_PARAM_BUFFER_LO/HI` to point at one 64-byte TM8 v1 file catalogue
@@ -697,6 +791,7 @@ TEC-FS card locator constants:
 | `TFS_META_OFFSET_REQUIRED_HW` | `0Eh` | Metadata required-hardware bitfield offset. |
 | `TFS_META_OFFSET_NAME_REF` | `10h` | Metadata long-name reference/prefix offset. |
 | `TFS_FILE_PROJECT` | `01h` | TecMate project metadata file type. |
+| `TFS_FILE_SOURCE_V1` | `01h` | TM8 v1 catalogue source-record file type. |
 | `TFS_FILE_SOURCE` | `02h` | Source text file type. |
 | `TFS_FILE_BINARY` | `03h` | Binary memory-range file type. |
 | `TFS_FILE_GAME` | `04h` | Game/application package file type. |
@@ -737,15 +832,14 @@ the record magic, version, and byte-count header. This gives the shell,
 assembler, and runner a small service for turning a blank metadata record into a
 source, binary, game, or asset record without duplicating field offsets.
 
-The next metadata update boundary should stay in bank 2 and keep the same
-caller-buffer model. The compact path is: format or read a catalogue/metadata
-buffer in RAM, patch the `TFM1` fields there, write new data blocks first, write
-and verify the updated metadata sector, then commit by updating the catalogue or
-locator generation/checksum. The monitor should not regain FAT32, PATA, or
-high-level file-record update code for this; it should only provide the stable
-bank-call route and any eventual low-level SD sector hook. Until the sector
-writer is real, `TFS_PATCH_META_RECORD` is the only metadata mutation service
-and it must not allocate blocks, choose filenames, or scan directories.
+Metadata mutation stays in bank 2 and keeps the same caller-buffer model.
+Source save writes data blocks first and commits the catalogue size last.
+`TFS_SVC_CREATE_SOURCE` adds the narrow allocator needed by the editor while
+leaving FAT32 and PATA policy in bank 5: it validates the fixed TM8 header,
+finds a free catalogue slot and file id, clears one free data block, marks that
+block allocated, updates the superblock free count/checksum, and publishes the
+catalogue entry last. It does not create prefixes, delete files, move files
+between prefixes, or provide a general transaction journal.
 
 The sector I/O contract uses `TFS_PARAM_SECTOR_0..3` for the absolute card
 sector and `TFS_PARAM_BUFFER_LO..HI` for the RAM buffer. Callers that start with
@@ -757,6 +851,53 @@ address is zero, the service reports the no-driver status with carry set. A
 driver receives `A=TFS_DRIVER_OP_READ` or `A=TFS_DRIVER_OP_WRITE` and uses the
 TEC-FS parameter block for sector and buffer arguments.
 
+Normal TecMate boot installs bank 5's `TFS_MON3_FILE_DRIVER` at `8200h`. That
+entry treats the sector parameter as a 512-byte sector relative to the FAT32
+`VOLUME.TM8` container. Bank 5 owns a relocated copy of the MON3 SD/FAT32
+storage package, so MON3-lite remains compact. Each operation opens the
+container; reads copy `0600h..07FFh` into the caller buffer, and writes use the
+required read-modify-write sequence. The `8000h` entry remains the deterministic
+RAM bridge for fast proofs.
+
+`TFS_SVC_FIND_PATH` (`16h`) scans the bounded TM8 v1 prefix and catalogue
+regions for `TFS_PARAM_PATH_LO/HI`, accepting `/name` and `/prefix/name`. A
+successful lookup copies the 64-byte entry to `TFS_CATALOG_BUFFER` at `3D00h`
+and remembers its sector and slot. Source saves write data pages before
+read-modify-writing that exact catalogue sector.
+
+`TFS_SVC_LIST_PATH` (`17h`) accepts `/` or `/prefix` through
+`TFS_PARAM_PATH_LO/HI`; a null path pointer selects `/src`. It scans the real
+catalogue, skips leading-dot names, and writes whole local names separated by
+newlines followed by a NUL. It never emits a partial name. If another name
+would exceed the destination capacity, it returns success with
+`TFS_LIST_FLAG_TRUNCATED` set.
+
+| List parameter | Direction | Meaning |
+| --- | --- | --- |
+| `TFS_PARAM_PATH_LO/HI` | in | NUL-terminated root or prefix path; zero selects `/src`. |
+| `TFS_PARAM_LIST_DEST_LO/HI` | in | Destination for the newline-separated, NUL-terminated list. |
+| `TFS_PARAM_LIST_CAP_LO/HI` | in | Total destination capacity including the final NUL. |
+| `TFS_PARAM_LIST_USED_LO/HI` | out | Bytes written including the final NUL. |
+| `TFS_PARAM_LIST_COUNT` | out | Number of complete visible names returned. |
+| `TFS_PARAM_LIST_FLAGS` | out | `TFS_LIST_FLAG_TRUNCATED` when more complete names existed than fitted. |
+
+`TFS_SVC_CREATE_SOURCE` (`18h`) accepts the same bounded `/name` or
+`/prefix/name` path as `FIND_PATH`. The prefix must already exist, and the local
+name is limited to lowercase letters, digits, `.`, `_`, and `-`. A successful
+call creates an empty `TFS_FILE_SOURCE_V1` entry backed by one cleared 4 KiB
+block. The editor treats `TFS_ERR_NOT_FOUND` from `FIND_PATH` as the create
+case, calls this service, resolves the new entry, and then follows the ordinary
+load/edit/save path. Duplicate creation returns `TFS_ERR_EXISTS` without
+allocating another block.
+
+`TFS_SVC_RENAME_SOURCE` (`1Ah`) accepts the current path through
+`TFS_PARAM_PATH_LO/HI` and the destination through
+`TFS_PARAM_AUX_PATH_LO/HI`. Both paths must use the same existing prefix, the
+destination must not exist, and the source must be a source file. The service
+patches only the bounded name field in the source catalogue sector; file id,
+block chain, size, type, and data remain unchanged. Cross-prefix requests
+return `TFS_ERR_CROSS_PREFIX`.
+
 TEC-FS status codes:
 
 | Constant | Value | Meaning |
@@ -767,6 +908,13 @@ TEC-FS status codes:
 | `TFS_ERR_BAD_SECTOR` | `0Dh` | Requested sector is outside the standard 31-volume span. |
 | `TFS_ERR_BAD_BUFFER` | `0Eh` | Requested sector buffer pointer is zero. |
 | `TFS_ERR_BAD_LOCATOR` | `0Fh` | Locator buffer has invalid magic or unsupported version. |
+| `TFS_ERR_DRIVER_IO` | `11h` | The bank-5 SD/FAT32 backend failed an open, read, or write. |
+| `TFS_ERR_NOT_FOUND` | `12h` | No matching bounded prefix/catalogue entry was found. |
+| `TFS_ERR_BAD_PATH` | `13h` | The path is malformed or exceeds TM8 v1 bounds. |
+| `TFS_ERR_NO_SPACE` | `14h` | No free data block, catalogue slot, or file id is available. |
+| `TFS_ERR_EXISTS` | `15h` | The requested source path already exists. |
+| `TFS_ERR_BAD_VOLUME_FORMAT` | `16h` | The fixed TM8 v1 superblock fields do not match. |
+| `TFS_ERR_CROSS_PREFIX` | `17h` | A bounded rename attempted to move between prefixes. |
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
@@ -809,7 +957,82 @@ The bare entry call with `A=00h` and the explicit `RTC_SVC_TOOL_ENTRY` selector
 both publish the descriptor. Unknown RTC selectors return `RTC_ERR_UNKNOWN` with
 carry set and do not modify the RTC status fields.
 
-## Bank 4: GLCD Boundary
+## Bank 4: Editor And GLCD Boundary
+
+Physical bank 4 owns the interactive ROM editor alongside the optional GLCD
+containment boundary. `EDT_SVC_OPEN` resolves the compact project-main target
+or an explicit `SHL_TARGET_KIND_SOURCE_PATH` target,
+loads a three-page/48-record workspace through `TFS_SVC_LOAD_SOURCE`, and
+renders it through the bank-1 TMS9918 VDU. `EDT_SVC_RUN` adds the bank-6 key
+loop, cursor movement and page movement, printable insertion, character delete,
+record split/join, explicit save, and dirty-exit confirmation before returning
+to bank 0. `EDT_SVC_BOOT` supplies the file-workspace front door: it opens
+`/src/main.asm`, restores a valid hidden session, and enters the same loop.
+
+The cursor is a character-cell cursor in the style of an eight-bit line editor.
+Bank 4 saves the character under the caret, writes the solid block
+`EDT_CURSOR_BLOCK_CHAR`, and alternates the saved character and block from the
+idle blink path. Moving or editing always restores the saved character first.
+The status row is live, for example `Ln 01 Col 02 DIRTY Pg 1/2`.
+
+At the shell, `EDIT` opens `/src/main.asm`; `EDIT /prefix/name` opens that
+bounded catalogue entry. Both forms use the same block cursor, explicit save,
+dirty-exit prompt, and SD-backed reopen path.
+
+| Constant | Address | Meaning |
+| --- | ---: | --- |
+| `EDT_ENTRY` | `8000h` | Bank-origin editor/GLCD dispatcher. |
+| `EDT_SVC_OPEN` | `20h` | Open and render the project-main source workspace. |
+| `EDT_SVC_RUN` | `21h` | Open, run the interactive bank-6 key loop, and return on quit. |
+| `EDT_SVC_STEP` | `22h` | Apply one translated key event from the input parameter block. |
+| `EDT_SVC_BLINK` | `23h` | Advance the TMS9918 block-cursor blink state. |
+| `EDT_SVC_BOOT` | `24h` | Enter the default SD workspace, restore session state, and run until quit. |
+| `EDT_PARAM_BASE` | `3A40h` | Base of the compact editor file-buffer ABI. |
+| `EDT_PARAM_STATUS` | `3A40h` | Editor status. |
+| `EDT_PARAM_LAST_ERROR` | `3A41h` | Editor or TEC-FS detail code. |
+| `EDT_PARAM_BANK` | `3A42h` | Editor bank marker, `04h`. |
+| `EDT_PARAM_VERSION` | `3A43h` | Editor ABI version. |
+| `EDT_PARAM_TARGET_LO` | `3A44h` | Shell target descriptor pointer low byte. |
+| `EDT_PARAM_TARGET_HI` | `3A45h` | Shell target descriptor pointer high byte. |
+| `EDT_PARAM_BUFFER_LO` | `3A46h` | Source buffer base low byte. |
+| `EDT_PARAM_BUFFER_HI` | `3A47h` | Source buffer base high byte. |
+| `EDT_PARAM_BUFFER_BYTES_LO` | `3A48h` | Source buffer capacity low byte. |
+| `EDT_PARAM_BUFFER_BYTES_HI` | `3A49h` | Source buffer capacity high byte. |
+| `EDT_PARAM_FIRST_LINE_LO` | `3A4Ah` | First buffered source line low byte. |
+| `EDT_PARAM_FIRST_LINE_HI` | `3A4Bh` | First buffered source line high byte. |
+| `EDT_PARAM_LOADED_LINES_LO` | `3A4Ch` | Loaded source line count low byte. |
+| `EDT_PARAM_LOADED_LINES_HI` | `3A4Dh` | Loaded source line count high byte. |
+| `EDT_PARAM_CURSOR_LINE_LO` | `3A4Eh` | Cursor source line low byte. |
+| `EDT_PARAM_CURSOR_LINE_HI` | `3A4Fh` | Cursor source line high byte. |
+| `EDT_PARAM_CURSOR_COLUMN` | `3A50h` | Cursor source column. |
+| `EDT_PARAM_DIRTY_FLAGS` | `3A51h` | Dirty flags; bit 0 means changed. |
+| `EDT_PARAM_RESULT` | `3A52h` | Result compatible with `SHL_RESULT_*`. |
+| `EDT_BUFFER_BASE` | `6000h` | Three-page source-record workspace. |
+| `EDT_BUFFER_BYTES` | `0600h` | 1536-byte/48-record workspace capacity. |
+| `EDT_PAGE_BYTES` | `0200h` | Bytes per persisted source sector-page. |
+| `EDT_BUFFER_PAGES` | `03h` | Maximum resident source pages. |
+| `EDT_CURSOR_BLOCK_CHAR` | `DBh` | Solid-block TMS9918 cursor character. |
+| `EDT_STATUS_BUFFER` | `3A00h` | Cross-bank VDU status scratch. |
+| `EDT_DIRTY_CHANGED` | `01h` | Changed-buffer dirty flag. |
+| `EDT_STATUS_OK` | `00h` | Successful editor operation. |
+| `EDT_ERR_BAD_TARGET` | `11h` | Target is not an edit/project-main descriptor. |
+| `EDT_ERR_BAD_RECORD` | `12h` | Reserved malformed-record error. |
+
+The workspace key surface is Ctrl-O open, Ctrl-N new, Ctrl-A save-as, Ctrl-R
+rename, Ctrl-S safe save, Ctrl-G help, and Ctrl-Q quit. Open is bounded to the
+first 16 visible entries in a 256-byte `/src` listing. Name prompts accept 1–27
+characters from the bounded lowercase filename alphabet. Session state lives in
+the 64-byte `TMS1` record `/src/.tecmate.s` and stores the current path, cursor
+line/column, page, and recovery flag.
+
+On real storage, a safe save first copies the committed file to a derived
+same-prefix hidden `.b` path, then commits a recovery-pending session record,
+then writes source pages and metadata. Only after those writes succeed does it
+clear the recovery marker. A restart with the marker set offers the backup;
+accepting it loads the last committed content as a dirty buffer so the user can
+save it without replacing the only good backup first. The exact UI, naming,
+session layout, demo-image workflow, and capacity limits are recorded in
+`docs/debug80-tecmate-workspace.md`.
 
 Physical bank 4 is the first GLCD relocation boundary. It does not yet contain
 the real GLCD implementation; it exposes a descriptor and explicit unsupported
@@ -852,26 +1075,30 @@ validating the sector and buffer. The long-term role of this bank is to bridge
 `TFS_DRIVER_OP_READ` and `TFS_DRIVER_OP_WRITE` to the selected low-level SD
 sector routines, without making bank 2 know where those routines live.
 
-The current implementation is a simulated bridge used by `proof:tecfs-bank`: it
-returns `A=85h` with carry clear, writes `TFS_BRIDGE_READ_MARKER` into the
-caller buffer for read requests, and accepts write requests without touching
-media. Replacing this simulation with the real SD bridge should not change the
+The current implementation is a persistent simulated bridge used by the ROM
+proofs. It returns `A=85h` with carry clear, initializes a three-record source
+fixture whose first record begins with `TFS_BRIDGE_READ_MARKER`, copies indexed
+512-byte pages between the caller and proof backing RAM, persists a separate
+catalogue metadata record, and counts data and metadata writes independently.
+Replacing this proof backing with the real SD bridge should not change the
 bank-2 sector I/O ABI.
 
 Unknown bridge operation selectors return `SVC_ERR_UNKNOWN` with carry set and
 do not modify the TEC-FS status fields.
 
-## Bank 6: Input Snapshot Boundary
+## Bank 6: Input Snapshot And Key Event Boundary
 
 Physical bank 6 owns the first matrix-keyboard and joystick-facing service
-boundary. The current implementation is deliberately neutral: it publishes a
-valid service boundary and returns a no-input snapshot until real keyboard and
-joystick scanning code is attached.
+boundary. `INP_SVC_READ` retains the neutral snapshot contract. The editor uses
+`INP_SVC_READ_KEY`, which consumes translated proof-queue events when present
+and otherwise scans the MON3 keyboard matrix, publishes raw scan bytes and
+Shift/Ctrl state, and normalizes Ctrl+A..Z to control codes.
 
 | Constant | Address | Status |
 | --- | ---: | --- |
 | `INP_ENTRY` | `8000h` | Bank-origin dispatcher; use `A=INP_SVC_READ`. |
 | `INP_SVC_READ` | `01h` | Reads the current input snapshot, returns `A=86h`, carry clear. |
+| `INP_SVC_READ_KEY` | `02h` | Polls one translated key event, returns `A=86h`, carry clear. |
 
 Input parameter block:
 
@@ -885,7 +1112,14 @@ Input parameter block:
 | `INP_PARAM_KEYS_LO` | `3BC4h` | Low byte of the future matrix-key snapshot. |
 | `INP_PARAM_KEYS_HI` | `3BC5h` | High byte of the future matrix-key snapshot. |
 | `INP_PARAM_JOYSTICK` | `3BC6h` | Joystick bitfield. |
-| `INP_PARAM_MODIFIERS` | `3BC7h` | Future modifier/input-mode flags. |
+| `INP_PARAM_MODIFIERS` | `3BC7h` | Shift/Ctrl flags for the current key event. |
+| `INP_PARAM_KEY` | `3C30h` | Translated key or normalized control code. |
+| `INP_PARAM_EVENT` | `3C31h` | One when a key event was published, otherwise zero. |
+| `INP_PARAM_RAW_PRIMARY` | `3C32h` | Latest MON3 primary matrix scan byte. |
+| `INP_PARAM_RAW_SECONDARY` | `3C33h` | Latest MON3 secondary/modifier scan byte. |
+| `INP_QUEUE_BASE` | `6800h` | Proof/emulator queue of key/modifier byte pairs. |
+| `INP_QUEUE_HEAD` | `3C34h` | Current proof-queue event index. |
+| `INP_QUEUE_COUNT` | `3C35h` | Remaining proof-queue event count. |
 
 Input status and joystick values:
 
@@ -908,98 +1142,132 @@ the shell, editor, assembler, debugger, and game support code. It stays generic:
 game-specific controls should interpret this snapshot rather than adding a
 separate monitor-facing game input API.
 
-## Bank 7: Assembler Skeleton
+## Bank 7: Phase-One Assembler
 
-Physical bank 7 owns the first assembler service skeleton. It is not the
-self-hosted assembler yet; it is the reserved banked boundary that the shell can
-target once the assembler grows out of the current command classifier.
+Physical bank 7 owns the self-hosted two-pass assembler. The shell passes the
+project-main `SHL_TARGET_DESC`; bank 7 reads the resident bank-4 32-byte-record
+workspace, resolves up to four one-level TEC-FS includes, resolves up to 16
+eight-character global symbols, and emits at most 512 bytes plus a `TMAP`
+source map.
 
 | Constant | Address/Value | Meaning |
 | --- | ---: | --- |
 | `ASM_ENTRY` | `8000h` | Bank-origin dispatcher for assembler-local service IDs. |
-| `ASM_BANK` | `07h` | Physical bank holding the assembler skeleton. |
-| `ASM_SVC_ASSEMBLE` | `01h` | Assemble/build request selector. |
-| `ASM_PARAM_BASE` | `3BE4h` | Base of assembler parameter block. |
-| `ASM_PARAM_STATUS` | `3BE4h` | Last assembler status code. |
-| `ASM_PARAM_LAST_ERROR` | `3BE5h` | Last assembler error code. |
+| `ASM_BANK` | `07h` | Physical assembler bank. |
+| `ASM_SVC_ASSEMBLE` | `01h` | Run the two-pass build. |
+| `ASM_PARAM_BASE` | `3BE4h` | Base of the shell-facing assembler parameter block. |
+| `ASM_PARAM_STATUS` | `3BE4h` | Last assembler status. |
+| `ASM_PARAM_LAST_ERROR` | `3BE5h` | Last assembler error. |
 | `ASM_PARAM_BANK` | `3BE6h` | Service bank marker. |
 | `ASM_PARAM_VERSION` | `3BE7h` | Service ABI version. |
 | `ASM_PARAM_TARGET_LO` | `3BE8h` | Target descriptor pointer low byte. |
 | `ASM_PARAM_TARGET_HI` | `3BE9h` | Target descriptor pointer high byte. |
-| `ASM_PARAM_RESULT_LO` | `3BEAh` | Shell/tool result low byte. |
-| `ASM_PARAM_RESULT_HI` | `3BEBh` | Shell/tool result high byte or diagnostic detail. |
+| `ASM_PARAM_RESULT_LO` | `3BEAh` | `SHL_RESULT_OK`, `BUILD`, or `FILE`. |
+| `ASM_PARAM_RESULT_HI` | `3BEBh` | Zero-based diagnostic source record on `BUILD`. |
+| `ASM_PARAM_DIAG_LINE` | `3C8Dh` | Zero-based diagnostic record. |
+| `ASM_PARAM_DIAG_COLUMN` | `3C8Eh` | Zero-based diagnostic column. |
+| `ASM_PARAM_DIAG_CODE` | `3C8Fh` | Detailed `ASM_ERR_*` code. |
+| `ASM_PARAM_DIAG_FILE` | `3CA6h` | Source ordinal: main `0`, includes `1..4`. |
+| `ASM_PARAM_OUTPUT_SIZE_LO` | `3C86h` | Emitted binary byte count low byte. |
+| `ASM_PARAM_ORIGIN_LO` | `3C84h` | Binary origin low byte. |
+| `ASM_PARAM_RUN_LO` | `3C91h` | Entry address low byte. |
+| `ASM_PARAM_MAP_SIZE_LO` | `3C93h` | `TMAP` byte count low byte. |
+| `ASM_OUTPUT_BASE` | `5000h` | 512-byte binary staging buffer. |
+| `ASM_MAP_BASE` | `5200h` | 512-byte `TMAP` staging buffer. |
+| `ASM_SYMBOL_CAPACITY` | `10h` | Maximum symbol count, 16. |
 | `ASM_STATUS_OK` | `00h` | Success. |
-| `ASM_ERR_UNKNOWN` | `EEh` | Unknown assembler-local service. |
-| `ASM_ERR_UNSUPPORTED` | `E0h` | Assembler service exists but is not implemented yet. |
+| `ASM_ERR_BAD_TARGET` | `20h` | Invalid shell target descriptor. |
+| `ASM_ERR_NO_SOURCE` | `21h` | Resident editor workspace has no records. |
+| `ASM_ERR_SYNTAX` | `22h` | Unsupported or malformed statement. |
+| `ASM_ERR_EXPRESSION` | `23h` | Invalid literal or unresolved symbol. |
+| `ASM_ERR_SYMBOL_FULL` | `24h` | More than 16 symbols. |
+| `ASM_ERR_DUP_SYMBOL` | `25h` | Duplicate global symbol. |
+| `ASM_ERR_OUTPUT_FULL` | `26h` | Binary or map exceeds 512 bytes. |
+| `ASM_ERR_BAD_ORIGIN` | `27h` | Origin/output falls outside the runner window. |
+| `ASM_ERR_STORAGE` | `28h` | Bank-2 artifact persistence failed. |
+| `ASM_ERR_INCLUDE` | `29h` | Include path, depth, count, type, or load failure. |
+| `ASM_ERR_UNKNOWN` | `EEh` | Unknown assembler-local selector. |
 
-`ASM_SVC_ASSEMBLE` is intentionally unsupported at this stage. The skeleton
-records bank/version, sets `ASM_PARAM_STATUS` and `ASM_PARAM_LAST_ERROR` to
-`ASM_ERR_UNSUPPORTED`, writes `SHL_RESULT_UNSUPPORTED` to
-`ASM_PARAM_RESULT_LO`, clears `ASM_PARAM_RESULT_HI`, preserves target
-descriptor pointer, and returns `A=ASM_ERR_UNSUPPORTED` with carry set. This
-lets the shell and later project metadata path point at an assembler boundary
-without inventing the assembler implementation early.
+The supported syntax is documented in
+`docs/tecmate-self-hosted-assembler.md`. A build error sets carry, returns its
+`ASM_ERR_*` code, publishes `SHL_RESULT_BUILD_ERROR`, and preserves the source
+ordinal, record, column, and code for bank 4. A successful build derives
+`/build/<main-stem>.bin` and `.map`, writes both through
+`TFS_SVC_SAVE_ARTIFACT`, publishes sizes and origin/entry, and returns
+`SHL_RESULT_OK`. In each `TMAP` record, the kind byte's low nibble is the symbol
+kind and its high nibble is the source ordinal.
 
-The assembler MVP ABI is deliberately small. The shell passes a pointer to
-`SHL_TARGET_DESC`; for the no-argument `asm` command the descriptor action is
-`SHL_ACTION_ASM`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_MAIN`, and
-the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`. Until a real assembler
-is linked in, bank 7 must not parse source, allocate buffers, or write build
-artifacts. Its only supported visible result is `SHL_RESULT_UNSUPPORTED` with
-detail zero, rendered by the shell as `UNSUP`.
+Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set
+without dispatching the build.
 
-Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set,
-preserve the assembler status fields, and do not dispatch through the
-unsupported assemble path.
+## Bank 8: Validated Loader And Runner
 
-## Bank 8: Run Skeleton
-
-Physical bank 8 owns the first run-command service skeleton. It is not the
-program loader or debugger yet; it is the reserved banked boundary that will
-eventually launch the build artifact described by the shell target descriptor.
+Physical bank 8 owns the bounded loader/runner for the derived executable.
 
 | Constant | Address/Value | Meaning |
 | --- | ---: | --- |
 | `RUN_ENTRY` | `8000h` | Bank-origin dispatcher for run-local service IDs. |
-| `RUN_BANK` | `08h` | Physical bank holding the run skeleton. |
-| `RUN_SVC_RUN` | `01h` | Run request selector. |
-| `RUN_PARAM_BASE` | `3BF8h` | Base of run parameter block. |
-| `RUN_PARAM_STATUS` | `3BF8h` | Last run status code. |
-| `RUN_PARAM_LAST_ERROR` | `3BF9h` | Last run error code. |
+| `RUN_BANK` | `08h` | Physical runner bank. |
+| `RUN_SVC_RUN` | `01h` | Load, validate, call, and regain control. |
+| `RUN_SVC_SYMBOLS` | `02h` | Format `TMAP` symbols as `NAME=AAAA F#:L##`. |
+| `RUN_SVC_DEBUG_START` | `03h` | Load the executable and return stopped at its entry. |
+| `RUN_SVC_BREAK_SYMBOL` | `04h` | Resolve a symbol and arm a software breakpoint. |
+| `RUN_SVC_DEBUG_STEP` | `05h` | Execute one architectural instruction and return stopped. |
+| `RUN_SVC_DEBUG_CONTINUE` | `06h` | Resume until a breakpoint or normal program return. |
+| `RUN_SVC_LISTING` | `07h` | Format source-map rows as `AAAA F#:L## NAME`. |
+| `RUN_PARAM_BASE` | `3BF8h` | Base of the shell-facing runner parameter block. |
+| `RUN_PARAM_STATUS` | `3BF8h` | Last runner status. |
+| `RUN_PARAM_LAST_ERROR` | `3BF9h` | Last runner error. |
 | `RUN_PARAM_BANK` | `3BFAh` | Service bank marker. |
 | `RUN_PARAM_VERSION` | `3BFBh` | Service ABI version. |
 | `RUN_PARAM_TARGET_LO` | `3BFCh` | Target descriptor pointer low byte. |
 | `RUN_PARAM_TARGET_HI` | `3BFDh` | Target descriptor pointer high byte. |
-| `RUN_PARAM_RESULT_LO` | `3BFEh` | Shell/tool result low byte. |
-| `RUN_PARAM_RESULT_HI` | `3BFFh` | Shell/tool result high byte or diagnostic detail. |
+| `RUN_PARAM_RESULT_LO` | `3BFEh` | `SHL_RESULT_OK` or `SHL_RESULT_FILE_ERROR`. |
+| `RUN_PARAM_RESULT_HI` | `3BFFh` | Detailed runner/storage error. |
+| `RUN_PARAM_LOAD_LO` | `3C70h` | Validated load address low byte. |
+| `RUN_PARAM_END_LO` | `3C72h` | Validated exclusive end low byte. |
+| `RUN_PARAM_ENTRY_LO` | `3C74h` | Validated entry address low byte. |
+| `RUN_PARAM_BYTES_LO` | `3C76h` | Loaded byte count low byte. |
+| `RUN_PARAM_RETURN_COUNT` | `3C78h` | Successful program returns. |
+| `RUN_TRAMPOLINE_BASE` | `3CC0h` | RAM `CALL entry; RET` trampoline. |
+| `RUN_LOAD_MIN` | `4000h` | First permitted load byte. |
+| `RUN_LOAD_MAX` | `5000h` | Exclusive upper bound. |
 | `RUN_STATUS_OK` | `00h` | Success. |
-| `RUN_ERR_UNKNOWN` | `EEh` | Unknown run-local service. |
-| `RUN_ERR_UNSUPPORTED` | `E0h` | Run service exists but is not implemented yet. |
+| `RUN_ERR_BAD_TARGET` | `30h` | Invalid shell target descriptor. |
+| `RUN_ERR_NO_ARTIFACT` | `31h` | No binary artifact exists. |
+| `RUN_ERR_BAD_META` | `32h` | Invalid or non-executable `TFM1` metadata. |
+| `RUN_ERR_BAD_RANGE` | `33h` | Load/end/entry lies outside the safe range. |
+| `RUN_ERR_STORAGE` | `34h` | Bank-2 load failed. |
+| `RUN_ERR_BAD_MAP` | `35h` | Missing or malformed `TMAP` data. |
+| `RUN_ERR_NO_SYMBOL` | `36h` | Requested breakpoint symbol is absent. |
+| `RUN_ERR_NOT_STOPPED` | `37h` | Step/continue was requested without an active stop. |
+| `RUN_ERR_STEP` | `38h` | No safe bounded successor could be selected. |
+| `RUN_ERR_UNKNOWN` | `EEh` | Unknown run-local selector. |
 
-`RUN_SVC_RUN` is intentionally unsupported at this stage. The skeleton records
-bank/version, sets `RUN_PARAM_STATUS` and `RUN_PARAM_LAST_ERROR` to
-`RUN_ERR_UNSUPPORTED`, writes `SHL_RESULT_UNSUPPORTED` to
-`RUN_PARAM_RESULT_LO`, clears `RUN_PARAM_RESULT_HI`, preserves target
-descriptor pointer, and returns `A=RUN_ERR_UNSUPPORTED` with carry set.
+Bank 8 calls `TFS_SVC_LOAD_ARTIFACT`, validates the returned range again, builds
+the RAM trampoline, and calls it. The phase-one executable contract requires
+the program to finish with `RET`; control then returns to bank 8 and through the
+far-call gateway to bank 0. This is not relocation, a timeout, or a sandbox.
+Missing, malformed, or unsafe artifacts publish `SHL_RESULT_FILE_ERROR`.
 
-The run MVP ABI is deliberately small. The shell passes a pointer to
-`SHL_TARGET_DESC`; for the no-argument `run` command the descriptor action is
-`SHL_ACTION_RUN`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_OUTPUT`, and
-the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`. Until a real loader or
-debugger is linked in, bank 8 must not load files, relocate code, alter the
-program counter, or change the current expansion bank. Its only supported
-visible result is `SHL_RESULT_UNSUPPORTED` with detail zero, rendered by the
-shell as `UNSUP`.
+Debugger execution uses a private RAM stack ending at `7E00h` and a reversible
+`RST 38h` trap through MON3's `USER_INT` vector. Each stop snapshots the
+primary and alternate registers, program PC/SP, and stop reason at
+`DBG_STATE_BASE` (`3F00h`), restores the replaced byte, and unwinds to the
+shell-facing bank call. A normal `RET` reaches a private finish sentinel,
+restores the previous interrupt vector, clears the active flag, and returns
+`DBG_STOP_FINISHED`.
 
-Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set, preserve
-the run status fields, and do not dispatch through the unsupported run path.
+Single-step decodes sequential lengths for base, CB, ED, DD, and FD forms and
+selects actual successors for bounded JP, JR, DJNZ, CALL, RET, conditional,
+RST, and `JP (HL)` cases. A breakpoint is temporarily removed while stepping
+over it and rearmed at the successor. `HALT`, out-of-range targets, and control
+flow that cannot be represented by one safe successor return `RUN_ERR_STEP`.
 
-`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff for `asm` and
-`run`. It publishes the shell `SHL_TARGET_DESC`, copies that pointer into the
-relevant bank-local parameter block, calls bank 7 or bank 8, and copies the
-bank-local result bytes back into `SHL_PARAM_COMMAND_RESULT_LO/HI`. The
-assembler/run skeleton proof verifies that behaviour through the shell boundary
-rather than manually calling the tool banks.
+`SHL_RUN_COMMAND` copies the shell target pointer into the relevant bank-local
+parameter block, calls bank 7 or bank 8, and copies the result bytes back into
+`SHL_PARAM_COMMAND_RESULT_LO/HI`. The assembler-bank and monitor-launch proofs
+verify the complete handoff rather than manually entering the tool banks.
 
 ## Proof Hooks
 

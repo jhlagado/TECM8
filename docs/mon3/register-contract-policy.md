@@ -151,6 +151,12 @@ It assembles every expansion bank directly with strict contracts and the
 TecMate RST service interface. That keeps the banked ROM surface protected even
 if a Debug80 launch path changes how target policy is applied.
 
+Bank 5 currently relocates the legacy `pata_fat32.asm` implementation behind a
+small TecMate adapter. The gate keeps the adapter strict, supplies conservative
+external contracts for its three retained legacy entry points, and reports
+contract findings owned by the legacy file as a separate audit count. Syntax or
+assembly diagnostics from that module are never quarantined.
+
 ## Practical Use Now
 
 The existing monitor audit remains the baseline command:

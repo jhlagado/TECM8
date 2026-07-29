@@ -120,6 +120,12 @@ edit -> main
 asm  -> main
 run  -> derived output
 dir  -> current volume catalogue summary
+list -> source-aware address listing
+sym  -> symbol table
+debug -> stop at executable entry
+break SYMBOL -> source-aware breakpoint
+step -> one architectural instruction
+cont -> continue to breakpoint or return
 ```
 
 They are not stored in `/tecm8.prj`. This keeps the Z80 parser and project
@@ -130,19 +136,12 @@ A blank command line is a successful no-op. Pressing Enter at the prompt should
 clear stale command state and return to the prompt without reporting an unknown
 command.
 
-`dir` is the first storage-backed shell command. In the current ROM increment it
-does not walk a full directory yet. It calls the bank-2 TEC-FS one-slot summary
-primitive, advances once with `TFS_SVC_NEXT_CATALOG`, summarizes the second
-slot, restores the original catalogue pointer, leaves the target descriptor
-clear, returns `SHL_RESULT_OK` on success, and stores the two-slot count in
-`SHL_PARAM_COMMAND_RESULT_HI`. This proves the shell-to-TEC-FS handoff before
-the real multi-entry catalogue reader is linked in.
-
-The current catalogue buffer is deliberately explicit: before `dir` is called,
-`TFS_PARAM_BUFFER_LO/HI` must point at two adjacent 64-byte TM8 v1 catalogue
-slots in RAM. Inactive slots contribute zero to the count and are not file
-errors. This keeps the ROM path tiny while the later sector reader and real
-iterator are still absent.
+`dir` is the first storage-backed shell command. With the normal SD driver
+installed, `dir` defaults to `/src`; `dir /prefix` selects another bounded
+prefix. Bank 2 scans the real TM8 prefix and catalogue
+sectors, hides leading-dot backup names, and returns newline-separated local
+names for the shell to render. The deterministic RAM proof bridge preserves
+the earlier two-adjacent-slot summary behavior so old ABI proofs remain useful.
 
 ## Proved ROM Checkpoint Matrix
 
@@ -150,15 +149,17 @@ iterator are still absent.
 
 | Command | Route | Status | Result | Meaning |
 | --- | --- | --- | --- | --- |
-| `edit` | bank 0 shell | `EDIT` | n/a | Resolves the project main target. |
-| `asm` | bank 7 skeleton | `ASM` | `UNSUP` | Assembler target handoff exists; assembler is not linked yet. |
-| `run` | bank 8 skeleton | `RUN` | `UNSUP` | Output target handoff exists; runner is not linked yet. |
-| `dir` | bank 2 TEC-FS | `DIR` | `OK` | Reads two explicit catalogue slots and returns count 2. |
+| `edit` | banks 0/4/6/2/5/1 | `EDIT` | `OK` | Runs the interactive multi-page editor, explicit save/discard flow, and returns safely to the shell. |
+| `asm` | banks 7/2/5 | `ASM` | `BUILD`, then `OK` | Reports a source-record diagnostic, then emits binary/map data and metadata after the proof fixes the source. |
+| `run` | banks 8/2/5 | `RUN` | `FILE`, then `OK` | Rejects a missing artifact, then validates, loads, executes, and returns after the successful build. |
+| `dir` | banks 0/2/5/1 | `DIR` | `OK` | Walks `/src` on the real SD image, hides a dot backup, returns two names, and renders them on TMS9918 rows. |
+| `list` / `sym` | banks 0/8/2/5/1 | `DEBUG` | `OK` | Loads the real `.map` artifact and renders bounded source-map or symbol rows. |
+| `debug` / `break` / `step` / `cont` | banks 0/8/2/5 | `DEBUG` | `OK` | Stops at entry, resolves a symbol breakpoint, steps across files, continues, and returns safely after `RET`. |
 | unknown | bank 0 shell | `ERRCMD` | `NONE` | Rejects the command and keeps target/result fields clear. |
 | `dir` bad buffer | bank 2 TEC-FS | n/a | `FILE` | Bad catalogue buffer pointer is reported as a file/storage error. |
 
-This matrix is the MVP shell contract until the editor buffer and real TEC-FS
-reader are present. New commands should not be added just to improve the demo;
+This matrix is the MVP shell contract with the persistent bounded editor and
+TEC-FS source read/write path present. New commands should not be added just to improve the demo;
 they should map to a real banked service boundary and keep the bank-0 parser
 small.
 
@@ -184,9 +185,10 @@ should not replace the general `edit`, `asm`, and `run` commands. Instead, they
 should layer on the same project, assembler, runner, VDU, input, TEC-FS, and
 debugger services once those services exist.
 
-The current bank-0 `SHL_RUN_COMMAND` boundary still classifies only exact
-single-word `edit`, `asm`, `run`, and `dir`. It should reject `game` until a real
-multi-word shell parser and game tool dispatcher are implemented.
+The current bank-0 `SHL_RUN_COMMAND` boundary recognises `edit`, `asm`, `run`,
+`dir`, `list`, `sym`, `debug`, `break SYMBOL`, `step`, and `cont`, plus bounded
+absolute arguments for `edit` and `dir`. It still rejects `game` and `profile`
+until a real multi-word shell parser and tool dispatcher are implemented.
 
 ## Future Profile Command Surface
 
@@ -240,6 +242,9 @@ For the default config, no-argument commands resolve to:
 edit -> main   -> /src/main.asm
 asm  -> main   -> /src/main.asm
 run  -> output -> /build/main.bin
+list -> output map -> /build/main.map
+sym  -> output map -> /build/main.map
+debug/break/step/cont -> output and map
 ```
 
 The map path is not directly targeted by a short command in shell v1. `asm`
@@ -259,13 +264,25 @@ For the ROM MVP, bank 0 only decides these shapes:
 edit -> project-main target descriptor
 asm  -> project-main target descriptor, then bank 7
 run  -> project-output target descriptor, then bank 8
-dir  -> bank 2 catalogue summary service
+dir [absolute-prefix] -> bank 2 bounded catalogue-list service
+list -> source-map listing through bank 8
+sym -> symbol inspection through bank 8
+debug -> load the project output and stop at its entry
+break SYMBOL -> arm a source-aware software breakpoint
+step / cont -> execute from the current stop and return to the shell
 ```
 
-Path arguments, project defaults loaded from `/tecm8.prj`, long names, virtual
-folders, and catalogue scanning belong to the editor, TEC-FS, project loader, or
-future profile tools. If a feature needs more than exact word classification,
-it should move behind a banked service instead of expanding the bank-0 parser.
+Bank 0 only recognises the optional argument shape and copies its bounded bytes;
+bank 2 owns prefix/path validation and catalogue scanning. Project defaults
+loaded from `/tecm8.prj`, long names, virtual folders, and semantic filename
+resolution belong to the editor, TEC-FS, project loader, or future profile
+tools. If a feature needs more than this bounded dispatch shape, it should move
+behind a banked service instead of expanding the bank-0 parser.
+
+The debugger verbs are exact and bounded. `break` accepts one zero-terminated
+symbol with at most eight significant characters. `list` emits
+`AAAA F#:L## NAME`, while `sym` emits `NAME=AAAA F#:L##`. Both consume the
+derived `TMAP` sidecar and render through the shell's 16-row list view.
 
 ## `edit`
 
@@ -286,11 +303,12 @@ edit draw
 edit /src/draw.asm
 ```
 
-The shell resolves the argument to a TM8 path, appending `.asm` when no
-extension is present, and opens that file. If the file does not exist, the
-editor may create it after an explicit save; the shell should not need a
-separate `new` command for ordinary source editing. Editing a named file does
-not change `main`.
+The full shell resolver resolves relative arguments and appends `.asm` when no
+extension is present. The compact ROM command currently accepts the bounded
+absolute form, such as `EDIT /src/draw.asm`. If that source does not exist,
+bank 4 asks bank 2 to allocate one cleared block and publish an empty catalogue
+entry, then opens it through the ordinary editor path. No separate `new`
+command is required. Editing a named file does not change `main`.
 
 ## `asm`
 
@@ -342,7 +360,7 @@ The expected v1 result meanings are:
 SHL_RESULT_OK          assembly completed and wrote .bin/.map outputs
 SHL_RESULT_BUILD_ERROR source parsed but did not assemble; detail may be line
 SHL_RESULT_FILE_ERROR  source, output, map, or project file could not be used
-SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
+SHL_RESULT_UNSUPPORTED a recognized tool slot has no implementation
 ```
 
 `SHL_RENDER_RESULT` turns the low result byte into a short VDU status label:
@@ -350,11 +368,12 @@ SHL_RESULT_UNSUPPORTED asm was classified but the assembler tool is not linked
 not a diagnostic formatter. Detailed messages, line numbers, and filenames
 belong in later tool views, not in the eight-character shell status slot.
 
-Until project parsing and the assembler are linked behind the shell,
 `SHL_RUN_COMMAND` classifies `asm`, points the target slot at the minimal
-`SHL_TARGET_DESC`, marks that descriptor as the project-main default, calls the
-bank-7 assembler skeleton, and publishes the skeleton's
-`SHL_RESULT_UNSUPPORTED` result.
+`SHL_TARGET_DESC`, marks that descriptor as the project-main default, and calls
+the bank-7 two-pass assembler. Bank 7 consumes the resident editor records,
+publishes `BUILD` with a zero-based source record on a parse/assembly error, or
+publishes `OK` after writing binary and `TMAP` data/metadata through bank 2.
+The editor reads bank 7's diagnostic line and column on its next launch.
 
 ## `run`
 
@@ -377,11 +396,13 @@ run /build/test.bin
 The shell runs that one-off target and does not change project config. The
 no-argument form remains the primary workflow.
 
-Until project parsing and a real launcher/debugger are linked behind the shell,
 `SHL_RUN_COMMAND` classifies `run`, points the target slot at the minimal
 `SHL_TARGET_DESC`, marks that descriptor as the derived project output default,
-calls the bank-8 run skeleton, and publishes the skeleton's
-`SHL_RESULT_UNSUPPORTED` result.
+and calls bank 8. The runner asks bank 2 to load executable metadata and data,
+requires the artifact and entry point to stay inside `4000h-4FFFh`, and invokes
+the entry through a RAM trampoline. A phase-one program returns with `RET`, so
+bank 8 can publish `OK` and return through the shell gateway. Missing or invalid
+artifacts publish `FILE`.
 
 ## Errors
 

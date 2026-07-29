@@ -37,6 +37,15 @@ type LastRun = {
       firstNameLength?: number;
       flags?: number;
     };
+    buildWorkflow?: {
+      diagnosticLine?: number;
+      output?: number[];
+      mapMagic?: string;
+      artifactDataWrites?: number;
+      artifactMetaWrites?: number;
+      programMarker?: number;
+      runnerReturns?: number;
+    };
   };
 };
 
@@ -65,14 +74,14 @@ function readLastRun(): LastRun {
   if (data.installed.shellAsmStatus !== 'ASM') {
     throw new Error(`monitor launch proof output is missing exact shell asm status ASM: ${proofPath}`);
   }
-  if (data.installed.shellAsmResultStatus !== 'UNSUP') {
-    throw new Error(`monitor launch proof output is missing exact shell asm result status UNSUP: ${proofPath}`);
+  if (data.installed.shellAsmResultStatus !== 'BUILD') {
+    throw new Error(`monitor launch proof output is missing exact initial shell asm result status BUILD: ${proofPath}`);
   }
   if (data.installed.shellRunStatus !== 'RUN') {
     throw new Error(`monitor launch proof output is missing exact shell run status RUN: ${proofPath}`);
   }
-  if (data.installed.shellRunResultStatus !== 'UNSUP') {
-    throw new Error(`monitor launch proof output is missing exact shell run result status UNSUP: ${proofPath}`);
+  if (data.installed.shellRunResultStatus !== 'FILE') {
+    throw new Error(`monitor launch proof output is missing exact initial shell run result status FILE: ${proofPath}`);
   }
   if (data.installed.shellUnknownStatus !== 'ERRCMD') {
     throw new Error(`monitor launch proof output is missing exact shell unknown status ERRCMD: ${proofPath}`);
@@ -88,6 +97,17 @@ function readLastRun(): LastRun {
   }
   if (data.installed.shellDirErrorResultStatus !== 'FILE') {
     throw new Error(`monitor launch proof output is missing exact shell dir error result status FILE: ${proofPath}`);
+  }
+  const workflow = data.installed.buildWorkflow;
+  if (
+    workflow?.diagnosticLine !== 4 ||
+    workflow.mapMagic !== 'TMAP' ||
+    workflow.artifactDataWrites !== 2 ||
+    workflow.artifactMetaWrites !== 2 ||
+    workflow.programMarker !== 0x5a ||
+    workflow.runnerReturns !== 1
+  ) {
+    throw new Error(`monitor launch proof output is missing the complete build workflow: ${proofPath}`);
   }
 
   const expectedTrace = [0x00, undefined, undefined, undefined, 0x81, 0x82, 0x83, 0x86, 0x80];
@@ -128,33 +148,37 @@ function main(): void {
   console.log('4. Expect bank 0 to install the expansion vectors, then launch the TecMate shell scaffold.');
   console.log('5. On the TMS9918 VDU, expect `TecMate ROM Shell`, `TFS:30+1 128M 4K`, `KEY:0000 JOY:00`, `>`, and `POLL`.');
   console.log('6. The proof also runs `edit` through the shell command service and renders status `EDIT` on the VDU status line.');
-  console.log('7. The proof runs `asm` through the shell command service, reaches the bank-7 assembler skeleton, and renders `ASM` then `UNSUP`.');
-  console.log('8. The proof runs `run` through the shell command service, reaches the bank-8 run skeleton, and renders `RUN` then `UNSUP`.');
+  console.log('7. The proof runs `asm` against the initial incompatible fixture and renders `ASM` then `BUILD` with a source-record diagnostic.');
+  console.log('8. The proof runs `run` before an artifact exists and renders `RUN` then `FILE`.');
   console.log('9. The proof runs `dir` through the shell command service, checks the bank-2 TEC-FS catalogue summary, renders result status `OK`, and proves the bad-buffer path renders `FILE`.');
+  console.log('10. The proof edits and saves a five-record program, diagnoses line 4, reopens the editor at that record, fixes it, rebuilds binary plus TMAP artifacts, runs the binary, and returns safely to the shell.');
   console.log('');
   console.log('Proof-backed service inventory:');
   console.log('- fixed monitor: expansion discovery, installed menu vector, installed service vector');
   console.log('- bank 0: shell entry, one-command shell boundary, status/result renderers');
   console.log('- bank 1: VDU/TMS9918 text/status rendering');
-  console.log('- bank 2: TEC-FS mount, catalogue summary, catalogue advance, bad-buffer error');
+  console.log('- bank 2: TEC-FS mount/catalogue plus binary and source-map data/metadata persistence');
   console.log('- bank 6: input snapshot boundary');
-  console.log('- bank 7: assembler skeleton handoff and unsupported result');
-  console.log('- bank 8: run skeleton handoff and unsupported result');
+  console.log('- bank 7: two-pass phase-one assembler, record diagnostics, binary and TMAP emission');
+  console.log('- bank 8: validated bounded loader, RAM call trampoline, and safe shell return');
   console.log('');
   console.log('Proof-backed shell command matrix:');
   console.log('| Command | Route | Visible status | Visible result | Detail |');
   console.log('| --- | --- | --- | --- | --- |');
   console.log(`| edit | bank 0 shell | ${installed.shellCommandStatus ?? 'unknown'} | n/a | project main target |`);
-  console.log(`| asm | bank 7 skeleton | ${installed.shellAsmStatus ?? 'unknown'} | ${installed.shellAsmResultStatus ?? 'unknown'} | project main target |`);
-  console.log(`| run | bank 8 skeleton | ${installed.shellRunStatus ?? 'unknown'} | ${installed.shellRunResultStatus ?? 'unknown'} | project output target |`);
+  console.log(`| asm (initial fixture) | bank 7 assembler | ${installed.shellAsmStatus ?? 'unknown'} | ${installed.shellAsmResultStatus ?? 'unknown'} | diagnostic line ${installed.buildWorkflow?.diagnosticLine ?? 'unknown'} |`);
+  console.log(`| run (before build) | bank 8 runner | ${installed.shellRunStatus ?? 'unknown'} | ${installed.shellRunResultStatus ?? 'unknown'} | no binary artifact |`);
   console.log(`| unknown | bank 0 shell | ${installed.shellUnknownStatus ?? 'unknown'} | ${installed.shellUnknownResultStatus ?? 'unknown'} | target/result clear |`);
   console.log(`| dir | bank 2 TEC-FS | DIR | ${installed.shellDirResultStatus ?? 'unknown'} | count ${installed.shellDirResult?.count ?? 'unknown'} |`);
   console.log(`| dir bad-buffer | bank 2 TEC-FS | n/a | ${installed.shellDirErrorResultStatus ?? 'unknown'} | buffer error path |`);
   console.log('');
-  console.log('Next manual milestone:');
-  console.log('- shell `edit` should hand a project-main target descriptor to TEC-FS lookup, then to an editor file-buffer service.');
-  console.log('- visible success is one loaded 32-byte-record source window on the VDU/TMS9918 path, cursor state, dirty flag clear, and return to shell.');
-  console.log('- this is not yet save, insert/delete, scrolling, assembler diagnostics, or GLCD rendering.');
+  console.log('Complete self-hosted workflow evidence:');
+  console.log(`- assembler diagnostic source line: ${installed.buildWorkflow?.diagnosticLine ?? 'unknown'}`);
+  console.log(`- emitted binary bytes: ${(installed.buildWorkflow?.output ?? []).map((value) => value.toString(16).toUpperCase().padStart(2, '0')).join(' ')}`);
+  console.log(`- source-map magic: ${installed.buildWorkflow?.mapMagic ?? 'unknown'}`);
+  console.log(`- artifact writes: data=${installed.buildWorkflow?.artifactDataWrites ?? 'unknown'} metadata=${installed.buildWorkflow?.artifactMetaWrites ?? 'unknown'}`);
+  console.log(`- executed program marker: ${hex(installed.buildWorkflow?.programMarker)}`);
+  console.log(`- runner returns to shell: ${installed.buildWorkflow?.runnerReturns ?? 'unknown'}`);
   console.log('');
   console.log('Proof-backed addresses and markers from the last run:');
   console.log(`- launchExpansion: ${hex(proof.launchAddress)}`);
@@ -180,7 +204,7 @@ function main(): void {
   console.log(`- final physical bank: ${installed.finalPhysicalBank ?? 'unknown'}`);
   console.log('');
   console.log('Observable success means the fixed monitor, expansion discovery, bank 0 shell scaffold, VDU/TMS9918,');
-  console.log('input snapshot service, TEC-FS service boundary, assembler/run skeleton handoffs, shell command status/result paths, and `dir` catalogue summary all ran through the ROM path.');
+  console.log('input snapshot service, persistent editor, TEC-FS artifacts, assembler diagnostics, bounded runner, shell return, and `dir` catalogue summary all ran through the ROM path.');
 }
 
 main();

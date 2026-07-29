@@ -54,17 +54,27 @@ test('Debug80 TecMate demo milestone records the manual ROM launch script', () =
   assert.match(doc, /Enter the monitor `Expansion` menu item/);
   assert.match(doc, /`TecMate ROM Shell` title, `TFS:30\+1 128M 4K` TEC-FS geometry line,\s+`KEY:0000 JOY:00` input echo, `>` prompt, and `POLL` status text/);
   assert.match(doc, /first input\/update\/render\s+loop slice/);
-  assert.match(doc, /shell command matrix to show/);
-  assert.match(doc, /`edit -> EDIT`, `asm -> ASM\/UNSUP`, `run -> RUN\/UNSUP`, `dir -> DIR\/OK`,\s+and `dir bad-buffer -> FILE`/);
+  assert.match(doc, /initial command matrix to show/);
+  assert.match(doc, /`edit -> EDIT\/OK`, `asm -> ASM\/BUILD`, `run -> RUN\/FILE`,\s+`dir -> DIR\/OK`, and `dir bad-buffer -> FILE`/);
 });
 
-test('Debug80 TecMate demo milestone defines the next editor-buffer manual target', () => {
-  assert.match(doc, /## Next Manual Milestone/);
-  assert.match(doc, /shell `edit`[\s\S]*project-main target descriptor[\s\S]*TEC-FS target\/metadata lookup boundary[\s\S]*editor file-buffer service/);
-  assert.match(doc, /VDU\/TMS9918 shows a loaded 32-byte-record source window/);
-  assert.match(doc, /not a complete editor loop/);
-  assert.match(doc, /one loaded\s+source window, a cursor position, a dirty flag shown as clear, and a return path\s+to the shell/);
-  assert.match(doc, /Save, insert\/delete, scrolling, assembler diagnostics, and GLCD\s+rendering can follow/);
+test('Debug80 TecMate demo milestone records the completed persistent editor workflow', () => {
+  assert.match(doc, /## Completed Persistent Editor Workflow/);
+  assert.match(doc, /shell `edit`[\s\S]*interactive bank-4 editor and bank-6 key service/);
+  assert.match(doc, /multi-page 32-byte-record source workspace/);
+  assert.match(doc, /bank-2 data-sector writes followed by a metadata-sector commit/);
+  assert.match(doc, /solid-block character cursor/);
+  assert.match(doc, /record split\/join/);
+  assert.match(doc, /reopens to prove the saved `PAGEY` record persisted/);
+});
+
+test('Debug80 TecMate demo milestone records the complete build-and-run workflow', () => {
+  assert.match(doc, /## Completed Self-Hosted Build-And-Run Workflow/);
+  assert.match(doc, /asm reports BUILD at source record 4/);
+  assert.match(doc, /edit reopens at record 4, column 2/);
+  assert.match(doc, /asm emits 3E 5A 32 F0 4F C9 and TMAP/);
+  assert.match(doc, /two artifact data writes and two metadata writes/);
+  assert.match(doc, /run loads at 4000h, executes the marker write, and returns to the shell/);
 });
 
 test('Debug80 TecMate demo milestone has concrete acceptance criteria', () => {
@@ -102,9 +112,9 @@ test('Debug80 TecMate demo milestone is backed by the monitor launch proof', () 
 });
 
 test('Debug80 TecMate demo milestone keeps scope small', () => {
-  assert.match(doc, /full TEC-FS catalogue, allocator, file load, or file save/);
-  assert.match(doc, /a real assembler/);
-  assert.match(doc, /a complete editor loop/);
+  assert.match(doc, /full TEC-FS catalogue allocator beyond the bounded editor source workflow/);
+  assert.match(doc, /complete Z80\/AZM language beyond the documented phase-one subset/);
+  assert.match(doc, /unbounded files larger than the three-page ROM workspace/);
   assert.match(doc, /a game runtime/);
   assert.match(doc, /GLCD feature work/);
   assert.match(doc, /direct boot into TecMate as the final product policy/);

@@ -59,11 +59,11 @@ const expansionBudgets: Budget[] = [
   { role: 'VDU/TMS9918 boundary', softSpan: 0x1000, hardSpan: 0x2000 },
   { role: 'TEC-FS boundary and block mapper', softSpan: 0x1000, hardSpan: 0x2000 },
   { role: 'RTC boundary', softSpan: 0x0400, hardSpan: 0x0800 },
-  { role: 'GLCD boundary', softSpan: 0x0400, hardSpan: 0x0800 },
-  { role: 'TEC-FS monitor-sector bridge', softSpan: 0x0400, hardSpan: 0x0800 },
+  { role: 'Editor and optional GLCD boundary', softSpan: 0x1000, hardSpan: 0x2000 },
+  { role: 'TEC-FS monitor-sector bridge', softSpan: 0x1000, hardSpan: 0x2000 },
   { role: 'Input snapshot boundary', softSpan: 0x0400, hardSpan: 0x0800 },
-  { role: 'Assembler skeleton', softSpan: 0x2000, hardSpan: 0x3000 },
-  { role: 'Run skeleton', softSpan: 0x1000, hardSpan: 0x2000 },
+  { role: 'Phase-one self-hosted assembler', softSpan: 0x2000, hardSpan: 0x3000 },
+  { role: 'Validated loader and runner', softSpan: 0x1000, hardSpan: 0x2000 },
 ];
 
 const totalExpansionSoftSpan = 0x8000;

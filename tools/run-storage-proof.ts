@@ -9,11 +9,14 @@
 const { execFileSync } = require('node:child_process');
 const { existsSync, readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const {
+  debug80Mon3BundleRoot,
+  loadDebug80RuntimeModules,
+} = require('./debug80-integration.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
-const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const MON3_ROM_CANDIDATES = [
-  resolve(DEBUG80_ROOT, 'resources/bundles/tec1g/mon3/v1/mon3.bin'),
+  resolve(debug80Mon3BundleRoot(), 'mon3.bin'),
   '/Users/johnhardy/projects/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
   '/Users/johnhardy/projects/2026/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
 ];
@@ -100,10 +103,6 @@ type Runtime = {
 type PlatformRuntime = {
   recordCycles: (cycles: number) => void;
 };
-
-function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
-}
 
 function low(value: number): number {
   return value & 0xff;
@@ -216,16 +215,13 @@ function makeConfig() {
   };
 }
 
-function loadRuntime(): { runtime: Runtime; platformRuntime: PlatformRuntime; doneAddr: number } {
-  const { createTec1gRuntime } = requireFromDebug80('out/platforms/tec1g/runtime.js') as {
-    createTec1gRuntime: Function;
-  };
-  const { createTec1gMemoryHooks } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-memory.js',
-  ) as { createTec1gMemoryHooks: Function };
-  const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
-    createZ80Runtime: Function;
-  };
+async function loadRuntime(): Promise<{
+  runtime: Runtime;
+  platformRuntime: PlatformRuntime;
+  doneAddr: number;
+}> {
+  const { createTec1gRuntime, createTec1gMemoryHooks, createZ80Runtime } =
+    await loadDebug80RuntimeModules();
 
   const config = makeConfig();
   const tec1gRuntime = createTec1gRuntime(config, () => {});
@@ -323,12 +319,12 @@ function verifyMarkers(): Array<{ sector: number; offset: number; marker: string
   });
 }
 
-function main(): void {
+async function main(): Promise<void> {
   if (!existsSync(MON3_ROM_PATH)) {
     throw new Error(`MON3 ROM not found: ${MON3_ROM_PATH}`);
   }
   ensureImage();
-  const { runtime, platformRuntime, doneAddr } = loadRuntime();
+  const { runtime, platformRuntime, doneAddr } = await loadRuntime();
   const instructions = runProof(runtime, platformRuntime, doneAddr);
   const markers = verifyMarkers();
   writeFileSync(
@@ -350,4 +346,8 @@ function main(): void {
   );
 }
 
-main();
+main().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`error: ${message}`);
+  process.exit(1);
+});

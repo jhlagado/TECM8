@@ -226,6 +226,8 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
     'SHL_ACTION_EDIT',
     'SHL_ACTION_ASM',
     'SHL_ACTION_RUN',
+    'SHL_ACTION_DIR',
+    'SHL_ACTION_DEBUG',
     'SHL_TARGET_KIND_NONE',
     'SHL_TARGET_KIND_PROJECT_MAIN',
     'SHL_TARGET_KIND_PROJECT_OUTPUT',
@@ -256,28 +258,30 @@ test('banked service ABI doc covers bank 0 shell entry slots and parameters', ()
   assert.match(doc, /without becoming a game runtime or full shell loop/);
   assert.match(doc, /private `Tecm8ShellRunCommand` label/);
   assert.match(doc, /`SHL_RUN_COMMAND` reads a zero-terminated command line/);
-  assert.match(doc, /classifies the\s+first shell verbs: `edit`, `asm`, `run`, and `dir`/);
+  assert.match(doc, /first shell verbs: `edit`, `asm`, `run`, `dir`, `list`, `sym`, `debug`,\s+`break SYMBOL`, `step`, and `cont`/);
   assert.match(doc, /writes `SHL_PARAM_COMMAND_TARGET_LO\/HI` to point\s+at `SHL_TARGET_DESC` for commands with resolved targets/);
   assert.match(doc, /`dir` records `SHL_ACTION_DIR`/);
-  assert.match(doc, /calls the bank-2\s+`TFS_SVC_SUMMARIZE_CATALOG`, `TFS_SVC_NEXT_CATALOG`, and\s+`TFS_SVC_SUMMARIZE_CATALOG` services/);
-  assert.match(doc, /restores the original catalogue pointer/);
-  assert.match(doc, /two-slot count in\s+`SHL_PARAM_COMMAND_RESULT_HI`/);
+  assert.match(doc, /bare `dir` lists `\/src`/);
+  assert.match(doc, /`dir \/prefix` lists an explicit bounded prefix through `TFS_SVC_LIST_PATH`/);
+  assert.match(doc, /leading-dot backup names\s+are hidden/);
+  assert.match(doc, /RAM proof bridge retains the original two-resident-slot\s+summary path/);
   assert.match(doc, /`SHL_RENDER_STATUS` and `SHL_RENDER_RESULT` are separate/);
   assert.match(doc, /maps the current command action to\s+short labels such as `EDIT`, `ASM`, `RUN`, and `DIR`/);
   assert.match(doc, /maps\s+`SHL_PARAM_COMMAND_RESULT_LO` to a compact result label such as `OK`, `BUILD`,\s+`FILE`, `UNSUP`, or `NONE`/);
-  assert.match(doc, /leaves the target pointer and flags clear/);
+  assert.match(doc, /writes up to sixteen returned filenames to TMS9918\s+rows 5–20/);
   assert.match(doc, /blank command is a\s+successful no-op/);
   assert.match(doc, /leaves\s+`SHL_ACTION_NONE`, records length zero, keeps status OK/);
-  assert.match(doc, /`asm` calls the bank-7 assembler\s+skeleton/);
-  assert.match(doc, /`run` calls the bank-8 run skeleton/);
+  assert.match(doc, /`asm` calls the bank-7 two-pass assembler/);
+  assert.match(doc, /`run` calls the bank-8\s+validated loader\/runner/);
   assert.match(doc, /bank-local tool result bytes back into\s+`SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
   assert.match(doc, /`edit` and `asm` use `SHL_TARGET_KIND_PROJECT_MAIN`/);
   assert.match(doc, /`run` uses\s+`SHL_TARGET_KIND_PROJECT_OUTPUT`/);
-  assert.match(doc, /`edit` does not\s+yet call a banked editor service/);
-  assert.match(doc, /leaves `SHL_RESULT_NONE` in the result\s+slots/);
+  assert.match(doc, /bank 0 transfers the descriptor\s+to the bank-4 editor service/);
+  assert.match(doc, /resolves the current fixed project\s+main to `\/src\/main\.asm`/);
   assert.match(doc, /low\s+result byte should use `SHL_RESULT_\*`/);
   assert.match(doc, /assembler diagnostic line or zero when no detail applies/);
-  assert.match(doc, /bank-7\s+assembler skeleton and bank-8 run skeleton currently publish\s+`SHL_RESULT_UNSUPPORTED`/);
+  assert.match(doc, /Bank 7 consumes the resident editor records/);
+  assert.match(doc, /Bank 8 publishes\s+`SHL_RESULT_FILE_ERROR` for a missing or invalid artifact/);
 });
 
 test('shell command target descriptor stays compact and bounded', () => {
@@ -308,12 +312,33 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_DECODE_CATALOG` \(`0Dh`\) \| Implemented single-entry catalogue decoder/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_SUMMARIZE_CATALOG` \(`0Eh`\) \| Implemented one-slot catalogue summary/);
   assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_NEXT_CATALOG` \(`0Fh`\) \| Implemented one-slot caller pointer advance/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_LOAD_SOURCE` \(`10h`\) \| Implemented catalogue-to-bounded-source-page load/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_SOURCE` \(`18h`\) \| Implemented bounded empty-source creation in an existing prefix/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_CREATE_FILE` \(`19h`\) \| Implemented bounded binary\/asset creation in an existing prefix/);
+  assert.match(doc, /direct bank call \| `02h` \| `8000h` \| `TFS_SVC_RENAME_SOURCE` \(`1Ah`\) \| Implemented bounded same-prefix source rename/);
   assert.match(doc, /TEC-FS implementation state/);
-  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG` \|/);
-  assert.match(doc, /`READ`\/`WRITE` still require an installed sector driver/);
+  assert.match(doc, /\| Implemented proof services \| `MOUNT`, `SELECT_VOLUME`, `READ`, `WRITE`, `MAP_BLOCK`, `TRANSLATE_SECTOR`, `FORMAT_LOCATOR`, `READ_LOCATOR`, `FORMAT_META_RECORD`, `PATCH_META_RECORD`, `DECODE_CATALOG`, `SUMMARIZE_CATALOG`, `NEXT_CATALOG`, `LOAD_SOURCE`, `LOAD_SOURCE_PAGE`, `SAVE_SOURCE_PAGE`, `COMMIT_SOURCE_META`, `SAVE_ARTIFACT`, `LOAD_ARTIFACT`, `FIND_PATH`, `LIST_PATH`, `CREATE_SOURCE`, `CREATE_FILE`, `RENAME_SOURCE` \|/);
+  assert.match(doc, /Sector-backed calls still require an installed sector driver/);
   assert.match(doc, /\| Stubbed\/reserved services \| `LOAD_RANGE`, `SAVE_RANGE` \| Service numbers are reserved and return unsupported\. \|/);
-  assert.match(doc, /\| Deferred filesystem work \| allocator, multi-sector catalogue scan, filename\/prefix lookup, long-name storage, file create\/delete\/rename, transaction commit, PC repair\/import utility \|/);
-  assert.match(doc, /Not part of the current ROM proof and must not be implied by `dir`/);
+  assert.match(doc, /\| Deferred filesystem work \| delete, cross-prefix move, new-prefix allocation, long-name storage, multi-block artifact growth, general transaction journal, PC repair\/import utility \|/);
+  assert.match(doc, /Not part of the bounded ROM creation proof/);
+  assert.match(doc, /`TFS_SVC_LIST_PATH` \(`17h`\) accepts `\/` or `\/prefix`/);
+  assert.match(doc, /a null path pointer selects `\/src`/);
+  assert.match(doc, /It never emits a partial name/);
+  assert.match(doc, /`TFS_SVC_CREATE_SOURCE` \(`18h`\) accepts the same bounded `\/name` or\s+`\/prefix\/name` path as `FIND_PATH`/);
+  assert.match(doc, /creates an empty `TFS_FILE_SOURCE_V1` entry backed by one cleared 4 KiB\s+block/);
+  assert.match(doc, /Duplicate creation returns `TFS_ERR_EXISTS` without\s+allocating another block/);
+  assert.match(doc, /`TFS_SVC_RENAME_SOURCE` \(`1Ah`\)[\s\S]*`TFS_ERR_CROSS_PREFIX`/);
+  for (const name of [
+    'TFS_PARAM_LIST_DEST_LO/HI',
+    'TFS_PARAM_LIST_CAP_LO/HI',
+    'TFS_PARAM_LIST_USED_LO/HI',
+    'TFS_PARAM_LIST_COUNT',
+    'TFS_PARAM_LIST_FLAGS',
+    'TFS_LIST_FLAG_TRUNCATED',
+  ]) {
+    assert.match(doc, new RegExp(name.replace('/', '\\/')));
+  }
 
   for (const name of [
     'TFS_ENTRY',
@@ -346,11 +371,45 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_SVC_DECODE_CATALOG',
     'TFS_SVC_SUMMARIZE_CATALOG',
     'TFS_SVC_NEXT_CATALOG',
+    'TFS_SVC_LOAD_SOURCE',
+    'TFS_SVC_LOAD_SOURCE_PAGE',
+    'TFS_SVC_SAVE_SOURCE_PAGE',
+    'TFS_SVC_COMMIT_SOURCE_META',
+    'TFS_SVC_SAVE_ARTIFACT',
+    'TFS_SVC_LOAD_ARTIFACT',
+    'TFS_SVC_CREATE_SOURCE',
+    'TFS_SVC_CREATE_FILE',
+    'TFS_SVC_RENAME_SOURCE',
     'TFS_PARAM_BASE',
     'TFS_PARAM_ACTIVE_VOLUME',
     'TFS_PARAM_REQUEST_VOLUME',
     'TFS_PARAM_STATUS',
     'TFS_PARAM_LAST_ERROR',
+    'TFS_SOURCE_PARAM_BASE',
+    'TFS_PARAM_SOURCE_PAGE',
+    'TFS_PARAM_SOURCE_PAGE_COUNT',
+    'TFS_PARAM_SOURCE_ALLOCATED_PAGES',
+    'TFS_PARAM_SOURCE_SIZE_LO',
+    'TFS_PARAM_SOURCE_SIZE_HI',
+    'TFS_PARAM_SOURCE_DATA_WRITES',
+    'TFS_PARAM_SOURCE_META_WRITES',
+    'TFS_PARAM_SOURCE_IO_KIND',
+    'TFS_ARTIFACT_PARAM_BASE',
+    'TFS_PARAM_ARTIFACT_KIND',
+    'TFS_PARAM_ARTIFACT_BUFFER_LO',
+    'TFS_PARAM_ARTIFACT_BUFFER_HI',
+    'TFS_PARAM_ARTIFACT_SIZE_LO',
+    'TFS_PARAM_ARTIFACT_SIZE_HI',
+    'TFS_PARAM_ARTIFACT_LOAD_LO',
+    'TFS_PARAM_ARTIFACT_LOAD_HI',
+    'TFS_PARAM_ARTIFACT_RUN_LO',
+    'TFS_PARAM_ARTIFACT_RUN_HI',
+    'TFS_PARAM_ARTIFACT_DATA_WRITES',
+    'TFS_PARAM_ARTIFACT_META_WRITES',
+    'TFS_PARAM_ARTIFACT_IO_KIND',
+    'TFS_ARTIFACT_KIND_BINARY',
+    'TFS_ARTIFACT_KIND_MAP',
+    'TFS_ARTIFACT_MAX_BYTES',
     'TFS_PARAM_VOLUME_MIB',
     'TFS_PARAM_BLOCK_BYTES_LO',
     'TFS_PARAM_BLOCK_BYTES_HI',
@@ -379,6 +438,15 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_PARAM_DRIVER_BANK',
     'TFS_PARAM_DRIVER_ADDR_LO',
     'TFS_PARAM_DRIVER_ADDR_HI',
+    'TFS_LOAD_PARAM_BASE',
+    'TFS_PARAM_LOAD_DEST_LO',
+    'TFS_PARAM_LOAD_DEST_HI',
+    'TFS_PARAM_LOAD_BYTES_LO',
+    'TFS_PARAM_LOAD_BYTES_HI',
+    'TFS_PARAM_LOAD_LINES_LO',
+    'TFS_PARAM_LOAD_LINES_HI',
+    'TFS_PARAM_LOAD_CATALOG_LO',
+    'TFS_PARAM_LOAD_CATALOG_HI',
     'TFS_PARAM_ENTRY_FIRST_BLOCK_LO',
     'TFS_PARAM_ENTRY_FIRST_BLOCK_HI',
     'TFS_PARAM_ENTRY_SIZE_0',
@@ -469,6 +537,7 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_META_OFFSET_REQUIRED_HW',
     'TFS_META_OFFSET_NAME_REF',
     'TFS_FILE_PROJECT',
+    'TFS_FILE_SOURCE_V1',
     'TFS_FILE_SOURCE',
     'TFS_FILE_BINARY',
     'TFS_FILE_GAME',
@@ -497,6 +566,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
     'TFS_ERR_BAD_BUFFER',
     'TFS_ERR_BAD_LOCATOR',
     'TFS_ERR_BAD_CATALOG',
+    'TFS_ERR_NO_SPACE',
+    'TFS_ERR_EXISTS',
+    'TFS_ERR_BAD_VOLUME_FORMAT',
     'TFS_ERR_NO_DRIVER',
     'TFS_ERR_UNSUPPORTED',
   ]) {
@@ -512,12 +584,11 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_FORMAT_LOCATOR` writes the current locator header fields/);
   assert.match(doc, /`TFS_READ_LOCATOR` validates the magic\/version/);
   assert.match(doc, /`TFS_PATCH_META_RECORD` copies the metadata patch parameter block/);
-  assert.match(doc, /next metadata update boundary should stay in bank 2/);
-  assert.match(doc, /keep the same\s+caller-buffer model/);
-  assert.match(doc, /write new data blocks first, write\s+and verify the updated metadata sector/);
-  assert.match(doc, /commit by updating the catalogue or\s+locator generation\/checksum/);
-  assert.match(doc, /monitor should not regain FAT32, PATA, or\s+high-level file-record update code/);
-  assert.match(doc, /`TFS_PATCH_META_RECORD` is the only metadata mutation service\s+and it must not allocate blocks, choose filenames, or scan directories/);
+  assert.match(doc, /Metadata mutation stays in bank 2 and keeps the same caller-buffer model/);
+  assert.match(doc, /Source save writes data blocks first and commits the catalogue size last/);
+  assert.match(doc, /finds a free catalogue slot and file id, clears one free data block/);
+  assert.match(doc, /publishes the\s+catalogue entry last/);
+  assert.match(doc, /It does not create prefixes, delete files, move files\s+between prefixes, or provide a general transaction journal/);
   assert.match(doc, /absolute LBA 1/);
   assert.match(doc, /magic is `TFS1`/);
   assert.match(doc, /16-byte volume records/);
@@ -542,6 +613,9 @@ test('banked service ABI doc covers bank 2 TEC-FS slots and parameters', () => {
   assert.match(doc, /`TFS_SUMMARY_RESULT_BASE`/);
   assert.match(doc, /`TFS_SUMMARY_FLAG_HAS_FIRST`/);
   assert.match(doc, /not yet a full directory walker/);
+  assert.match(doc, /`TFS_SVC_SAVE_ARTIFACT` accepts a nonzero artifact of at most 512 bytes/);
+  assert.match(doc, /writes the raw payload to sector zero, writes the\s+private `TFM1` sidecar to sector seven, then publishes catalogue size\/type last/);
+  assert.match(doc, /`TFS_SVC_LOAD_ARTIFACT` resolves the binary path, reads and validates the\s+sidecar/);
 });
 
 test('TEC-FS catalog result blocks do not collide with neighbouring ABI RAM', () => {
@@ -563,7 +637,7 @@ test('TEC-FS catalog result blocks do not collide with neighbouring ABI RAM', ()
   }
 });
 
-test('banked service ABI doc covers bank 7 assembler skeleton slots and parameters', () => {
+test('banked service ABI doc covers the bank 7 phase-one assembler', () => {
   for (const name of [
     'ASM_ENTRY',
     'ASM_BANK',
@@ -577,29 +651,51 @@ test('banked service ABI doc covers bank 7 assembler skeleton slots and paramete
     'ASM_PARAM_TARGET_HI',
     'ASM_PARAM_RESULT_LO',
     'ASM_PARAM_RESULT_HI',
+    'ASM_PARAM_DIAG_LINE',
+    'ASM_PARAM_DIAG_COLUMN',
+    'ASM_PARAM_DIAG_CODE',
+    'ASM_PARAM_DIAG_FILE',
+    'ASM_PARAM_OUTPUT_SIZE_LO',
+    'ASM_PARAM_ORIGIN_LO',
+    'ASM_PARAM_RUN_LO',
+    'ASM_PARAM_MAP_SIZE_LO',
+    'ASM_OUTPUT_BASE',
+    'ASM_MAP_BASE',
+    'ASM_SYMBOL_CAPACITY',
     'ASM_STATUS_OK',
     'ASM_ERR_UNKNOWN',
-    'ASM_ERR_UNSUPPORTED',
+    'ASM_ERR_BAD_TARGET',
+    'ASM_ERR_NO_SOURCE',
+    'ASM_ERR_SYNTAX',
+    'ASM_ERR_EXPRESSION',
+    'ASM_ERR_SYMBOL_FULL',
+    'ASM_ERR_DUP_SYMBOL',
+    'ASM_ERR_OUTPUT_FULL',
+    'ASM_ERR_BAD_ORIGIN',
+    'ASM_ERR_STORAGE',
+    'ASM_ERR_INCLUDE',
   ]) {
     assertDocRow(name);
   }
-  assert.match(doc, /Physical bank 7 owns the first assembler service skeleton/);
-  assert.match(doc, /`ASM_SVC_ASSEMBLE` is intentionally unsupported/);
-  assert.match(doc, /preserves target\s+descriptor pointer/);
-  assert.match(doc, /The assembler MVP ABI is deliberately small/);
-  assert.match(doc, /the descriptor action is\s+`SHL_ACTION_ASM`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_MAIN`/);
-  assert.match(doc, /the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`/);
-  assert.match(doc, /bank 7 must not parse source, allocate buffers, or write build\s+artifacts/);
-  assert.match(doc, /only supported visible result is `SHL_RESULT_UNSUPPORTED` with\s+detail zero, rendered by the shell as `UNSUP`/);
-  assert.match(doc, /Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set,\s+preserve the assembler status fields/);
-  assert.match(doc, /do not dispatch through the\s+unsupported assemble path/);
+  assert.match(doc, /Physical bank 7 owns the self-hosted two-pass assembler/);
+  assert.match(doc, /reads the resident bank-4 32-byte-record\s+workspace/);
+  assert.match(doc, /emits at most 512 bytes plus a `TMAP`\s+source map/);
+  assert.match(doc, /publishes `SHL_RESULT_BUILD_ERROR`/);
+  assert.match(doc, /derives\s+`\/build\/<main-stem>\.bin` and `\.map`, writes both through\s+`TFS_SVC_SAVE_ARTIFACT`/);
+  assert.match(doc, /Unknown assembler-local selectors return `A=ASM_ERR_UNKNOWN` with carry set/);
 });
 
-test('banked service ABI doc covers bank 8 run skeleton slots and parameters', () => {
+test('banked service ABI doc covers the bank 8 validated loader and runner', () => {
   for (const name of [
     'RUN_ENTRY',
     'RUN_BANK',
     'RUN_SVC_RUN',
+    'RUN_SVC_SYMBOLS',
+    'RUN_SVC_DEBUG_START',
+    'RUN_SVC_BREAK_SYMBOL',
+    'RUN_SVC_DEBUG_STEP',
+    'RUN_SVC_DEBUG_CONTINUE',
+    'RUN_SVC_LISTING',
     'RUN_PARAM_BASE',
     'RUN_PARAM_STATUS',
     'RUN_PARAM_LAST_ERROR',
@@ -609,25 +705,34 @@ test('banked service ABI doc covers bank 8 run skeleton slots and parameters', (
     'RUN_PARAM_TARGET_HI',
     'RUN_PARAM_RESULT_LO',
     'RUN_PARAM_RESULT_HI',
+    'RUN_PARAM_LOAD_LO',
+    'RUN_PARAM_END_LO',
+    'RUN_PARAM_ENTRY_LO',
+    'RUN_PARAM_BYTES_LO',
+    'RUN_PARAM_RETURN_COUNT',
+    'RUN_TRAMPOLINE_BASE',
+    'RUN_LOAD_MIN',
+    'RUN_LOAD_MAX',
     'RUN_STATUS_OK',
     'RUN_ERR_UNKNOWN',
-    'RUN_ERR_UNSUPPORTED',
+    'RUN_ERR_BAD_TARGET',
+    'RUN_ERR_NO_ARTIFACT',
+    'RUN_ERR_BAD_META',
+    'RUN_ERR_BAD_RANGE',
+    'RUN_ERR_STORAGE',
+    'RUN_ERR_BAD_MAP',
+    'RUN_ERR_NO_SYMBOL',
+    'RUN_ERR_NOT_STOPPED',
+    'RUN_ERR_STEP',
   ]) {
     assertDocRow(name);
   }
-  assert.match(doc, /Physical bank 8 owns the first run-command service skeleton/);
-  assert.match(doc, /`RUN_SVC_RUN` is intentionally unsupported/);
-  assert.match(doc, /preserves target\s+descriptor pointer/);
-  assert.match(doc, /The run MVP ABI is deliberately small/);
-  assert.match(doc, /the descriptor action is\s+`SHL_ACTION_RUN`, the descriptor kind is `SHL_TARGET_KIND_PROJECT_OUTPUT`/);
-  assert.match(doc, /the descriptor flags include `SHL_TARGET_FLAG_DEFAULT`/);
-  assert.match(doc, /bank 8 must not load files, relocate code, alter the\s+program counter, or change the current expansion bank/);
-  assert.match(doc, /only supported\s+visible result is `SHL_RESULT_UNSUPPORTED` with detail zero, rendered by the\s+shell as `UNSUP`/);
-  assert.match(doc, /Unknown run-local selectors return `A=RUN_ERR_UNKNOWN` with carry set, preserve\s+the run status fields/);
-  assert.match(doc, /do not\s+dispatch through the unsupported run path/);
-  assert.match(doc, /`SHL_RUN_COMMAND` now performs the first shell-to-tool handoff/);
-  assert.match(doc, /copies that pointer into the\s+relevant bank-local parameter block/);
-  assert.match(doc, /copies the\s+bank-local result bytes back into `SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
+  assert.match(doc, /Physical bank 8 owns the bounded loader\/runner/);
+  assert.match(doc, /calls `TFS_SVC_LOAD_ARTIFACT`/);
+  assert.match(doc, /phase-one executable contract requires\s+the program to finish with `RET`/);
+  assert.match(doc, /not relocation, a timeout, or a sandbox/);
+  assert.match(doc, /copies the shell target pointer into the relevant bank-local\s+parameter block/);
+  assert.match(doc, /copies the result bytes back into\s+`SHL_PARAM_COMMAND_RESULT_LO\/HI`/);
 });
 
 test('banked service ABI doc covers bank 3 RTC slots and parameters', () => {
@@ -673,19 +778,47 @@ test('banked service ABI doc covers bank 4 GLCD boundary slots and parameters', 
   }
 });
 
+test('banked service ABI doc covers the interactive editor file-buffer boundary', () => {
+  for (const name of [
+    'EDT_ENTRY',
+    'EDT_SVC_OPEN',
+    'EDT_SVC_RUN',
+    'EDT_SVC_STEP',
+    'EDT_SVC_BLINK',
+    'EDT_PARAM_BASE',
+    'EDT_PARAM_TARGET_LO',
+    'EDT_PARAM_BUFFER_LO',
+    'EDT_PARAM_BUFFER_BYTES_LO',
+    'EDT_PARAM_FIRST_LINE_LO',
+    'EDT_PARAM_LOADED_LINES_LO',
+    'EDT_PARAM_CURSOR_LINE_LO',
+    'EDT_PARAM_CURSOR_COLUMN',
+    'EDT_PARAM_DIRTY_FLAGS',
+    'EDT_PARAM_RESULT',
+    'EDT_BUFFER_BASE',
+    'EDT_BUFFER_BYTES',
+  ]) {
+    assertDocRow(name);
+  }
+  assert.match(doc, /loads a three-page\/48-record workspace through `TFS_SVC_LOAD_SOURCE`/);
+  assert.match(doc, /`Ln 01 Col 02 DIRTY Pg 1\/2`/);
+  assert.match(doc, /solid block\s+`EDT_CURSOR_BLOCK_CHAR`/);
+});
+
 test('banked service ABI doc covers bank 5 TEC-FS monitor-sector bridge', () => {
   assert.match(doc, /## Bank 5: TEC-FS Monitor-Sector Bridge/);
   assert.match(doc, /sector-driver bridge boundary/);
   assert.match(doc, /bridge\s+`TFS_DRIVER_OP_READ` and `TFS_DRIVER_OP_WRITE` to the selected low-level SD/);
   assert.match(doc, /TFS_PARAM_DRIVER_BANK/);
   assert.match(doc, /returns `A=85h` with carry clear/);
-  assert.match(doc, /writes `TFS_BRIDGE_READ_MARKER` into the\s+caller buffer for read requests/);
+  assert.match(doc, /first record begins with `TFS_BRIDGE_READ_MARKER`/);
 });
 
 test('banked service ABI doc covers bank 6 input snapshot boundary', () => {
   for (const name of [
     'INP_ENTRY',
     'INP_SVC_READ',
+    'INP_SVC_READ_KEY',
     'INP_PARAM_BASE',
     'INP_PARAM_STATUS',
     'INP_PARAM_LAST_ERROR',
@@ -695,6 +828,13 @@ test('banked service ABI doc covers bank 6 input snapshot boundary', () => {
     'INP_PARAM_KEYS_HI',
     'INP_PARAM_JOYSTICK',
     'INP_PARAM_MODIFIERS',
+    'INP_PARAM_KEY',
+    'INP_PARAM_EVENT',
+    'INP_PARAM_RAW_PRIMARY',
+    'INP_PARAM_RAW_SECONDARY',
+    'INP_QUEUE_BASE',
+    'INP_QUEUE_HEAD',
+    'INP_QUEUE_COUNT',
     'INP_STATUS_OK',
     'INP_ERR_UNKNOWN',
     'INP_JOY_UP',
@@ -706,9 +846,10 @@ test('banked service ABI doc covers bank 6 input snapshot boundary', () => {
   ]) {
     assertDocRow(name);
   }
-  assert.match(doc, /## Bank 6: Input Snapshot Boundary/);
+  assert.match(doc, /## Bank 6: Input Snapshot And Key Event Boundary/);
   assert.match(doc, /matrix-keyboard and joystick-facing service/);
-  assert.match(doc, /returns a no-input snapshot/);
+  assert.match(doc, /otherwise scans the MON3 keyboard matrix/);
+  assert.match(doc, /normalizes Ctrl\+A\.\.Z to control codes/);
   assert.match(doc, /unknown-selector path returns `INP_ERR_UNKNOWN`/);
   assert.match(doc, /shell, editor, assembler, debugger, and game support code/);
 });

@@ -32,9 +32,70 @@ there is a measured reason. Any syntax accepted by the self-hosted assembler
 should either be AZM-compatible or explicitly documented as a TecMate-only
 extension.
 
+## Implemented ROM Subset
+
+Bank 7 now contains the first useful two-pass implementation. It reads the
+resident bank-4 editor workspace as 32-byte source records and accepts:
+
+- global labels up to eight characters, with forward and backward references
+- constants declared as either `NAME .EQU expression` or
+  `NAME: .EQU expression`; a constant must resolve in pass one
+- 16-bit decimal and `0x` hexadecimal integers
+- simple left-to-right `+` and `-` expressions, unary `+` and `-`,
+  parentheses, symbols, constants, and `$` for the current program counter
+- comments, `.org`, `.db`, and `.dw`
+- `.include "path"` with an absolute TEC-FS path or a path relative to the
+  main source directory
+- `NOP`, `HALT`, `DI`, `EI`, `SCF`, `CCF`, and `CPL`
+- unconditional and conditional `RET`, `JP`, and `CALL`
+- unconditional `JR`, `JR NZ/Z/NC/C`, and `DJNZ`
+- `LD r,r`, `LD r,n`, `LD r,(HL)`, `LD (HL),r`, `LD (HL),n`,
+  `LD A,(nn)`, `LD (nn),A`, and 16-bit immediate loads into `HL`, `DE`,
+  `BC`, or `SP`
+- register, `(HL)`, and eight-bit immediate forms of `XOR`, `AND`, `OR`,
+  `SUB`, and `CP`
+- `ADD A`, `ADC A`, and `SBC A` with a register, `(HL)`, or eight-bit
+  immediate operand
+- `INC` and `DEC` for every eight-bit register and `(HL)`
+- `PUSH` and `POP` for `BC`, `DE`, `HL`, or `AF`
+- `OUT (n),A` and `IN A,(n)`
+
+The implementation is case-insensitive, supports at most 16 symbols, and emits
+at most 512 bytes. The origin and every emitted byte must remain in the runner's
+`4000h-4FFFh` window. A build may process at most four one-level includes per
+pass; each included source is bounded to the editor's 48-record/1536-byte
+workspace, and an included file may not include another file. Multiplication,
+division, bitwise expression operators, forward references between constants,
+macros, indexed instructions, the complete Z80 instruction set, recursive
+module graphs, and contract analysis remain later work. Those omissions
+distinguish the implemented ROM subset from the broader direction below.
+
+On an error, bank 7 publishes a zero-based source record, column, diagnostic
+code, and source-file ordinal (`0` for the main file, `1..4` for includes).
+Reopening `edit` after a failed main-file build positions the editor on that
+record and column. On success, bank 7 derives `/build/<stem>.bin` and
+`/build/<stem>.map` from the main source path and writes both through bank 2's
+installed TEC-FS sector-driver boundary.
+
+The binary is accompanied by a fixed-record `TMAP` artifact. Its eight-byte
+header is `TMAP`, version `1`, record size `12`, symbol count, and one reserved
+byte. Each symbol record contains an eight-byte zero-padded name, a little-endian
+value, a zero-based source line, and a kind/source byte. Its low nibble is `1`
+for an address label or `2` for a constant; its high nibble is the source-file
+ordinal. This preserves the original main-file values `01h` and `02h` while
+making included symbols source-aware.
+
+Bank 8 loads and validates the executable metadata and binary through bank 2.
+It rejects ranges outside `4000h-4FFFh` or an entry point outside the artifact,
+then calls the entry through a RAM trampoline. A phase-one program must finish
+with `RET`; control then returns through bank 8 and the bank-call gateway to the
+shell. This is a bounded loader, not a sandbox, timeout mechanism, or relocating
+linker.
+
 ## Phase 1: Core Subset
 
-Phase 1 should assemble normal source files without clever language features.
+The complete Phase 1 direction should assemble normal source files without
+clever language features.
 
 Required:
 
@@ -67,28 +128,30 @@ This gives TecMate a practical assembler before it tries to become AZM.
 
 ## MVP Readiness Gates
 
-The assembler should not move beyond the bank-7 skeleton until the smaller
-file path exists:
+The readiness path is now implemented:
 
 ```text
 editor opens 32-byte-record source buffer
   -> assembler reads that buffer or a TEC-FS source stream
   -> assembler emits binary and map records through TEC-FS
-  -> shell `asm` reports `OK`, `BUILD`, `FILE`, or `UNSUP`
+  -> shell `asm` reports `OK`, `BUILD`, or `FILE`
 ```
 
-That means the first useful assembler is gated by the editor file-buffer ABI
-and by TEC-FS source/binary/map record writes. Before those exist, bank 7 should
-remain a compact handoff skeleton that proves target passing and result
-reporting only.
+The first useful assembler was gated by the editor file-buffer ABI and TEC-FS
+source/binary/map writes. Those dependencies now exist and the monitor-launch
+proof exercises them as one edit, diagnose, fix, rebuild, run, and return loop.
 
-Phase 1 source input should therefore be one loaded source buffer or a simple
-sequential TEC-FS source stream. It should not require a general project graph,
-directory scan, recursive include resolver, host-style build directory, or
-profile preprocessor. The first output path should be one binary record plus a
-minimal map record. Listings, include files, register-contract checking, and
-profile-generated source can wait until the source-buffer-to-output path is
-measured and small.
+The next readiness layer is also implemented: the resident main buffer can name
+bounded TEC-FS includes, and the resulting binary and map are real catalogue
+files. The SD-backed proof loads `/project/build.asm`, resolves
+`/project/lib.asm`, creates `/build/build.bin` and `/build/build.map`, reloads
+the binary, executes it, and returns. The `/build` prefix must already exist;
+new-prefix allocation remains outside the bounded create service.
+
+Source input remains intentionally bounded rather than a general project graph:
+one resident main buffer plus up to four non-recursive include streams. Listings,
+register-contract checking, recursive modules, and profile-generated source are
+still later layers.
 
 ## Profile-Generated Source Compatibility
 
@@ -140,8 +203,8 @@ self-hosted assembler larger.
 
 ## Artifact Convention
 
-The self-hosted assembler should use a small, predictable artifact set. It
-should not create a general host-style build directory model inside MON3.
+The self-hosted assembler uses a small, predictable artifact set rather than a
+general host-style build model inside MON3.
 
 For a project with:
 
@@ -163,6 +226,12 @@ place outputs under `/build`, and use `.bin` and `.map`. A later game tool can
 add game-specific products, but it should still start from the same source,
 binary, map, and project metadata vocabulary.
 
+On the real MON3 file driver, the catalogue file contains the raw exported
+payload starting at sector zero of its 4K allocation block. A private `TFM1`
+sidecar occupies sector seven. Save order is payload, sidecar, then catalogue
+size/type publication, so host export of `.bin` and `.map` stays byte-exact
+without exposing an incomplete catalogue entry.
+
 The binary metadata should use the TEC-FS metadata record fields directly:
 
 - `TFS_META_OFFSET_FILE_TYPE`: `TFS_FILE_BINARY`
@@ -179,7 +248,8 @@ fields with `TFS_PATCH_META_RECORD`. The assembler receives the resolved target
 descriptor and writes source, binary, and map records through the same metadata
 vocabulary.
 
-The map artifact is deliberately simpler than host D8/D8M at first. Phase 1
+The map artifact is deliberately simpler than host D8/D8M. The current ROM
+implementation uses the fixed `TMAP` header and records described above. Phase 1
 only needs enough information for `run`, simple debugger lookup, and editor
 jump-to-error:
 
@@ -193,21 +263,22 @@ information to inspect it, and preserve the TEC-specific load/run metadata.
 
 ## Phase 2: Project Usability
 
-Phase 2 should make the assembler useful from the shell:
-
-- include files
-- listing output
-- source location reporting suitable for editor jump-to-error
-- shell command integration
-- build products written through TEC-FS
-- symbols readable by a debugger or monitor tool
-- a stable command contract for `asm`
+Phase 2 is implemented. Include files, catalogue build products, cross-file
+source ordinals, and included-file editor jump-to-error are joined by two
+shell inspection views: `list` shows address/source/name rows and `sym` shows
+name/address/source rows. `debug`, `break SYMBOL`, `step`, and `cont` consume
+the same `TMAP` records and return to the shell at every stop.
 
 At this point TecMate should be able to support the ordinary loop:
 
 ```text
 edit source -> asm -> run -> inspect/debug -> edit source
 ```
+
+The bounded limits are intentional: one include level, four includes, sixteen
+global eight-character symbols, a 512-byte binary, a 512-byte map, and a load
+range of `4000h..4FFFh`. Software stepping rejects unsafe successors rather
+than executing outside that range.
 
 This phase is still about ordinary assembly. It should not depend on a game
 runtime, but it should be good enough for game routines.
@@ -286,8 +357,8 @@ projects, and optional game runtime APIs.
 
 ## Near-Term Consequence
 
-The next TecMate implementation work should continue to build general services,
-but prefer decisions that help the self-hosted assembler path:
+Further TecMate work should continue to build general services, while extending
+the self-hosted toolchain deliberately:
 
 - stable shell command boundaries
 - VDU text output for diagnostics and assembler errors
