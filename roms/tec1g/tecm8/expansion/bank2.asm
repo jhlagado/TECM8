@@ -46,6 +46,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsSummarizeCatalogImpl
         cp TFS_SVC_NEXT_CATALOG
         jp z,tecfsNextCatalogImpl
+        cp TFS_SVC_OBJECT
+        jp z,tecfsObjectUnavailable
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -94,6 +96,11 @@ tecfsSummarizeCatalog:
 
 tecfsNextCatalog:
         jp tecfsNextCatalogImpl
+
+tecfsObjectUnavailable:
+        ld a,NUCLEUS_STATUS_UNAVAILABLE
+        scf
+        ret
 
 BankAbiNestedTarget:
         ld c,MON_SYS_GET

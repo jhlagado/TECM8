@@ -658,5 +658,8 @@ Tecm8ServiceRegistry:
         .db     ABI_PROBE_NESTED,VDU_BANK
         .dw     VDU_ENTRY
         .db     ABI_PROBE_NESTED
+        .db     NUCLEUS_OBJECT,TFS_BANK
+        .dw     TFS_ADDR
+        .db     TFS_SVC_OBJECT
 Tecm8ServiceRegistryEnd:
         .db     SVC_REG_END

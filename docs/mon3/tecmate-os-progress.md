@@ -5,7 +5,7 @@ The purpose of the recent ROM work was not to build the whole OS at once. It was
 to create the stable ROM and bank machinery that lets TecMate grow without
 forcing every new system function into the already-full fixed monitor ROM.
 
-## What Has Been Built
+## Current Implementation
 
 The expansion ROM now has a banked service structure.
 
@@ -139,21 +139,25 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-3234 occupied bytes currently
-3234 bytes total high-water span across all banks
+3248 occupied bytes currently
+3248 bytes total high-water span across all banks
 ```
 
-The current shell/TEC-FS `dir` milestone keeps the expansion footprint small:
+The native object-service transport keeps the expansion footprint small:
 
 ```text
-bank 0 span: 1229 -> 1284 bytes
-bank 2 span: 1008 -> 1042 bytes
-expansion total span: 3145 -> 3234 bytes
+bank 0 span: 1284 -> 1289 bytes
+bank 2 span: 1042 -> 1051 bytes
+expansion total span: 3234 -> 3248 bytes
+fixed monitor occupied: 9007 -> 9017 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
-The latest compact planning loop did not grow the ROM image. It tightened the
-proof and documentation around the next MVP path:
+The native object-service transport reserves public selector `91h`, routes it
+through bank 0 to bank 2, and returns a canonical unavailable result until the
+storage provider is installed. The same increment makes the installed expansion
+service path preserve `IX` and `IY`. The existing compact planning constraints
+remain in force:
 
 - unknown shell commands are now proof-backed as `ERRCMD` / `NONE`, with target
   and result fields clear
@@ -175,16 +179,16 @@ Current size checkpoint:
 
 ```text
 fixed monitor span: 16384/16384 bytes
-bank 0 span: 1284 bytes, softFree=764
+bank 0 span: 1289 bytes, softFree=759
 bank 1 span: 568 bytes, softFree=3528
-bank 2 span: 1042 bytes, softFree=3054
+bank 2 span: 1051 bytes, softFree=3045
 bank 3 span: 95 bytes, softFree=929
 bank 4 span: 68 bytes, softFree=956
 bank 5 span: 40 bytes, softFree=984
 bank 6 span: 47 bytes, softFree=977
 bank 7 span: 45 bytes, softFree=8147
 bank 8 span: 45 bytes, softFree=4051
-expansion total span: 3234 bytes, softFree=29534
+expansion total span: 3248 bytes, softFree=29520
 ```
 
 Manual checkpoint:
@@ -239,7 +243,7 @@ The next work should keep the same MVP bias:
 5. Treat GLCD as a compatibility boundary and low-priority optional bank unless
    it blocks the core editor/TEC-FS/assembler path.
 
-## Why This Builds Forward
+## Forward Path
 
 The system shape is now:
 

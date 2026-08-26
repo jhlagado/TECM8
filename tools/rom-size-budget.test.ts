@@ -111,7 +111,7 @@ test('ROM size delta command prints span and occupied deltas', () => {
 
   assert.match(output, /# TecMate ROM Size Delta/);
   assert.match(output, /\| Area \| Current Span \| Span Delta \| Current Occupied \| Occupied Delta \|/);
-  assert.match(output, /\| Fixed monitor \| 16384 \| 0 \| 9007 \| 0 \|/);
+  assert.match(output, /\| Fixed monitor \| 16384 \| 0 \| 9017 \| 0 \|/);
   assert.match(output, /\| Expansion total \| \d+ \| [-+0-9]+ \| \d+ \| [-+0-9]+ \|/);
   assert.match(output, /\| Bank 0 Shell, launcher, registry \|/);
 });

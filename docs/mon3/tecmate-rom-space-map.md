@@ -60,9 +60,9 @@ Terms:
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `1284` | `1284` | `8504h` | `15100` |
+| 0 | Shell, launcher, registry | `1289` | `1289` | `8509h` | `15095` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `1042` | `1042` | `8412h` | `15342` |
+| 2 | TEC-FS boundary and block mapper | `1051` | `1051` | `841Bh` | `15333` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
@@ -70,16 +70,17 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `3234`
+Expansion occupied bytes: `3248`
 
-Expansion high-water span total: `3234`
+Expansion high-water span total: `3248`
 
-Latest shell/TEC-FS `dir` delta:
+Latest native object-service transport delta:
 
 ```text
-bank 0 span: 1229 -> 1284 bytes
-bank 2 span: 1008 -> 1042 bytes
-expansion total span: 3145 -> 3234 bytes
+bank 0 span: 1284 -> 1289 bytes
+bank 2 span: 1042 -> 1051 bytes
+expansion total span: 3234 -> 3248 bytes
+fixed monitor occupied: 9007 -> 9017 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

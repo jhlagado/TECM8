@@ -271,7 +271,7 @@ NMI:
 ;API Call Routine
 ; Input:   C = Function index
 ;          A, B, DE, HL = Parameters if needed
-; Corrupt: IX; expansion service dispatch also corrupts IY
+; Corrupt: IX for fixed API-table calls. Expansion services preserve IX/IY.
 APICall:
         push af             ;save AF
         ld a,c              ;Check index is within range
@@ -3256,6 +3256,8 @@ validateExpansionServiceVectorClear:
 
 expansionServiceBridge:
         pop af
+        push ix
+        push iy
         push af
         push bc
         push de
@@ -3300,6 +3302,9 @@ expansionServiceBridgeReturn:
         and EXPAND
         ld (XPND_MODE),a
         pop af
+expansionServiceBridgeRestoreIndex:
+        pop iy
+        pop ix
         ret
 expansionServiceBridgeSelectError:
         pop de
@@ -3308,7 +3313,7 @@ expansionServiceBridgeSelectError:
         pop af
         ld a,0BH
         scf
-        ret
+        jr expansionServiceBridgeRestoreIndex
 expansionServiceBridgeMissing:
         pop hl
         pop de
@@ -3316,7 +3321,7 @@ expansionServiceBridgeMissing:
         pop af
         ld a,0FFH
         scf
-        ret
+        jr expansionServiceBridgeRestoreIndex
 
 discoverExpansion:
         call clearExpansionVectors

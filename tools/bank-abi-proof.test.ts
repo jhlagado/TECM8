@@ -26,8 +26,9 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(proof, /callService GLC_ENTRY/);
   assert.match(proof, /callService SHL_ENTRY/);
   assert.match(proof, /callService SHL_RUN_COMMAND/);
+  assert.match(proof, /ld ix,0x1357[\s\S]*ld iy,0x2468[\s\S]*callService NUCLEUS_OBJECT/);
   assert.match(proof, /callService 0x7F[\s\S]*ld \(ABI_TRACE_BASE\+21\),a[\s\S]*jp nc,BankAbiFarJumpReturnedFail/);
-  assert.match(runner, /loadTec1gExpansionRomImage/);
+  assert.match(runner, /expansionBytes\.slice/);
   assert.match(runner, /applyExpansionRomMemory/);
   assert.match(runner, /function assertProofPassed/);
   assert.match(runner, /resultAddr=0x/);
@@ -41,6 +42,9 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(runner, /farCall target sees original A argument/);
   assert.match(runner, /farCall preserved stack pointer low byte/);
   assert.match(runner, /farCall preserved stack pointer high byte/);
+  assert.match(runner, /named-object transport preserved IX low byte/);
+  assert.match(runner, /named-object transport restored caller bank/);
+  assert.match(runner, /named-object transport preserved request operation canary/);
   assert.match(runner, /returning farJump target did not resume after farJump op/);
   assert.match(runner, /service registry dispatched VDU init/);
   assert.match(runner, /service registry dispatched GLCD boundary entry/);

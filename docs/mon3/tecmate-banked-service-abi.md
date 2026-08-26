@@ -16,8 +16,9 @@ through the fixed-ROM RST 10h bank services and the AZM helpers:
 service selector, and `HL` for the target address while entering the monitor
 trampoline. The helper saves caller `AF`, `DE`, and `HL` before loading those
 control values, and the fixed-ROM service restores them before entering the
-banked target. `B`, `C`, `IX`, and `IY` are gateway scratch. Larger service
-arguments still use small RAM parameter blocks.
+banked target. `B` and `C` are gateway scratch. Fixed bank calls may also use
+`IX` and `IY`, but the installed expansion-service path preserves both index
+registers. Larger service arguments still use small RAM parameter blocks.
 
 ## Fixed Bank Calls
 
@@ -113,6 +114,7 @@ published as fixed callable addresses.
 | `SHL_RENDER_STATUS` | `82h` | Resident shell VDU action/status-line publisher service ID. |
 | `SHL_RENDER_RESULT` | `83h` | Resident shell VDU command-result status-line publisher service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
+| `NUCLEUS_OBJECT` | `91h` | Private named-object transport. The current bank-2 target returns status `02h` (unavailable) without changing the request or its buffers. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 The registry table is laid out as repeated five-byte records:
@@ -770,6 +772,13 @@ TEC-FS status codes:
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
+The public `NUCLEUS_OBJECT` selector routes a 16-byte named-object request to
+bank 2. The transport currently returns `A=02h` with carry set for every
+request. It preserves `IX`, `IY`, the caller's stack depth, and the selected
+bank, and it does not change request or transfer-buffer bytes. Object lookup,
+transfer, and publication remain unavailable until the bounded tool-object
+store is implemented.
+
 ## Bank 3: RTC Boundary
 
 Physical bank 3 currently exposes the RTC service/tool boundary. The hardware
@@ -1022,9 +1031,9 @@ reused accidentally by service implementations.
 | `ABI_FARJUMP_LANDED` | `4300h` | RAM landing routine for the far-jump proof. |
 | `ABI_PROBE_REQUEST` | `311Ch` | RAM selector used when a proof must preserve caller `A`. |
 | `ABI_PROBE_NESTED` | `90h` | Proof selector for nested bank-call dispatch. |
-| `ABI_PROBE_PRESERVE` | `91h` | Proof selector for register-preservation dispatch. |
-| `ABI_PROBE_FARJUMP` | `92h` | Proof selector for non-returning far-jump dispatch. |
-| `ABI_PROBE_RETURNING_FARJUMP` | `93h` | Proof selector for far-jump return-suppression dispatch. |
+| `ABI_PROBE_PRESERVE` | `F1h` | Bank-local proof selector for register-preservation dispatch. |
+| `ABI_PROBE_FARJUMP` | `F2h` | Bank-local proof selector for non-returning far-jump dispatch. |
+| `ABI_PROBE_RETURNING_FARJUMP` | `F3h` | Bank-local proof selector for far-jump return-suppression dispatch. |
 
 The bank ABI proof deliberately does not publish fixed expansion-ROM target
 addresses. It enters banks through their bank origin or the installed service

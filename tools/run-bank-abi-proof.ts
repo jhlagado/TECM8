@@ -145,9 +145,6 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
   const { createTec1gMemoryHooks, applyExpansionRomMemory } = requireFromDebug80(
     'out/platforms/tec1g/tec1g-memory.js',
   ) as { createTec1gMemoryHooks: Function; applyExpansionRomMemory: Function };
-  const { loadTec1gExpansionRomImage } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-expansion-rom.js',
-  ) as { loadTec1gExpansionRomImage: Function };
   const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
     createZ80Runtime: Function;
   };
@@ -168,7 +165,13 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
     config.romRanges,
     tec1gRuntime.state.system,
   );
-  const expansionImage = loadTec1gExpansionRomImage(EXPANSION_ROM_PATH);
+  const expansionBytes = new Uint8Array(readFileSync(EXPANSION_ROM_PATH));
+  const expansionImage = {
+    banks: Array.from({ length: Math.ceil(expansionBytes.length / 0x4000) }, (_, index) =>
+      expansionBytes.slice(index * 0x4000, (index + 1) * 0x4000),
+    ),
+    memory: new Uint8Array(0x10000),
+  };
   applyExpansionRomMemory(hooks.expandBanks, expansionImage);
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
@@ -183,18 +186,24 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
   return { runtime, platformRuntime: tec1gRuntime };
 }
 
-function runUntilHalt(runtime: Runtime, platformRuntime: PlatformRuntime): number {
+function runUntilHalt(
+  runtime: Runtime,
+  platformRuntime: PlatformRuntime,
+): { instructions: number; tStates: number } {
   const maxInstructions = 1_000_000;
   const pcHistory: number[] = [];
+  let tStates = 0;
   for (let i = 0; i < maxInstructions; i += 1) {
     pcHistory.push(runtime.cpu.pc & 0xffff);
     if (pcHistory.length > 64) {
       pcHistory.shift();
     }
     const result = runtime.step();
-    platformRuntime.recordCycles(result.cycles ?? 0);
+    const cycles = result.cycles ?? 0;
+    tStates += cycles;
+    platformRuntime.recordCycles(cycles);
     if (runtime.cpu.halted || result.halted) {
-      return i + 1;
+      return { instructions: i + 1, tStates };
     }
   }
   const sp = runtime.cpu.sp & 0xffff;
@@ -246,11 +255,12 @@ function assertProofPassed(
 async function main(): Promise<void> {
   const { bytes, symbols } = await compileProof();
   const { runtime, platformRuntime } = loadRuntime(bytes);
-  const instructions = runUntilHalt(runtime, platformRuntime);
+  const { instructions, tStates } = runUntilHalt(runtime, platformRuntime);
 
   const resultAddr = symbolAddress(symbols, 'ResultMarker');
   const traceBase = symbolNumber(symbols, 'ABI_TRACE_BASE');
-  const trace = readTrace(runtime, traceBase, 79);
+  const trace = readTrace(runtime, traceBase, 91);
+  const objectRequest = readTrace(runtime, symbolNumber(symbols, 'ObjectRequestCanary'), 4);
   const shellStatusBuffer = symbolNumber(symbols, 'SHL_STATUS_BUFFER');
   const shellStatusCapacity = symbolNumber(symbols, 'SHL_STATUS_CAPACITY');
   const statusBytes = readTrace(runtime, shellStatusBuffer, shellStatusCapacity);
@@ -342,6 +352,20 @@ async function main(): Promise<void> {
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');
   assertEqual(trace[29], 0xB6, 'service bridge preserved caller B into bank 0');
+  assertEqual(trace[79], 0x02, 'named-object transport returned unavailable');
+  assertEqual(trace[80], 0x01, 'named-object transport returned carry set');
+  assertEqual(trace[83], trace[81], 'named-object transport preserved stack pointer low byte');
+  assertEqual(trace[84], trace[82], 'named-object transport preserved stack pointer high byte');
+  assertEqual(trace[85], 0x57, 'named-object transport preserved IX low byte');
+  assertEqual(trace[86], 0x13, 'named-object transport preserved IX high byte');
+  assertEqual(trace[87], 0x68, 'named-object transport preserved IY low byte');
+  assertEqual(trace[88], 0x24, 'named-object transport preserved IY high byte');
+  assertEqual(trace[89], INITIAL_SYS_CTRL, 'named-object transport restored caller bank');
+  assertEqual(trace[90], 0x02, 'named-object transport repeated unavailable result');
+  assertEqual(objectRequest[0], 0x10, 'named-object transport preserved request size');
+  assertEqual(objectRequest[1], 0x01, 'named-object transport preserved request ABI');
+  assertEqual(objectRequest[2], 0xA5, 'named-object transport preserved request operation canary');
+  assertEqual(objectRequest[3], 0x5A, 'named-object transport preserved request flags canary');
 
   writeFileSync(
     LAST_RUN,
@@ -349,6 +373,7 @@ async function main(): Promise<void> {
       {
         result: 'ok',
         instructions,
+        tStates,
         resultMarker: result,
         trace,
         finalPc: runtime.cpu.pc & 0xffff,
@@ -360,7 +385,7 @@ async function main(): Promise<void> {
     )}\n`,
   );
 
-  console.log(`bank ABI proof passed in ${instructions} instructions`);
+  console.log(`bank ABI proof passed in ${instructions} instructions and ${tStates} T-states`);
 }
 
 main().catch((error: unknown) => {

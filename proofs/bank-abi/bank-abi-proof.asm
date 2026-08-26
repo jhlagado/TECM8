@@ -15,7 +15,7 @@ PROOF_FAIL_FARJUMP_LOCAL_RET .equ   0xE2
 .routine out carry,zero clobbers sign,parity,halfCarry,A,B,C,D,E,H,L
 Start:
         ld hl,ABI_TRACE_BASE
-        ld b,64
+        ld b,96
 ClearTrace:
         ld (hl),0
         inc hl
@@ -229,6 +229,46 @@ ClearTrace:
         ld (ABI_TRACE_BASE+40),a
         ld a,(INP_PARAM_BANK)
         ld (ABI_TRACE_BASE+41),a
+
+        ld ix,0x1357
+        ld iy,0x2468
+        ld hl,0
+        add hl,sp
+        ld a,l
+        ld (ABI_TRACE_BASE+81),a
+        ld a,h
+        ld (ABI_TRACE_BASE+82),a
+        ld hl,ObjectRequestCanary
+        callService NUCLEUS_OBJECT
+        ld (ABI_TRACE_BASE+79),a
+        ld a,0
+        adc a,0
+        ld (ABI_TRACE_BASE+80),a
+        ld hl,0
+        add hl,sp
+        ld a,l
+        ld (ABI_TRACE_BASE+83),a
+        ld a,h
+        ld (ABI_TRACE_BASE+84),a
+        push ix
+        pop hl
+        ld a,l
+        ld (ABI_TRACE_BASE+85),a
+        ld a,h
+        ld (ABI_TRACE_BASE+86),a
+        push iy
+        pop hl
+        ld a,l
+        ld (ABI_TRACE_BASE+87),a
+        ld a,h
+        ld (ABI_TRACE_BASE+88),a
+        ld c,MON_SYS_GET
+        rst 10H
+        ld (ABI_TRACE_BASE+89),a
+        ld hl,ObjectRequestCanary
+        callService NUCLEUS_OBJECT
+        ld (ABI_TRACE_BASE+90),a
+
         ld a,0xA5
         ld b,0xB6
         callService 0x7F
@@ -267,6 +307,9 @@ BankAbiFarJumpLanded:
 
 ResultMarker:
         .db     0
+
+ObjectRequestCanary:
+        .db     0x10,0x01,0xA5,0x5A
 
 ProfileCommand:
         .db     "profile",0
