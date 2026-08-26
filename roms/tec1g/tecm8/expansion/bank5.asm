@@ -56,7 +56,8 @@ tecfsMon3FileRead:
         ret c
         ld a,2
         ld (TFS_MON3_ERROR_STAGE),a
-        call readSector
+        ld hl,MON_DISK_BUFFER
+        call IDEreadSector
         jp c,tecfsMon3FileError
         ld hl,MON_DISK_BUFFER
         ld de,(TFS_MON3_BUFFER_PTR)
@@ -67,23 +68,22 @@ tecfsMon3FileRead:
 tecfsMon3FileWrite:
         call tecfsMon3FilePrepare
         ret c
-        ; MON3 records the physical target during readSector, so prime that
-        ; state from the same file offset before replacing the sector.
-        ld a,2
-        ld (TFS_MON3_ERROR_STAGE),a
-        call readSector
-        jp c,tecfsMon3FileError
+        push bc
+        push de
         ld hl,(TFS_MON3_BUFFER_PTR)
         ld de,MON_DISK_BUFFER
         ld bc,0x0200
         ldir
+        pop de
+        pop bc
         ld a,3
         ld (TFS_MON3_ERROR_STAGE),a
-        call writeSector
+        ld hl,MON_DISK_BUFFER
+        call IDEwriteSector
         jp c,tecfsMon3FileError
         jp tecfsMon3FileOk
 
-.routine out A,carry,zero clobbers sign,parity,halfCarry,B,C,D,E,H,L
+.routine out A,BC,DE,carry,zero clobbers sign,parity,halfCarry,H,L,IX,IY
 tecfsMon3FilePrepare:
         ld hl,(TFS_PARAM_BUFFER_LO)
         ld a,h
@@ -95,7 +95,41 @@ tecfsMon3FilePrepare:
         ld hl,Tecm8Mon3VolumeName
         call openFile
         jp c,tecfsMon3FileError
-        call tecfsMon3SectorToOffset
+        ld hl,(TFS_PARAM_SECTOR_2)
+        ld a,h
+        or l
+        jr nz,tecfsMon3FileBadSector
+        ld a,(TFS_PARAM_SECTOR_1)
+        cp 0x20
+        jr nc,tecfsMon3FileBadSector
+        ld a,(C_FILENO)
+        ld l,a
+        ld h,0
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld de,RFC_LIST
+        add hl,de
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        inc hl
+        ld c,(hl)
+        inc hl
+        ld b,(hl)
+        call FATgetSector
+        push ix
+        pop de
+        push hl
+        pop bc
+        ld hl,(TFS_PARAM_SECTOR_0)
+        add hl,de
+        ex de,hl
+        ld hl,0
+        adc hl,bc
+        push hl
+        pop bc
+        or a
         ret
 
 tecfsMon3FileBadBuffer:
@@ -108,27 +142,6 @@ tecfsMon3FilePublishError:
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
         scf
-        ret
-
-; Convert a little-endian 32-bit sector number to MON3's HLDE byte offset.
-; Reject any value whose shift by nine would overflow 32 bits.
-.routine out A,DE,HL,carry,zero clobbers sign,parity,halfCarry
-tecfsMon3SectorToOffset:
-        ld a,(TFS_PARAM_SECTOR_3)
-        or a
-        jr nz,tecfsMon3FileBadSector
-        ld a,(TFS_PARAM_SECTOR_0)
-        add a,a
-        ld d,a
-        ld e,0
-        ld a,(TFS_PARAM_SECTOR_1)
-        rla
-        ld l,a
-        ld a,(TFS_PARAM_SECTOR_2)
-        rla
-        ld h,a
-        jr c,tecfsMon3FileBadSector
-        or a
         ret
 
 tecfsMon3FileBadSector:
@@ -147,8 +160,9 @@ tecfsMon3FileOk:
 Tecm8Mon3VolumeName:
         .db     "VOLUME.TM8",0
 
-; Relocated MON3 storage package. Only openFile, readSector, and writeSector
-; are exported by this bank; the legacy display paths are inert here.
+; Relocated MON3 storage package. The bank exports its sector wrapper; the
+; object path also uses its private file lookup and direct IDE routines.
+; Legacy display paths are inert here.
 MCB_SD_CARD     .equ    0x80
 SDIO            .equ    0xFD
 loadHEX:

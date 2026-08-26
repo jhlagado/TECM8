@@ -352,7 +352,7 @@ async function main(): Promise<void> {
   assertEqual(trace[27], trace[25], 'farCall preserved stack pointer high byte');
   assertEqual(trace[28], 0xA5, 'service bridge preserved caller A into bank 0');
   assertEqual(trace[29], 0xB6, 'service bridge preserved caller B into bank 0');
-  assertEqual(trace[79], 0x02, 'named-object transport returned unavailable');
+  assertEqual(trace[79], 0x01, 'named-object transport rejected malformed request');
   assertEqual(trace[80], 0x01, 'named-object transport returned carry set');
   assertEqual(trace[83], trace[81], 'named-object transport preserved stack pointer low byte');
   assertEqual(trace[84], trace[82], 'named-object transport preserved stack pointer high byte');
@@ -361,7 +361,7 @@ async function main(): Promise<void> {
   assertEqual(trace[87], 0x68, 'named-object transport preserved IY low byte');
   assertEqual(trace[88], 0x24, 'named-object transport preserved IY high byte');
   assertEqual(trace[89], INITIAL_SYS_CTRL, 'named-object transport restored caller bank');
-  assertEqual(trace[90], 0x02, 'named-object transport repeated unavailable result');
+  assertEqual(trace[90], 0x01, 'named-object transport repeated invalid result');
   assertEqual(objectRequest[0], 0x10, 'named-object transport preserved request size');
   assertEqual(objectRequest[1], 0x01, 'named-object transport preserved request ABI');
   assertEqual(objectRequest[2], 0xA5, 'named-object transport preserved request operation canary');

@@ -62,17 +62,17 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `1289` | `1289` | `8509h` | `15095` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `1052` | `1052` | `841Ch` | `15332` |
+| 2 | TEC-FS boundary and block mapper | `3052` | `3052` | `8BECh` | `13332` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
-| 5 | TEC-FS monitor-sector bridge | `2871` | `2871` | `8B37h` | `13513` |
+| 5 | TEC-FS monitor-sector bridge | `2895` | `2895` | `8B4Fh` | `13489` |
 | 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `6080`
+Expansion occupied bytes: `8104`
 
-Expansion high-water span total: `6080`
+Expansion high-water span total: `8104`
 
 Latest MON3 VOLUME.TM8 sector-provider delta:
 
@@ -84,6 +84,20 @@ expansion occupied: 3248 -> 6080 bytes
 expansion total span: 3248 -> 6080 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
+
+Latest bounded named-object-provider delta, after its local compression pass:
+
+```text
+bank 2 occupied/span: 1052 -> 3052 bytes (+2000)
+bank 5 occupied/span: 2871 -> 2895 bytes (+24)
+expansion occupied/span: 6080 -> 8104 bytes (+2024)
+bank 0 and fixed monitor: unchanged
+compiler cores: unchanged
+```
+
+The first complete assembly measured 3152 bytes in bank 2. Shared descriptor
+validation/checksum/I/O tails, compact operation dispatch, and sector arithmetic
+removed 100 bytes before retention.
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later

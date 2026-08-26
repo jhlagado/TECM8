@@ -14,3 +14,21 @@ extern writeSector
 out carry
 clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
 end
+
+extern IDEreadSector
+in BC,DE,HL
+out carry
+clobbers A,BC,DE,HL,IX,IY,carry,zero,sign,parity,halfCarry
+end
+
+extern IDEwriteSector
+in BC,DE,HL
+out carry
+clobbers A,BC,DE,HL,IX,IY,carry,zero,sign,parity,halfCarry
+end
+
+extern FATgetSector
+in BC,DE
+out HL,IX
+clobbers A,BC,DE,HL,IX,carry,zero,sign,parity,halfCarry
+end

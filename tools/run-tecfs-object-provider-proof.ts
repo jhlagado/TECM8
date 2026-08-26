@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Prove the real bank-5 VOLUME.TM8 sector driver against Debug80 SD I/O. */
+/** Prove native named-object ABI 1 against the real MON3/SD provider chain. */
 
 const { execFileSync } = require('node:child_process');
 const { readFileSync, writeFileSync } = require('node:fs');
@@ -7,21 +7,24 @@ const { resolve } = require('node:path');
 
 const ROOT = resolve(__dirname, '..');
 const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
-const SOURCE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-mon3-sector-proof.asm');
-const IMAGE = resolve(ROOT, 'build/proofs/tecfs-mon3-sector.img');
-const MANIFEST = resolve(ROOT, 'build/proofs/tecfs-mon3-sector.json');
+const SOURCE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-object-provider-proof.asm');
+const IMAGE = resolve(ROOT, 'build/proofs/tecfs-object-provider.img');
+const MANIFEST = resolve(ROOT, 'build/proofs/tecfs-object-provider.json');
 const MONITOR = resolve(ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const EXPANSION = resolve(ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
+const BANK5_MAP = resolve(ROOT, 'build/roms/tec1g/tecm8/expansion/bank5.d8.json');
 const APP_START = 0x4000;
 const PROOF_RESULT = 0x3a10;
 const PROOF_PHASE = 0x3a11;
 const PROOF_PASS = 0x42;
+const INITIAL_SP = 0x7ff0;
 const MCB = 0x0888;
 const MCB_SD_CARD = 0x80;
 const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
-const INITIAL_SP = 0x7ff0;
+const DESCRIPTOR_SECTOR = 81;
+const DATA_SECTOR = 2048 + 128;
 
 function requireDebug80(path: string): unknown {
   return require(resolve(DEBUG80_ROOT, path));
@@ -33,6 +36,13 @@ function prepareImage(): void {
     ['--experimental-strip-types', resolve(ROOT, 'tools/create-storage-proof-image.ts'), IMAGE],
     { cwd: ROOT, stdio: 'ignore' },
   );
+  const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+  const image = readFileSync(IMAGE);
+  const { createVolumeImage } = require(resolve(ROOT, 'tools/tm8/format.ts')) as {
+    createVolumeImage: () => Buffer;
+  };
+  createVolumeImage().copy(image, manifest.volume_start_byte_offset);
+  writeFileSync(IMAGE, image);
 }
 
 async function compileProof(): Promise<Uint8Array> {
@@ -60,6 +70,21 @@ function expansionImage(): { banks: Uint8Array[]; memory: Uint8Array } {
     ),
     memory: new Uint8Array(0x10000),
   };
+}
+
+function symbolAddress(mapPath: string, name: string): number {
+  const map = JSON.parse(readFileSync(mapPath, 'utf8'));
+  for (const file of Object.values(map.files) as Array<{ symbols?: Array<Record<string, unknown>> }>) {
+    const symbol = file.symbols?.find((item) => item.name === name && item.kind === 'label');
+    if (typeof symbol?.address === 'number') return symbol.address;
+  }
+  throw new Error(`missing ${name} in ${mapPath}`);
+}
+
+function sum(bytes: Buffer): number {
+  let result = 0;
+  for (const byte of bytes) result = (result + byte) & 0xff;
+  return result;
 }
 
 async function main(): Promise<void> {
@@ -114,7 +139,8 @@ async function main(): Promise<void> {
     config.romRanges,
     platform.state.system,
   );
-  applyExpansionRomMemory(hooks.expandBanks, expansionImage());
+  const expansion = expansionImage();
+  applyExpansionRomMemory(hooks.expandBanks, expansion);
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
   runtime.hardware.forceMemWrite = hooks.forceMemWrite;
@@ -126,9 +152,22 @@ async function main(): Promise<void> {
   runtime.cpu.sp = INITIAL_SP;
   runtime.cpu.pc = APP_START;
 
+  const writeEntry = symbolAddress(BANK5_MAP, 'tecfsMon3FileWrite') - 0x8000;
+  const originalWriteEntry = hooks.expandBanks[5]!.slice(writeEntry, writeEntry + 4);
+  let writeFaultActive = false;
+
   let instructions = 0;
   let tStates = 0;
-  for (; instructions < 20_000_000; instructions += 1) {
+  for (; instructions < 300_000_000; instructions += 1) {
+    const phase = runtime.hardware.memory[PROOF_PHASE];
+    const wantWriteFault = phase === 0x30 || phase === 0x31;
+    if (wantWriteFault !== writeFaultActive) {
+      hooks.expandBanks[5]!.set(
+        wantWriteFault ? Uint8Array.from([0x3e, 0x06, 0x37, 0xc9]) : originalWriteEntry,
+        writeEntry,
+      );
+      writeFaultActive = wantWriteFault;
+    }
     const step = runtime.step();
     const cycles = step.cycles ?? 0;
     tStates += cycles;
@@ -137,12 +176,10 @@ async function main(): Promise<void> {
   }
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
-    const hexBytes = (start: number, count: number): string =>
-      Array.from(runtime.hardware.memory.slice(start, start + count) as Uint8Array)
-        .map((value) => value.toString(16).padStart(2, '0'))
-        .join('');
+    const request = Array.from(runtime.hardware.memory.slice(0x5800, 0x5810));
+    const handles = Array.from(runtime.hardware.memory.slice(0x3c80, 0x3cd0));
     throw new Error(
-      `proof failed: marker=0x${marker.toString(16)} phase=${runtime.hardware.memory[PROOF_PHASE]} pc=0x${runtime.cpu.pc.toString(16)} sp=0x${runtime.cpu.sp.toString(16)} instructions=${instructions} status=0x${runtime.hardware.memory[0x3b42].toString(16)} error=0x${runtime.hardware.memory[0x3b43].toString(16)} stage=${runtime.hardware.memory[0x3c52]} file=${runtime.hardware.memory[0x0897]} rfc=${hexBytes(0x0430,16)} root=${hexBytes(0x05f8,4)} data=${hexBytes(0x05fc,4)} next=${hexBytes(0x05c9,4)}`,
+      `proof failed: marker=0x${marker.toString(16)} phase=${runtime.hardware.memory[PROOF_PHASE]} status=0x${runtime.hardware.memory[0x3a12].toString(16)} pc=0x${runtime.cpu.pc.toString(16)} sp=0x${runtime.cpu.sp.toString(16)} instructions=${instructions} scan=${runtime.hardware.memory[0x3c62]} half=${runtime.hardware.memory[0x3c65]} sector=${runtime.hardware.memory[0x3b4f].toString(16)}${runtime.hardware.memory[0x3b4e].toString(16).padStart(2, '0')} stage=${runtime.hardware.memory[0x3c52]} request=${request.join(',')} handles=${handles.join(',')}`,
     );
   }
   if (runtime.cpu.sp !== INITIAL_SP) {
@@ -152,16 +189,37 @@ async function main(): Promise<void> {
   }
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
   const image = readFileSync(IMAGE);
-  const offset = manifest.volume_start_byte_offset + 7 * 512;
-  const observed = Array.from(image.subarray(offset, offset + 5));
-  const expected = [0x00, 0x1a, 0x7f, 0x80, 0xff];
-  if (observed.some((value, index) => value !== expected[index])) {
-    throw new Error(`host image mismatch: ${observed.join(',')}`);
+  const volume = manifest.volume_start_byte_offset;
+  const descriptor = image.subarray(
+    volume + DESCRIPTOR_SECTOR * 512,
+    volume + (DESCRIPTOR_SECTOR + 1) * 512,
+  );
+  const expectedName = Buffer.from('src/alpha.nu', 'ascii');
+  if (descriptor.subarray(0, 4).toString('ascii') !== 'NTO1') {
+    throw new Error('generation-two descriptor magic is missing');
   }
-  const report = { result: 'ok', instructions: instructions + 1, tStates, observed };
-  writeFileSync(resolve(ROOT, 'build/proofs/tecfs-mon3-sector-last-run.json'), `${JSON.stringify(report, null, 2)}\n`);
+  if (descriptor.readUInt16LE(6) !== 2 || descriptor[8] !== 1) {
+    throw new Error('generation-two descriptor selection is incorrect');
+  }
+  if (descriptor.readUInt16LE(10) !== 5) {
+    throw new Error('generation-two descriptor length is incorrect');
+  }
+  if (!descriptor.subarray(12, 12 + expectedName.length).equals(expectedName)) {
+    throw new Error('descriptor name is incorrect');
+  }
+  if (sum(descriptor) !== 0) throw new Error('descriptor checksum is invalid');
+  const observed = image.subarray(volume + DATA_SECTOR * 512, volume + DATA_SECTOR * 512 + 5);
+  const expected = Buffer.from([0x00, 0x1a, 0x7f, 0x80, 0xff]);
+  if (!observed.equals(expected)) {
+    throw new Error(`committed binary mismatch: ${Array.from(observed).join(',')}`);
+  }
+  const report = { result: 'ok', instructions: instructions + 1, tStates };
+  writeFileSync(
+    resolve(ROOT, 'build/proofs/tecfs-object-provider-last-run.json'),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
   console.log(
-    `TEC-FS MON3 sector proof passed in ${report.instructions} instructions and ${tStates} T-states`,
+    `TEC-FS object provider proof passed in ${report.instructions} instructions and ${tStates} T-states`,
   );
 }
 

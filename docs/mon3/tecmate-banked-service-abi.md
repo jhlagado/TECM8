@@ -114,7 +114,7 @@ published as fixed callable addresses.
 | `SHL_RENDER_STATUS` | `82h` | Resident shell VDU action/status-line publisher service ID. |
 | `SHL_RENDER_RESULT` | `83h` | Resident shell VDU command-result status-line publisher service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
-| `NUCLEUS_OBJECT` | `91h` | Private named-object transport. The current bank-2 target returns status `02h` (unavailable) without changing the request or its buffers. |
+| `NUCLEUS_OBJECT` | `91h` | Private named-object transport backed by the bounded tool-object arena in `VOLUME.TM8`. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 The registry table is laid out as repeated five-byte records:
@@ -550,8 +550,10 @@ TEC-FS parameter block:
 | `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
 
 `TFS_MOUNT` installs bank 5's `TFS_MON3_FILE_DRIVER` by default. That driver
-opens the contiguous FAT32 `VOLUME.TM8` file for each operation and transfers
-all 512 bytes without text interpretation. Tests may replace the driver fields
+opens the required contiguous FAT32 `VOLUME.TM8` file for each operation,
+resolves its first physical sector, adds the bounded 0–8191 relative sector,
+and transfers all 512 bytes without text interpretation. It does not repeatedly
+walk the FAT chain to reach high tool-data sectors. Tests may replace the driver fields
 with the deterministic RAM bridge or another contract-compatible provider.
 
 The first directory/list primitive is deliberately small. `TFS_SVC_DECODE_CATALOG`
@@ -777,12 +779,43 @@ TEC-FS status codes:
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
-The public `NUCLEUS_OBJECT` selector routes a 16-byte named-object request to
-bank 2. The transport currently returns `A=02h` with carry set for every
-request. It preserves `IX`, `IY`, the caller's stack depth, and the selected
-bank, and it does not change request or transfer-buffer bytes. Object lookup,
-transfer, and publication remain unavailable until the bounded tool-object
-store is implemented.
+The public `NUCLEUS_OBJECT` selector routes the existing 16-byte named-object
+ABI v1 request to bank 2. It implements `openRead`, `beginWrite`, `read`,
+`write`, `rewind`, `seek`, `close`, `commit`, and `abort`. Carry clear is
+success. Carry set returns the nonzero Nucleus status in `A`. The public banked
+gateway restores `IX`, `IY`, `SP`, and the caller's selected expansion bank.
+
+The provider owns eight logical object slots and eight tokenised RAM handles.
+Each slot has two 64 KiB data generations. A writer uses the inactive
+generation; `commit` publishes it by writing one descriptor sector after all
+data writes succeed. The previous descriptor and data generation remain valid
+until that final write succeeds. `abort`, including abort of a writer poisoned
+by a failed data write, leaves the committed generation unchanged. A new writer
+is rejected while it would overwrite a generation still held by an open reader.
+
+Object names are one to 255 raw bytes. Object contents are byte-transparent.
+The transfer path does not interpret `00h`, `1Ah`, `7Fh`, `80h`, or `FFh`.
+Objects can contain at most 65,535 bytes. Reads may be short at physical object
+EOF and return their byte count in the request result. EOF itself is a
+successful zero-byte read. The bounded provider supports rewind and seeks from
+zero through the current logical length; larger or 32-bit seeks return
+`NucleusStatusUnsupported`.
+
+`VOLUME.TM8` blocks 10–11 and 256–511 are reserved for this private arena.
+Sixteen descriptor sectors occupy sectors 80–95; 2,048 data sectors occupy
+sectors 2048–4095. Ordinary file allocation can still use blocks 12–255 through
+the legacy MON3 path. Descriptor magic is `NTO1` for committed state and `NTP1` for a
+tentative writer. A descriptor records format version, slot, 16-bit generation,
+half, name length, logical data length, name bytes, and an additive checksum
+whose complete 512-byte sum is zero. Bank 2 validates that both reserved ranges,
+258 allocation entries in total, are intact before accepting requests. A legacy volume without that
+reservation fails with `NucleusStatusUnavailable`; it is never overwritten by
+the provider.
+
+The provider uses 623 bytes of always-visible RAM: 31 bytes at `3C60h`, eight
+10-byte handles at `3C80h`, and one 512-byte sector buffer at `3D00h`. Mount
+resets the handle generation and invalidates outstanding handles. The provider
+retains no caller request, name, or transfer pointer after a synchronous call.
 
 ## Bank 3: RTC Boundary
 

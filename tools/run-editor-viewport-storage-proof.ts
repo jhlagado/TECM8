@@ -1554,7 +1554,7 @@ function verifyEditorAllocationGrowthProof(runtime: Runtime, _platformRuntime: P
   if (backup.size !== 4608) {
     throw new Error(`editor allocation growth backup size ${backup.size}, expected 4608`);
   }
-  const expectedFreeBlocks = 1014 - 7;
+  const expectedFreeBlocks = 756 - 7;
   if (parsed.superblock.freeBlockCount !== expectedFreeBlocks) {
     throw new Error(
       `editor allocation growth free block count ${parsed.superblock.freeBlockCount}, expected ${expectedFreeBlocks}`,

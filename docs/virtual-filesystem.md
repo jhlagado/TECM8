@@ -102,7 +102,10 @@ block 0      superblock
 block 1      allocation table
 blocks 2-5   prefix table
 blocks 6-9   file catalog
-block 10..n  file data blocks
+blocks 10-11  private tool-object descriptors
+blocks 12-255 general file data blocks
+blocks 256-511 private tool-object data
+blocks 512..n general file data blocks
 ```
 
 Initial constants:
@@ -197,6 +200,22 @@ block 35 -> END
 ```
 
 Blocks do not need to be adjacent. Fragmentation is accepted initially.
+
+The formatter marks blocks 10–11 and 256–511 as reserved (`0xffff`). They are a
+bounded private store used by the Atom/Nucleus tool-service gateway, not part of
+the general file catalogue or allocator. This consumes 258 blocks: two blocks
+of descriptors and 256 blocks of double-buffered object data. The ordinary
+allocator therefore has 756 free blocks in a new 4 MiB volume and selects block
+12 first. Keeping blocks 12–255 general-purpose preserves the efficient legacy
+MON3 path. The private provider reaches its high object-data extent by resolving
+the required contiguous `VOLUME.TM8` base sector and adding a bounded relative
+sector number directly.
+
+This reservation is also the compatibility marker. A version-1 image created
+before the tool arena existed leaves those entries free. The Z80 object provider
+checks both reserved ranges and reports unavailable on such an image rather
+than risking collision with ordinary files. Reformatting creates the reservation;
+the provider does not migrate or rewrite legacy allocation tables itself.
 
 ## Prefix Table And File Catalog
 

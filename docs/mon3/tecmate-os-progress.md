@@ -139,8 +139,8 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-6080 occupied bytes currently
-6080 bytes total high-water span across all banks
+8104 occupied bytes currently
+8104 bytes total high-water span across all banks
 ```
 
 The MON3 VOLUME.TM8 sector provider remains in expansion ROM:
@@ -154,11 +154,13 @@ expansion total span: 3248 -> 6080 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
-The native object-service transport reserves public selector `91h`, routes it
-through bank 0 to bank 2, and returns a canonical unavailable result until the
-storage provider is installed. The same increment makes the installed expansion
-service path preserve `IX` and `IY`. The existing compact planning constraints
-remain in force:
+The native object-service transport reserves public selector `91h` and now routes through
+bank 0 to a complete bank-2 provider. Eight named objects have two 64 KiB
+generations each, so data can be written tentatively and published by one final
+descriptor-sector write. Failed data writes, failed publication, and abort all
+preserve the prior generation. Binary transfers preserve all eight bits. The
+installed expansion path preserves `IX`, `IY`, stack depth, and selected bank.
+The existing compact planning constraints remain in force:
 
 - unknown shell commands are now proof-backed as `ERRCMD` / `NONE`, with target
   and result fields clear
@@ -182,14 +184,14 @@ Current size checkpoint:
 fixed monitor span: 16384/16384 bytes
 bank 0 span: 1289 bytes, softFree=759
 bank 1 span: 568 bytes, softFree=3528
-bank 2 span: 1052 bytes, softFree=3044
+bank 2 span: 3052 bytes, softFree=1044
 bank 3 span: 95 bytes, softFree=929
 bank 4 span: 68 bytes, softFree=956
-bank 5 span: 2871 bytes, softFree=1225
+bank 5 span: 2895 bytes, softFree=1201
 bank 6 span: 47 bytes, softFree=977
 bank 7 span: 45 bytes, softFree=8147
 bank 8 span: 45 bytes, softFree=4051
-expansion total span: 6080 bytes, softFree=26688
+expansion total span: 8104 bytes, softFree=24664
 ```
 
 Manual checkpoint:

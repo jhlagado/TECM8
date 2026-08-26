@@ -15,8 +15,10 @@ test('bank 5 exposes a real MON3 VOLUME.TM8 sector driver', () => {
 
   assert.match(bank5, /\.org\s+TFS_MON3_FILE_DRIVER[\s\S]*Tecm8Mon3FileDriverEntry:/);
   assert.match(bank5, /call openFile/);
-  assert.match(bank5, /call readSector/);
-  assert.match(bank5, /call writeSector/);
+  assert.match(bank5, /call FATgetSector/);
+  assert.match(bank5, /call IDEreadSector/);
+  assert.match(bank5, /push bc[\s\S]*push de[\s\S]*call IDEwriteSector/);
+  assert.match(bank5, /ld hl,\(TFS_PARAM_SECTOR_2\)[\s\S]*cp 0x20/);
   assert.match(bank5, /\.include "\.\.\/monitor\/pata_fat32\.asm"/);
   assert.match(bank2, /ld a,TFS_BRIDGE_BANK[\s\S]*ld hl,TFS_MON3_FILE_DRIVER/);
   assert.match(proof, /0x00,0x1A,0x7F,0x80,0xFF/);

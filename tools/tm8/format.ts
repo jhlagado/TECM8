@@ -24,6 +24,11 @@ const TM8_FORMAT = {
   catalogEntrySize: 64,
   catalogEntryCount: 256,
   dataStartBlock: 10,
+  toolDescriptorStartBlock: 10,
+  toolDescriptorBlockCount: 2,
+  toolDataStartBlock: 256,
+  toolDataBlockCount: 256,
+  toolArenaBlockCount: 258,
   superblockBytes: 512,
   checksumOffset: 72,
 } as const;
@@ -133,7 +138,20 @@ function superblockChecksum(superblock: Buffer): number {
 }
 
 function freeBlockCount(): number {
-  return TM8_FORMAT.totalBlocks - TM8_FORMAT.dataStartBlock;
+  return (
+    TM8_FORMAT.totalBlocks -
+    TM8_FORMAT.dataStartBlock -
+    TM8_FORMAT.toolArenaBlockCount
+  );
+}
+
+function isToolArenaBlock(block: number): boolean {
+  return (
+    (block >= TM8_FORMAT.toolDescriptorStartBlock &&
+      block < TM8_FORMAT.toolDescriptorStartBlock + TM8_FORMAT.toolDescriptorBlockCount) ||
+    (block >= TM8_FORMAT.toolDataStartBlock &&
+      block < TM8_FORMAT.toolDataStartBlock + TM8_FORMAT.toolDataBlockCount)
+  );
 }
 
 function makeSuperblock(): Buffer {
@@ -164,6 +182,9 @@ function makeAllocationTable(): Buffer {
   const block = Buffer.alloc(TM8_FORMAT.blockBytes);
   for (let index = 0; index < TM8_FORMAT.dataStartBlock; index += 1) {
     putU16(block, index * 2, ALLOCATION_RESERVED);
+  }
+  for (let index = TM8_FORMAT.dataStartBlock; index < TM8_FORMAT.totalBlocks; index += 1) {
+    if (isToolArenaBlock(index)) putU16(block, index * 2, ALLOCATION_RESERVED);
   }
   return block;
 }
@@ -275,6 +296,12 @@ function validateAllocation(allocation: number[]): number {
 
   for (let block = TM8_FORMAT.dataStartBlock; block < TM8_FORMAT.totalBlocks; block += 1) {
     const entry = allocation[block];
+    if (isToolArenaBlock(block)) {
+      if (entry !== ALLOCATION_RESERVED) {
+        throw new Error(`unexpected allocation entry for tool block ${block}: ${entry}`);
+      }
+      continue;
+    }
     if (entry === ALLOCATION_FREE) {
       freeBlocks += 1;
       continue;

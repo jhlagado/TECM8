@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 1052,
-      "span": 1052,
+      "occupied": 3052,
+      "span": 3052,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 33820,
-      "freeAfterHighWater": 15332
+      "highWaterEnd": 35820,
+      "freeAfterHighWater": 13332
     },
     {
       "bank": 3,
@@ -59,12 +59,12 @@
     {
       "bank": 5,
       "role": "TEC-FS monitor-sector bridge",
-      "occupied": 2871,
-      "span": 2871,
+      "occupied": 2895,
+      "span": 2895,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 35639,
-      "freeAfterHighWater": 13513
+      "highWaterEnd": 35663,
+      "freeAfterHighWater": 13489
     },
     {
       "bank": 6,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 6080,
-    "span": 6080,
+    "occupied": 8104,
+    "span": 8104,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 141376
+    "freeAfterHighWater": 139352
   }
 }

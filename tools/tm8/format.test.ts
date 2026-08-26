@@ -57,7 +57,7 @@ function writeCatalogEntry(
   const offset =
     TM8_FORMAT.catalogStartBlock * TM8_FORMAT.blockBytes +
     index * TM8_FORMAT.catalogEntrySize;
-  const firstBlock = options.firstBlock ?? TM8_FORMAT.dataStartBlock + index;
+  const firstBlock = options.firstBlock ?? firstGeneralDataBlock() + index;
   image[offset] = ENTRY_STATUS_ACTIVE;
   image[offset + 1] = options.fileId;
   image[offset + 2] = options.prefixId;
@@ -140,7 +140,15 @@ function prefixEntryStart(index: number): number {
 }
 
 function initialFreeBlockCount(): number {
-  return TM8_FORMAT.totalBlocks - TM8_FORMAT.dataStartBlock;
+  return (
+    TM8_FORMAT.totalBlocks -
+    TM8_FORMAT.dataStartBlock -
+    TM8_FORMAT.toolArenaBlockCount
+  );
+}
+
+function firstGeneralDataBlock(): number {
+  return TM8_FORMAT.toolDescriptorStartBlock + TM8_FORMAT.toolDescriptorBlockCount;
 }
 
 test('formats and parses the default 4 MiB TM8 volume layout', () => {
@@ -166,7 +174,7 @@ test('formats and parses the default 4 MiB TM8 volume layout', () => {
     catalogEntrySize: 64,
     catalogEntryCount: 256,
     dataStartBlock: 10,
-    freeBlockCount: 1014,
+    freeBlockCount: 756,
     checksum: volume.superblock.checksum,
   });
 });
@@ -178,7 +186,7 @@ test('marks metadata blocks reserved and data blocks free in the allocation tabl
   for (let block = 0; block < TM8_FORMAT.dataStartBlock; block += 1) {
     assert.equal(volume.allocation[block], ALLOCATION_RESERVED);
   }
-  assert.equal(volume.allocation[TM8_FORMAT.dataStartBlock], ALLOCATION_FREE);
+  assert.equal(volume.allocation[TM8_FORMAT.dataStartBlock], ALLOCATION_RESERVED);
   assert.equal(volume.allocation[TM8_FORMAT.totalBlocks - 1], ALLOCATION_FREE);
 });
 
@@ -234,12 +242,23 @@ test('rejects corrupted allocation table entries', () => {
   const corruptedFreeBlock = createVolumeImage();
   corruptedFreeBlock.writeUInt16LE(
     ALLOCATION_RESERVED,
-    TM8_FORMAT.allocationStartBlock * TM8_FORMAT.blockBytes +
-      TM8_FORMAT.dataStartBlock * 2,
+      TM8_FORMAT.allocationStartBlock * TM8_FORMAT.blockBytes +
+      firstGeneralDataBlock() * 2,
   );
   assert.throws(
     () => parseVolumeImage(corruptedFreeBlock),
     /unexpected TM8 freeBlockCount/,
+  );
+
+  const corruptedToolBlock = createVolumeImage();
+  corruptedToolBlock.writeUInt16LE(
+    ALLOCATION_FREE,
+    TM8_FORMAT.allocationStartBlock * TM8_FORMAT.blockBytes +
+      TM8_FORMAT.toolDescriptorStartBlock * 2,
+  );
+  assert.throws(
+    () => parseVolumeImage(corruptedToolBlock),
+    /unexpected allocation entry for tool block/,
   );
 });
 
@@ -300,7 +319,7 @@ test('writes a formatted volume file that can be read back', () => {
 
     assert.equal(image.byteLength, TM8_FORMAT.volumeBytes);
     assert.equal(volume.superblock.magic, 'TECM8VOL');
-    assert.equal(volume.superblock.freeBlockCount, 1014);
+    assert.equal(volume.superblock.freeBlockCount, 756);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -405,7 +424,7 @@ test('rejects active file entries with invalid block chains', () => {
     fileId: 1,
     prefixId: 0,
     name: 'main.asm',
-    firstBlock: TM8_FORMAT.dataStartBlock,
+    firstBlock: firstGeneralDataBlock(),
     allocate: false,
   });
   assert.throws(() => parseVolumeImage(freeBlockFile), /file entry 0 points to free block/);
@@ -415,21 +434,21 @@ test('rejects active file entries with invalid block chains', () => {
     fileId: 1,
     prefixId: 0,
     name: 'main.asm',
-    firstBlock: TM8_FORMAT.dataStartBlock,
+    firstBlock: firstGeneralDataBlock(),
   });
   writeU16(
     cyclicFile,
     TM8_FORMAT.allocationStartBlock * TM8_FORMAT.blockBytes +
-      TM8_FORMAT.dataStartBlock * 2,
-    TM8_FORMAT.dataStartBlock + 1,
+      firstGeneralDataBlock() * 2,
+    firstGeneralDataBlock() + 1,
   );
   writeU16(
     cyclicFile,
     TM8_FORMAT.allocationStartBlock * TM8_FORMAT.blockBytes +
-      (TM8_FORMAT.dataStartBlock + 1) * 2,
-    TM8_FORMAT.dataStartBlock,
+      (firstGeneralDataBlock() + 1) * 2,
+    firstGeneralDataBlock(),
   );
-  rewriteFreeBlockCount(cyclicFile, 1012);
+  rewriteFreeBlockCount(cyclicFile, 754);
   assert.throws(() => parseVolumeImage(cyclicFile), /cycle in file block chain/);
 
   const sharedBlock = createVolumeImage();
@@ -437,13 +456,13 @@ test('rejects active file entries with invalid block chains', () => {
     fileId: 1,
     prefixId: 0,
     name: 'main.asm',
-    firstBlock: TM8_FORMAT.dataStartBlock,
+    firstBlock: firstGeneralDataBlock(),
   });
   writeCatalogEntry(sharedBlock, 1, {
     fileId: 2,
     prefixId: 0,
     name: 'other.asm',
-    firstBlock: TM8_FORMAT.dataStartBlock,
+    firstBlock: firstGeneralDataBlock(),
     allocate: false,
   });
   assert.throws(() => parseVolumeImage(sharedBlock), /shared file block/);
@@ -456,7 +475,7 @@ test('rejects file sizes larger than their allocated block chains', () => {
     prefixId: 0,
     name: 'too-big.bin',
     size: TM8_FORMAT.blockBytes + 1,
-    firstBlock: TM8_FORMAT.dataStartBlock,
+    firstBlock: firstGeneralDataBlock(),
   });
 
   assert.throws(() => parseVolumeImage(image), /exceeds allocated block chain/);
@@ -601,7 +620,11 @@ test('fs lists an empty root path', () => {
 
 test('creates a root file with one allocated data block', () => {
   const image = createVolumeImage();
-  image.fill(0xa5, TM8_FORMAT.dataStartBlock * TM8_FORMAT.blockBytes, (TM8_FORMAT.dataStartBlock + 1) * TM8_FORMAT.blockBytes);
+  image.fill(
+    0xa5,
+    firstGeneralDataBlock() * TM8_FORMAT.blockBytes,
+    (firstGeneralDataBlock() + 1) * TM8_FORMAT.blockBytes,
+  );
   const updated = createFileInVolumeImage(image, '/main.asm');
   const volume = parseVolumeImage(updated);
 
@@ -615,12 +638,12 @@ test('creates a root file with one allocated data block', () => {
       fileType: 1,
     },
   ]);
-  assert.equal(volume.files[0].firstBlock, TM8_FORMAT.dataStartBlock);
-  assert.equal(volume.allocation[TM8_FORMAT.dataStartBlock], ALLOCATION_END);
-  assert.equal(volume.superblock.freeBlockCount, 1013);
+  assert.equal(volume.files[0].firstBlock, firstGeneralDataBlock());
+  assert.equal(volume.allocation[firstGeneralDataBlock()], ALLOCATION_END);
+  assert.equal(volume.superblock.freeBlockCount, 755);
   for (
-    let offset = TM8_FORMAT.dataStartBlock * TM8_FORMAT.blockBytes;
-    offset < (TM8_FORMAT.dataStartBlock + 1) * TM8_FORMAT.blockBytes;
+    let offset = firstGeneralDataBlock() * TM8_FORMAT.blockBytes;
+    offset < (firstGeneralDataBlock() + 1) * TM8_FORMAT.blockBytes;
     offset += 1
   ) {
     assert.equal(updated[offset], 0);
