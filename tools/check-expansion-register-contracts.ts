@@ -11,6 +11,11 @@ const { relative, resolve } = require('node:path');
 const TECM8_ROOT = resolve(__dirname, '..');
 const EXPANSION_ROOT = resolve(TECM8_ROOT, 'roms/tec1g/tecm8/expansion');
 const RST_INTERFACE = resolve(EXPANSION_ROOT, 'tecm8-rst-services.asmi');
+const LEGACY_STORAGE_INTERFACE = resolve(EXPANSION_ROOT, 'mon3-storage-legacy.asmi');
+const LEGACY_STORAGE_MODULE = resolve(
+  TECM8_ROOT,
+  'roms/tec1g/tecm8/monitor/pata_fat32.asm'
+);
 const BANK_COUNT = 9;
 
 type Diagnostic = {
@@ -38,6 +43,13 @@ function formatDiagnostic(diagnostic: Diagnostic): string {
   return `${file}:${line}:${column} ${severity} ${code} ${message}`;
 }
 
+function isQuarantinedLegacyStorageDiagnostic(diagnostic: Diagnostic): boolean {
+  return (
+    diagnostic.code === 'AZMN_REGISTER_CONTRACTS' &&
+    diagnostic.sourceName === LEGACY_STORAGE_MODULE
+  );
+}
+
 async function main(): Promise<void> {
   const { compile, defaultFormatWriters } = await import('@jhlagado/azm/compile');
   const allDiagnostics: Diagnostic[] = [];
@@ -54,16 +66,26 @@ async function main(): Promise<void> {
         registerContracts: 'strict',
         registerContractsPolicy: {
           strict: ['roms/tec1g/tecm8/expansion/**/*.asm'],
+          off: ['roms/tec1g/tecm8/monitor/pata_fat32.asm'],
         },
         registerContractsProfile: 'mon3',
-        registerContractsInterfaces: [RST_INTERFACE],
+        registerContractsInterfaces: [RST_INTERFACE, LEGACY_STORAGE_INTERFACE],
         emitRegisterReport: true,
       },
       { formats: defaultFormatWriters }
     )) as CompileResult;
 
-    console.log(`bank${bank}: diagnostics=${result.diagnostics.length}`);
-    allDiagnostics.push(...result.diagnostics);
+    const quarantinedDiagnostics = result.diagnostics.filter(
+      isQuarantinedLegacyStorageDiagnostic
+    );
+    const blockingDiagnostics = result.diagnostics.filter(
+      (diagnostic) => !isQuarantinedLegacyStorageDiagnostic(diagnostic)
+    );
+    console.log(
+      `bank${bank}: diagnostics=${blockingDiagnostics.length} ` +
+        `legacy-storage=${quarantinedDiagnostics.length}`
+    );
+    allDiagnostics.push(...blockingDiagnostics);
   }
 
   if (allDiagnostics.length > 0) {

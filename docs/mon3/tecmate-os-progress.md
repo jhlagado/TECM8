@@ -139,17 +139,18 @@ The expansion ROM is almost empty:
 
 ```text
 144K total expansion image
-3248 occupied bytes currently
-3248 bytes total high-water span across all banks
+6080 occupied bytes currently
+6080 bytes total high-water span across all banks
 ```
 
-The native object-service transport keeps the expansion footprint small:
+The MON3 VOLUME.TM8 sector provider remains in expansion ROM:
 
 ```text
-bank 0 span: 1284 -> 1289 bytes
-bank 2 span: 1042 -> 1051 bytes
-expansion total span: 3234 -> 3248 bytes
-fixed monitor occupied: 9007 -> 9017 bytes
+bank 2 span: 1051 -> 1052 bytes
+bank 5 occupied: 40 -> 2871 bytes
+bank 5 span: 40 -> 2871 bytes
+expansion occupied: 3248 -> 6080 bytes
+expansion total span: 3248 -> 6080 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 
@@ -181,14 +182,14 @@ Current size checkpoint:
 fixed monitor span: 16384/16384 bytes
 bank 0 span: 1289 bytes, softFree=759
 bank 1 span: 568 bytes, softFree=3528
-bank 2 span: 1051 bytes, softFree=3045
+bank 2 span: 1052 bytes, softFree=3044
 bank 3 span: 95 bytes, softFree=929
 bank 4 span: 68 bytes, softFree=956
-bank 5 span: 40 bytes, softFree=984
+bank 5 span: 2871 bytes, softFree=1225
 bank 6 span: 47 bytes, softFree=977
 bank 7 span: 45 bytes, softFree=8147
 bank 8 span: 45 bytes, softFree=4051
-expansion total span: 3248 bytes, softFree=29520
+expansion total span: 6080 bytes, softFree=26688
 ```
 
 Manual checkpoint:

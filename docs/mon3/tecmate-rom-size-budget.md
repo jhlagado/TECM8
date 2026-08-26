@@ -81,7 +81,7 @@ Initial per-bank hard budgets:
 | 2 | TEC-FS boundary and block mapper | 8 KiB |
 | 3 | RTC boundary | 2 KiB |
 | 4 | GLCD boundary | 2 KiB |
-| 5 | TEC-FS monitor-sector bridge | 2 KiB |
+| 5 | TEC-FS monitor-sector bridge and relocated MON3 storage | 8 KiB |
 | 6 | Input snapshot boundary | 2 KiB |
 | 7 | Assembler skeleton | 12 KiB |
 | 8 | Run skeleton | 8 KiB |

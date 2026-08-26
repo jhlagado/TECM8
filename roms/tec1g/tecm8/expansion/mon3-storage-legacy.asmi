@@ -1,0 +1,16 @@
+extern openFile
+in HL
+out carry
+clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
+end
+
+extern readSector
+in DE,HL
+out carry
+clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
+end
+
+extern writeSector
+out carry
+clobbers A,BC,DE,HL,carry,zero,sign,parity,halfCarry
+end

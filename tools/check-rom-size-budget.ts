@@ -60,7 +60,7 @@ const expansionBudgets: Budget[] = [
   { role: 'TEC-FS boundary and block mapper', softSpan: 0x1000, hardSpan: 0x2000 },
   { role: 'RTC boundary', softSpan: 0x0400, hardSpan: 0x0800 },
   { role: 'GLCD boundary', softSpan: 0x0400, hardSpan: 0x0800 },
-  { role: 'TEC-FS monitor-sector bridge', softSpan: 0x0400, hardSpan: 0x0800 },
+  { role: 'TEC-FS monitor-sector bridge', softSpan: 0x1000, hardSpan: 0x2000 },
   { role: 'Input snapshot boundary', softSpan: 0x0400, hardSpan: 0x0800 },
   { role: 'Assembler skeleton', softSpan: 0x2000, hardSpan: 0x3000 },
   { role: 'Run skeleton', softSpan: 0x1000, hardSpan: 0x2000 },

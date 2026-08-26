@@ -75,11 +75,12 @@ test('TecMate ROM space map records current monitor and expansion measurements',
 
   assert.ok(doc.includes(`Expansion occupied bytes: \`${totalOccupied}\``));
   assert.ok(doc.includes(`Expansion high-water span total: \`${totalSpan}\``));
-  assert.match(doc, /Latest native object-service transport delta/);
-  assert.match(doc, /bank 0 span: 1284 -> 1289 bytes/);
-  assert.match(doc, /bank 2 span: 1042 -> 1051 bytes/);
-  assert.match(doc, /expansion total span: 3234 -> 3248 bytes/);
-  assert.match(doc, /fixed monitor occupied: 9007 -> 9017 bytes/);
+  assert.match(doc, /Latest MON3 VOLUME\.TM8 sector-provider delta/);
+  assert.match(doc, /bank 2 span: 1051 -> 1052 bytes/);
+  assert.match(doc, /bank 5 occupied: 40 -> 2871 bytes/);
+  assert.match(doc, /bank 5 span: 40 -> 2871 bytes/);
+  assert.match(doc, /expansion occupied: 3248 -> 6080 bytes/);
+  assert.match(doc, /expansion total span: 3248 -> 6080 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
 });
 

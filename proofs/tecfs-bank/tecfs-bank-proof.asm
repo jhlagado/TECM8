@@ -95,6 +95,17 @@ ClearParams:
         cp TFS_VOLUME_SECTORS_3
         jp nz,FailVolumeSectors
 
+        ld a,(TFS_PARAM_DRIVER_BANK)
+        cp TFS_BRIDGE_BANK
+        jp nz,FailMount
+        ld hl,(TFS_PARAM_DRIVER_ADDR_LO)
+        ld de,TFS_MON3_FILE_DRIVER
+        or a
+        sbc hl,de
+        jp nz,FailMount
+        ld hl,0
+        ld (TFS_PARAM_DRIVER_ADDR_LO),hl
+
         ld hl,0x6200
         ld (TFS_PARAM_BUFFER_LO),hl
         ld a,TFS_SVC_FORMAT_LOCATOR

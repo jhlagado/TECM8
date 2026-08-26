@@ -142,10 +142,10 @@ tecfsMountImpl:
         ld (TFS_PARAM_VOLUME_SECTORS_2),a
         ld a,TFS_VOLUME_SECTORS_3
         ld (TFS_PARAM_VOLUME_SECTORS_3),a
-        xor a
+        ld a,TFS_BRIDGE_BANK
         ld (TFS_PARAM_DRIVER_BANK),a
-        ld (TFS_PARAM_DRIVER_ADDR_LO),a
-        ld (TFS_PARAM_DRIVER_ADDR_HI),a
+        ld hl,TFS_MON3_FILE_DRIVER
+        ld (TFS_PARAM_DRIVER_ADDR_LO),hl
         ld a,0x82
         or a
         ret

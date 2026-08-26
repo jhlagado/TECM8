@@ -151,6 +151,15 @@ It assembles every expansion bank directly with strict contracts and the
 TecMate RST service interface. That keeps the banked ROM surface protected even
 if a Debug80 launch path changes how target policy is applied.
 
+Bank 5 relocates the retained MON3 `pata_fat32.asm` implementation beneath its
+new sector-provider adapter. The adapter remains strict and calls the legacy
+module through three conservative external contracts for `openFile`,
+`readSector`, and `writeSector`. Register-contract findings owned by that legacy
+file are reported separately and do not block the expansion gate; assembly and
+syntax diagnostics are never quarantined. This confines the exception to the
+unchanged imported implementation while keeping every new provider instruction
+under strict checking.
+
 ## Practical Use Now
 
 The existing monitor audit remains the baseline command:

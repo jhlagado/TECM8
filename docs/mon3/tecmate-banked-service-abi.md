@@ -549,6 +549,11 @@ TEC-FS parameter block:
 | `TFS_PARAM_DRIVER_ADDR_LO` | `3B5Eh` | Installed sector driver entry address low byte. |
 | `TFS_PARAM_DRIVER_ADDR_HI` | `3B5Fh` | Installed sector driver entry address high byte. |
 
+`TFS_MOUNT` installs bank 5's `TFS_MON3_FILE_DRIVER` by default. That driver
+opens the contiguous FAT32 `VOLUME.TM8` file for each operation and transfers
+all 512 bytes without text interpretation. Tests may replace the driver fields
+with the deterministic RAM bridge or another contract-compatible provider.
+
 The first directory/list primitive is deliberately small. `TFS_SVC_DECODE_CATALOG`
 expects `TFS_PARAM_BUFFER_LO/HI` to point at one 64-byte TM8 v1 file catalogue
 entry already loaded in RAM. It rejects inactive entries and bad filename

@@ -62,25 +62,26 @@ Terms:
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | Shell, launcher, registry | `1289` | `1289` | `8509h` | `15095` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `1051` | `1051` | `841Bh` | `15333` |
+| 2 | TEC-FS boundary and block mapper | `1052` | `1052` | `841Ch` | `15332` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
-| 5 | TEC-FS monitor-sector bridge | `40` | `40` | `8028h` | `16344` |
+| 5 | TEC-FS monitor-sector bridge | `2871` | `2871` | `8B37h` | `13513` |
 | 6 | Input snapshot boundary | `47` | `47` | `802Fh` | `16337` |
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `3248`
+Expansion occupied bytes: `6080`
 
-Expansion high-water span total: `3248`
+Expansion high-water span total: `6080`
 
-Latest native object-service transport delta:
+Latest MON3 VOLUME.TM8 sector-provider delta:
 
 ```text
-bank 0 span: 1284 -> 1289 bytes
-bank 2 span: 1042 -> 1051 bytes
-expansion total span: 3234 -> 3248 bytes
-fixed monitor occupied: 9007 -> 9017 bytes
+bank 2 span: 1051 -> 1052 bytes
+bank 5 occupied: 40 -> 2871 bytes
+bank 5 span: 40 -> 2871 bytes
+expansion occupied: 3248 -> 6080 bytes
+expansion total span: 3248 -> 6080 bytes
 fixed monitor span: unchanged at 16384 bytes
 ```
 

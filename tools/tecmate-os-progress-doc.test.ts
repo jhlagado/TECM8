@@ -27,13 +27,14 @@ test('TecMate OS progress note records current first-loop banked services', () =
 
 test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /144K total expansion image/);
-  assert.match(doc, /3248 occupied bytes currently/);
-  assert.match(doc, /3248 bytes total high-water span across all banks/);
-  assert.match(doc, /native object-service transport keeps the expansion footprint small/);
-  assert.match(doc, /bank 0 span: 1284 -> 1289 bytes/);
-  assert.match(doc, /bank 2 span: 1042 -> 1051 bytes/);
-  assert.match(doc, /expansion total span: 3234 -> 3248 bytes/);
-  assert.match(doc, /fixed monitor occupied: 9007 -> 9017 bytes/);
+  assert.match(doc, /6080 occupied bytes currently/);
+  assert.match(doc, /6080 bytes total high-water span across all banks/);
+  assert.match(doc, /MON3 VOLUME\.TM8 sector provider remains in expansion ROM/);
+  assert.match(doc, /bank 2 span: 1051 -> 1052 bytes/);
+  assert.match(doc, /bank 5 occupied: 40 -> 2871 bytes/);
+  assert.match(doc, /bank 5 span: 40 -> 2871 bytes/);
+  assert.match(doc, /expansion occupied: 3248 -> 6080 bytes/);
+  assert.match(doc, /expansion total span: 3248 -> 6080 bytes/);
   assert.match(doc, /fixed monitor span: unchanged at 16384 bytes/);
   assert.match(doc, /native object-service transport reserves public selector `91h`/);
   assert.match(doc, /unknown shell commands are now proof-backed as `ERRCMD` \/ `NONE`/);
@@ -47,9 +48,10 @@ test('TecMate OS progress note records current expansion footprint', () => {
   assert.match(doc, /assembler remains gated behind editor-buffer input and TEC-FS binary\/map\s+output readiness/);
   assert.match(doc, /fixed monitor span: 16384\/16384 bytes/);
   assert.match(doc, /bank 0 span: 1289 bytes, softFree=759/);
-  assert.match(doc, /bank 2 span: 1051 bytes, softFree=3045/);
+  assert.match(doc, /bank 2 span: 1052 bytes, softFree=3044/);
   assert.match(doc, /bank 7 span: 45 bytes, softFree=8147/);
-  assert.match(doc, /expansion total span: 3248 bytes, softFree=29520/);
+  assert.match(doc, /bank 5 span: 2871 bytes, softFree=1225/);
+  assert.match(doc, /expansion total span: 6080 bytes, softFree=26688/);
   assert.match(doc, /npm run checkpoint:tecmate-rom/);
   assert.match(doc, /shell command matrix/);
   assert.match(doc, /aggregate two-slot\s+`dir` count/);
