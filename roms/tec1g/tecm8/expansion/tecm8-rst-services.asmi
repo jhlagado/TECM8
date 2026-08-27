@@ -59,7 +59,12 @@ in C
 out A,carry
 clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
 end
-service rst 0x10 C 0x91 NUCLEUS_OBJECT
+service rst 0x10 C 0x91 ZT_OBJECT
+in C,HL
+out A,carry
+clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry
+end
+service rst 0x10 C 0x92 ZT_FILE
 in C,HL
 out A,carry
 clobbers B,C,D,E,H,L,zero,sign,parity,halfCarry

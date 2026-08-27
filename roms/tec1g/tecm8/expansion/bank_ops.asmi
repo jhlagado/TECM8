@@ -250,6 +250,7 @@ TFS_SVC_DECODE_CATALOG .equ 0x0D
 TFS_SVC_SUMMARIZE_CATALOG .equ 0x0E
 TFS_SVC_NEXT_CATALOG .equ 0x0F
 TFS_SVC_OBJECT      .equ    0x10
+TFS_SVC_FILE        .equ    0x11
 TFS_PARAM_BASE            .equ    0x3B40
 TFS_PARAM_ACTIVE_VOLUME   .equ    TFS_PARAM_BASE+0
 TFS_PARAM_REQUEST_VOLUME  .equ    TFS_PARAM_BASE+1
@@ -359,6 +360,39 @@ TFS_OBJECT_HANDLE_WRITE     .equ 2
 TFS_OBJECT_HANDLE_POISONED  .equ 3
 TFS_OBJECT_SECTOR_BUFFER    .equ 0x3D00
 
+; Read-only ordinary TEC-FS file provider workspace. The provider exposes one
+; live file handle because the native Atom harness closes each source part
+; before opening the next. Source-part identity remains the catalogue's
+; one-byte file id, so this handle bound does not limit a project to one part.
+TFS_FILE_STATE_BASE          .equ 0x3CD0
+TFS_FILE_REQUEST_PTR         .equ TFS_FILE_STATE_BASE+0
+TFS_FILE_HANDLE_MODE         .equ TFS_FILE_STATE_BASE+2
+TFS_FILE_HANDLE_TOKEN        .equ TFS_FILE_STATE_BASE+3
+TFS_FILE_HANDLE_ID           .equ TFS_FILE_STATE_BASE+4
+TFS_FILE_HANDLE_CURSOR       .equ TFS_FILE_STATE_BASE+5
+TFS_FILE_HANDLE_LENGTH       .equ TFS_FILE_STATE_BASE+7
+TFS_FILE_HANDLE_FIRST_BLOCK  .equ TFS_FILE_STATE_BASE+9
+TFS_FILE_NEXT_TOKEN          .equ TFS_FILE_STATE_BASE+11
+TFS_FILE_STATE_MAGIC         .equ TFS_FILE_STATE_BASE+12
+TFS_FILE_XFER_PTR            .equ TFS_FILE_STATE_BASE+14
+TFS_FILE_XFER_REMAIN         .equ TFS_FILE_STATE_BASE+16
+TFS_FILE_XFER_RESULT         .equ TFS_FILE_STATE_BASE+18
+TFS_FILE_XFER_CURSOR         .equ TFS_FILE_STATE_BASE+20
+TFS_FILE_CURRENT_BLOCK       .equ TFS_FILE_STATE_BASE+22
+TFS_FILE_IO_SECTOR           .equ TFS_FILE_STATE_BASE+24
+TFS_FILE_XFER_OFFSET         .equ TFS_FILE_STATE_BASE+26
+TFS_FILE_XFER_CHUNK          .equ TFS_FILE_STATE_BASE+28
+TFS_FILE_SCAN_SECTOR         .equ TFS_FILE_STATE_BASE+30
+TFS_FILE_BLOCK_STEPS         .equ TFS_FILE_STATE_BASE+31
+TFS_FILE_STATE_END           .equ TFS_FILE_STATE_BASE+32
+TFS_FILE_HANDLE_FREE         .equ 0
+TFS_FILE_HANDLE_READ         .equ 1
+TFS_FILE_CATALOG_SECTOR      .equ 48
+TFS_FILE_CATALOG_SECTORS     .equ 32
+TFS_FILE_ENTRIES_PER_SECTOR  .equ 8
+TFS_FILE_ALLOCATION_SECTOR   .equ 8
+TFS_FILE_TOTAL_BLOCKS        .equ 1024
+
 ; Descriptor blocks stay near the file start; the two 64 KiB generations per
 ; slot occupy blocks 256..511. Blocks 12..255 remain available to ordinary TM8
 ; files reached through the legacy MON3 path.
@@ -384,33 +418,66 @@ TFS_OBJECT_DESC_DATA_LENGTH  .equ 10
 TFS_OBJECT_DESC_NAME         .equ 12
 TFS_OBJECT_DESC_CHECKSUM     .equ 511
 
-NucleusObjectAbiVersion       .equ 1
-NucleusObjectRequestSize      .equ 16
-NucleusObjectRequestOperation .equ 2
-NucleusObjectRequestFlags     .equ 3
-NucleusObjectRequestHandle    .equ 4
-NucleusObjectRequestPointer   .equ 6
-NucleusObjectRequestLength    .equ 8
-NucleusObjectRequestOffset    .equ 10
-NucleusObjectRequestResult    .equ 14
-NucleusObjectOpenRead          .equ 0
-NucleusObjectBeginWrite        .equ 1
-NucleusObjectRead              .equ 2
-NucleusObjectWrite             .equ 3
-NucleusObjectRewind            .equ 4
-NucleusObjectSeek              .equ 5
-NucleusObjectClose             .equ 6
-NucleusObjectCommit            .equ 7
-NucleusObjectAbort             .equ 8
-NucleusStatusInvalid           .equ 1
-NucleusStatusUnavailable       .equ 2
-NucleusStatusNotFound          .equ 3
-NucleusStatusCapacity          .equ 4
-NucleusStatusAccess            .equ 5
-NucleusStatusStorage           .equ 6
-NucleusStatusConflict          .equ 7
-NucleusStatusCancelled         .equ 8
-NucleusStatusUnsupported       .equ 9
+; Shared Z80 tool-services ABI 1. Neutral names are authoritative; the Nucleus
+; aliases preserve the existing public source contract at selector 91h.
+ZT_ABI                          .equ 1
+ZT_RQLEN                        .equ 16
+ZT_FSIZE                        .equ 0
+ZT_FABI                         .equ 1
+ZT_FOP                          .equ 2
+ZT_FFLG                         .equ 3
+ZT_FHND                         .equ 4
+ZT_FPTR                         .equ 6
+ZT_FLEN                         .equ 8
+ZT_FOFF                         .equ 10
+ZT_FRES                         .equ 14
+ZT_OPEN                         .equ 0
+ZT_BEGIN                        .equ 1
+ZT_READ                         .equ 2
+ZT_WRITE                        .equ 3
+ZT_REW                          .equ 4
+ZT_SEEK                         .equ 5
+ZT_CLOSE                        .equ 6
+ZT_COM                          .equ 7
+ZT_ABORT                        .equ 8
+ZT_OK                           .equ 0
+ZT_INV                          .equ 1
+ZT_UNAV                         .equ 2
+ZT_NF                           .equ 3
+ZT_CAP                          .equ 4
+ZT_ACC                          .equ 5
+ZT_STORE                        .equ 6
+ZT_CONF                         .equ 7
+ZT_CAN                          .equ 8
+ZT_UNSUP                        .equ 9
+
+NucleusObjectAbiVersion       .equ ZT_ABI
+NucleusObjectRequestSize      .equ ZT_RQLEN
+NucleusObjectRequestOperation .equ ZT_FOP
+NucleusObjectRequestFlags     .equ ZT_FFLG
+NucleusObjectRequestHandle    .equ ZT_FHND
+NucleusObjectRequestPointer   .equ ZT_FPTR
+NucleusObjectRequestLength    .equ ZT_FLEN
+NucleusObjectRequestOffset    .equ ZT_FOFF
+NucleusObjectRequestResult    .equ ZT_FRES
+NucleusObjectOpenRead          .equ ZT_OPEN
+NucleusObjectBeginWrite        .equ ZT_BEGIN
+NucleusObjectRead              .equ ZT_READ
+NucleusObjectWrite             .equ ZT_WRITE
+NucleusObjectRewind            .equ ZT_REW
+NucleusObjectSeek              .equ ZT_SEEK
+NucleusObjectClose             .equ ZT_CLOSE
+NucleusObjectCommit            .equ ZT_COM
+NucleusObjectAbort             .equ ZT_ABORT
+NucleusStatusInvalid           .equ ZT_INV
+NucleusStatusUnavailable       .equ ZT_UNAV
+NucleusStatusNotFound          .equ ZT_NF
+NucleusStatusCapacity          .equ ZT_CAP
+NucleusStatusAccess            .equ ZT_ACC
+NucleusStatusStorage           .equ ZT_STORE
+NucleusStatusConflict          .equ ZT_CONF
+NucleusStatusCancelled         .equ ZT_CAN
+NucleusStatusUnsupported       .equ ZT_UNSUP
 TFS_BRIDGE_READ_MARKER    .equ    0xA5
 TFS_LOC_LBA_0         .equ    0x01
 TFS_LOC_LBA_1         .equ    0x00
@@ -500,7 +567,9 @@ TFS_ERR_DRIVER_IO         .equ    0x11
 TFS_ERR_NO_DRIVER         .equ    0xE1
 TFS_ERR_UNSUPPORTED       .equ    0xE0
 
-NUCLEUS_OBJECT            .equ    0x91
+ZT_OBJECT                 .equ    0x91
+ZT_FILE                   .equ    0x92
+NUCLEUS_OBJECT            .equ    ZT_OBJECT
 NUCLEUS_STATUS_UNAVAILABLE .equ   0x02
 
 RTC_ENTRY             .equ    0x8000

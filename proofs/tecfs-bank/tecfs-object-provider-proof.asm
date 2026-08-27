@@ -413,7 +413,7 @@ ObjectReset:
 
 ObjectCall:
         ld hl,PROOF_REQUEST
-        ld c,NUCLEUS_OBJECT
+        ld c,ZT_OBJECT
         rst 10H
         ret
 

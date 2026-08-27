@@ -1,21 +1,23 @@
 #!/usr/bin/env node
-/** Prove native named-object ABI 1 against the real MON3/SD provider chain. */
+/** Prove the read-only TEC-FS file provider through the real MON3/SD chain. */
 
 const { execFileSync } = require('node:child_process');
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { loadTec1gExpansionRomImage } = require('./tec1g-expansion-image.ts');
 
 const ROOT = resolve(__dirname, '..');
 const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
-const SOURCE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-object-provider-proof.asm');
-const IMAGE = resolve(ROOT, 'build/proofs/tecfs-object-provider.img');
-const MANIFEST = resolve(ROOT, 'build/proofs/tecfs-object-provider.json');
+const SOURCE = resolve(ROOT, 'proofs/tecfs-bank/tecfs-file-provider-proof.asm');
+const IMAGE = resolve(ROOT, 'build/proofs/tecfs-file-provider.img');
+const MANIFEST = resolve(ROOT, 'build/proofs/tecfs-file-provider.json');
 const MONITOR = resolve(ROOT, 'roms/tec1g/tecm8/monitor/monitor.bin');
 const EXPANSION = resolve(ROOT, 'roms/tec1g/tecm8/expansion/expansion.bin');
 const BANK5_MAP = resolve(ROOT, 'build/roms/tec1g/tecm8/expansion/bank5.d8.json');
 const APP_START = 0x4000;
 const PROOF_RESULT = 0x3a10;
 const PROOF_PHASE = 0x3a11;
+const PROOF_STATUS = 0x3a12;
 const PROOF_PASS = 0x42;
 const INITIAL_SP = 0x7ff0;
 const MCB = 0x0888;
@@ -23,8 +25,11 @@ const MCB_SD_CARD = 0x80;
 const MON3_SYS_MODE = 0x089d;
 const SYS_CTRL = 0xff;
 const SHADOW_OFF = 0x01;
-const DESCRIPTOR_SECTOR = 81;
-const DATA_SECTOR = 2048 + 128;
+
+const sourceBytes = Buffer.alloc(5000);
+for (let index = 0; index < sourceBytes.length; index += 1) {
+  sourceBytes[index] = (index * 37 + 11) & 0xff;
+}
 
 function requireDebug80(path: string): unknown {
   return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', path));
@@ -38,10 +43,19 @@ function prepareImage(): void {
   );
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
   const image = readFileSync(IMAGE);
-  const { createVolumeImage } = require(resolve(ROOT, 'tools/tm8/format.ts')) as {
+  const { createVolumeImage, importFileIntoVolumeImage, parseVolumeImage } = require(
+    resolve(ROOT, 'tools/tm8/format.ts'),
+  ) as {
     createVolumeImage: () => Buffer;
+    importFileIntoVolumeImage: (image: Buffer, path: string, bytes: Buffer) => Buffer;
+    parseVolumeImage: (image: Buffer) => { files: Array<{ fileId: number; size: number }> };
   };
-  createVolumeImage().copy(image, manifest.volume_start_byte_offset);
+  const volume = importFileIntoVolumeImage(createVolumeImage(), '/src/main.asm', sourceBytes);
+  const parsed = parseVolumeImage(volume);
+  if (parsed.files.length !== 1 || parsed.files[0]?.fileId !== 0 || parsed.files[0]?.size !== 5000) {
+    throw new Error('proof source did not receive the expected binary file id and length');
+  }
+  volume.copy(image, manifest.volume_start_byte_offset);
   writeFileSync(IMAGE, image);
 }
 
@@ -62,16 +76,6 @@ async function compileProof(): Promise<Uint8Array> {
   return artifact.bytes;
 }
 
-function expansionImage(): { banks: Uint8Array[]; memory: Uint8Array } {
-  const bytes = new Uint8Array(readFileSync(EXPANSION));
-  return {
-    banks: Array.from({ length: 9 }, (_, index) =>
-      bytes.slice(index * 0x4000, (index + 1) * 0x4000),
-    ),
-    memory: new Uint8Array(0x10000),
-  };
-}
-
 function symbolAddress(mapPath: string, name: string): number {
   const map = JSON.parse(readFileSync(mapPath, 'utf8'));
   for (const file of Object.values(map.files) as Array<{ symbols?: Array<Record<string, unknown>> }>) {
@@ -81,10 +85,11 @@ function symbolAddress(mapPath: string, name: string): number {
   throw new Error(`missing ${name} in ${mapPath}`);
 }
 
-function sum(bytes: Buffer): number {
-  let result = 0;
-  for (const byte of bytes) result = (result + byte) & 0xff;
-  return result;
+function assertBytes(memory: Uint8Array, address: number, expected: Uint8Array, label: string): void {
+  const actual = memory.slice(address, address + expected.length);
+  if (!Buffer.from(actual).equals(Buffer.from(expected))) {
+    throw new Error(`${label} differs at ${address.toString(16)}`);
+  }
 }
 
 async function main(): Promise<void> {
@@ -139,8 +144,7 @@ async function main(): Promise<void> {
     config.romRanges,
     platform.state.system,
   );
-  const expansion = expansionImage();
-  applyExpansionRomMemory(hooks.expandBanks, expansion);
+  applyExpansionRomMemory(hooks.expandBanks, loadTec1gExpansionRomImage(EXPANSION));
   runtime.hardware.memRead = hooks.memRead;
   runtime.hardware.memWrite = hooks.memWrite;
   runtime.hardware.forceMemWrite = hooks.forceMemWrite;
@@ -152,21 +156,19 @@ async function main(): Promise<void> {
   runtime.cpu.sp = INITIAL_SP;
   runtime.cpu.pc = APP_START;
 
-  const writeEntry = symbolAddress(BANK5_MAP, 'tecfsMon3FileWrite') - 0x8000;
-  const originalWriteEntry = hooks.expandBanks[5]!.slice(writeEntry, writeEntry + 4);
-  let writeFaultActive = false;
-
+  const readEntry = symbolAddress(BANK5_MAP, 'tecfsMon3FileRead') - 0x8000;
+  const originalReadEntry = hooks.expandBanks[5]!.slice(readEntry, readEntry + 4);
+  let readFaultActive = false;
   let instructions = 0;
   let tStates = 0;
   for (; instructions < 300_000_000; instructions += 1) {
-    const phase = runtime.hardware.memory[PROOF_PHASE];
-    const wantWriteFault = phase === 0x30 || phase === 0x31;
-    if (wantWriteFault !== writeFaultActive) {
+    const wantReadFault = runtime.hardware.memory[PROOF_PHASE] === 0x30;
+    if (wantReadFault !== readFaultActive) {
       hooks.expandBanks[5]!.set(
-        wantWriteFault ? Uint8Array.from([0x3e, 0x06, 0x37, 0xc9]) : originalWriteEntry,
-        writeEntry,
+        wantReadFault ? Uint8Array.from([0x3e, 0x06, 0x37, 0xc9]) : originalReadEntry,
+        readEntry,
       );
-      writeFaultActive = wantWriteFault;
+      readFaultActive = wantReadFault;
     }
     const step = runtime.step();
     const cycles = step.cycles ?? 0;
@@ -177,9 +179,8 @@ async function main(): Promise<void> {
   const marker = runtime.hardware.memory[PROOF_RESULT];
   if (marker !== PROOF_PASS) {
     const request = Array.from(runtime.hardware.memory.slice(0x5800, 0x5810));
-    const handles = Array.from(runtime.hardware.memory.slice(0x3c80, 0x3cd0));
     throw new Error(
-      `proof failed: marker=0x${marker.toString(16)} phase=${runtime.hardware.memory[PROOF_PHASE]} status=0x${runtime.hardware.memory[0x3a12].toString(16)} pc=0x${runtime.cpu.pc.toString(16)} sp=0x${runtime.cpu.sp.toString(16)} instructions=${instructions} scan=${runtime.hardware.memory[0x3c62]} half=${runtime.hardware.memory[0x3c65]} sector=${runtime.hardware.memory[0x3b4f].toString(16)}${runtime.hardware.memory[0x3b4e].toString(16).padStart(2, '0')} stage=${runtime.hardware.memory[0x3c52]} request=${request.join(',')} handles=${handles.join(',')}`,
+      `proof failed: marker=0x${marker.toString(16)} phase=0x${runtime.hardware.memory[PROOF_PHASE].toString(16)} status=0x${runtime.hardware.memory[PROOF_STATUS].toString(16)} pc=0x${runtime.cpu.pc.toString(16)} sp=0x${runtime.cpu.sp.toString(16)} instructions=${instructions} request=${request.join(',')}`,
     );
   }
   if (runtime.cpu.sp !== INITIAL_SP) {
@@ -187,39 +188,20 @@ async function main(): Promise<void> {
       `stack mismatch: got 0x${runtime.cpu.sp.toString(16)}, expected 0x${INITIAL_SP.toString(16)}`,
     );
   }
-  const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
-  const image = readFileSync(IMAGE);
-  const volume = manifest.volume_start_byte_offset;
-  const descriptor = image.subarray(
-    volume + DESCRIPTOR_SECTOR * 512,
-    volume + (DESCRIPTOR_SECTOR + 1) * 512,
-  );
-  const expectedName = Buffer.from('src/alpha.nu', 'ascii');
-  if (descriptor.subarray(0, 4).toString('ascii') !== 'NTO1') {
-    throw new Error('generation-two descriptor magic is missing');
-  }
-  if (descriptor.readUInt16LE(6) !== 2 || descriptor[8] !== 1) {
-    throw new Error('generation-two descriptor selection is incorrect');
-  }
-  if (descriptor.readUInt16LE(10) !== 5) {
-    throw new Error('generation-two descriptor length is incorrect');
-  }
-  if (!descriptor.subarray(12, 12 + expectedName.length).equals(expectedName)) {
-    throw new Error('descriptor name is incorrect');
-  }
-  if (sum(descriptor) !== 0) throw new Error('descriptor checksum is invalid');
-  const observed = image.subarray(volume + DATA_SECTOR * 512, volume + DATA_SECTOR * 512 + 5);
-  const expected = Buffer.from([0x00, 0x1a, 0x7f, 0x80, 0xff]);
-  if (!observed.equals(expected)) {
-    throw new Error(`committed binary mismatch: ${Array.from(observed).join(',')}`);
+  assertBytes(runtime.hardware.memory, 0x6000, sourceBytes.subarray(0, 600), 'sector-crossing read');
+  assertBytes(runtime.hardware.memory, 0x6300, sourceBytes.subarray(4090, 4122), 'block-crossing read');
+  assertBytes(runtime.hardware.memory, 0x6400, sourceBytes.subarray(4990), 'short read');
+  assertBytes(runtime.hardware.memory, 0x6500, sourceBytes.subarray(1, 17), 'retry after storage failure');
+  if (runtime.hardware.memory[0x7fff] !== sourceBytes[0]) {
+    throw new Error('half-open boundary read did not write byte 7FFFh');
   }
   const report = { result: 'ok', instructions: instructions + 1, tStates };
   writeFileSync(
-    resolve(ROOT, 'build/proofs/tecfs-object-provider-last-run.json'),
+    resolve(ROOT, 'build/proofs/tecfs-file-provider-last-run.json'),
     `${JSON.stringify(report, null, 2)}\n`,
   );
   console.log(
-    `TEC-FS object provider proof passed in ${report.instructions} instructions and ${tStates} T-states`,
+    `TEC-FS file provider proof passed in ${report.instructions} instructions and ${tStates} T-states`,
   );
 }
 

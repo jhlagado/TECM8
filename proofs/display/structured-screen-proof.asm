@@ -22,7 +22,6 @@ Start:
         LD      (MON3_VPORT),HL
 
         LD      HL,StructuredScreenLong
-        .rcignore definite_contract_violation "A is not live after rendering the screen model."
         CALL    DisplayRenderScreen
         JR      C,ProofFailed
 
@@ -54,7 +53,6 @@ Start:
         CALL    DisplayEraseCursorCell
         JR      C,ProofFailed
 
-        .rcignore definite_contract_violation "A is not live after this full flush proof call."
         CALL    GlcdTileFlushFull
         JR      C,ProofFailed
 

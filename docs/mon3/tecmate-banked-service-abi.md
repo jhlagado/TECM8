@@ -114,7 +114,9 @@ published as fixed callable addresses.
 | `SHL_RENDER_STATUS` | `82h` | Resident shell VDU action/status-line publisher service ID. |
 | `SHL_RENDER_RESULT` | `83h` | Resident shell VDU command-result status-line publisher service ID. |
 | `SHL_BANK` | `00h` | Resident shell physical bank. |
-| `NUCLEUS_OBJECT` | `91h` | Private named-object transport backed by the bounded tool-object arena in `VOLUME.TM8`. |
+| `ZT_OBJECT` | `91h` | Transactional named-object transport backed by the bounded tool-object arena in `VOLUME.TM8`. |
+| `NUCLEUS_OBJECT` | `91h` | Compatibility alias for `ZT_OBJECT`. |
+| `ZT_FILE` | `92h` | Read-only access to ordinary TEC-FS files by binary catalogue id. |
 | `SVC_ERR_UNKNOWN` | `EEh` | Unknown service ID error. |
 
 The registry table is laid out as repeated five-byte records:
@@ -430,6 +432,8 @@ TEC-FS routine.
 | direct bank call | `02h` | `8000h` | `TFS_SVC_DECODE_CATALOG` (`0Dh`) | Implemented single-entry catalogue decoder. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_SUMMARIZE_CATALOG` (`0Eh`) | Implemented one-slot catalogue summary. |
 | direct bank call | `02h` | `8000h` | `TFS_SVC_NEXT_CATALOG` (`0Fh`) | Implemented one-slot caller pointer advance. |
+| `ZT_OBJECT` (`91h`) | `02h` | `8000h` | `TFS_SVC_OBJECT` (`10h`) | Implemented transactional named-object provider. |
+| `ZT_FILE` (`92h`) | `02h` | `8000h` | `TFS_SVC_FILE` (`11h`) | Implemented read-only ordinary-file provider. |
 
 | Constant | Address | Status |
 | --- | ---: | --- |
@@ -463,6 +467,8 @@ TEC-FS routine.
 | `TFS_SVC_DECODE_CATALOG` | `0Dh` | Decodes one active 64-byte TM8 catalogue entry from the caller buffer. |
 | `TFS_SVC_SUMMARIZE_CATALOG` | `0Eh` | Summarizes one catalogue slot for the shell `dir` path. |
 | `TFS_SVC_NEXT_CATALOG` | `0Fh` | Advances `TFS_PARAM_BUFFER_LO/HI` by one 64-byte catalogue slot. |
+| `TFS_SVC_OBJECT` | `10h` | Routes the shared 16-byte request to the transactional object arena. |
+| `TFS_SVC_FILE` | `11h` | Routes the shared 16-byte request to ordinary TEC-FS files. |
 
 `TFS_SVC_LOAD_RANGE` and `TFS_SVC_SAVE_RANGE` are reserved TEC-FS calls that
 return the unsupported error until the catalogue/range loader exists. The
@@ -590,7 +596,7 @@ publishes a one-entry summary:
 | `TFS_PARAM_SUMMARY_FIRST_FILE_ID` | `3BD4h` | First active file id, if present. |
 | `TFS_PARAM_SUMMARY_FIRST_FILE_TYPE` | `3BD5h` | First active file type, if present. |
 | `TFS_PARAM_SUMMARY_FIRST_NAME_LEN` | `3BD6h` | First active local filename length, if present. |
-| `TFS_PARAM_SUMMARY_FLAGS` | `3BD7h` | Summary flags. Bit 0 means a first entry is present. |
+| `TFS_PARAM_SUMMARY_FLAGS` | `3BD7h` | Summary flags. Bit 0 records that a first entry is present. |
 | `TFS_SUMMARY_FLAG_HAS_FIRST` | `01h` | Summary flag for a present first active entry. |
 
 This is not yet a full directory walker. Sector reads, prefix resolution,
@@ -712,7 +718,7 @@ TEC-FS card locator constants:
 | `TFS_FILE_BASIC` | `05h` | BASIC program file type. |
 | `TFS_FILE_ASSET` | `06h` | Game/editor asset file type. |
 | `TFS_META_FLAG_EXECUTABLE` | `01h` | Metadata record describes an executable object. |
-| `TFS_META_FLAG_EXP_RAM` | `02h` | Metadata record expects expansion RAM. |
+| `TFS_META_FLAG_EXP_RAM` | `02h` | The program requires expansion RAM. |
 | `TFS_META_HW_TMS9918` | `01h` | Required hardware bit for TMS9918-compatible video. |
 | `TFS_META_HW_GLCD` | `02h` | Required hardware bit for GLCD. |
 | `TFS_META_HW_JOYSTICK` | `04h` | Required hardware bit for joystick input. |
@@ -779,10 +785,11 @@ TEC-FS status codes:
 | `TFS_ERR_NO_DRIVER` | `E1h` | Request is valid but no low-level SD sector driver is linked yet. |
 | `TFS_ERR_UNSUPPORTED` | `E0h` | Service slot exists but is not implemented yet. |
 
-The public `NUCLEUS_OBJECT` selector routes the existing 16-byte named-object
-ABI v1 request to bank 2. It implements `openRead`, `beginWrite`, `read`,
+The public `ZT_OBJECT` selector routes the shared 16-byte named-object ABI v1
+request to bank 2. `NUCLEUS_OBJECT` remains an assembly-time alias for existing
+callers. The provider implements `openRead`, `beginWrite`, `read`,
 `write`, `rewind`, `seek`, `close`, `commit`, and `abort`. Carry clear is
-success. Carry set returns the nonzero Nucleus status in `A`. The public banked
+success. Carry set returns a nonzero `ZT_*` status in `A`. The public banked
 gateway restores `IX`, `IY`, `SP`, and the caller's selected expansion bank.
 
 The provider owns eight logical object slots and eight tokenised RAM handles.
@@ -799,7 +806,7 @@ Objects can contain at most 65,535 bytes. Reads may be short at physical object
 EOF and return their byte count in the request result. EOF itself is a
 successful zero-byte read. The bounded provider supports rewind and seeks from
 zero through the current logical length; larger or 32-bit seeks return
-`NucleusStatusUnsupported`.
+`ZT_UNSUP`.
 
 `VOLUME.TM8` blocks 10–11 and 256–511 are reserved for this private arena.
 Sixteen descriptor sectors occupy sectors 80–95; 2,048 data sectors occupy
@@ -809,13 +816,27 @@ tentative writer. A descriptor records format version, slot, 16-bit generation,
 half, name length, logical data length, name bytes, and an additive checksum
 whose complete 512-byte sum is zero. Bank 2 validates that both reserved ranges,
 258 allocation entries in total, are intact before accepting requests. A legacy volume without that
-reservation fails with `NucleusStatusUnavailable`; it is never overwritten by
+reservation fails with `ZT_UNAV`; it is never overwritten by
 the provider.
 
-The provider uses 623 bytes of always-visible RAM: 31 bytes at `3C60h`, eight
+The object provider uses 623 bytes of always-visible RAM: 31 bytes at `3C60h`, eight
 10-byte handles at `3C80h`, and one 512-byte sector buffer at `3D00h`. Mount
 resets the handle generation and invalidates outstanding handles. The provider
 retains no caller request, name, or transfer pointer after a synchronous call.
+
+`ZT_FILE` uses the same request fields and status values for ordinary TEC-FS
+files. `openRead` takes a one-byte binary name containing the catalogue file
+id. `read`, `rewind`, `seek`, and `close` are implemented; mutation operations
+return `ZT_UNSUP`. Files larger than 65,535 bytes return `ZT_CAP` because the
+native client cursor is 16-bit. Reads follow the TM8 allocation chain, return
+short counts at EOF, and preserve all byte values.
+
+The file provider has one live reader at `3CD0h..3CEFh` and reuses the
+synchronous sector buffer at `3D00h`. This is a handle limit, not a project
+limit: Atom closes each source before opening the next. TEC-FS has 256 binary
+file ids, and Atom can assemble 255 ordered parts through an ordinal-to-file-id
+table. Mount invalidates both object and file handles. The complete provider
+state uses 655 always-visible bytes, including the shared 512-byte buffer.
 
 ## Bank 3: RTC Boundary
 
@@ -1083,6 +1104,8 @@ The active proofs are:
 npm run proof:bank-abi
 npm run proof:tms9918-bank
 npm run proof:tecfs-bank
+npm run proof:tecfs-object-provider
+npm run proof:tecfs-file-provider
 npm run proof:input-bank
 npm run proof:assembler-bank
 npm run proof:rtc-bank

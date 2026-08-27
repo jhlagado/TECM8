@@ -239,7 +239,7 @@ ClearTrace:
         ld a,h
         ld (ABI_TRACE_BASE+82),a
         ld hl,ObjectRequestCanary
-        callService NUCLEUS_OBJECT
+        callService ZT_OBJECT
         ld (ABI_TRACE_BASE+79),a
         ld a,0
         adc a,0
@@ -266,7 +266,7 @@ ClearTrace:
         rst 10H
         ld (ABI_TRACE_BASE+89),a
         ld hl,ObjectRequestCanary
-        callService NUCLEUS_OBJECT
+        callService ZT_OBJECT
         ld (ABI_TRACE_BASE+90),a
 
         ld a,0xA5

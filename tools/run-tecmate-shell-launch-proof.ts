@@ -5,6 +5,7 @@
 
 const { readFileSync, writeFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { loadTec1gExpansionRomImage } = require('./tec1g-expansion-image.ts');
 
 const TECM8_ROOT = resolve(__dirname, '..');
 const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
@@ -66,7 +67,7 @@ type CompileResult = {
 };
 
 function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
+  return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', modulePath.replace(/^out\//, '')));
 }
 
 async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {
@@ -143,9 +144,6 @@ function loadRuntime(bytes: Uint8Array): { runtime: Runtime; platformRuntime: Pl
   const { createTec1gMemoryHooks, applyExpansionRomMemory } = requireFromDebug80(
     'out/platforms/tec1g/tec1g-memory.js',
   ) as { createTec1gMemoryHooks: Function; applyExpansionRomMemory: Function };
-  const { loadTec1gExpansionRomImage } = requireFromDebug80(
-    'out/platforms/tec1g/tec1g-expansion-rom.js',
-  ) as { loadTec1gExpansionRomImage: Function };
   const { createZ80Runtime } = requireFromDebug80('out/z80/runtime.js') as {
     createZ80Runtime: Function;
   };

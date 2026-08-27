@@ -15,7 +15,7 @@ test('native object provider is wired through the public 91h gateway', () => {
   const format = read('tools/tm8/format.ts');
   const pkg = JSON.parse(read('package.json'));
 
-  assert.match(bank0, /NUCLEUS_OBJECT,TFS_BANK[\s\S]*TFS_SVC_OBJECT/);
+  assert.match(bank0, /ZT_OBJECT,TFS_BANK[\s\S]*TFS_SVC_OBJECT/);
   assert.match(bank2, /cp TFS_SVC_OBJECT[\s\S]*jp z,tecfsObjectImpl/);
   assert.match(bank2, /tecfsObjectCommit:[\s\S]*tecfsObjectSealDescriptor/);
   assert.match(bank2, /TFS_OBJECT_HANDLE_POISONED/);
@@ -25,7 +25,7 @@ test('native object provider is wired through the public 91h gateway', () => {
   assert.match(abi, /TFS_OBJECT_DATA_BLOCK\s+\.equ 256/);
   assert.match(format, /toolDescriptorStartBlock: 10/);
   assert.match(format, /toolDataStartBlock: 256/);
-  assert.match(proof, /ld c,NUCLEUS_OBJECT[\s\S]*rst 10H/);
+  assert.match(proof, /ld c,ZT_OBJECT[\s\S]*rst 10H/);
   assert.match(proof, /\.db 0x00,0x1A,0x7F,0x80,0xFF/);
   assert.match(proof, /NucleusStatusStorage[\s\S]*NucleusObjectAbort/);
   assert.match(runner, /tecfsMon3FileWrite[\s\S]*wantWriteFault/);

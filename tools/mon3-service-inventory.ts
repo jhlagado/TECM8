@@ -211,7 +211,7 @@ function remove(notes: string): ClassificationRule {
 function defaultMon3BundleRoot(): string {
   return resolve(
     process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80',
-    'resources/bundles/tec1g/mon3/v1',
+    'apps/debug80-vscode/resources/bundles/tec1g/mon3/v1',
   );
 }
 

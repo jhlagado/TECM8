@@ -61,7 +61,7 @@ type CompileResult = {
 };
 
 function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
+  return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', modulePath.replace(/^out\//, '')));
 }
 
 async function compileProof(): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {

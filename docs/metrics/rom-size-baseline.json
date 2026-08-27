@@ -9,12 +9,12 @@
     {
       "bank": 0,
       "role": "Shell, launcher, registry",
-      "occupied": 1289,
-      "span": 1289,
+      "occupied": 1294,
+      "span": 1294,
       "softSpan": 2048,
       "hardSpan": 4096,
-      "highWaterEnd": 34057,
-      "freeAfterHighWater": 15095
+      "highWaterEnd": 34062,
+      "freeAfterHighWater": 15090
     },
     {
       "bank": 1,
@@ -29,12 +29,12 @@
     {
       "bank": 2,
       "role": "TEC-FS boundary and block mapper",
-      "occupied": 3052,
-      "span": 3052,
+      "occupied": 4096,
+      "span": 4096,
       "softSpan": 4096,
       "hardSpan": 8192,
-      "highWaterEnd": 35820,
-      "freeAfterHighWater": 13332
+      "highWaterEnd": 36864,
+      "freeAfterHighWater": 12288
     },
     {
       "bank": 3,
@@ -98,10 +98,10 @@
     }
   ],
   "expansionTotal": {
-    "occupied": 8104,
-    "span": 8104,
+    "occupied": 9153,
+    "span": 9153,
     "softSpan": 32768,
     "hardSpan": 65536,
-    "freeAfterHighWater": 139352
+    "freeAfterHighWater": 138303
   }
 }

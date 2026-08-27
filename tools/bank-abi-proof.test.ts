@@ -26,7 +26,7 @@ test('bank ABI proof covers farCall restore and farJump handoff behavior', () =>
   assert.match(proof, /callService GLC_ENTRY/);
   assert.match(proof, /callService SHL_ENTRY/);
   assert.match(proof, /callService SHL_RUN_COMMAND/);
-  assert.match(proof, /ld ix,0x1357[\s\S]*ld iy,0x2468[\s\S]*callService NUCLEUS_OBJECT/);
+  assert.match(proof, /ld ix,0x1357[\s\S]*ld iy,0x2468[\s\S]*callService ZT_OBJECT/);
   assert.match(proof, /callService 0x7F[\s\S]*ld \(ABI_TRACE_BASE\+21\),a[\s\S]*jp nc,BankAbiFarJumpReturnedFail/);
   assert.match(runner, /expansionBytes\.slice/);
   assert.match(runner, /applyExpansionRomMemory/);

@@ -46,7 +46,6 @@ Start:
         CALL    GlcdTileDrawTextRun
         JP      C,ProofFailed
 
-        .rcignore definite_contract_violation "A is not live after this proof call; the next A use reloads it from RAM."
         CALL    GlcdTileFlushFull
         JP      C,ProofFailed
         LD      A,(GlcdTileFlushFullCount)
@@ -85,7 +84,6 @@ Start:
         JP      C,ProofFailed
 
         LD      A,1
-        .rcignore definite_contract_violation "A is an input row selector here and is not live after the queue call."
         CALL    GlcdTileQueueRow
         JP      C,ProofFailed
         CALL    GlcdTileStep
@@ -247,7 +245,6 @@ CellTwoByteStepFinalReturn:
         LD      (GlcdTileFlushCellCount),A
         LD      (GlcdTileStepCount),A
         LD      A,8
-        .rcignore definite_contract_violation "A is an input gutter row selector here and is not live after the mark call."
         CALL    GlcdTileMarkGutterDirty
         JP      C,ProofFailed
         LD      A,6
@@ -422,7 +419,6 @@ CoalescedRowStepFinalReturn:
         CP      16
         JP      NZ,ProofFailed
         LD      A,5
-        .rcignore definite_contract_violation "A is an input row selector here and is not live after the queue call."
         CALL    GlcdTileQueueRow
         JP      C,ProofFailed
         LD      A,6

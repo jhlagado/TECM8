@@ -12,7 +12,7 @@ const TECM8_ROOT = resolve(__dirname, '..');
 const DEBUG80_ROOT = resolve(process.env.DEBUG80_ROOT ?? '/Users/johnhardy/projects/debug80');
 const AZM_ROOT = process.env.AZM_ROOT ? resolve(process.env.AZM_ROOT) : undefined;
 const MON3_ROM_CANDIDATES = [
-  resolve(DEBUG80_ROOT, 'resources/bundles/tec1g/mon3/v1/mon3.bin'),
+  resolve(DEBUG80_ROOT, 'apps/debug80-vscode/resources/bundles/tec1g/mon3/v1/mon3.bin'),
   '/Users/johnhardy/projects/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
   '/Users/johnhardy/projects/2026/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
 ];
@@ -284,7 +284,7 @@ type CompileResult = {
 };
 
 function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
+  return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', modulePath.replace(/^out\//, '')));
 }
 
 async function compileProof(proofCase: ProofCase): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {

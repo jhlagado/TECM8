@@ -17,7 +17,7 @@ const GLCD_CAPTURE_PATH = resolve(SESSION_DIR, 'editor-session-glcd.pgm');
 const SUMMARY_PATH = resolve(SESSION_DIR, 'editor-session-last-run.json');
 const IMAGE_TOOL = resolve(TECM8_ROOT, 'tools/create-storage-proof-image.ts');
 const MON3_ROM_CANDIDATES = [
-  resolve(DEBUG80_ROOT, 'resources/bundles/tec1g/mon3/v1/mon3.bin'),
+  resolve(DEBUG80_ROOT, 'apps/debug80-vscode/resources/bundles/tec1g/mon3/v1/mon3.bin'),
   '/Users/johnhardy/projects/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
   '/Users/johnhardy/projects/2026/debug80-tec1g-mon3/roms/tec1g/mon-3/mon3.bin',
 ];
@@ -80,7 +80,7 @@ type CompileResult = {
 };
 
 function requireFromDebug80(modulePath: string): unknown {
-  return require(resolve(DEBUG80_ROOT, modulePath));
+  return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', modulePath.replace(/^out\//, '')));
 }
 
 async function compileMain(sourceFile = SOURCE_FILE): Promise<{ bytes: Uint8Array; symbols: D8Symbol[] }> {

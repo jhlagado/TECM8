@@ -48,6 +48,8 @@ Tecm8ExpansionBank2Entry:
         jp z,tecfsNextCatalogImpl
         cp TFS_SVC_OBJECT
         jp z,tecfsObjectImpl
+        cp TFS_SVC_FILE
+        jp z,tecfsFileImpl
         ld a,SVC_ERR_UNKNOWN
         scf
         ret
@@ -107,6 +109,7 @@ BankAbiNestedTarget:
 
 tecfsMountImpl:
         call tecfsObjectReset
+        call tecfsFileReset
         xor a
         ld (TFS_PARAM_STATUS),a
         ld (TFS_PARAM_LAST_ERROR),a
@@ -584,6 +587,8 @@ tecfsNextCatalogImpl:
         ld a,0x82
         or a
         ret
+
+        .include "tecfs-file-provider.asm"
 
 ; Common named-object ABI 1 over the private bounded tool arena at the end of
 ; VOLUME.TM8. The public 91h expansion gateway preserves IX/IY and bank state;

@@ -24,7 +24,7 @@ const SHADOW_OFF = 0x01;
 const INITIAL_SP = 0x7ff0;
 
 function requireDebug80(path: string): unknown {
-  return require(resolve(DEBUG80_ROOT, path));
+  return require(resolve(DEBUG80_ROOT, 'packages/debug80-runtime/dist', path.replace(/^out\//, '')));
 }
 
 function prepareImage(): void {

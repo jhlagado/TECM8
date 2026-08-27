@@ -54,15 +54,15 @@ Terms:
 
 - Occupied bytes: sum of emitted D8 segments in the bank.
 - Span bytes: bytes from `8000h` to the high-water end address in the bank.
-- High-water end: the D8 segment end address, which is end-exclusive. For
-  example, an end of `8165h` means the highest emitted byte is `8164h`.
+- High-water end: the D8 segment end address, which is end-exclusive. For an
+  end of `8165h`, the highest emitted byte is `8164h`.
 - Free after high-water: `16384 - span bytes`.
 
 | Bank | Current role | Occupied bytes | Span bytes | High-water end exclusive | Free after high-water |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 0 | Shell, launcher, registry | `1289` | `1289` | `8509h` | `15095` |
+| 0 | Shell, launcher, registry | `1294` | `1294` | `850Eh` | `15090` |
 | 1 | VDU/TMS9918 boundary | `568` | `568` | `8238h` | `15816` |
-| 2 | TEC-FS boundary and block mapper | `3052` | `3052` | `8BECh` | `13332` |
+| 2 | TEC-FS boundary and block mapper | `4096` | `4096` | `9000h` | `12288` |
 | 3 | RTC boundary | `95` | `95` | `805Fh` | `16289` |
 | 4 | GLCD boundary | `68` | `68` | `8044h` | `16316` |
 | 5 | TEC-FS monitor-sector bridge | `2895` | `2895` | `8B4Fh` | `13489` |
@@ -70,9 +70,9 @@ Terms:
 | 7 | Assembler skeleton | `45` | `45` | `802Dh` | `16339` |
 | 8 | Run skeleton | `45` | `45` | `802Dh` | `16339` |
 
-Expansion occupied bytes: `8104`
+Expansion occupied bytes: `9153`
 
-Expansion high-water span total: `8104`
+Expansion high-water span total: `9153`
 
 Latest MON3 VOLUME.TM8 sector-provider delta:
 
@@ -98,6 +98,20 @@ compiler cores: unchanged
 The first complete assembly measured 3152 bytes in bank 2. Shared descriptor
 validation/checksum/I/O tails, compact operation dispatch, and sector arithmetic
 removed 100 bytes before retention.
+
+Latest shared file-service-provider delta:
+
+```text
+bank 0 occupied/span: 1289 -> 1294 bytes (+5)
+bank 2 occupied/span: 3052 -> 4096 bytes (+1044)
+expansion occupied/span: 8104 -> 9153 bytes (+1049)
+fixed monitor span: unchanged at 16384 bytes
+```
+
+Bank 2 now sits exactly at its 4096-byte soft budget, with 12288 bytes left in
+the physical bank. The added service reads ordinary TEC-FS files through the
+shared Z80 tool-service request. It supports all 256 catalogue file IDs and
+keeps one file open at a time, which matches Atom's streaming source reader.
 
 The important practical point is that the expansion ROM is still almost empty.
 The fixed monitor remains full, but the service ABI is now giving MON3 and later
@@ -134,8 +148,8 @@ registry, and marker labels are current private bank-0 layout.
 ## Consequences
 
 - The immediate pressure is still in fixed monitor ROM, not the expansion ROM.
-- Banked services are cheap at this stage; the total occupied expansion code is
-  just over 3K, even after adding the first TEC-FS-backed `dir` command path.
+- Banked services remain within their budgets; the total occupied expansion
+  code is just under 10K across nine banks.
 - Bank 0 layout now needs active care because it contains both the registry and
   shell launcher boundary. Private labels may move; callers should enter through
   discovery-installed vectors and service IDs, not internal marker addresses.
